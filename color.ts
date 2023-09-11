@@ -743,7 +743,7 @@ class Color implements Color {
 
     // generating colors
 
-    public compliment(num:number, gradient:boolean = false):Color[]|Gradient {
+    public compliment(num:number): Gradient {
         num = Math.floor(num);
         if (num < 2) num = 2;
 
@@ -755,14 +755,19 @@ class Color implements Color {
 
         const g = [this, ...hues.map(h => Color.fromHSL(h, hsl[1], hsl[2], this.a))];
 
-        return gradient ? new Gradient(...g) : g;
+        return new Gradient(...g);
     }
 
-    public analogous():Color[] {
+    public analogous():[Color, Color, Color] {
         const hsl = this.hsl.values;
-        const hues = [hsl[0] - (30 / 360), hsl[0] + (30 / 360)];
+        const hues: [number, number] = [hsl[0] - (30 / 360), hsl[0] + (30 / 360)];
 
-        return [this, ...hues.map(h => Color.fromHSL(h, hsl[1], hsl[2], this.a))];
+        const [h1, h2] = hues.map(h => Color.fromHSL(h, hsl[1], hsl[2], this.a));
+        return [
+            this,
+            h1,
+            h2
+        ];
     }
 
     public interpolate(toColor: Color, distance: number = 0.5):Color {
@@ -824,8 +829,6 @@ class Color implements Color {
             );
         }));
     }
-
-
 
     public detectContrast(color:Color):number {
         const l1 = 0.2126 * Math.pow(this.r / 255, 2.2) + 0.7152 * Math.pow(this.g / 255, 2.2) + 0.0722 * Math.pow(this.b / 255, 2.2);
