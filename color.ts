@@ -11,6 +11,213 @@ interface Color {
     toString(): string;
 };
 
+type ColorStr = 
+"aliceblue"      |
+"antiquewhite"|
+"aqua"|
+"aquamarine"|
+"azure"|
+"beige"|
+"bisque"|
+"black"|
+"blanchedalmond"|
+"blue" |
+"blueviolet"|
+"brown"|
+"burlywood"|
+"cadetblue"|
+"chartreuse"|
+"chocolate"|
+"coral"|
+"cornflowerblue"|
+"cornsilk"|
+"crimson"|
+"cyan"|
+"darkblue"|
+"darkcyan"|
+"darkgoldenrod"|
+"darkgray"|
+"darkgreen"|
+"darkgrey"|
+"darkkhaki"|
+"darkmagenta"|
+"darkolivegreen"|
+"darkorange"|
+"darkorchid"|
+"darkred"|
+"darksalmon"|
+"darkseagreen"|
+"darkslateblue"|
+"darkslategray"|
+"darkslategrey"|
+"darkturquoise"|
+"darkviolet"|
+"deeppink"|
+"deepskyblue"|
+"dimgray"|
+"dimgrey"|
+"dodgerblue"|
+"firebrick"|
+"floralwhite"|
+"forestgreen"|
+"fuchsia"|
+"gainsboro"|
+"ghostwhite"|
+"gold"|
+"goldenrod"|
+"gray"|
+"green"|
+"greenyellow"|
+"grey"|
+"honeydew"|
+"hotpink"|
+"indianred"|
+"indigo"|
+"ivory"|
+"khaki"|
+"lavender"|
+"lavenderblush"|
+"lawngreen"|
+"lemonchiffon"|
+"lightblue"|
+"lightcoral"|
+"lightcyan"|
+"lightgoldenrodyellow"|
+"lightgray"|
+"lightgreen"|
+"lightgrey"|
+"lightpink"|
+"lightsalmon"|
+"lightseagreen"|
+"lightskyblue"|
+"lightslategray"|
+"lightslategrey"|
+"lightsteelblue"|
+"lightyellow"|
+"lime"|
+"limegreen"|
+"linen"|
+"magenta"|
+"maroon"|
+"mediumaquamarine"|
+"mediumblue"|
+"mediumorchid"|
+"mediumpurple"|
+"mediumseagreen"|
+"mediumslateblue"|
+"mediumspringgreen"|
+"mediumturquoise"|
+"mediumvioletred"|
+"midnightblue"|
+"mintcream"|
+"mistyrose"|
+"moccasin"|
+"navajowhite"|
+"navy"|
+"oldlace"|
+"olive"|
+"olivedrab"|
+"orange"|
+"orangered"|
+"orchid"|
+"palegoldenrod"|
+"palegreen"|
+"paleturquoise"|
+"palevioletred"|
+"papayawhip"|
+"peachpuff"|
+"peru"|
+"pink"|
+"plum"|
+"powderblue"|
+"purple"|
+"red"|
+"rosybrown"|
+"royalblue"|
+"saddlebrown"|
+"salmon"|
+"sandybrown"|
+"seagreen"|
+"seashell"|
+"sienna"|
+"silver"|
+"skyblue"|
+"slateblue"|
+"slategray"|
+"slategrey"|
+"snow"|
+"springgreen"|
+"steelblue"|
+"tan"|
+"teal"|
+"thistle"|
+"tomato"|
+"transparent"|
+"turquoise"|
+"violet"|
+"wheat"|
+"white"|
+"whitesmoke"|
+"yellow"|
+"yellowgreen"|
+"rebeccapurple";
+
+
+
+type BootstrapColor = 
+"primary"|
+"secondary"|
+"success"|
+"info"|
+"warning"|
+"danger"|
+"light"|
+"dark"|
+"indigo"|
+"indigo-light"|
+"indigo-dark"|
+"teal"|
+"teal-light"|
+"teal-dark"|
+"orange"|
+"orange-light"|
+"orange-dark"|
+"pink"|
+"pink-light"|
+"pink-dark"|
+"purple"|
+"purple-light"|
+"purple-dark"|
+"navy"|
+"navy-light"|
+"navy-dark"|
+"yellow"|
+"yellow-light"|
+"yellow-dark"|
+"lime"|
+"lime-light"|
+"lime-dark"|
+"gray"|
+"gray-light"|
+"gray-dark"|
+"brown"|
+"brown-light"|
+"brown-dark"|
+"grape"|
+"grape-light"|
+"grape-dark"|
+"vermillion"|
+"vermillion-light"|
+"vermillion-dark"|
+"steel"|
+"steel-light"|
+"steel-dark"|
+"green"|
+"green-light"|
+"green-dark";
+
+
+
 type colorArray = [number, number, number, number];
 
 type colors = {
@@ -24,9 +231,14 @@ type ClosestColor = {
 };
 
 class Color implements Color {
-    static parse(color: string):Color {
+    static parse(color: string | ColorStr | BootstrapColor):Color {
         // receives a css color string and returns a Color object
         // if the string is not a valid color, returns a Color object with the default color
+
+        const bs = Color.fromBootstrap(color as BootstrapColor);
+        if (bs) return bs;
+        const cl = Color.fromName(color as ColorStr);
+        if (cl) return cl;
 
         // remove spaces
         color = color.replace(/\s/g, '');
@@ -115,14 +327,14 @@ class Color implements Color {
         return new Color(Math.random() * 255, Math.random() * 255, Math.random() * 255);
     }
 
-    static fromName(name: string):Color|undefined {
-        const c = Color.colors[name.toLowerCase()];
+    static fromName(name: ColorStr):Color|undefined {
+        const c = Color.colors[name];
 
         if (c) return new Color(...c);
     }
 
-    static fromBootstrap(name: string):Color|undefined {
-        const c = Color.bootstrap[name.toLowerCase()];
+    static fromBootstrap(name: BootstrapColor):Color|undefined {
+        const c = Color.bootstrap[name];
 
         if (c) return new Color(...c);
     }
@@ -161,7 +373,9 @@ class Color implements Color {
     /**
      * All colors and their RGB values
      */
-    static get colors():colors {
+    static get colors(): {
+        [key in ColorStr]: colorArray;
+    } {
         return {
             "aliceblue": [240, 248, 255, 1],
             "antiquewhite": [250, 235, 215, 1],
@@ -318,7 +532,9 @@ class Color implements Color {
     /**
      * Get the bootstrap colors
      */
-    static get bootstrap():colors {
+    static get bootstrap(): {
+        [key in BootstrapColor]: colorArray;
+    } {
         return {
             "primary": [0, 123, 255, 1],
             "secondary": [108, 117, 125, 1],
@@ -501,7 +717,7 @@ class Color implements Color {
         return new Color(this.r, this.g, this.b, this.a);
     }
 
-    constructor(redOrString: number | string, green?: number, blue?: number, alpha?: number) {
+    constructor(redOrString: number | string | ColorStr | BootstrapColor, green?: number, blue?: number, alpha?: number) {
         if (typeof redOrString === 'string') {
             if (green !== undefined || blue !== undefined || alpha !== undefined) {
                 throw new Error('Invalid arguments. If the first argument is a string, the other arguments must be undefined.');
@@ -736,8 +952,21 @@ class Color implements Color {
         return this;
     }
 
-    public toString():string {
-        return `rgba(${this.r}, ${this.g}, ${this.b}, ${this.a})`;
+    public toString(type: 'hex' | 'hexa' | 'hsl' | 'hsla' | 'rgb' | 'rgba' = 'rgba'): string {
+        switch (type) {
+            case 'hex':
+                return this.hex.toString();
+            case 'hexa':
+                return this.hexa.toString();
+            case 'hsl':
+                return this.hsl.toString();
+            case 'hsla':
+                return this.hsla.toString();
+            case 'rgb':
+                return this.rgb.toString();
+            case 'rgba':
+                return this.rgba.toString();
+        };
     }
 
 
