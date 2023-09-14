@@ -267,7 +267,7 @@ class Color implements Color {
         }
     }
 
-    static fromHex(hex: string) {
+    static fromHex(hex: string): Color {
         const r = parseInt(hex.slice(1, 3), 16);
         const g = parseInt(hex.slice(3, 5), 16);
         const b = parseInt(hex.slice(5, 7), 16);
@@ -277,11 +277,11 @@ class Color implements Color {
         return new Color(r, g, b, a);
     }
 
-    static fromRGB(r: number, g: number, b: number, a?: number) {
+    static fromRGB(r: number, g: number, b: number, a?: number): Color {
         return new Color(r, g, b, a);
     }
 
-    static fromHSL(h: number, s: number, l: number, a?: number) {
+    static fromHSL(h: number, s: number, l: number, a?: number): Color {
         const params = ['hue', 'saturation', 'lightness'];
         [h,s,l].forEach((v, i) => {
             if (isNaN(v)) throw new Error(`Invalid ${params[i]}, ${v} is not a parsable number`);
@@ -323,17 +323,19 @@ class Color implements Color {
         return new Color(r * 255, g * 255, b * 255, a);
     }
 
-    static random() {
+    static random(): Color {
         return new Color(Math.random() * 255, Math.random() * 255, Math.random() * 255);
     }
 
+    static fromName<T extends ColorStr>(name: T):Color;
     static fromName(name: ColorStr):Color|undefined {
         const c = Color.colors[name];
 
         if (c) return new Color(...c);
     }
 
-    static fromBootstrap(name: BootstrapColor):Color|undefined {
+    static fromBootstrap<T extends BootstrapColor>(name: T):Color;
+    static fromBootstrap(name: BootstrapColor):Color | undefined {
         const c = Color.bootstrap[name];
 
         if (c) return new Color(...c);
@@ -682,7 +684,7 @@ class Color implements Color {
     /**
      * @returns {Object} The closest bootstrap color and its distance
      */
-    get closestBootstrap():object {
+    get closestBootstrap():ClosestColor {
         const { bootstrap } = Color;
         const [r, g, b] = this.rgb.values;
 
@@ -925,25 +927,6 @@ class Color implements Color {
             setAlpha: this.setAlpha
         }
     }
-
-
-
-    // global setters
-
-    set hue(hue:number) {
-        this.hsl.setHue(hue);
-    }
-
-    set saturation(saturation:number) {
-        this.hsl.setSaturation(saturation);
-    }
-
-    set lightness(lightness:number) {
-        this.hsl.setLightness(lightness);
-    }
-
-
-
 
 
 
