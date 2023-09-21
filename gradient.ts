@@ -1,4 +1,4 @@
-import { Color } from './color';
+import { Color } from './color.ts';
 export class Gradient {
     colors:Color[];
 

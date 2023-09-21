@@ -1,4 +1,4 @@
-import { Gradient } from "./gradient";
+import { Gradient } from "./gradient.ts";
 
 
 
