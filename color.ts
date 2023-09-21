@@ -1,17 +1,8 @@
-interface Color {
-    r: number;
-    g: number;
-    b: number;
-    a: number;
+import { Gradient } from "./gradient";
 
-    parse(): Color;
-    fromHex(): Color;
-    fromRGB(): Color;
-    fromHSL(): Color;
-    toString(): string;
-};
 
-type ColorStr = 
+
+export type ColorStr = 
 "aliceblue"      |
 "antiquewhite"|
 "aqua"|
@@ -218,19 +209,19 @@ type BootstrapColor =
 
 
 
-type colorArray = [number, number, number, number];
+export type colorArray = [number, number, number, number];
 
-type colors = {
+export type colors = {
     [key: string]:colorArray;
 }
 
-type ClosestColor = {
+export type ClosestColor = {
     name: string;
     distance: number;
     color: Color;
 };
 
-class Color implements Color {
+export class Color {
     static parse(color: string | ColorStr | BootstrapColor):Color {
         // receives a css color string and returns a Color object
         // if the string is not a valid color, returns a Color object with the default color
@@ -711,6 +702,15 @@ class Color implements Color {
             color: new Color(0, 0, 0)
         } as ClosestColor);
     }
+
+
+
+
+    r: number;
+    g: number;
+    b: number;
+    a: number;
+
 
     /**
      * @returns {Color} A copy of this color with no dependencies

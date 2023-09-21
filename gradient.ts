@@ -1,4 +1,5 @@
-class Gradient {
+import { Color } from './color';
+export class Gradient {
     colors:Color[];
 
     /**
