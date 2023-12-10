@@ -26,7 +26,6 @@ export type Queries = {
             accountId: string,
             userAgent: string,
             requests: number,
-            created: number,
             prevUrl: string
         }],
         unknown
@@ -57,7 +56,9 @@ export type Queries = {
     'db/get-version': [
         [],
         {
-            version: number
+            major: number,
+            minor: number,
+            patch: number
         }
     ],
     'roles/from-id': [
@@ -170,7 +171,7 @@ export type Queries = {
     ],
     'account/roles': [
         [{
-            accountId: string
+            id: string
         }],
         Role
     ],

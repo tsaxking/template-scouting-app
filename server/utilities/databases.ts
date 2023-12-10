@@ -1,9 +1,11 @@
 
-import { __root } from "./env.ts";
+import env, { __root } from "./env.ts";
 import path from 'node:path';
 import { Database, Statement } from "https://deno.land/x/sqlite3@0.9.1/mod.ts";
-import { log } from "./terminal-logging.ts";
+import { log, error } from "./terminal-logging.ts";
 import { Queries } from "./sql-types.ts";
+
+const { DATABASE_LINK } = env;
 
 /**
  * Description placeholder
@@ -18,7 +20,7 @@ const dbDir = path.resolve(__root, './storage/db');
  *
  * @type {Database}
  */
-export const MAIN = new Database(path.resolve(dbDir, './main.db'));
+export const MAIN = new Database(path.resolve(dbDir, DATABASE_LINK + '.db'));
 
 
 
@@ -39,6 +41,18 @@ type Parameter = string | number | boolean | null;
  * @typedef {DB}
  */
 export class DB {
+    static readonly db = MAIN;
+
+    static get path() {
+        console.log(env);
+        return path.resolve(dbDir, env.DATABASE_LINK + '.db');
+    }
+
+    static get version(): [number, number, number] {
+        const v = DB.get('db/get-version');
+        return [v?.major ?? 0, v?.minor ?? 0, v?.patch ?? 0];
+    }
+
     /**
      * Description placeholder
      * @date 10/12/2023 - 3:24:19 PM
@@ -56,9 +70,65 @@ export class DB {
 
             return MAIN.prepare(sql);
         } catch (err) {
-            throw new Error('Could not find query: ' + type);
+            error('Error preparing query:', type, err);
+            throw new Error('Database error, above error was thrown when preparing query');
         }
     }
+
+    private static runQuery<T extends keyof Queries>(type: 'run' | 'get' | 'all', query: T, ...args: Queries[T][0]): Queries[T][1] | undefined {
+        const q = DB.prepare(query);
+
+        const recurse = (i: number) => {
+            if (i > 10) throw new Error('Attempted to run the query 10 times, all failed');
+            try {
+                return q[type](...args);
+            } catch (error) {
+                if (error.message.includes('database is locked')) {
+                    return setTimeout(() => recurse(i + 1));
+                } else {
+                    throw error;
+                }
+            }
+        }
+
+        let d: Queries[T][1] | Queries[T][1][] | number | undefined;
+        try {
+            d = recurse(0);
+        } catch (e) {
+            log('Error in query', query);
+            throw e;
+        }
+        return d;
+    }
+
+    private static runUnsafeQuery(type: 'run' | 'get' | 'all', query: string, ...args: Parameter[]) {
+        const q = MAIN.prepare(query);
+
+        const recurse = (i: number) => {
+            if (i > 10) throw new Error('Attempted to run the query 10 times, all failed');
+            try {
+                return q[type](...args);
+            } catch (error) {
+                if (error.message.includes('database is locked')) {
+                    // wait until the event loop is free
+                    return setTimeout(() => recurse(i + 1));
+                } else {
+                    throw error;
+                }
+            }
+        }
+
+        let d: unknown;
+        try {
+            d = recurse(0);
+        } catch (e) {
+            log('Error in query', query);
+            throw e;
+        }
+        return d;
+    }
+
+
 
     /**
      * Description placeholder
@@ -71,16 +141,7 @@ export class DB {
      * @returns {number}
      */
     static run<T extends keyof Queries>(type: T, ...args: Queries[T][0]): number {
-        const q = DB.prepare(type);
-        let d: number;
-        try {
-            d = q.run(...args);
-        } catch (e) {
-            log('Error in query', type);
-            throw e;
-        }
-        // q.finalize();
-        return d;
+        return DB.runQuery('run', type, ...args) as number;
     }
 
     /**
@@ -94,16 +155,7 @@ export class DB {
      * @returns {(Queries[T][1] | undefined)}
      */
     static get<T extends keyof Queries>(type: T, ...args: Queries[T][0]): Queries[T][1] | undefined {
-        const q = DB.prepare(type);
-        let d: Queries[T][1] | undefined;
-        try {
-            d = q.get(...args);
-        } catch (e) {
-            log('Error in query', type);
-            throw e;
-        }
-        // q.finalize();
-        return d;
+        return DB.runQuery('get', type, ...args);
     }
 
     /**
@@ -117,16 +169,7 @@ export class DB {
      * @returns {Queries[T][1][]}
      */
     static all<T extends keyof Queries>(type: T, ...args: Queries[T][0]): Queries[T][1][] {
-        const q = DB.prepare(type);
-        let d: Queries[T][1][];
-        try {
-            d = q.all(...args);
-        } catch (e) {
-            log('Error in query', type);
-            throw e;
-        }
-        // q.finalize();
-        return d;
+        return DB.runQuery('all', type, ...args) as Queries[T][1][];
     }
 
 
@@ -142,40 +185,13 @@ export class DB {
     static get unsafe() {
         return {
             run: (query: string, ...args: Parameter[]): number => {
-                const q = MAIN.prepare(query);
-                let d: number;
-                try {
-                    d = q.run(...args);
-                } catch (e) {
-                    log('Error in query', query);
-                    throw e;
-                }
-                // q.finalize();
-                return d;
+                return DB.runUnsafeQuery('run', query, ...args) as number;
             },
             get: <type = unknown>(query: string, ...args: Parameter[]) => {
-                const q = MAIN.prepare(query);
-                let d: Record<string, type> | undefined;
-                try {
-                    d = q.get<Record<string, type>>(...args);
-                } catch (e) {
-                    log('Error in query', query);
-                    throw e;
-                }
-                // q.finalize();
-                return d;
+                return DB.runUnsafeQuery('get', query, ...args) as type;
             },
-            all: <type>(query: string, ...args: Parameter[]) => {
-                const q = MAIN.prepare(query);
-                let d: Record<string, type>[];
-                try {
-                    d = q.all<Record<string, type>>(...args);
-                } catch (e) {
-                    log('Error in query', query);
-                    throw e;
-                }
-                // q.finalize();
-                return d;
+            all: <type = unknown>(query: string, ...args: Parameter[]) => {
+                return DB.runUnsafeQuery('all', query, ...args) as type[];
             }
         }
     }

@@ -120,13 +120,15 @@ export const messages: {
     message: 'You have been logged in.',
     color: 'success',
     code: 200,
-    instructions: 'You will be redirected to the home page.'
+    instructions: 'You will be redirected to the home page.',
+    redirect: '/home'
 },
     'account:logged-out': {
     message: 'You have been logged out.',
     color: 'success',
     code: 200,
-    instructions: 'You will be redirected to the home page.'
+    instructions: 'You will be redirected to the home page.',
+    redirect: '/home'
 },
     'account:no-role': {
     message: 'This account does not have this role',
@@ -428,6 +430,12 @@ export const messages: {
     code: 400,
     instructions: ''
 },
+    'server:unknown-server-error': {
+    message: 'There was an unknown error. If this persists, please contact an administrator/developer.',
+    color: 'danger',
+    code: 500,
+    instructions: ''
+},
     'skills:added': {
     message: 'Skill added',
     color: 'success',
@@ -552,6 +560,7 @@ export type StatusId = 'account:already-logged-in'
 	| 'roles:not-found'
 	| 'roles:removed'
 	| 'server:invalid-data'
+	| 'server:unknown-server-error'
 	| 'skills:added'
 	| 'skills:has-skill'
 	| 'skills:invalid-skill'
@@ -646,6 +655,10 @@ export type RolesStatusId = 'added'
 	| 'removed';
 
 
+export type ServerStatusId = 'invalid-data'
+	| 'unknown-server-error';
+
+
 export type SkillsStatusId = 'added'
 	| 'has-skill'
 	| 'invalid-skill'
@@ -661,6 +674,3 @@ export type TestStatusId = 'fail'
 
 
 export type UnknownStatusId = 'error';
-
-
-export type ServerStatusId = 'invalid-data';
