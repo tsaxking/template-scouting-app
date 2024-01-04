@@ -2,6 +2,12 @@ import { ActionState } from "./app-object";
 import { Point2D } from '../../submodules/calculations/src/linear-algebra/point';
 import { EventEmitter } from '../../../shared/event-emitter';
 
+export type Point = [...Point2D, number] // x, y, path (time is the index)
+
+
+export type CollectedData = Point | ActionState | null;
+
+
 type Section = 'auto' | 'teleop' | 'endgame';
 
 type AppEvents = {
@@ -13,24 +19,39 @@ type AppEvents = {
 };
 
 export class Tick {
-    private data: Point2D | null = null;
+    private data: CollectedData = null;
 
-    constructor(public readonly time: number, public readonly index: number, public readonly app: App) {}
+    constructor(public readonly time: number, public readonly index: number) {}
 
-    public set(data: Point2D) {
+    public get second(): number {
+        return Math.floor(this.index / 4);
+    }
+
+    public get section(): Section | null {
+        for (const [section, range] of Object.entries(App.sections)) {
+            const [start, end] = range as number[];
+            if (this.second >= start && this.second <= end) {
+                return section as Section;
+            }
+        }
+
+        return null;
+    }
+
+    public set(data: CollectedData) {
         if (this.data instanceof ActionState) return; // don't overwrite action state
         this.data = data;
     }
 
-    public get(): Point2D | null {
+    public get(): CollectedData {
         return this.data;
     }
 
-    public next(): Tick | null {
+    public next(): Tick | undefined {
         return App.ticks[this.index + 1];
     }
 
-    public prev(): Tick | null {
+    public prev(): Tick | undefined {
         return App.ticks[this.index - 1];
     }
 };
@@ -40,17 +61,20 @@ export class App {
     private static readonly tickDuration = 250; // ms
     public static currentTime = 0; // ms
     public static startTime = 0; // ms
+    public static currentTick: Tick | undefined = undefined;
     private static readonly $emitter: EventEmitter<keyof AppEvents> = new EventEmitter<keyof AppEvents>();
-    private static readonly sections = {
+    public static readonly sections: {
+        [key in Section]: [number, number]
+    } = {
         // [sectionName]: [start, end]
         auto: [0, 15],
         teleop: [15, 135],
         endgame: [135, 150]
     }
 
-    public static readonly ticks: Tick[] = new Array<Tick>(150 * 4).fill(null as unknown as Tick).map((_, i) => new Tick(i * App.tickDuration, i, this));
+    public static readonly ticks: Tick[] = new Array<Tick>(150 * 4).fill(null as unknown as Tick).map((_, i) => new Tick(i * App.tickDuration, i));
 
-    public static launch(cb: (app: App, setTickData: () => void) => void) {
+    public static launch(cb: (app: App) => void) {
         App.startTime = Date.now();
         App.currentTime = App.startTime;
         let active = true;
@@ -61,14 +85,17 @@ export class App {
         App.on('stop', stop);
 
         // adaptive loop to be as close to 250ms as possible
-        const run = async (t: Tick | null) => {
+        const run = async (t: Tick | undefined) => {
+            // section change
+            App.currentTick = t;
+
             if (!t) return App.emit('end');
             if (!active) return App.emit('stopped');
             const start = Date.now();
             App.currentTime = start - App.startTime;
 
             try {
-                await cb(this, t.set.bind(t));
+                await cb(App);
             } catch (error) {
                 App.$emitter.emit('error', error);
                 return App.stop();
@@ -85,19 +112,20 @@ export class App {
         run(App.ticks[0]);
     }
 
-    // ms since start
-    public static get time() {
-        return App.currentTime - App.startTime;
-    }
-
-    public static get section(): string | null {
+    public static get section(): Section | null {
+        if (!App.currentTick) return null;
         for (const [section, range] of Object.entries(App.sections)) {
             const [start, end] = range as number[];
-            if (App.time >= start && App.time <= end) {
-                return section;
+            if (App.currentTick.second >= start && App.currentTick.second <= end) {
+                return section as Section;
             }
         }
         return null;
+    }
+
+    // ms since start
+    public static get time() {
+        return App.currentTime - App.startTime;
     }
 
     public static stop() {
