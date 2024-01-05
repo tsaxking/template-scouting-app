@@ -130,3 +130,11 @@ export const drawSpline = (ctx: CanvasRenderingContext2D, spline: Spline, steps:
 export const colorToString = (color: [number, number, number]): string => {
     return `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
 }
+
+export const toRadians = (degrees: number): number => {
+    return degrees * Math.PI / 180;
+}
+
+export const toDegrees = (radians: number): number => {
+    return radians * 180 / Math.PI;
+}
