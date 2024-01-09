@@ -5,7 +5,7 @@
 
 
 import { ActionState } from "./app-object";
-import { Point2D } from '../../submodules/calculations/src/linear-algebra/point';
+import { Point2D } from '../../../shared/submodules/calculations/src/linear-algebra/point';
 import { EventEmitter } from '../../../shared/event-emitter';
 import { ButtonCircle } from "./button-circle";
 import { Canvas } from "../canvas/canvas";

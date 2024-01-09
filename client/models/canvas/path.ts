@@ -1,4 +1,4 @@
-import { Point, Point2D } from "../../submodules/calculations/src/linear-algebra/point";
+import { Point, Point2D } from "../../../shared/submodules/calculations/src/linear-algebra/point";
 import { LineProperties } from "./shape-properties";
 
 /**

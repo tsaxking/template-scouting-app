@@ -1,7 +1,7 @@
 import { GameObject } from './game-object';
-import { toRadians } from '../../submodules/calculations/src/graphing';
+import { toRadians } from '../../../shared/submodules/calculations/src/graphing';
 import { App } from './app';
-import { Point } from '../../submodules/calculations/src/linear-algebra/point';
+import { Point } from '../../../shared/submodules/calculations/src/linear-algebra/point';
 import { Color } from '../../submodules/colors/color';
 import { EventEmitter } from '../../../shared/event-emitter';
 import { AppObject, Iterator } from './app-object';

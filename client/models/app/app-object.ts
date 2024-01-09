@@ -5,7 +5,7 @@
 
 
 
-import { Point2D } from "../../submodules/calculations/src/linear-algebra/point";
+import { Point2D } from "../../../shared/submodules/calculations/src/linear-algebra/point";
 import { Tick } from "./app";
 
 /**
