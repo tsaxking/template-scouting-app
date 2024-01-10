@@ -45,6 +45,8 @@ const createEnv = () => {
     values.autoSignIn = runPrompt('Auto Sign In: (no default)', '', undefined, true);
     values.tbaKey = runPrompt('TBA Key: (no default)', '', undefined, true);
     values.databaseLink = runPrompt('Database Link: (default: main)', 'main', (i) => i.length > 0, true);
+    values.eventApiKey = runPrompt('Event API Key: (no default)', '', undefined, true);
+    values.dashboardDomain = runPrompt('Dashboard Domain: (default: localhost:2122)', 'http://localhost:2122', (i) => i.length > 0, true);
 
     Object.assign(env, values);
 
