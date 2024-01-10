@@ -1,6 +1,13 @@
 import { Point } from "./linear-algebra/point";
 import { Spline } from "./linear-algebra/spline";
 
+/**
+ * Options for drawing a point onto a canvas
+ * @date 1/10/2024 - 2:43:32 PM
+ *
+ * @export
+ * @typedef {DrawPointOptions}
+ */
 export type DrawPointOptions = {
     width?: number;
     height?: number;
@@ -11,6 +18,10 @@ export type DrawPointOptions = {
     transform?: (point: Point) => Point;
 }
 
+/**
+ * Draws a point onto a canvas
+ * @date 1/10/2024 - 2:43:32 PM
+ */
 export const drawPoint = (ctx: CanvasRenderingContext2D, point: Point, options?: DrawPointOptions) => {
     let p = new Point(...point.array);
 
@@ -57,6 +68,10 @@ export const drawPoint = (ctx: CanvasRenderingContext2D, point: Point, options?:
     ctx.restore();
 };
 
+/**
+ * Generates rgb values from a normalized point
+ * @date 1/10/2024 - 2:43:32 PM
+ */
 export const colorFromPos = (point: Point): [number, number, number] => {
     const [x, y, z] = point.array;
     const r = x * 255;
@@ -67,6 +82,13 @@ export const colorFromPos = (point: Point): [number, number, number] => {
 };
 
 
+/**
+ * Options for drawing an edge onto a canvas
+ * @date 1/10/2024 - 2:43:32 PM
+ *
+ * @export
+ * @typedef {DrawEdgeOptions}
+ */
 export type DrawEdgeOptions = {
     gradient?: boolean;
     strokeStyle?: string;
@@ -74,6 +96,10 @@ export type DrawEdgeOptions = {
     transform?: (point: Point) => Point;
 };
 
+/**
+ * Draws an edge onto a canvas
+ * @date 1/10/2024 - 2:43:32 PM
+ */
 export const drawEdge = (ctx: CanvasRenderingContext2D, [p1, p2]: [Point, Point], options: DrawEdgeOptions) => {
     let p1t = p1;
     let p2t = p2;
@@ -114,10 +140,18 @@ export const drawEdge = (ctx: CanvasRenderingContext2D, [p1, p2]: [Point, Point]
 }
 
 
+/**
+ * Clears a canvas
+ * @date 1/10/2024 - 2:43:32 PM
+ */
 export const clear = (ctx: CanvasRenderingContext2D) => {
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 }
 
+/**
+ * Draws a spline onto a canvas
+ * @date 1/10/2024 - 2:43:32 PM
+ */
 export const drawSpline = (ctx: CanvasRenderingContext2D, spline: Spline, steps: number, options?: (p: Point) => DrawPointOptions) => {
     for (let i = 0; i < steps; i++) {
         const t = i / steps;
@@ -127,14 +161,26 @@ export const drawSpline = (ctx: CanvasRenderingContext2D, spline: Spline, steps:
     }
 };
 
+/**
+ * Converts rgb values to a string
+ * @date 1/10/2024 - 2:43:31 PM
+ */
 export const colorToString = (color: [number, number, number]): string => {
     return `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
 }
 
+/**
+ * Converts degrees to radians
+ * @date 1/10/2024 - 2:43:31 PM
+ */
 export const toRadians = (degrees: number): number => {
     return degrees * Math.PI / 180;
 }
 
+/**
+ * Converts radians to degrees
+ * @date 1/10/2024 - 2:43:31 PM
+ */
 export const toDegrees = (radians: number): number => {
     return radians * 180 / Math.PI;
 }

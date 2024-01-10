@@ -1,5 +1,9 @@
 import { Point2D } from "./linear-algebra/point";
 
+/**
+ * Uses the ray-casting algorithm to test if a point is inside a polygon
+ * @date 1/10/2024 - 2:45:25 PM
+ */
 export const isInside = (point: Point2D, points: Point2D[]) => {
     // using ray-casting algorithm
     // test if a point is inside a polygon

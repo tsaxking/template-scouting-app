@@ -1,9 +1,31 @@
 import { Point } from "./point";
 import { Vector } from "./vector";
 
+/**
+ * A curve defined by a series of points
+ * @date 1/10/2024 - 2:41:33 PM
+ *
+ * @export
+ * @class Spline
+ * @typedef {Spline}
+ */
 export class Spline {
+    /**
+     * An array of points defining the spline
+     * @date 1/10/2024 - 2:41:33 PM
+     *
+     * @public
+     * @type {Point[]}
+     */
     public points: Point[];
 
+    /**
+     * Creates an instance of Spline.
+     * @date 1/10/2024 - 2:41:33 PM
+     *
+     * @constructor
+     * @param {...Point[]} points
+     */
     constructor(...points: Point[]) {
         this.points = points;
     }

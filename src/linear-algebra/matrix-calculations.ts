@@ -2,13 +2,34 @@ import { Point, Point3D, Point2D } from "./point";
 import { Vector } from "./vector";
 import { Plane } from "./plane";
 
+/**
+ * A 2d array of numbers
+ * @date 1/10/2024 - 2:35:33 PM
+ *
+ * @typedef {Matrix}
+ */
 type Matrix = number[][];
+/**
+ * A 3x3 matrix of numbers
+ * @date 1/10/2024 - 2:35:33 PM
+ *
+ * @typedef {SpatialMatrix}
+ */
 type SpatialMatrix = [
     Point3D,
     Point3D,
     Point3D
 ]
 
+/**
+ * Multiplies two matricies
+ * @date 1/10/2024 - 2:35:33 PM
+ *
+ * @export
+ * @param {Matrix} a
+ * @param {Matrix} b
+ * @returns {{}}
+ */
 export function multiplyMatricies(a: Matrix, b: Matrix) {
     // ensure that the matricies are compatible
     if (a[0].length !== b.length) {
@@ -40,27 +61,80 @@ export function multiplyMatricies(a: Matrix, b: Matrix) {
     return c;
 }
 
+/**
+ * Transforms a point by a matrix
+ * @date 1/10/2024 - 2:35:33 PM
+ *
+ * @export
+ * @param {Point3D} point
+ * @param {SpatialMatrix} matrix
+ * @returns {Point3D}
+ */
 export function transform(point: Point3D, matrix: SpatialMatrix): Point3D {
     const [x, y, z] = point;
     const [[a], [b], [c]] = multiplyMatricies(matrix, [[x], [y], [z]]);
     return [a, b, c];
 }
 
-export function translate([x, y, z]: Point3D, [dx, dy, dz]: Point3D): Point3D {
+
+/**
+ * Translates a point by a vector
+ * @date 1/10/2024 - 2:37:22 PM
+ *
+ * @export
+ * @param {Point3D} point
+ * @param {Point3D} vector
+ * @returns {Point3D}
+ */
+export function translate(point: Point3D, vector: Point3D): Point3D {
+    const [x, y, z] = point;
+    const [dx, dy, dz] = vector;
     return [x + dx, y + dy, z + dz];
 }
 
-export function scale([x, y, z]: Point3D, [dx, dy, dz]: Point3D): Point3D {
+/**
+ * Scales a point by a vector
+ * @date 1/10/2024 - 2:37:52 PM
+ *
+ * @export
+ * @param {Point3D} point
+ * @param {Point3D} vector
+ * @returns {Point3D}
+ */
+export function scale(point: Point3D, vector: Point3D): Point3D {
+    const [x, y, z] = point;
+    const [dx, dy, dz] = vector;
     return [x * dx, y * dy, z * dz];
 }
 
-export function rotate2D([x, y]: Point2D, r: number): Point2D {
+
+/**
+ * Rotates a 2d point by a vector
+ * @date 1/10/2024 - 2:38:06 PM
+ *
+ * @export
+ * @param {Point2D} point
+ * @param {number} angle
+ * @returns {Point2D}
+ */
+export function rotate2D(point: Point2D, angle: number): Point2D {
+    const [x, y] = point;
     return [
-        x * Math.cos(r) - y * Math.sin(r),
-        x * Math.sin(r) + y * Math.cos(r)
+        x * Math.cos(angle) - y * Math.sin(angle),
+        x * Math.sin(angle) + y * Math.cos(angle)
     ];
 }
 
+/**
+ * Rotates a 3d point by a vector
+ * @date 1/10/2024 - 2:35:33 PM
+ *
+ * @export
+ * @param {Point3D} point
+ * @param {Point3D} about
+ * @param {Point3D} angle
+ * @returns {Point3D}
+ */
 export function rotate3D(point: Point3D, about: Point3D, angle: Point3D): Point3D {
     let [x, y, z] = point;
     const [ax, ay, az] = about;
@@ -76,6 +150,17 @@ export function rotate3D(point: Point3D, about: Point3D, angle: Point3D): Point3
     return [x, y, z];
 }
 
+/**
+ * Projects a point onto a plane (not tested yet)
+ * @date 1/10/2024 - 2:35:33 PM
+ *
+ * @export
+ * @param {Point3D} point
+ * @param {number} cameraDistance
+ * @param {Vector} viewPlane
+ * @param {number} viewAngle
+ * @returns {(Point2D | undefined)}
+ */
 export function perspective(point: Point3D, cameraDistance: number, viewPlane: Vector, viewAngle: number): Point2D | undefined {
     const cameraPoint = new Point(0, 0, -1 * cameraDistance);
     const cameraVector = new Vector(cameraPoint, new Point(...point));
