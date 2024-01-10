@@ -1,4 +1,4 @@
-import { Drawable } from "./canvas";
+import { Drawable } from './canvas';
 
 /**
  * Location and size of the image
@@ -11,7 +11,7 @@ type CanvasImageProperties = {
     y: number;
     width: number;
     height: number;
-}
+};
 
 /**
  * Image drawable
@@ -42,7 +42,10 @@ export class Img {
      * @param {string} src
      * @param {Partial<CanvasImageProperties>} properties
      */
-    constructor(public readonly src: string, public readonly properties: Partial<CanvasImageProperties>) {
+    constructor(
+        public readonly src: string,
+        public readonly properties: Partial<CanvasImageProperties>,
+    ) {
         this.img = new Image();
         this.img.src = src;
 
@@ -152,11 +155,9 @@ export class Img {
             this.x * ctx.canvas.width,
             this.y * ctx.canvas.height,
             this.width * ctx.canvas.width,
-            this.height * ctx.canvas.height
+            this.height * ctx.canvas.height,
         );
     }
-
-
 
     /**
      * Determines if the given point is inside the image
@@ -167,6 +168,7 @@ export class Img {
      * @returns {boolean}
      */
     isIn(x: number, y: number) {
-        return x >= this.x && x <= this.x + this.width && y >= this.y && y <= this.y + this.height;
+        return x >= this.x && x <= this.x + this.width && y >= this.y &&
+            y <= this.y + this.height;
     }
-};
+}

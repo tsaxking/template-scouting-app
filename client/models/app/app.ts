@@ -3,19 +3,18 @@
  * @description This contains the main class for the app, which is responsible for running the match and keeping track of the state of the robot over time. The data is collected every 250ms, and the app will run for 150 seconds, so there will be 600 ticks in total.
  */
 
-
-import { ActionState } from "./app-object";
+import { ActionState } from './app-object';
 import { Point2D } from '../../../shared/submodules/calculations/src/linear-algebra/point';
 import { EventEmitter } from '../../../shared/event-emitter';
-import { ButtonCircle } from "./button-circle";
-import { Canvas } from "../canvas/canvas";
-import { AppObject } from "./app-object";
-import { Path } from "../canvas/path";
-import { Img } from "../canvas/image";
-import { BorderPolygon } from "../canvas/border";
-import { Polygon } from "../canvas/polygon";
-import { Circle } from "../canvas/circle";
-import { Color } from "../../submodules/colors/color";
+import { ButtonCircle } from './button-circle';
+import { Canvas } from '../canvas/canvas';
+import { AppObject } from './app-object';
+import { Path } from '../canvas/path';
+import { Img } from '../canvas/image';
+import { BorderPolygon } from '../canvas/border';
+import { Polygon } from '../canvas/polygon';
+import { Circle } from '../canvas/circle';
+import { Color } from '../../submodules/colors/color';
 
 /**
  * Point including time
@@ -24,8 +23,7 @@ import { Color } from "../../submodules/colors/color";
  * @export
  * @typedef {Point}
  */
-export type Point = [...Point2D, number] // x, y, path (time is the index of the tick)
-
+export type Point = [...Point2D, number]; // x, y, path (time is the index of the tick)
 
 /**
  * Data collected at a given point in time
@@ -35,7 +33,6 @@ export type Point = [...Point2D, number] // x, y, path (time is the index of the
  * @typedef {CollectedData}
  */
 export type CollectedData = ActionState | null;
-
 
 /**
  * Section of the match
@@ -58,7 +55,6 @@ type AppEvents = {
     'end': void;
     'stopped': void;
 };
-
 
 /**
  * Tick of the match
@@ -96,7 +92,11 @@ export class Tick {
      * @param {number} index
      * @param {App} app
      */
-    constructor(public readonly time: number, public readonly index: number, public readonly app: App) {}
+    constructor(
+        public readonly time: number,
+        public readonly index: number,
+        public readonly app: App,
+    ) {}
 
     /**
      * Nearest second
@@ -180,8 +180,7 @@ export class Tick {
     public prev(): Tick | undefined {
         return this.app.ticks[this.index - 1];
     }
-};
-
+}
 
 /**
  * The full scouting app, including the canvas and all the buttons
@@ -192,9 +191,8 @@ export class Tick {
  * @typedef {App}
  */
 export class App {
-
-    // ▄▀▀ ▄▀▄ █▄ █ ▄▀▀ ▀█▀ ▄▀▄ █▄ █ ▀█▀ ▄▀▀ 
-    // ▀▄▄ ▀▄▀ █ ▀█ ▄█▀  █  █▀█ █ ▀█  █  ▄█▀ 
+    // ▄▀▀ ▄▀▄ █▄ █ ▄▀▀ ▀█▀ ▄▀▄ █▄ █ ▀█▀ ▄▀▀
+    // ▀▄▄ ▀▄▀ █ ▀█ ▄█▀  █  █▀█ █ ▀█  █  ▄█▀
     /**
      * All the sections of the match
      * @date 1/9/2024 - 3:08:20 AM
@@ -203,18 +201,17 @@ export class App {
      * @static
      * @readonly
      * @type {{
-    *         [key in Section]: [number, number]
-    *     }}
-    */
+     *         [key in Section]: [number, number]
+     *     }}
+     */
     public static readonly sections: {
-        [key in Section]: [number, number]
+        [key in Section]: [number, number];
     } = {
         // [sectionName]: [start, end]
         auto: [0, 15],
         teleop: [15, 135],
-        endgame: [135, 150]
-    }
-
+        endgame: [135, 150],
+    };
 
     /**
      * The number of ticks per second
@@ -240,7 +237,6 @@ export class App {
         return 1000 / App.ticksPerSecond;
     }
 
-
     /**
      * Creates an instance of App.
      * @date 1/9/2024 - 3:08:20 AM
@@ -260,7 +256,7 @@ export class App {
                 x: xOffset,
                 y: 0,
                 width: target.clientHeight * 2,
-                height: target.clientHeight
+                height: target.clientHeight,
             });
         } else {
             const yOffset = (target.clientHeight - target.clientWidth / 2) / 2;
@@ -268,16 +264,13 @@ export class App {
                 x: 0,
                 y: yOffset,
                 width: target.clientWidth,
-                height: target.clientWidth / 2
+                height: target.clientWidth / 2,
             });
         }
     }
 
-
-
-
-    // █ █ ▄▀▄ █▀▄ █ ▄▀▄ ██▄ █   ██▀ ▄▀▀ 
-    // ▀▄▀ █▀█ █▀▄ █ █▀█ █▄█ █▄▄ █▄▄ ▄█▀ 
+    // █ █ ▄▀▄ █▀▄ █ ▄▀▄ ██▄ █   ██▀ ▄▀▀
+    // ▀▄▀ █▀█ █▀▄ █ █▀█ █▄█ █▄▄ █▄▄ ▄█▀
     /**
      * The current time in the match
      * @date 1/9/2024 - 3:08:20 AM
@@ -311,12 +304,8 @@ export class App {
      */
     public currentLocation: Point2D | undefined = undefined;
 
-
-
-
-
-    // █▀▄ █▀▄ ▄▀▄ █   █ ▄▀▄ ██▄ █   ██▀ ▄▀▀ 
-    // █▄▀ █▀▄ █▀█ ▀▄▀▄▀ █▀█ █▄█ █▄▄ █▄▄ ▄█▀ 
+    // █▀▄ █▀▄ ▄▀▄ █   █ ▄▀▄ ██▄ █   ██▀ ▄▀▀
+    // █▄▀ █▀▄ █▀█ ▀▄▀▄▀ █▀█ █▄█ █▄▄ █▄▄ ▄█▀
     /**
      * Whether the robot is drawing or not
      * @date 1/9/2024 - 3:08:20 AM
@@ -380,8 +369,6 @@ export class App {
      */
     public readonly areas: (Polygon | Circle)[] = [];
 
-
-
     /**
      * Sets the border of the field
      * @date 1/9/2024 - 3:23:58 AM
@@ -394,8 +381,8 @@ export class App {
         if (this.border) throw new Error('Border already set');
         const b = new BorderPolygon(points, {
             fill: {
-                color: color.toString('rgba')
-            }
+                color: color.toString('rgba'),
+            },
         });
 
         const { draw } = b;
@@ -403,7 +390,7 @@ export class App {
             if (this.currentLocation && b.isIn(this.currentLocation)) {
                 draw(ctx);
             }
-        }
+        };
 
         this.canvas.add(b);
         this.border = b;
@@ -421,8 +408,8 @@ export class App {
     addArea(points: Point2D[], color: Color) {
         const p = new Polygon(points, {
             fill: {
-                color: color.toString('rgba')
-            }
+                color: color.toString('rgba'),
+            },
         });
 
         // only draw if the robot is in the area
@@ -431,17 +418,12 @@ export class App {
             if (this.currentLocation && p.isIn(this.currentLocation)) {
                 draw(ctx);
             }
-        }
+        };
 
         this.canvas.add(p);
         this.areas.push(p);
         return p;
     }
-
-
-
-
-
 
     /**
      * The canvas element
@@ -478,8 +460,9 @@ export class App {
      * @readonly
      * @type {EventEmitter<keyof AppEvents>}
      */
-    private readonly $emitter: EventEmitter<keyof AppEvents> = new EventEmitter<keyof AppEvents>();
-
+    private readonly $emitter: EventEmitter<keyof AppEvents> = new EventEmitter<
+        keyof AppEvents
+    >();
 
     /**
      * All the ticks of the match
@@ -489,7 +472,9 @@ export class App {
      * @readonly
      * @type {Tick[]}
      */
-    public readonly ticks: Tick[] = new Array(150 * App.ticksPerSecond).fill(null).map((_, i) => new Tick(i * App.tickDuration, i, this));
+    public readonly ticks: Tick[] = new Array(150 * App.ticksPerSecond).fill(
+        null,
+    ).map((_, i) => new Tick(i * App.tickDuration, i, this));
 
     /**
      * Launch the app
@@ -516,7 +501,9 @@ export class App {
 
             const { section } = this;
             this.currentTick = t;
-            if (this.section !== section) this.emit('section', this.section ?? undefined);
+            if (this.section !== section) {
+                this.emit('section', this.section ?? undefined);
+            }
 
             if (!t) return this.emit('end');
             if (!active) return this.emit('stopped');
@@ -533,10 +520,10 @@ export class App {
             const end = Date.now();
             const duration = end - start;
             const delay = App.tickDuration - duration;
-            
+
             // there could be a major delay if the callback takes too long, so we need to account for that
             setTimeout(() => run(t.next()), Math.max(0, delay));
-        }
+        };
 
         run(this.ticks[0]);
     }
@@ -553,7 +540,10 @@ export class App {
         if (!this.currentTick) return null;
         for (const [section, range] of Object.entries(App.sections)) {
             const [start, end] = range as number[];
-            if (this.currentTick.second >= start && this.currentTick.second <= end) {
+            if (
+                this.currentTick.second >= start &&
+                this.currentTick.second <= end
+            ) {
                 return section as Section;
             }
         }
@@ -612,7 +602,10 @@ export class App {
      * @param {(data: AppEvents[K]) => void} cb
      * @returns {void) => void}
      */
-    public on<K extends keyof AppEvents>(event: K, cb: (data: AppEvents[K]) => void) {
+    public on<K extends keyof AppEvents>(
+        event: K,
+        cb: (data: AppEvents[K]) => void,
+    ) {
         this.$emitter.on(event, cb);
     }
 
@@ -626,7 +619,10 @@ export class App {
      * @param {?(data: AppEvents[K]) => void} [cb]
      * @returns {void) => void}
      */
-    public off<K extends keyof AppEvents>(event: K, cb?: (data: AppEvents[K]) => void) {
+    public off<K extends keyof AppEvents>(
+        event: K,
+        cb?: (data: AppEvents[K]) => void,
+    ) {
         this.$emitter.off(event, cb);
     }
 
@@ -642,7 +638,6 @@ export class App {
     public emit<K extends keyof AppEvents>(event: K, data?: AppEvents[K]) {
         this.$emitter.emit(event, data);
     }
-
 
     /**
      * The time left in the match
@@ -669,7 +664,13 @@ export class App {
      * @param {?(state: T) => string} [convert]
      * @returns {string) => void}
      */
-    addGameObject<T = unknown>(x: number, y: number, object: AppObject<T>, button: HTMLElement, convert?: (state: T) => string) {
+    addGameObject<T = unknown>(
+        x: number,
+        y: number,
+        object: AppObject<T>,
+        button: HTMLElement,
+        convert?: (state: T) => string,
+    ) {
         this.gameObjects.push({ x, y, object });
 
         button.innerText = object.name;
@@ -682,24 +683,26 @@ export class App {
 
         object.listen((state) => {
             this.currentTick?.set(state);
-            button.innerText = `${object.name}: ${convert ? convert(state.state) : state.state}`;
+            button.innerText = `${object.name}: ${
+                convert ? convert(state.state) : state.state
+            }`;
         });
 
         button.addEventListener('click', () => {
             object.change(this.currentLocation);
         });
 
-        // if the button is held down, change the state 
+        // if the button is held down, change the state
         let interval: NodeJS.Timeout | undefined = undefined;
         const start = () => {
             if (interval) end();
             interval = setTimeout(() => {
-                object.undo()
+                object.undo();
             }, 1000);
-        }
+        };
         const end = () => {
             if (interval) clearTimeout(interval);
-        }
+        };
 
         button.addEventListener('mousedown', start);
         button.addEventListener('touchstart', start);
@@ -735,7 +738,7 @@ export class App {
             setInterval(() => {
                 this.path.points.shift();
             }, 1000); // clear after 1 second
-        }
+        };
 
         const down = (x: number, y: number) => {
             push(x, y);
@@ -783,8 +786,6 @@ export class App {
         });
     }
 
-
-
     /**
      * Use this to get the location of points for your polygons. This is not to be used in the actual app, but rather to help you develop.
      * @date 1/9/2024 - 3:33:17 AM
@@ -802,4 +803,4 @@ export class App {
 
         return em;
     }
-};
+}

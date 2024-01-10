@@ -1,9 +1,3 @@
-
-
-
-
-
-
 export type LineProperties = {
     width: number;
     color: string;
@@ -12,9 +6,6 @@ export type LineProperties = {
 export type FillProperties = {
     color: string;
 };
-
-
-
 
 export type ShapeProperties = Partial<{
     line: Partial<LineProperties>;

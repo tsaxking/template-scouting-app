@@ -1,5 +1,5 @@
-import { Point2D } from "../../../shared/submodules/calculations/src/linear-algebra/point";
-import { Polygon } from "./polygon";
+import { Point2D } from '../../../shared/submodules/calculations/src/linear-algebra/point';
+import { Polygon } from './polygon';
 
 /**
  * A polygon that the robot cannot enter (shades on the outside)
@@ -33,13 +33,13 @@ export class BorderPolygon extends Polygon {
 
         region.moveTo(
             this.points[0][0] * ctx.canvas.width,
-            this.points[0][1] * ctx.canvas.height
+            this.points[0][1] * ctx.canvas.height,
         );
 
         for (let i = 1; i < this.points.length; i++) {
             region.lineTo(
                 this.points[i][0] * ctx.canvas.width,
-                this.points[i][1] * ctx.canvas.height
+                this.points[i][1] * ctx.canvas.height,
             );
         }
         region.closePath();
@@ -54,4 +54,4 @@ export class BorderPolygon extends Polygon {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
         ctx.fill('evenodd');
     }
-};
+}

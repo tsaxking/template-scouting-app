@@ -25,9 +25,6 @@ export type Teleop = {};
  */
 export type Endgame = {};
 
-
-
-
 /**
  * Data structure for game object
  * @date 1/9/2024 - 11:12:36 AM
@@ -39,4 +36,4 @@ export type GameObject = {
     auto: Auto;
     teleop: Teleop;
     endgame: Endgame;
-}
+};
