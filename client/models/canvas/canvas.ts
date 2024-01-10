@@ -1,8 +1,5 @@
-
-
-import { EventEmitter } from "../../../shared/event-emitter";
-import { Point2D } from "../../../shared/submodules/calculations/src/linear-algebra/point";
-
+import { EventEmitter } from '../../../shared/event-emitter';
+import { Point2D } from '../../../shared/submodules/calculations/src/linear-algebra/point';
 
 /**
  * Similar to mouse events, but with a point
@@ -36,9 +33,9 @@ export class CanvasEvent<T> {
     constructor(
         public readonly event: keyof Events,
         public readonly point: Point2D,
-        public readonly data: T
+        public readonly data: T,
     ) {}
-};
+}
 
 /**
  * All events for the canvas
@@ -114,8 +111,6 @@ export interface Drawable {
     off?<K extends keyof Events>(event: K, cb: (e: Events[K]) => void): void;
 }
 
-
-
 /**
  * The canvas class, this contains elements that can be drawn (drawables), event emitters, and more
  * All points used should be normalized (between 0 and 1)
@@ -155,7 +150,7 @@ export class Canvas {
 
     // TODO: Implement FPS
     // public fps: number = 0;
-    
+
     /**
      * Creates an instance of Canvas.
      * @date 1/9/2024 - 11:39:34 AM
@@ -176,11 +171,8 @@ export class Canvas {
         });
     }
 
-
-
-    // ▄▀  ██▀ ▀█▀ ▀█▀ ██▀ █▀▄ ▄▀▀       ▄▀▀ ██▀ ▀█▀ ▀█▀ ██▀ █▀▄ ▄▀▀ 
-    // ▀▄█ █▄▄  █   █  █▄▄ █▀▄ ▄█▀       ▄█▀ █▄▄  █   █  █▄▄ █▀▄ ▄█▀ 
-
+    // ▄▀  ██▀ ▀█▀ ▀█▀ ██▀ █▀▄ ▄▀▀       ▄▀▀ ██▀ ▀█▀ ▀█▀ ██▀ █▀▄ ▄▀▀
+    // ▀▄█ █▄▄  █   █  █▄▄ █▀▄ ▄█▀       ▄█▀ █▄▄  █   █  █▄▄ █▀▄ ▄█▀
 
     /**
      * Width of the canvas
@@ -188,7 +180,7 @@ export class Canvas {
      *
      * @type {number}
      */
-    get width() {   
+    get width() {
         return this.ctx.canvas.width;
     }
 
@@ -221,7 +213,7 @@ export class Canvas {
     set height(height: number) {
         this.ctx.canvas.height = height;
     }
-    
+
     /**
      * Image data of the canvas
      * @date 1/9/2024 - 11:39:34 AM
@@ -233,7 +225,7 @@ export class Canvas {
     }
 
     /**
-     * Sets the image data of the canvas 
+     * Sets the image data of the canvas
      * This will clear the canvas, and stop animating
      * @date 1/9/2024 - 11:39:34 AM
      *
@@ -244,9 +236,6 @@ export class Canvas {
         this.clear();
         this.ctx.putImageData(imageData, 0, 0);
     }
-
-
-
 
     /**
      * Adds drawables to the canvas
@@ -295,7 +284,7 @@ export class Canvas {
      * Animates the canvas (calls draw() every frame)
      * To change the animation, change the elements array outside of this class
      * @date 1/9/2024 - 11:39:34 AM
-     * 
+     *
      * @param {(canvas: this) => void} [update] - The update function, called every frame (optional)
      */
     animate(update?: (canvas: this) => void): () => void {
@@ -310,7 +299,7 @@ export class Canvas {
             update?.(this);
             this.draw();
             requestAnimationFrame(loop);
-        }
+        };
         requestAnimationFrame(loop);
         return stop;
     }
@@ -337,10 +326,11 @@ export class Canvas {
         if (e instanceof MouseEvent) {
             return [[e.clientX - rect.left, e.clientY - rect.top]];
         } else {
-            return Array.from(e.touches).map((touch) => ([touch.clientX - rect.left, touch.clientY - rect.top]));
+            return Array.from(e.touches).map((
+                touch,
+            ) => [touch.clientX - rect.left, touch.clientY - rect.top]);
         }
     }
-
 
     /**
      * Adds an event listener

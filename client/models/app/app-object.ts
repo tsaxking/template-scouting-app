@@ -3,10 +3,8 @@
  * @description The point of this class is to provide a way to change the state of an object and keep track of the history of those changes. This is useful for undo/redo functionality, and for keeping track of the state of the robot over time.
  */
 
-
-
-import { Point2D } from "../../../shared/submodules/calculations/src/linear-algebra/point";
-import { Tick } from "./app";
+import { Point2D } from '../../../shared/submodules/calculations/src/linear-algebra/point';
+import { Tick } from './app';
 
 /**
  * State of an action at a given point in time
@@ -44,7 +42,11 @@ export class ActionState<T = any> {
      * @param {T} state
      * @param {?Point2D} [point]
      */
-    constructor(public readonly action: AppObject<T>, public state: T, public readonly point?: Point2D) {}
+    constructor(
+        public readonly action: AppObject<T>,
+        public state: T,
+        public readonly point?: Point2D,
+    ) {}
 
     /**
      * Set the tick that contains this action state
@@ -70,7 +72,6 @@ export class ActionState<T = any> {
     }
 }
 
-
 /**
  * Object that can be changed
  * @date 1/9/2024 - 3:04:36 AM
@@ -81,7 +82,6 @@ export class ActionState<T = any> {
  * @template [T=any]
  */
 export class AppObject<T = any> {
-
     /**
      * Current state of the object
      * @date 1/9/2024 - 3:04:36 AM
@@ -107,7 +107,7 @@ export class AppObject<T = any> {
      * @private
      * @type {?((state: T) => T)}
      */
-    private $toChange?: ((state: T) => T);
+    private $toChange?: (state: T) => T;
     /**
      * Listeners that are called when the state of the object changes
      * @date 1/9/2024 - 3:04:36 AM
@@ -126,7 +126,10 @@ export class AppObject<T = any> {
      * @param {string} name
      * @param {string} description
      */
-    constructor(public readonly name: string, public readonly description: string) {
+    constructor(
+        public readonly name: string,
+        public readonly description: string,
+    ) {
     }
 
     /**
@@ -139,7 +142,9 @@ export class AppObject<T = any> {
      */
     public toChange(cb: (state: T) => T) {
         if (this.$toChange) {
-            throw new Error(`toChange callback already set for action ${this.name}`);
+            throw new Error(
+                `toChange callback already set for action ${this.name}`,
+            );
         }
         this.$toChange = cb;
     }
@@ -177,7 +182,9 @@ export class AppObject<T = any> {
             this.stateHistory.pop();
             this.state = this.stateHistory[this.stateHistory.length - 1].state;
         } else {
-            console.warn(`Cannot undo action ${this.name} because there is only one state`);
+            console.warn(
+                `Cannot undo action ${this.name} because there is only one state`,
+            );
         }
 
         // first state shouldn't have a tick, but we can still remove it just in case
@@ -207,8 +214,7 @@ export class AppObject<T = any> {
     toString() {
         return String(this.state);
     }
-};
-
+}
 
 /**
  * Toggle between two states (true/false)
@@ -229,7 +235,11 @@ export class Toggle extends AppObject<boolean> {
      * @param {string} description
      * @param {boolean} [defaultState=false]
      */
-    constructor(name: string, description: string, defaultState: boolean = false) {
+    constructor(
+        name: string,
+        description: string,
+        defaultState: boolean = false,
+    ) {
         super(name, description);
         this.state = defaultState;
         this.toChange((state) => !state);
@@ -292,7 +302,11 @@ export class StateMachine<T> extends AppObject<T> {
      * @param {string} description
      * @param {{}} [states=[] as T[]]
      */
-    constructor(name: string, description: string, public readonly states = [] as T[]) {
+    constructor(
+        name: string,
+        description: string,
+        public readonly states = [] as T[],
+    ) {
         super(name, description);
         this.toChange((state) => {
             // move through states in a circular fashion
@@ -331,7 +345,11 @@ export class PingPong<T> extends AppObject<T> {
      * @param {string} description
      * @param {{}} [states=[] as T[]]
      */
-    constructor(name: string, description: string, public readonly states = [] as T[]) {
+    constructor(
+        name: string,
+        description: string,
+        public readonly states = [] as T[],
+    ) {
         super(name, description);
         this.toChange((state) => {
             // move through states, then reverse direction

@@ -1,3 +1,3 @@
-import { Polygon } from "./polygon";
+import { Polygon } from './polygon';
 
-export class AreaPolygon extends Polygon {};
+export class AreaPolygon extends Polygon {}
