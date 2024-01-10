@@ -7,7 +7,10 @@
  * @param {number} [sigFigs=4]
  * @returns {(x: number) => number}
  */
-export function derivative(fn: (x: number) => number, sigFigs: number = 4): (x: number) => number {
+export function derivative(
+    fn: (x: number) => number,
+    sigFigs: number = 4,
+): (x: number) => number {
     const accuracy = Math.pow(10, -sigFigs);
     return (x: number) => (fn(x + accuracy) - fn(x)) / accuracy;
 }
@@ -21,7 +24,10 @@ export function derivative(fn: (x: number) => number, sigFigs: number = 4): (x: 
  * @param {number} [sigFigs=4]
  * @returns {(x: number) => number}
  */
-export function integral(fn: (x: number) => number, sigFigs: number = 4): (x: number) => number {
+export function integral(
+    fn: (x: number) => number,
+    sigFigs: number = 4,
+): (x: number) => number {
     const accuracy = Math.pow(10, -sigFigs);
     return (x: number) => {
         let sum = 0;
@@ -29,5 +35,5 @@ export function integral(fn: (x: number) => number, sigFigs: number = 4): (x: nu
             sum += fn(i) * accuracy;
         }
         return sum;
-    }
+    };
 }

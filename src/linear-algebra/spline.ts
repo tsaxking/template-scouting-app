@@ -33,7 +33,7 @@ export class Spline {
     /**
      * Returns the point on the spline at t
      * @param t (between 0 and 1)
-     * @returns 
+     * @returns
      */
     ft(t: number): Point {
         let points: Point[] = this.points.slice();

@@ -4,7 +4,9 @@
  */
 export const standardDeviation = (data: number[]): number => {
     const mean = data.reduce((a, b) => a + b, 0) / data.length;
-    const variance = data.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b, 0) / data.length;
+    const variance =
+        data.map((x) => Math.pow(x - mean, 2)).reduce((a, b) => a + b, 0) /
+        data.length;
     return Math.sqrt(variance);
 };
 
@@ -38,7 +40,7 @@ export const mode = (data: number[]): number => {
     const counts = data.reduce((counts, x) => {
         counts[x] = counts[x] ? counts[x] + 1 : 1;
         return counts;
-    }, {} as {[key: number]: number});
+    }, {} as { [key: number]: number });
 
     let max = 0;
     let mode = 0;
@@ -74,7 +76,7 @@ export const quartiles = (data: number[]): [number, number, number] => {
     return [
         median(lower),
         median(sorted),
-        median(upper)
+        median(upper),
     ];
 };
 
@@ -94,7 +96,7 @@ export const interquartileRange = (data: number[]): number => {
 export const outliers = (data: number[]): number[] => {
     const [lower, _, upper] = quartiles(data);
     const iqr = interquartileRange(data);
-    return data.filter(x => x < lower - 1.5 * iqr || x > upper + 1.5 * iqr);
+    return data.filter((x) => x < lower - 1.5 * iqr || x > upper + 1.5 * iqr);
 };
 
 /**
@@ -112,7 +114,7 @@ export const zScore = (data: number[], value: number): number => {
 export const zScores = (data: number[]): number[] => {
     const m = mean(data);
     const sd = standardDeviation(data);
-    return data.map(x => (x - m) / sd);
+    return data.map((x) => (x - m) / sd);
 };
 
 /**
@@ -125,8 +127,7 @@ export const correlation = (data1: number[], data2: number[]): number => {
 
     const sum = z1.map((z, i) => z * z2[i]).reduce((a, b) => a + b, 0);
     return sum / (z1.length - 1);
-}
-
+};
 
 /**
  * Returns the covariance of the given data (how closely the data is correlated)
@@ -135,9 +136,12 @@ export const correlation = (data1: number[], data2: number[]): number => {
 export const covariance = (data1: number[], data2: number[]): number => {
     const m1 = mean(data1);
     const m2 = mean(data2);
-    const sum = data1.map((x, i) => (x - m1) * (data2[i] - m2)).reduce((a, b) => a + b, 0);
+    const sum = data1.map((x, i) => (x - m1) * (data2[i] - m2)).reduce(
+        (a, b) => a + b,
+        0,
+    );
     return sum / (data1.length - 1);
-}
+};
 
 /**
  * Returns the moving average of the given data (the average of the last n values)

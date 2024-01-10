@@ -16,20 +16,24 @@ export type DrawPointOptions = {
     fillStyle?: string;
 
     transform?: (point: Point) => Point;
-}
+};
 
 /**
  * Draws a point onto a canvas
  * @date 1/10/2024 - 2:43:32 PM
  */
-export const drawPoint = (ctx: CanvasRenderingContext2D, point: Point, options?: DrawPointOptions) => {
+export const drawPoint = (
+    ctx: CanvasRenderingContext2D,
+    point: Point,
+    options?: DrawPointOptions,
+) => {
     let p = new Point(...point.array);
 
     let width = 1;
     let height = 1;
     let round = false;
-    let strokeStyle = 'black';
-    let fillStyle = 'black';
+    let strokeStyle = "black";
+    let fillStyle = "black";
 
     ctx.save();
     if (options) {
@@ -50,19 +54,20 @@ export const drawPoint = (ctx: CanvasRenderingContext2D, point: Point, options?:
     if (round) {
         ctx.beginPath();
         ctx.arc(
-            p.x * ctx.canvas.height, 
-            p.y * ctx.canvas.height, 
-            width, 0, 
-            2 * Math.PI
+            p.x * ctx.canvas.height,
+            p.y * ctx.canvas.height,
+            width,
+            0,
+            2 * Math.PI,
         );
         ctx.fill();
         ctx.stroke();
     } else {
         ctx.fillRect(
-            p.x * ctx.canvas.height - width / 2, 
-            p.y * ctx.canvas.height - height / 2, 
-            width, 
-            height
+            p.x * ctx.canvas.height - width / 2,
+            p.y * ctx.canvas.height - height / 2,
+            width,
+            height,
         );
     }
     ctx.restore();
@@ -80,7 +85,6 @@ export const colorFromPos = (point: Point): [number, number, number] => {
 
     return [r, g, b];
 };
-
 
 /**
  * Options for drawing an edge onto a canvas
@@ -100,26 +104,28 @@ export type DrawEdgeOptions = {
  * Draws an edge onto a canvas
  * @date 1/10/2024 - 2:43:32 PM
  */
-export const drawEdge = (ctx: CanvasRenderingContext2D, [p1, p2]: [Point, Point], options: DrawEdgeOptions) => {
+export const drawEdge = (
+    ctx: CanvasRenderingContext2D,
+    [p1, p2]: [Point, Point],
+    options: DrawEdgeOptions,
+) => {
     let p1t = p1;
     let p2t = p2;
     let lineWidth: number = 1;
-    let strokeStyle: string | CanvasGradient = 'black';
+    let strokeStyle: string | CanvasGradient = "black";
 
     if (options) {
-
         if (options.transform) {
             p1t = options.transform(p1);
             p2t = options.transform(p2);
         }
 
-        
         if (options.gradient) {
             const g = ctx.createLinearGradient(
-                p1t.x * ctx.canvas.height, 
-                p1t.y * ctx.canvas.height, 
-                p2t.x * ctx.canvas.height, 
-                p2t.y * ctx.canvas.height
+                p1t.x * ctx.canvas.height,
+                p1t.y * ctx.canvas.height,
+                p2t.x * ctx.canvas.height,
+                p2t.y * ctx.canvas.height,
             );
 
             g.addColorStop(0, colorToString(colorFromPos(p1)));
@@ -137,8 +143,7 @@ export const drawEdge = (ctx: CanvasRenderingContext2D, [p1, p2]: [Point, Point]
     ctx.lineTo(p2t.x * ctx.canvas.height, p2t.y * ctx.canvas.height);
     ctx.stroke();
     ctx.restore();
-}
-
+};
 
 /**
  * Clears a canvas
@@ -146,13 +151,18 @@ export const drawEdge = (ctx: CanvasRenderingContext2D, [p1, p2]: [Point, Point]
  */
 export const clear = (ctx: CanvasRenderingContext2D) => {
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-}
+};
 
 /**
  * Draws a spline onto a canvas
  * @date 1/10/2024 - 2:43:32 PM
  */
-export const drawSpline = (ctx: CanvasRenderingContext2D, spline: Spline, steps: number, options?: (p: Point) => DrawPointOptions) => {
+export const drawSpline = (
+    ctx: CanvasRenderingContext2D,
+    spline: Spline,
+    steps: number,
+    options?: (p: Point) => DrawPointOptions,
+) => {
     for (let i = 0; i < steps; i++) {
         const t = i / steps;
         // console.log(t);
@@ -167,7 +177,7 @@ export const drawSpline = (ctx: CanvasRenderingContext2D, spline: Spline, steps:
  */
 export const colorToString = (color: [number, number, number]): string => {
     return `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
-}
+};
 
 /**
  * Converts degrees to radians
@@ -175,7 +185,7 @@ export const colorToString = (color: [number, number, number]): string => {
  */
 export const toRadians = (degrees: number): number => {
     return degrees * Math.PI / 180;
-}
+};
 
 /**
  * Converts radians to degrees
@@ -183,4 +193,4 @@ export const toRadians = (degrees: number): number => {
  */
 export const toDegrees = (radians: number): number => {
     return radians * 180 / Math.PI;
-}
+};

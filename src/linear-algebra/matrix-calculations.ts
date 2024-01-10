@@ -1,4 +1,4 @@
-import { Point, Point3D, Point2D } from "./point";
+import { Point, Point2D, Point3D } from "./point";
 import { Vector } from "./vector";
 import { Plane } from "./plane";
 
@@ -18,8 +18,8 @@ type Matrix = number[][];
 type SpatialMatrix = [
     Point3D,
     Point3D,
-    Point3D
-]
+    Point3D,
+];
 
 /**
  * Multiplies two matricies
@@ -33,9 +33,11 @@ type SpatialMatrix = [
 export function multiplyMatricies(a: Matrix, b: Matrix) {
     // ensure that the matricies are compatible
     if (a[0].length !== b.length) {
-        throw new Error('Matricies are not compatible, ' + 'A: ' + a.length + 'x' + a[0].length + ' B: ' + b.length + 'x' + b[0].length + '');
+        throw new Error(
+            "Matricies are not compatible, " + "A: " + a.length + "x" +
+                a[0].length + " B: " + b.length + "x" + b[0].length + "",
+        );
     }
-
 
     // create the new matrix
     const c: number[][] = [];
@@ -76,7 +78,6 @@ export function transform(point: Point3D, matrix: SpatialMatrix): Point3D {
     return [a, b, c];
 }
 
-
 /**
  * Translates a point by a vector
  * @date 1/10/2024 - 2:37:22 PM
@@ -107,7 +108,6 @@ export function scale(point: Point3D, vector: Point3D): Point3D {
     return [x * dx, y * dy, z * dz];
 }
 
-
 /**
  * Rotates a 2d point by a vector
  * @date 1/10/2024 - 2:38:06 PM
@@ -121,7 +121,7 @@ export function rotate2D(point: Point2D, angle: number): Point2D {
     const [x, y] = point;
     return [
         x * Math.cos(angle) - y * Math.sin(angle),
-        x * Math.sin(angle) + y * Math.cos(angle)
+        x * Math.sin(angle) + y * Math.cos(angle),
     ];
 }
 
@@ -135,7 +135,11 @@ export function rotate2D(point: Point2D, angle: number): Point2D {
  * @param {Point3D} angle
  * @returns {Point3D}
  */
-export function rotate3D(point: Point3D, about: Point3D, angle: Point3D): Point3D {
+export function rotate3D(
+    point: Point3D,
+    about: Point3D,
+    angle: Point3D,
+): Point3D {
     let [x, y, z] = point;
     const [ax, ay, az] = about;
     const [rx, ry, rz] = angle;
@@ -161,7 +165,12 @@ export function rotate3D(point: Point3D, about: Point3D, angle: Point3D): Point3
  * @param {number} viewAngle
  * @returns {(Point2D | undefined)}
  */
-export function perspective(point: Point3D, cameraDistance: number, viewPlane: Vector, viewAngle: number): Point2D | undefined {
+export function perspective(
+    point: Point3D,
+    cameraDistance: number,
+    viewPlane: Vector,
+    viewAngle: number,
+): Point2D | undefined {
     const cameraPoint = new Point(0, 0, -1 * cameraDistance);
     const cameraVector = new Vector(cameraPoint, new Point(...point));
 

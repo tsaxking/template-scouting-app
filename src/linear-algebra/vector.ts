@@ -29,7 +29,6 @@ export class Vector {
      */
     constructor(public point: Point, public rate: Point) {}
 
-
     /**
      * Returns the magnitude of the vector
      * @date 1/10/2024 - 2:42:00 PM
@@ -43,29 +42,28 @@ export class Vector {
 
     /**
      * Returns a function of t that returns the position of the vector at time t
-     * @param param 
-     * @returns 
+     * @param param
+     * @returns
      */
-    ft(param: 'x' | 'y' | 'z'): (t: number) => number {
+    ft(param: "x" | "y" | "z"): (t: number) => number {
         return (t: number) => this.point[param] + this.rate[param] * t;
-    }/**
+    } /**
      * Description placeholder
      * @date 1/10/2024 - 2:42:00 PM
      */
-    ;
 
     /**
      * Magnitude of the vector projection of this vector onto v
      * @param v
-     * @returns 
+     * @returns
      */
     dot(v: Vector) {
-        return this.rate.x * v.rate.x + this.rate.y * v.rate.y + this.rate.z * v.rate.z;
-    }/**
+        return this.rate.x * v.rate.x + this.rate.y * v.rate.y +
+            this.rate.z * v.rate.z;
+    } /**
      * Description placeholder
      * @date 1/10/2024 - 2:42:00 PM
      */
-    ;
 
     /**
      * Returns the angle between the two vectors in radians
@@ -78,7 +76,7 @@ export class Vector {
      * Area/Volume of the parallelogram formed by the two vectors
      * Vector is perpendicular to the plane formed by the two vectors
      * The return vector starts at the origin
-     * @param v 
+     * @param v
      */
     cross(v: Vector): Vector {
         return new Vector(
@@ -86,37 +84,34 @@ export class Vector {
             new Point(
                 this.rate.y * v.rate.z - this.rate.z * v.rate.y,
                 this.rate.z * v.rate.x - this.rate.x * v.rate.z,
-                this.rate.x * v.rate.y - this.rate.y * v.rate.x
-            )
+                this.rate.x * v.rate.y - this.rate.y * v.rate.x,
+            ),
         );
     }
 
     /**
      * Moves the vector to the given point (mutates "this" vector) and returns it
-     * @param point 
-     * @returns 
+     * @param point
+     * @returns
      */
     move(point: Point): this {
         this.point = point;
         return this;
     }
 
-
     /**
      * Returns the determinant of the two vectors (area/volume of the parallelogram formed by the two vectors)
-     * @param v 
-     * @returns 
+     * @param v
+     * @returns
      */
     determinant(v: Vector): number {
         return this.cross(v).magnitude;
     }
 
-
-
     /**
      * Scales the vector by the given magnitude (mutates "this" vector) and returns it
-     * @param magnitude 
-     * @returns 
+     * @param magnitude
+     * @returns
      */
     scale(magnitude: number): this {
         this.rate = this.rate.scale(magnitude);
@@ -125,8 +120,8 @@ export class Vector {
 
     /**
      * Adds the given vector to "this" vector (mutates "this" vector) and returns it
-     * @param v 
-     * @returns 
+     * @param v
+     * @returns
      */
     add(v: Vector): this {
         this.rate = this.rate.add(v.rate);

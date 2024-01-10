@@ -15,7 +15,6 @@ export type Point2D = [number, number];
  */
 export type Point3D = [number, number, number];
 
-
 /**
  * A class representing a point in 2d or 3d space
  * @date 1/10/2024 - 2:39:28 PM
@@ -66,7 +65,11 @@ export class Point {
      * @returns {Point}
      */
     add(vector: Point): Point {
-        return new Point(this.x + vector.x, this.y + vector.y, this.z + vector.z);
+        return new Point(
+            this.x + vector.x,
+            this.y + vector.y,
+            this.z + vector.z,
+        );
     }
 
     /**
@@ -88,7 +91,10 @@ export class Point {
      * @returns {number}
      */
     distance(point: Point): number {
-        return Math.sqrt(Math.pow(this.x - point.x, 2) + Math.pow(this.y - point.y, 2) + Math.pow(this.z - point.z, 2));
+        return Math.sqrt(
+            Math.pow(this.x - point.x, 2) + Math.pow(this.y - point.y, 2) +
+                Math.pow(this.z - point.z, 2),
+        );
     }
 
     /**
@@ -104,7 +110,7 @@ export class Point {
         return new Point(
             this.x + (point.x - this.x) * ratio,
             this.y + (point.y - this.y) * ratio,
-            this.z + (point.z - this.z) * ratio
+            this.z + (point.z - this.z) * ratio,
         );
     }
 }
