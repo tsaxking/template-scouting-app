@@ -144,7 +144,7 @@ export class ButtonCircle {
     addButton(
         name: string,
         description: string,
-        defaultState: number = 0,
+        defaultState = 0,
         condition: () => boolean = () => true,
     ) {
         if (this.buttons.length > 8) {

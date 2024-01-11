@@ -156,7 +156,7 @@ export class Canvas {
      * @private
      * @type {boolean}
      */
-    private animating: boolean = false;
+    private animating = false;
 
     // TODO: Implement FPS
     // public fps: number = 0;
