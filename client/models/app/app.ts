@@ -500,7 +500,6 @@ export class App {
      */
     public launch(cb?: (tick: Tick) => void) {
         this.build();
-        this.setView(); // ensure the view is correct
         this.startTime = Date.now();
         this.currentTime = this.startTime;
         let active = true;
@@ -513,7 +512,6 @@ export class App {
         // adaptive loop to be as close to 250ms as possible
         const run = async (t: Tick | undefined) => {
             console.log('start');
-            this.setView(); // ensure the view is correct
             const start = Date.now();
 
             const { section } = this;
@@ -734,11 +732,11 @@ export class App {
     }
 
     /**
-     * Build the app
+     * Resets every state in the app
      * @date 1/9/2024 - 3:08:19 AM
      *
      * @public
-     * @returns {*}
+     * @returns {Function} Stops the app
      */
     public build(): undefined | (() => void)  {
         if (this.built) {
@@ -746,17 +744,38 @@ export class App {
             return;
         }
 
+        let quitView = false;
+
+        const view = () => {
+            if (quitView) return;
+            this.setView();
+            requestAnimationFrame(view);
+        }
+
+        requestAnimationFrame(view);
+
+
+        this.currentLocation = undefined;
+        this.currentTime = 0;
+        this.currentTick = undefined;
         this.built = true;
         this.ticks = new Array(150 * App.ticksPerSecond).fill(
             null,
         ).map((_, i) => new Tick(i * App.tickDuration, i, this));
         this.target.appendChild(this.canvasEl);
         this.setListeners();
-        const stop = this.canvas.animate();
-        return () => {
+        const stopAnimation = this.canvas.animate();
+
+        const stop = () => {
             this.built = false;
-            stop();
+            stopAnimation();
+            quitView = true;
+            this.emit('stop');
         }
+
+        this.on('stop', stopAnimation);
+
+        return stop;
     }
 
     /**
