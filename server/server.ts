@@ -172,21 +172,6 @@ app.post('/*', (req, res, next) => {
 //     // }
 // }));
 
-const homePages = getJSONSync<string[]>('pages/home');
-
-app.get('/', (req, res, next) => {
-    res.redirect('/home');
-});
-
-app.get('/*', async (req, res, next) => {
-    if (homePages?.includes(req.url.slice(1))) {
-        return res.send(
-            await homeBuilder(req.url),
-        );
-    }
-    next();
-});
-
 app.get('/test/:page', (req, res, next) => {
     if (env.ENVIRONMENT !== 'dev') return next();
     const s = res.sendTemplate('entries/test/' + req.params.page);
@@ -198,26 +183,34 @@ app.get('/test/:page', (req, res, next) => {
 app.route('/api', api);
 app.route('/account', account);
 
-app.use('/*', Account.autoSignIn(env.AUTO_SIGN_IN));
+// app.use('/*', Account.autoSignIn(env.AUTO_SIGN_IN));
 
-app.get('/*', (req, res, next) => {
-    if (!req.session?.accountId) {
-        req.session!.prevUrl = req.url;
-        return res.redirect('/account/sign-in');
-    }
+// app.get('/*', (req, res, next) => {
+//     if (!req.session?.accountId) {
+//         req.session!.prevUrl = req.url;
+//         return res.redirect('/account/sign-in');
+//     }
 
-    next();
-});
+//     next();
+// });
 
 app.route('/admin', admin);
 
-app.get('/user/*', Account.isSignedIn, (req, res, next) => {
-    res.sendTemplate('entries/user');
+app.get('/', (req, res, next) => {
+    res.redirect('/app');
 });
 
-app.get('/admin/*', Role.allowRoles('admin'), (req, res, next) => {
-    res.sendTemplate('entries/admin');
+app.get('/app', (req, res) => {
+    res.sendTemplate('entries/app');
 });
+
+// app.get('/user/*', Account.isSignedIn,  (req, res, next) => {
+//     res.sendTemplate('entries/user');
+// });
+
+// app.get('/admin/*', Role.allowRoles('admin'), (req, res, next) => {
+//     res.sendTemplate('entries/admin');
+// });
 
 app.final<{
     $$files?: any;
