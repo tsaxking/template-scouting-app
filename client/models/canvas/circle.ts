@@ -1,5 +1,5 @@
-import { Point2D } from "../../../shared/submodules/calculations/src/linear-algebra/point";
-import { ShapeProperties } from "./shape-properties";
+import { Point2D } from '../../../shared/submodules/calculations/src/linear-algebra/point';
+import { ShapeProperties } from './shape-properties';
 
 /**
  * A circle drawable
@@ -19,7 +19,11 @@ export class Circle {
      * @param {number} radius normalized radius of the circle to the height of the canvas
      * @param {?ShapeProperties} [properties]
      */
-    constructor(public center: Point2D, public radius: number, public properties?: ShapeProperties) {}
+    constructor(
+        public center: Point2D,
+        public radius: number,
+        public properties?: ShapeProperties,
+    ) {}
 
     /**
      * If the given point is inside the circle
@@ -30,7 +34,8 @@ export class Circle {
      */
     isIn(point: Point2D) {
         const [x, y] = point;
-        return Math.sqrt(Math.pow(x - this.x, 2) + Math.pow(y - this.y, 2)) < this.radius;
+        return Math.sqrt(Math.pow(x - this.x, 2) + Math.pow(y - this.y, 2)) <
+            this.radius;
     }
 
     /**
@@ -42,15 +47,21 @@ export class Circle {
     draw(context: CanvasRenderingContext2D) {
         context.save();
         context.beginPath();
-        if (this.properties?.line?.color) context.strokeStyle = this.properties.line.color;
-        if (this.properties?.line?.width) context.lineWidth = this.properties.line.width;
-        if (this.properties?.fill?.color) context.fillStyle = this.properties.fill.color;
+        if (this.properties?.line?.color) {
+            context.strokeStyle = this.properties.line.color;
+        }
+        if (this.properties?.line?.width) {
+            context.lineWidth = this.properties.line.width;
+        }
+        if (this.properties?.fill?.color) {
+            context.fillStyle = this.properties.fill.color;
+        }
         context.arc(
-            this.x * context.canvas.width, 
-            this.y * context.canvas.height, 
-            this.radius * context.canvas.height, 
-            0, 
-            2 * Math.PI
+            this.x * context.canvas.width,
+            this.y * context.canvas.height,
+            this.radius * context.canvas.height,
+            0,
+            2 * Math.PI,
         );
         if (this.properties?.fill) context.fill();
         context.stroke();
@@ -92,4 +103,4 @@ export class Circle {
     set y(y: number) {
         this.center[1] = y;
     }
-};
+}

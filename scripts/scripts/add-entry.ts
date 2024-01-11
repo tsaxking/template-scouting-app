@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { __root } from "../server/utilities/env.ts";
+import { __root } from '../server/utilities/env.ts';
 
 export const runEntryPrompt = () => {
     const input = prompt('File name (relative to client/entries):');
@@ -8,7 +8,7 @@ export const runEntryPrompt = () => {
         console.error('No file name provided');
         Deno.exit(1);
     }
-    
+
     addEntry(input);
 };
 
@@ -17,12 +17,12 @@ export const addEntry = (name: string) => {
     const dir = path.dirname(filepath);
 
     // try {
-        Deno.mkdirSync(dir, { recursive: true });
+    Deno.mkdirSync(dir, { recursive: true });
     // } catch {}
 
     const importsRelative = path.relative(
         dir,
-        path.resolve(__root, 'client', 'utilities', 'imports')
+        path.resolve(__root, 'client', 'utilities', 'imports'),
     );
 
     const imports = `import '${importsRelative}';`;
