@@ -1,30 +1,26 @@
 import { init } from '../storage/db/scripts/init.ts';
 import { repeatPrompt } from './prompt.ts';
-import { toSnakeCase, fromCamelCase } from '../shared/text.ts';
-import { error, log } from '../server/utilities/terminal-logging.ts';
+import { toSnakeCase } from '../shared/text.ts';
+import { log } from '../server/utilities/terminal-logging.ts';
+import { env as ENV } from 'node:process';
+import path from 'node:path';
 import fs from 'node:fs';
-import env, { __root, resolve } from '../server/utilities/env.ts';
+import { __root } from '../server/utilities/env.ts';
 
 const runPrompt = (
     message: string,
     defaultValue?: string,
     validation?: (data: string) => boolean,
-    allowBlank?: boolean,
 ): string => {
     if (Deno.args.includes('--default')) return defaultValue || '';
-    if (validation) {
-        const r = repeatPrompt(message, undefined, validation, allowBlank);
-        if (r) return r;
-        else return defaultValue || '';
-    }
-    const r = prompt(message + ':') || defaultValue || '';
-    return r;
+    if (validation) return repeatPrompt(message, undefined, validation);
+    return prompt(message + ':') || defaultValue || '';
 };
 
 const createEnv = () => {
     if (
         Deno.args.includes('--no-env') ||
-        fs.existsSync(resolve(__root, './.env'))
+        fs.existsSync(path.resolve(__root, './.env'))
     ) {
         log('Skipping .env file creation...');
         return {
@@ -42,76 +38,54 @@ const createEnv = () => {
         'Port: (default: 3000)',
         '3000',
         (i) => +i > 0 && +i < 65535,
-        true,
     );
     values.sessionPort = +values.port + 1;
     values.environment = runPrompt(
         'Environment: (default: dev)',
         'dev',
         (i) => ['dev', 'prod'].includes(i),
-        true,
     );
     values.domain = runPrompt(
         'Domain: (default: localhost)',
         'http://localhost:' + values.port,
-        (i) => i.length > 0,
-        true,
     );
     values.socketDomain = runPrompt(
         'Socket Domain: (default: localhost)',
         'http://localhost:' + values.sessionPort,
-        (i) => i.length > 0,
-        true,
     );
     values.title = runPrompt(
         'Title: (default: My App)',
         'My App',
         (i) => i.length > 0,
-        true,
     );
-    values.sendgridApiKey = runPrompt(
-        'Sendgrid API Key: (no default)',
-        '',
-        undefined,
-        true,
-    );
+    values.sendgridApiKey = runPrompt('Sendgrid API Key: (no default)', '');
     values.sendgridDefaultFrom = runPrompt(
         'Sendgrid Default From: (no default)',
         '',
-        undefined,
-        true,
     );
     values.sendStatusEmails = runPrompt(
             'Send Status Emails: (default: false) (y/n)',
             'false',
             (i) => ['y', 'n'].includes(i),
-            true,
         ) === 'y'
         ? 'TRUE'
         : 'FALSE';
-    values.autoSignIn = runPrompt(
-        'Auto Sign In: (no default)',
-        '',
-        undefined,
-        true,
-    );
-    values.tbaKey = runPrompt('TBA Key: (no default)', '', undefined, true);
+    values.autoSignIn = runPrompt('Auto Sign In: (no default)', '');
+    values.tbaKey = runPrompt('TBA Key: (no default)', '');
     values.databaseLink = runPrompt(
         'Database Link: (default: main)',
         'main',
         (i) => i.length > 0,
-        true,
     );
 
-    const e = Object.keys(values).map((key) =>
-        `${toSnakeCase(fromCamelCase(key)).toUpperCase()} = '${values[key]}'`
+    Object.assign(ENV, values);
+
+    const env = Object.keys(values).map((key) =>
+        `${toSnakeCase(key).toUpperCase()} = '${values[key]}'`
     ).join('\n');
     Deno.writeTextFileSync(
-        resolve(
-            __root,
-            './.env',
-        ),
-        e,
+        path.resolve(__root, './.env'),
+        env,
     );
 
     return values;
