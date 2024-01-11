@@ -1,3 +1,13 @@
+// type Events =
+//     'click' |
+//     'mousedown' |
+//     'mouseup' |
+//     'mousemove' |
+//     'mouseleave' |
+//     'touchstart' |
+//     'touchend' |
+//     'touchmove' |
+//     'touchcancel';
 import { EventEmitter } from '../../../shared/event-emitter';
 import { Point2D } from '../../../shared/submodules/calculations/src/linear-algebra/point';
 
@@ -151,13 +161,6 @@ export class Canvas {
     // TODO: Implement FPS
     // public fps: number = 0;
 
-    /**
-     * Creates an instance of Canvas.
-     * @date 1/9/2024 - 11:39:34 AM
-     *
-     * @constructor
-     * @param {CanvasRenderingContext2D} ctx
-     */
     constructor(public readonly ctx: CanvasRenderingContext2D) {
         ctx.canvas.addEventListener('click', (e) => {
             this.$emitter.emit('click', e);
@@ -171,15 +174,6 @@ export class Canvas {
         });
     }
 
-    // ▄▀  ██▀ ▀█▀ ▀█▀ ██▀ █▀▄ ▄▀▀       ▄▀▀ ██▀ ▀█▀ ▀█▀ ██▀ █▀▄ ▄▀▀
-    // ▀▄█ █▄▄  █   █  █▄▄ █▀▄ ▄█▀       ▄█▀ █▄▄  █   █  █▄▄ █▀▄ ▄█▀
-
-    /**
-     * Width of the canvas
-     * @date 1/9/2024 - 11:39:34 AM
-     *
-     * @type {number}
-     */
     get width() {
         return this.ctx.canvas.width;
     }
