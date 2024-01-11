@@ -10,6 +10,7 @@
 //     'touchcancel';
 import { EventEmitter } from '../../../shared/event-emitter';
 import { Point2D } from '../../../shared/submodules/calculations/src/linear-algebra/point';
+import { attempt } from '../../../shared/attempt';
 
 /**
  * Similar to mouse events, but with a point
@@ -269,7 +270,7 @@ export class Canvas {
     draw() {
         for (const element of this.drawables) {
             this.ctx.save();
-            element.draw(this.ctx);
+            attempt(() => element.draw(this.ctx));
             this.ctx.restore();
         }
     }
