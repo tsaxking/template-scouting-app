@@ -8,7 +8,6 @@ import { AppObject, Iterator } from './app-object';
 import { Circle } from '../canvas/circle';
 import { CanvasEvent } from '../canvas/canvas';
 
-
 /**
  * Order of colors for the buttons
  * @date 1/9/2024 - 3:34:30 AM
@@ -23,12 +22,11 @@ const colorOrder = [
     Color.fromName('blue'),
     Color.fromName('purple'),
     Color.fromName('pink'),
-    Color.fromName('brown')
+    Color.fromName('brown'),
 ];
 
-
-// ▄▀▀ ▄▀▄ █▄ █ ▄▀▀ ▀█▀ ▄▀▄ █▄ █ ▀█▀ ▄▀▀ 
-// ▀▄▄ ▀▄▀ █ ▀█ ▄█▀  █  █▀█ █ ▀█  █  ▄█▀ 
+// ▄▀▀ ▄▀▄ █▄ █ ▄▀▀ ▀█▀ ▄▀▄ █▄ █ ▀█▀ ▄▀▀
+// ▀▄▄ ▀▄▀ █ ▀█ ▄█▀  █  █▀█ █ ▀█  █  ▄█▀
 const diameter = 100;
 const radius = diameter / 2;
 const movingScale = 0.5; // size of the button when the robot is in motion
@@ -77,7 +75,6 @@ class Button {
         this.circle = new Circle([0, 0], radius);
     }
 }
-
 
 /**
  * All events for the button circle
@@ -144,8 +141,15 @@ export class ButtonCircle {
      * @param {() => boolean} [condition=() => true]
      * @returns {boolean) => void}
      */
-    addButton(name: string, description: string, defaultState: number = 0, condition: () => boolean = () => true) {
-        if (this.buttons.length > 8) throw new Error('Cannot add more than 8 buttons');
+    addButton(
+        name: string,
+        description: string,
+        defaultState: number = 0,
+        condition: () => boolean = () => true,
+    ) {
+        if (this.buttons.length > 8) {
+            throw new Error('Cannot add more than 8 buttons');
+        }
         const button = new Button(name, description, defaultState);
         this.buttons.push(button);
     }
@@ -160,18 +164,22 @@ export class ButtonCircle {
         const numButtons = this.buttons.length;
         const intervalAngle = toRadians(360 / numButtons); // interval between buttons
         const startAngle = toRadians(buttonOffset); // offset from 0
-        
+
         const location = this.app.currentLocation;
         if (!location) return;
         const [x, y] = location;
 
-
         for (let i = 0; i < numButtons; i++) {
             ctx.save();
             const angle = startAngle - i * intervalAngle; // go clockwise, hence the negative
-            const [dx, dy] = [Math.cos(angle) * radius, Math.sin(angle) * radius];
-            const [mx, my] = [Math.cos(angle) * radius * movingScale, Math.sin(angle) * radius * movingScale];
-
+            const [dx, dy] = [
+                Math.cos(angle) * radius,
+                Math.sin(angle) * radius,
+            ];
+            const [mx, my] = [
+                Math.cos(angle) * radius * movingScale,
+                Math.sin(angle) * radius * movingScale,
+            ];
         }
     }
 
@@ -183,7 +191,10 @@ export class ButtonCircle {
      * @param {K} event
      * @param {(e: ButtonEvents[K]) => void} cb
      */
-    on<K extends keyof ButtonEvents>(event: K, cb: (e: ButtonEvents[K]) => void): void {
+    on<K extends keyof ButtonEvents>(
+        event: K,
+        cb: (e: ButtonEvents[K]) => void,
+    ): void {
         this.$emitter.on(event, cb);
     }
 
@@ -195,7 +206,10 @@ export class ButtonCircle {
      * @param {K} event
      * @param {(e: ButtonEvents[K]) => void} cb
      */
-    off<K extends keyof ButtonEvents>(event: K, cb: (e: ButtonEvents[K]) => void): void {
+    off<K extends keyof ButtonEvents>(
+        event: K,
+        cb: (e: ButtonEvents[K]) => void,
+    ): void {
         this.$emitter.off(event, cb);
     }
 
@@ -210,4 +224,4 @@ export class ButtonCircle {
     emit<K extends keyof ButtonEvents>(event: K, data: ButtonEvents[K]): void {
         this.$emitter.emit(event, data);
     }
-};
+}
