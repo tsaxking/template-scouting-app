@@ -246,28 +246,44 @@ export class App {
      */
     constructor(public readonly target: HTMLDivElement) {
         target.style.position = 'relative';
-        this.canvas.ctx.canvas.width = target.clientWidth;
-        this.canvas.ctx.canvas.height = target.clientHeight;
-        this.canvas.add(this.buttonCircle, this.path);
+        target.classList.add('no-scroll');
+        target.style.height = '100vh';
+        target.style.width = '100vw';
+
+        this.canvas.ctx.canvas.style.position = 'absolute';
+
+        this.background = new Img('/public/pictures/field.png', {
+            x: 0,
+            y: 0,
+            width: 1,
+            height: 1
+        });
+
+        this.canvas.add(this.buttonCircle, this.path, this.background);
+
+        this.setView();
+    }
+
+
+    setView() {
+        const { target } =  this;
 
         if (target.clientWidth > target.clientHeight * 2) {
             const xOffset = (target.clientWidth - target.clientHeight * 2) / 2;
-            this.background = new Img('/assets/field.png', {
-                x: xOffset,
-                y: 0,
-                width: target.clientHeight * 2,
-                height: target.clientHeight,
-            });
+            this.canvas.ctx.canvas.width = target.clientHeight * 2;
+            this.canvas.ctx.canvas.height = target.clientHeight;
+            this.canvas.ctx.canvas.style.top = '0px';
+            this.canvas.ctx.canvas.style.left = `${xOffset}px`;
         } else {
             const yOffset = (target.clientHeight - target.clientWidth / 2) / 2;
-            this.background = new Img('/assets/field.png', {
-                x: 0,
-                y: yOffset,
-                width: target.clientWidth,
-                height: target.clientWidth / 2,
-            });
+            this.canvas.ctx.canvas.width = target.clientWidth;
+            this.canvas.ctx.canvas.height = target.clientWidth / 2;
+            this.canvas.ctx.canvas.style.top = `${yOffset}px`;
+            this.canvas.ctx.canvas.style.left = '0px';
         }
     }
+
+
 
     // █ █ ▄▀▄ █▀▄ █ ▄▀▄ ██▄ █   ██▀ ▄▀▀
     // ▀▄▀ █▀█ █▀▄ █ █▀█ █▄█ █▄▄ █▄▄ ▄█▀
@@ -472,9 +488,7 @@ export class App {
      * @readonly
      * @type {Tick[]}
      */
-    public readonly ticks: Tick[] = new Array(150 * App.ticksPerSecond).fill(
-        null,
-    ).map((_, i) => new Tick(i * App.tickDuration, i, this));
+    public ticks: Tick[];
 
     /**
      * Launch the app
@@ -486,6 +500,7 @@ export class App {
      */
     public launch(cb?: (tick: Tick) => void) {
         this.build();
+        this.setView(); // ensure the view is correct
         this.startTime = Date.now();
         this.currentTime = this.startTime;
         let active = true;
@@ -497,6 +512,8 @@ export class App {
 
         // adaptive loop to be as close to 250ms as possible
         const run = async (t: Tick | undefined) => {
+            console.log('start');
+            this.setView(); // ensure the view is correct
             const start = Date.now();
 
             const { section } = this;
@@ -525,7 +542,10 @@ export class App {
             setTimeout(() => run(t.next()), Math.max(0, delay));
         };
 
-        run(this.ticks[0]);
+        const start = () => run(this.ticks[0]);
+
+        this.target.addEventListener('mousedown', start);
+        this.target.addEventListener('touchstart', start);
     }
 
     /**
@@ -720,10 +740,23 @@ export class App {
      * @public
      * @returns {*}
      */
-    public build() {
-        if (this.built) return console.warn('App already built');
+    public build(): undefined | (() => void)  {
+        if (this.built) {
+            console.error('App already built');
+            return;
+        }
+
+        this.built = true;
+        this.ticks = new Array(150 * App.ticksPerSecond).fill(
+            null,
+        ).map((_, i) => new Tick(i * App.tickDuration, i, this));
         this.target.appendChild(this.canvasEl);
         this.setListeners();
+        const stop = this.canvas.animate();
+        return () => {
+            this.built = false;
+            stop();
+        }
     }
 
     /**

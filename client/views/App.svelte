@@ -2,4 +2,4 @@
     
 </script>
 
-<div id="container"></div>
+<div id="app"></div>

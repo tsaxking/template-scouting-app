@@ -35,6 +35,7 @@ export class Path {
     draw(context: CanvasRenderingContext2D) {
         context.save();
         context.beginPath();
+        if (!this.points[0]) return;
         context.moveTo(
             this.points[0][0] * context.canvas.width,
             this.points[0][1] * context.canvas.height,
