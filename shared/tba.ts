@@ -58,8 +58,8 @@ export type TBAMatch = {
     predicted_time: number,
     post_result_time: number,
     score_breakdown: {
-        red: {},
-        blue: {}
+        red: any,
+        blue: any
     },
     videos: {
         key: string,
@@ -89,8 +89,8 @@ export type TBAMatchSimple = {
     predicted_time: number,
     post_result_time: number,
     score_breakdown: {
-        red: {},
-        blue: {}
+        red: any,
+        blue: any
     },
     videos: {
         key: string,

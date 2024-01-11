@@ -15,7 +15,9 @@ export type Auto = {
  * @export
  * @typedef {Teleop}
  */
-export type Teleop = {};
+export type Teleop = {
+    rings: number
+};
 /**
  * Data structure for endgame
  * @date 1/9/2024 - 11:12:36 AM
@@ -23,7 +25,9 @@ export type Teleop = {};
  * @export
  * @typedef {Endgame}
  */
-export type Endgame = {};
+export type Endgame = {
+    climb: string;
+};
 
 /**
  * Data structure for game object
