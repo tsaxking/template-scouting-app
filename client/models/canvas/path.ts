@@ -2,6 +2,7 @@ import {
     Point,
     Point2D,
 } from '../../../shared/submodules/calculations/src/linear-algebra/point';
+import { Drawable } from './canvas';
 import { LineProperties } from './shape-properties';
 
 /**
@@ -12,7 +13,7 @@ import { LineProperties } from './shape-properties';
  * @class Path
  * @typedef {Path}
  */
-export class Path {
+export class Path implements Drawable {
     /**
      * Creates an instance of Path.
      * @date 1/9/2024 - 11:55:50 AM
@@ -30,26 +31,26 @@ export class Path {
      * Draw the path
      * @date 1/9/2024 - 11:55:50 AM
      *
-     * @param {CanvasRenderingContext2D} context
+     * @param {CanvasRenderingContext2D} ctx
      */
-    draw(context: CanvasRenderingContext2D) {
-        context.save();
-        context.beginPath();
+    draw(ctx: CanvasRenderingContext2D) {
+        ctx.save();
+        ctx.beginPath();
         if (!this.points[0]) return;
-        context.moveTo(
-            this.points[0][0] * context.canvas.width,
-            this.points[0][1] * context.canvas.height,
+        ctx.moveTo(
+            this.points[0][0] * ctx.canvas.width,
+            this.points[0][1] * ctx.canvas.height,
         );
-        if (this.properties?.color) context.strokeStyle = this.properties.color;
-        if (this.properties?.width) context.lineWidth = this.properties.width;
+        if (this.properties?.color) ctx.strokeStyle = this.properties.color;
+        if (this.properties?.width) ctx.lineWidth = this.properties.width;
         for (let i = 1; i < this.points.length; i++) {
-            context.lineTo(
-                this.points[i][0] * context.canvas.width,
-                this.points[i][1] * context.canvas.height,
+            ctx.lineTo(
+                this.points[i][0] * ctx.canvas.width,
+                this.points[i][1] * ctx.canvas.height,
             );
         }
-        context.stroke();
-        context.restore();
+        ctx.stroke();
+        ctx.restore();
     }
 
     /**

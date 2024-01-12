@@ -16,7 +16,7 @@ export type Auto = {
  * @typedef {Teleop}
  */
 export type Teleop = {
-    rings: number
+    rings: number;
 };
 /**
  * Data structure for endgame

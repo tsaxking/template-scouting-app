@@ -7,7 +7,7 @@ import { ActionState } from './app-object';
 import { Point2D } from '../../../shared/submodules/calculations/src/linear-algebra/point';
 import { EventEmitter } from '../../../shared/event-emitter';
 import { ButtonCircle } from './button-circle';
-import { Canvas } from '../canvas/canvas';
+import { Canvas, Drawable } from '../canvas/canvas';
 import { AppObject } from './app-object';
 import { Path } from '../canvas/path';
 import { Img } from '../canvas/image';
@@ -107,7 +107,7 @@ export class Tick {
      * @type {number}
      */
     public get second(): number {
-        return Math.round(this.index / 4);
+        return Math.round(this.index / 250);
     }
 
     /**
@@ -146,6 +146,14 @@ export class Tick {
         if (data instanceof ActionState) {
             data.tick = this;
         }
+    }
+
+    public clear() {
+        if (this.data instanceof ActionState) {
+            this.data.tick = null;
+        }
+
+        this.data = null;
     }
 
     /**
@@ -256,17 +264,16 @@ export class App {
             x: 0,
             y: 0,
             width: 1,
-            height: 1
+            height: 1,
         });
 
-        this.canvas.add(this.buttonCircle, this.path, this.background);
+        this.canvas.add(this.background, this.buttonCircle, this.path);
 
         this.setView();
     }
 
-
     setView() {
-        const { target } =  this;
+        const { target } = this;
 
         if (target.clientWidth > target.clientHeight * 2) {
             const xOffset = (target.clientWidth - target.clientHeight * 2) / 2;
@@ -274,16 +281,26 @@ export class App {
             this.canvas.ctx.canvas.height = target.clientHeight;
             this.canvas.ctx.canvas.style.top = '0px';
             this.canvas.ctx.canvas.style.left = `${xOffset}px`;
+
+            for (const o of this.gameObjects) {
+                const { element, x, y } = o;
+                element.style.left = `${x * this.canvas.width + xOffset}px`;
+                element.style.top = `${y * this.canvas.height}px`;
+            }
         } else {
             const yOffset = (target.clientHeight - target.clientWidth / 2) / 2;
             this.canvas.ctx.canvas.width = target.clientWidth;
             this.canvas.ctx.canvas.height = target.clientWidth / 2;
             this.canvas.ctx.canvas.style.top = `${yOffset}px`;
             this.canvas.ctx.canvas.style.left = '0px';
+
+            for (const o of this.gameObjects) {
+                const { element, x, y } = o;
+                element.style.left = `${x * this.canvas.width}px`;
+                element.style.top = `${y * this.canvas.height + yOffset}px`;
+            }
         }
     }
-
-
 
     // █ █ ▄▀▄ █▀▄ █ ▄▀▄ ██▄ █   ██▀ ▄▀▀
     // ▀▄▀ █▀█ █▀▄ █ █▀█ █▄█ █▄▄ █▄▄ ▄█▀
@@ -330,7 +347,10 @@ export class App {
      * @readonly
      * @type {Path}
      */
-    public readonly path: Path = new Path([]);
+    public readonly path: Path = new Path([], {
+        color: Color.fromName('black').toString('rgba'),
+        width: 1,
+    });
     /**
      * The circle of buttons surrounding the robot
      * @date 1/9/2024 - 3:08:20 AM
@@ -356,6 +376,7 @@ export class App {
         x: number;
         y: number;
         object: AppObject;
+        element: HTMLElement;
     }[] = [];
     /**
      * Whether the robot is drawing or not
@@ -374,7 +395,7 @@ export class App {
      * @public
      * @type {?BorderPolygon}
      */
-    public border?: BorderPolygon;
+    private $border?: BorderPolygon;
     /**
      * The areas of the field (Any area that is of significance)
      * @date 1/9/2024 - 3:23:58 AM
@@ -401,13 +422,6 @@ export class App {
             },
         });
 
-        const { draw } = b;
-        b.draw = (ctx) => {
-            if (this.currentLocation && b.isIn(this.currentLocation)) {
-                draw(ctx);
-            }
-        };
-
         this.canvas.add(b);
         this.border = b;
         return b;
@@ -421,20 +435,17 @@ export class App {
      * @param {Color} color
      * @returns {*}
      */
-    addArea(points: Point2D[], color: Color) {
+    addArea(
+        points: Point2D[],
+        color: Color,
+        condition: (shape: Polygon) => boolean,
+    ) {
         const p = new Polygon(points, {
             fill: {
                 color: color.toString('rgba'),
             },
+            drawCondition: condition as any, // TODO: fix the typing on draw polygon condition
         });
-
-        // only draw if the robot is in the area
-        const { draw } = p;
-        p.draw = (ctx) => {
-            if (this.currentLocation && p.isIn(this.currentLocation)) {
-                draw(ctx);
-            }
-        };
 
         this.canvas.add(p);
         this.areas.push(p);
@@ -511,7 +522,6 @@ export class App {
 
         // adaptive loop to be as close to 250ms as possible
         const run = async (t: Tick | undefined) => {
-            console.log('start');
             const start = Date.now();
 
             const { section } = this;
@@ -526,7 +536,11 @@ export class App {
             if (this.currentLocation) t.point = this.currentLocation;
 
             try {
+                const s = Date.now();
                 await cb?.(t);
+                if (Date.now() - s > 250) {
+                    console.warn('Callback took too long');
+                }
             } catch (error) {
                 this.$emitter.emit('error', error);
                 return this.stop();
@@ -537,10 +551,14 @@ export class App {
             const delay = App.tickDuration - duration;
 
             // there could be a major delay if the callback takes too long, so we need to account for that
-            setTimeout(() => run(t.next()), Math.max(0, delay));
+            setTimeout(() => run(t.next()), Math.max(0, App.tickDuration));
         };
 
-        const start = () => run(this.ticks[0]);
+        const start = () => {
+            run(this.ticks[0]);
+            this.target.removeEventListener('mousedown', start);
+            this.target.removeEventListener('touchstart', start);
+        };
 
         this.target.addEventListener('mousedown', start);
         this.target.addEventListener('touchstart', start);
@@ -566,6 +584,15 @@ export class App {
             }
         }
         return null;
+    }
+
+    public get border(): BorderPolygon | undefined {
+        return this.$border;
+    }
+
+    public set border(b: BorderPolygon) {
+        this.$border = b;
+        this.canvas.add(b);
     }
 
     // ms since start
@@ -683,24 +710,33 @@ export class App {
      * @returns {string) => void}
      */
     addGameObject<T = unknown>(
-        x: number,
-        y: number,
+        point: Point2D,
         object: AppObject<T>,
         button: HTMLElement,
         convert?: (state: T) => string,
     ) {
-        this.gameObjects.push({ x, y, object });
+        const [x, y] = point;
+        this.gameObjects.push({ x, y, object, element: button });
 
         button.innerText = object.name;
         button.style.position = 'absolute';
-        button.style.left = `${x}px`;
-        button.style.top = `${y}px`;
+        button.style.zIndex = '100';
         button.style.transform = 'translate(-50%, -50%)';
 
         this.target.appendChild(button);
 
-        object.listen((state) => {
-            this.currentTick?.set(state);
+        object.listen((state, event) => {
+            console.log('state change!', state, event);
+
+            switch (event) {
+                case 'new':
+                    this.currentTick?.set(state);
+                    break;
+                case 'undo':
+                    this.currentTick?.clear();
+                    break;
+            }
+
             button.innerText = `${object.name}: ${
                 convert ? convert(state.state) : state.state
             }`;
@@ -722,6 +758,10 @@ export class App {
             if (interval) clearTimeout(interval);
         };
 
+        button.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        });
+
         button.addEventListener('mousedown', start);
         button.addEventListener('touchstart', start);
         button.addEventListener('mouseup', end);
@@ -738,7 +778,7 @@ export class App {
      * @public
      * @returns {Function} Stops the app
      */
-    public build(): undefined | (() => void)  {
+    public build(): undefined | (() => void) {
         if (this.built) {
             console.error('App already built');
             return;
@@ -750,10 +790,9 @@ export class App {
             if (quitView) return;
             this.setView();
             requestAnimationFrame(view);
-        }
+        };
 
         requestAnimationFrame(view);
-
 
         this.currentLocation = undefined;
         this.currentTime = 0;
@@ -771,7 +810,7 @@ export class App {
             stopAnimation();
             quitView = true;
             this.emit('stop');
-        }
+        };
 
         this.on('stop', stopAnimation);
 
@@ -786,19 +825,25 @@ export class App {
      */
     public setListeners() {
         const push = (x: number, y: number) => {
+            if (!isDrawing) return;
             this.path.add([x, y]);
-            setInterval(() => {
-                this.path.points.shift();
-            }, 1000); // clear after 1 second
+            this.currentLocation = [x, y];
+            // setTimeout(() => {
+            //     this.path.points.shift();
+            // }, 1000); // clear after 1 second
         };
 
+        let isDrawing = false;
+
         const down = (x: number, y: number) => {
+            isDrawing = true;
             push(x, y);
         };
         const move = (x: number, y: number) => {
             push(x, y);
         };
         const up = (x: number, y: number) => {
+            isDrawing = false;
             push(x, y);
         };
 
@@ -828,13 +873,15 @@ export class App {
         });
 
         this.canvasEl.addEventListener('touchend', (e) => {
-            const [[x, y]] = this.canvas.getXY(e);
-            up(x, y);
+            isDrawing = false;
+            // const [[x, y]] = this.canvas.getXY(e);
+            // up(x, y);
         });
 
         this.canvasEl.addEventListener('touchcancel', (e) => {
-            const [[x, y]] = this.canvas.getXY(e);
-            up(x, y);
+            isDrawing = false;
+            // const [[x, y]] = this.canvas.getXY(e);
+            // up(x, y);
         });
     }
 

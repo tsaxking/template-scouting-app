@@ -1,6 +1,6 @@
 import { init } from '../storage/db/scripts/init.ts';
 import { repeatPrompt } from './prompt.ts';
-import { toSnakeCase, fromCamelCase } from '../shared/text.ts';
+import { fromCamelCase, toSnakeCase } from '../shared/text.ts';
 import { error, log } from '../server/utilities/terminal-logging.ts';
 import fs from 'node:fs';
 import env, { __root, resolve } from '../server/utilities/env.ts';

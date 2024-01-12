@@ -11,6 +11,9 @@
 import { EventEmitter } from '../../../shared/event-emitter';
 import { Point2D } from '../../../shared/submodules/calculations/src/linear-algebra/point';
 import { attempt } from '../../../shared/attempt';
+import { ShapeProperties } from './shape-properties';
+import { CanvasImageProperties } from './image';
+import { sleep } from '../../../shared/sleep';
 
 /**
  * Similar to mouse events, but with a point
@@ -66,7 +69,7 @@ type Events = {
  * @interface Drawable
  * @typedef {Drawable}
  */
-export interface Drawable {
+export interface Drawable<T = unknown> {
     /**
      * The draw function
      * @date 1/9/2024 - 11:39:34 AM
@@ -120,6 +123,8 @@ export interface Drawable {
      * @param {(e: Events[K]) => void} cb
      */
     off?<K extends keyof Events>(event: K, cb: (e: Events[K]) => void): void;
+
+    properties?: ShapeProperties<T>;
 }
 
 /**
@@ -160,7 +165,7 @@ export class Canvas {
     private animating = false;
 
     // TODO: Implement FPS
-    // public fps: number = 0;
+    public fps = 30;
 
     constructor(public readonly ctx: CanvasRenderingContext2D) {
         ctx.canvas.addEventListener('click', (e) => {
@@ -238,7 +243,7 @@ export class Canvas {
      *
      * @param {...Drawable[]} drawables
      */
-    add(...drawables: Drawable[]) {
+    add(...drawables: Drawable<any>[]) {
         this.drawables.push(...drawables);
     }
 
@@ -248,7 +253,7 @@ export class Canvas {
      *
      * @param {...Drawable[]} drawables
      */
-    remove(...drawables: Drawable[]) {
+    remove(...drawables: Drawable<any>[]) {
         for (const drawable of drawables) {
             const index = this.drawables.indexOf(drawable);
             if (index !== -1) this.drawables.splice(index, 1);
@@ -269,6 +274,10 @@ export class Canvas {
      */
     draw() {
         for (const element of this.drawables) {
+            if (element.properties?.drawCondition?.(element) === false) {
+                continue;
+            }
+
             this.ctx.save();
             attempt(() => element.draw(this.ctx));
             this.ctx.restore();
@@ -289,10 +298,9 @@ export class Canvas {
         this.animating = true;
         const loop = async () => {
             if (!this.animating) return;
-            // if (this.fps) await sleep(1000 / this.fps);
             this.clear();
-            update?.(this);
             this.draw();
+            // update?.(this);
             requestAnimationFrame(loop);
         };
         requestAnimationFrame(loop);
@@ -318,12 +326,17 @@ export class Canvas {
      */
     getXY(e: MouseEvent | TouchEvent): Point2D[] {
         const rect = this.ctx.canvas.getBoundingClientRect();
+
+        const makePoint = (x: number, y: number): [number, number] => {
+            return [(x - rect.left) / rect.width, (y - rect.top) / rect.height];
+        };
+
         if (e instanceof MouseEvent) {
-            return [[e.clientX - rect.left, e.clientY - rect.top]];
+            return [makePoint(e.clientX, e.clientY)];
         } else {
             return Array.from(e.touches).map((
                 touch,
-            ) => [touch.clientX - rect.left, touch.clientY - rect.top]);
+            ) => makePoint(touch.clientX, touch.clientY));
         }
     }
 

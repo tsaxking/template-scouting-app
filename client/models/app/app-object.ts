@@ -55,7 +55,7 @@ export class ActionState<T = any> {
      * @type {*}
      */
     set tick(tick: Tick | null) {
-        if (this.$tick) {
+        if (!!tick && this.$tick) {
             throw new Error(`Tick already set for action ${this.action.name}`);
         }
         this.$tick = tick;
@@ -116,7 +116,8 @@ export class AppObject<T = any> {
      * @readonly
      * @type {((state: ActionState<T>) => void)[]}
      */
-    private readonly $listeners: ((state: ActionState<T>) => void)[] = [];
+    private readonly $listeners:
+        ((state: ActionState<T>, event: 'new' | 'undo') => void)[] = [];
 
     /**
      * Creates an instance of AppObject.
@@ -163,7 +164,10 @@ export class AppObject<T = any> {
             this.stateHistory.push(new ActionState(this, this.state, point));
 
             for (const listener of this.$listeners) {
-                listener(this.stateHistory[this.stateHistory.length - 1]);
+                listener(
+                    this.stateHistory[this.stateHistory.length - 1],
+                    'new',
+                );
             }
         }
 
@@ -181,6 +185,13 @@ export class AppObject<T = any> {
         if (this.stateHistory.length > 1) {
             this.stateHistory.pop();
             this.state = this.stateHistory[this.stateHistory.length - 1].state;
+
+            for (const listener of this.$listeners) {
+                listener(
+                    this.stateHistory[this.stateHistory.length - 1],
+                    'undo',
+                );
+            }
         } else {
             console.warn(
                 `Cannot undo action ${this.name} because there is only one state`,
@@ -201,7 +212,7 @@ export class AppObject<T = any> {
      * @param {(state: ActionState<T>) => void} cb
      * @returns {void) => void}
      */
-    public listen(cb: (state: ActionState<T>) => void) {
+    public listen(cb: (state: ActionState<T>, event: 'new' | 'undo') => void) {
         this.$listeners.push(cb);
     }
 
@@ -241,8 +252,13 @@ export class Toggle extends AppObject<boolean> {
         defaultState: boolean = false,
     ) {
         super(name, description);
-        this.state = defaultState;
         this.toChange((state) => !state);
+
+        if (defaultState) {
+            // creates a new state history with the default state
+            this.state = !defaultState;
+            this.change();
+        }
     }
 
     /**
@@ -275,10 +291,15 @@ export class Iterator extends AppObject<number> {
      * @param {string} description
      * @param {number} [defaultState=0]
      */
-    constructor(name: string, description: string, defaultState: number = 0) {
+    constructor(name: string, description: string, defaultState?: number) {
         super(name, description);
-        this.state = defaultState;
         this.toChange((state) => state + 1);
+
+        if (defaultState !== undefined) {
+            // creates a new state history with the default state
+            this.state = defaultState - 1;
+            this.change();
+        }
     }
 }
 

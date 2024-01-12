@@ -7,7 +7,7 @@ import { Drawable } from './canvas';
  *
  * @typedef {CanvasImageProperties}
  */
-type CanvasImageProperties = {
+export type CanvasImageProperties = {
     x: number;
     y: number;
     width: number;
@@ -23,7 +23,7 @@ type CanvasImageProperties = {
  * @typedef {Img}
  * @implements {Drawable}
  */
-export class Img {
+export class Img implements Drawable {
     /**
      * Description placeholder
      * @date 1/9/2024 - 11:48:39 AM
@@ -41,11 +41,11 @@ export class Img {
      *
      * @constructor
      * @param {string} src
-     * @param {Partial<CanvasImageProperties>} properties
+     * @param {Partial<CanvasImageProperties>} imgProperties
      */
     constructor(
         public readonly src: string,
-        public readonly properties: Partial<CanvasImageProperties>,
+        public readonly imgProperties: Partial<CanvasImageProperties>,
     ) {
         this.img = new Image();
         this.img.src = src;
@@ -61,7 +61,7 @@ export class Img {
             const i = document.createElement('img');
             i.src = canvas.toDataURL();
             this.data = i;
-        }
+        };
     }
 
     /**
@@ -71,7 +71,7 @@ export class Img {
      * @type {number}
      */
     get x() {
-        return this.properties.x ?? 0;
+        return this.imgProperties.x ?? 0;
     }
 
     /**
@@ -81,7 +81,7 @@ export class Img {
      * @type {number}
      */
     set x(x: number) {
-        this.properties.x = x;
+        this.imgProperties.x = x;
     }
 
     /**
@@ -91,7 +91,7 @@ export class Img {
      * @type {number}
      */
     get y() {
-        return this.properties.y ?? 0;
+        return this.imgProperties.y ?? 0;
     }
 
     /**
@@ -101,7 +101,7 @@ export class Img {
      * @type {number}
      */
     set y(y: number) {
-        this.properties.y = y;
+        this.imgProperties.y = y;
     }
 
     /**
@@ -111,7 +111,7 @@ export class Img {
      * @type {number}
      */
     get width() {
-        return this.properties.width ?? this.img.width;
+        return this.imgProperties.width ?? this.img.width;
     }
 
     /**
@@ -121,7 +121,7 @@ export class Img {
      * @type {number}
      */
     set width(width: number) {
-        this.properties.width = width;
+        this.imgProperties.width = width;
     }
 
     /**
@@ -131,7 +131,7 @@ export class Img {
      * @type {number}
      */
     get height() {
-        return this.properties.height ?? this.img.height;
+        return this.imgProperties.height ?? this.img.height;
     }
 
     /**
@@ -141,7 +141,7 @@ export class Img {
      * @type {number}
      */
     set height(height: number) {
-        this.properties.height = height;
+        this.imgProperties.height = height;
     }
 
     /**
@@ -151,7 +151,7 @@ export class Img {
      * @param {CanvasRenderingContext2D} ctx
      */
     draw(ctx: CanvasRenderingContext2D) {
-        const { x, y, width, height } = this.properties;
+        const { x, y, width, height } = this.imgProperties;
         if (!this.data) return;
 
         ctx.drawImage(
@@ -159,7 +159,7 @@ export class Img {
             x || 0,
             y || 0,
             (width || 0) * ctx.canvas.width,
-            (height || 0) * ctx.canvas.height
+            (height || 0) * ctx.canvas.height,
         );
     }
 
