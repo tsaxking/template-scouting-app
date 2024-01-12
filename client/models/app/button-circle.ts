@@ -59,6 +59,7 @@ class Button {
      * @type {Circle}
      */
     public readonly circle: Circle;
+    public readonly color: Color;
 
     /**
      * Creates an instance of Button.
@@ -69,10 +70,21 @@ class Button {
      * @param {string} description
      * @param {number} [defaultState=0]
      */
-    constructor(name: string, description: string, defaultState: number = 0) {
+    constructor(
+        public readonly name: string,
+        public readonly description: string,
+        defaultState: number,
+        public readonly condition: (app: App) => boolean,
+        public readonly index: number,
+    ) {
         // TODO: add icons
         this.iterator = new Iterator(name, description, defaultState);
-        this.circle = new Circle([0, 0], radius);
+        this.color = colorOrder[index];
+        this.circle = new Circle([0, 0], radius, {
+            fill: {
+                color: this.color.toString('rgb'),
+            },
+        });
     }
 }
 
@@ -104,6 +116,8 @@ export class ButtonCircle {
      * @type {Button[]}
      */
     public readonly buttons: Button[] = [];
+    public visibleButtons: Button[] = [];
+
     /**
      * Event emitter for the button circle
      * @date 1/9/2024 - 3:34:30 AM
@@ -145,13 +159,21 @@ export class ButtonCircle {
         name: string,
         description: string,
         defaultState = 0,
-        condition: () => boolean = () => true,
+        condition: (app: App) => boolean = () => true,
     ) {
         if (this.buttons.length > 8) {
             throw new Error('Cannot add more than 8 buttons');
         }
-        const button = new Button(name, description, defaultState);
+        const index = this.buttons.length;
+        const button = new Button(
+            name,
+            description,
+            defaultState,
+            condition,
+            index,
+        );
         this.buttons.push(button);
+        return this;
     }
 
     /**
@@ -170,16 +192,33 @@ export class ButtonCircle {
         const [x, y] = location;
 
         for (let i = 0; i < numButtons; i++) {
+            const b = this.buttons[i];
+            if (!b.condition(this.app)) return;
             ctx.save();
             const angle = startAngle - i * intervalAngle; // go clockwise, hence the negative
             const [dx, dy] = [
                 Math.cos(angle) * radius,
                 Math.sin(angle) * radius,
             ];
+
+            b.circle.x = x + dx;
+            b.circle.y = y + dy;
+
             const [mx, my] = [
                 Math.cos(angle) * radius * movingScale,
                 Math.sin(angle) * radius * movingScale,
             ];
+
+            b.circle.x = x + mx;
+            b.circle.y = y + my;
+
+            b.circle.properties = {
+                fill: {
+                    color: b.color.setAlpha(fadeScale).toString('rgba'),
+                },
+            };
+
+            b.circle.draw(ctx);
         }
     }
 

@@ -1,4 +1,5 @@
 import { Point2D } from '../../../shared/submodules/calculations/src/linear-algebra/point';
+import { Drawable } from './canvas';
 import { ShapeProperties } from './shape-properties';
 
 /**
@@ -9,7 +10,7 @@ import { ShapeProperties } from './shape-properties';
  * @class Circle
  * @typedef {Circle}
  */
-export class Circle {
+export class Circle implements Drawable {
     /**
      * Creates an instance of Circle.
      * @date 1/9/2024 - 11:47:29 AM
