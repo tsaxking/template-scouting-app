@@ -1,208 +1,274 @@
-import { Gradient } from './gradient.ts';
+import { Gradient } from "./gradient.ts";
 
-export type ColorStr =
-    | 'aliceblue'
-    | 'antiquewhite'
-    | 'aqua'
-    | 'aquamarine'
-    | 'azure'
-    | 'beige'
-    | 'bisque'
-    | 'black'
-    | 'blanchedalmond'
-    | 'blue'
-    | 'blueviolet'
-    | 'brown'
-    | 'burlywood'
-    | 'cadetblue'
-    | 'chartreuse'
-    | 'chocolate'
-    | 'coral'
-    | 'cornflowerblue'
-    | 'cornsilk'
-    | 'crimson'
-    | 'cyan'
-    | 'darkblue'
-    | 'darkcyan'
-    | 'darkgoldenrod'
-    | 'darkgray'
-    | 'darkgreen'
-    | 'darkgrey'
-    | 'darkkhaki'
-    | 'darkmagenta'
-    | 'darkolivegreen'
-    | 'darkorange'
-    | 'darkorchid'
-    | 'darkred'
-    | 'darksalmon'
-    | 'darkseagreen'
-    | 'darkslateblue'
-    | 'darkslategray'
-    | 'darkslategrey'
-    | 'darkturquoise'
-    | 'darkviolet'
-    | 'deeppink'
-    | 'deepskyblue'
-    | 'dimgray'
-    | 'dimgrey'
-    | 'dodgerblue'
-    | 'firebrick'
-    | 'floralwhite'
-    | 'forestgreen'
-    | 'fuchsia'
-    | 'gainsboro'
-    | 'ghostwhite'
-    | 'gold'
-    | 'goldenrod'
-    | 'gray'
-    | 'green'
-    | 'greenyellow'
-    | 'grey'
-    | 'honeydew'
-    | 'hotpink'
-    | 'indianred'
-    | 'indigo'
-    | 'ivory'
-    | 'khaki'
-    | 'lavender'
-    | 'lavenderblush'
-    | 'lawngreen'
-    | 'lemonchiffon'
-    | 'lightblue'
-    | 'lightcoral'
-    | 'lightcyan'
-    | 'lightgoldenrodyellow'
-    | 'lightgray'
-    | 'lightgreen'
-    | 'lightgrey'
-    | 'lightpink'
-    | 'lightsalmon'
-    | 'lightseagreen'
-    | 'lightskyblue'
-    | 'lightslategray'
-    | 'lightslategrey'
-    | 'lightsteelblue'
-    | 'lightyellow'
-    | 'lime'
-    | 'limegreen'
-    | 'linen'
-    | 'magenta'
-    | 'maroon'
-    | 'mediumaquamarine'
-    | 'mediumblue'
-    | 'mediumorchid'
-    | 'mediumpurple'
-    | 'mediumseagreen'
-    | 'mediumslateblue'
-    | 'mediumspringgreen'
-    | 'mediumturquoise'
-    | 'mediumvioletred'
-    | 'midnightblue'
-    | 'mintcream'
-    | 'mistyrose'
-    | 'moccasin'
-    | 'navajowhite'
-    | 'navy'
-    | 'oldlace'
-    | 'olive'
-    | 'olivedrab'
-    | 'orange'
-    | 'orangered'
-    | 'orchid'
-    | 'palegoldenrod'
-    | 'palegreen'
-    | 'paleturquoise'
-    | 'palevioletred'
-    | 'papayawhip'
-    | 'peachpuff'
-    | 'peru'
-    | 'pink'
-    | 'plum'
-    | 'powderblue'
-    | 'purple'
-    | 'red'
-    | 'rosybrown'
-    | 'royalblue'
-    | 'saddlebrown'
-    | 'salmon'
-    | 'sandybrown'
-    | 'seagreen'
-    | 'seashell'
-    | 'sienna'
-    | 'silver'
-    | 'skyblue'
-    | 'slateblue'
-    | 'slategray'
-    | 'slategrey'
-    | 'snow'
-    | 'springgreen'
-    | 'steelblue'
-    | 'tan'
-    | 'teal'
-    | 'thistle'
-    | 'tomato'
-    | 'transparent'
-    | 'turquoise'
-    | 'violet'
-    | 'wheat'
-    | 'white'
-    | 'whitesmoke'
-    | 'yellow'
-    | 'yellowgreen'
-    | 'rebeccapurple';
 
-type BootstrapColor =
-    | 'primary'
-    | 'secondary'
-    | 'success'
-    | 'info'
-    | 'warning'
-    | 'danger'
-    | 'light'
-    | 'dark'
-    | 'indigo'
-    | 'indigo-light'
-    | 'indigo-dark'
-    | 'teal'
-    | 'teal-light'
-    | 'teal-dark'
-    | 'orange'
-    | 'orange-light'
-    | 'orange-dark'
-    | 'pink'
-    | 'pink-light'
-    | 'pink-dark'
-    | 'purple'
-    | 'purple-light'
-    | 'purple-dark'
-    | 'navy'
-    | 'navy-light'
-    | 'navy-dark'
-    | 'yellow'
-    | 'yellow-light'
-    | 'yellow-dark'
-    | 'lime'
-    | 'lime-light'
-    | 'lime-dark'
-    | 'gray'
-    | 'gray-light'
-    | 'gray-dark'
-    | 'brown'
-    | 'brown-light'
-    | 'brown-dark'
-    | 'grape'
-    | 'grape-light'
-    | 'grape-dark'
-    | 'vermillion'
-    | 'vermillion-light'
-    | 'vermillion-dark'
-    | 'steel'
-    | 'steel-light'
-    | 'steel-dark'
-    | 'green'
-    | 'green-light'
-    | 'green-dark';
 
+const colors = {
+    "aliceblue": [240, 248, 255, 1],
+    "antiquewhite": [250, 235, 215, 1],
+    "aqua": [0, 255, 255, 1],
+    "aquamarine": [127, 255, 212, 1],
+    "azure": [240, 255, 255, 1],
+    "beige": [245, 245, 220, 1],
+    "bisque": [255, 228, 196, 1],
+    "black": [0, 0, 0, 1],
+    "blanchedalmond": [255, 235, 205, 1],
+    "blue": [0, 0, 255, 1],
+    "blueviolet": [138, 43, 226, 1],
+    "brown": [165, 42, 42, 1],
+    "burlywood": [222, 184, 135, 1],
+    "cadetblue": [95, 158, 160, 1],
+    "chartreuse": [127, 255, 0, 1],
+    "chocolate": [210, 105, 30, 1],
+    "coral": [255, 127, 80, 1],
+    "cornflowerblue": [100, 149, 237, 1],
+    "cornsilk": [255, 248, 220, 1],
+    "crimson": [220, 20, 60, 1],
+    "cyan": [0, 255, 255, 1],
+    "darkblue": [0, 0, 139, 1],
+    "darkcyan": [0, 139, 139, 1],
+    "darkgoldenrod": [184, 134, 11, 1],
+    "darkgray": [169, 169, 169, 1],
+    "darkgreen": [0, 100, 0, 1],
+    "darkgrey": [169, 169, 169, 1],
+    "darkkhaki": [189, 183, 107, 1],
+    "darkmagenta": [139, 0, 139, 1],
+    "darkolivegreen": [85, 107, 47, 1],
+    "darkorange": [255, 140, 0, 1],
+    "darkorchid": [153, 50, 204, 1],
+    "darkred": [139, 0, 0, 1],
+    "darksalmon": [233, 150, 122, 1],
+    "darkseagreen": [143, 188, 143, 1],
+    "darkslateblue": [72, 61, 139, 1],
+    "darkslategray": [47, 79, 79, 1],
+    "darkslategrey": [47, 79, 79, 1],
+    "darkturquoise": [0, 206, 209, 1],
+    "darkviolet": [148, 0, 211, 1],
+    "deeppink": [255, 20, 147, 1],
+    "deepskyblue": [0, 191, 255, 1],
+    "dimgray": [105, 105, 105, 1],
+    "dimgrey": [105, 105, 105, 1],
+    "dodgerblue": [30, 144, 255, 1],
+    "firebrick": [178, 34, 34, 1],
+    "floralwhite": [255, 250, 240, 1],
+    "forestgreen": [34, 139, 34, 1],
+    "fuchsia": [255, 0, 255, 1],
+    "gainsboro": [220, 220, 220, 1],
+    "ghostwhite": [248, 248, 255, 1],
+    "gold": [255, 215, 0, 1],
+    "goldenrod": [218, 165, 32, 1],
+    "gray": [128, 128, 128, 1],
+    "green": [0, 128, 0, 1],
+    "greenyellow": [173, 255, 47, 1],
+    "grey": [128, 128, 128, 1],
+    "honeydew": [240, 255, 240, 1],
+    "hotpink": [255, 105, 180, 1],
+    "indianred": [205, 92, 92, 1],
+    "indigo": [75, 0, 130, 1],
+    "ivory": [255, 255, 240, 1],
+    "khaki": [240, 230, 140, 1],
+    "lavender": [230, 230, 250, 1],
+    "lavenderblush": [255, 240, 245, 1],
+    "lawngreen": [124, 252, 0, 1],
+    "lemonchiffon": [255, 250, 205, 1],
+    "lightblue": [173, 216, 230, 1],
+    "lightcoral": [240, 128, 128, 1],
+    "lightcyan": [224, 255, 255, 1],
+    "lightgoldenrodyellow": [250, 250, 210, 1],
+    "lightgray": [211, 211, 211, 1],
+    "lightgreen": [144, 238, 144, 1],
+    "lightgrey": [211, 211, 211, 1],
+    "lightpink": [255, 182, 193, 1],
+    "lightsalmon": [255, 160, 122, 1],
+    "lightseagreen": [32, 178, 170, 1],
+    "lightskyblue": [135, 206, 250, 1],
+    "lightslategray": [119, 136, 153, 1],
+    "lightslategrey": [119, 136, 153, 1],
+    "lightsteelblue": [176, 196, 222, 1],
+    "lightyellow": [255, 255, 224, 1],
+    "lime": [0, 255, 0, 1],
+    "limegreen": [50, 205, 50, 1],
+    "linen": [250, 240, 230, 1],
+    "magenta": [255, 0, 255, 1],
+    "maroon": [128, 0, 0, 1],
+    "mediumaquamarine": [102, 205, 170, 1],
+    "mediumblue": [0, 0, 205, 1],
+    "mediumorchid": [186, 85, 211, 1],
+    "mediumpurple": [147, 112, 219, 1],
+    "mediumseagreen": [60, 179, 113, 1],
+    "mediumslateblue": [123, 104, 238, 1],
+    "mediumspringgreen": [0, 250, 154, 1],
+    "mediumturquoise": [72, 209, 204, 1],
+    "mediumvioletred": [199, 21, 133, 1],
+    "midnightblue": [25, 25, 112, 1],
+    "mintcream": [245, 255, 250, 1],
+    "mistyrose": [255, 228, 225, 1],
+    "moccasin": [255, 228, 181, 1],
+    "navajowhite": [255, 222, 173, 1],
+    "navy": [0, 0, 128, 1],
+    "oldlace": [253, 245, 230, 1],
+    "olive": [128, 128, 0, 1],
+    "olivedrab": [107, 142, 35, 1],
+    "orange": [255, 165, 0, 1],
+    "orangered": [255, 69, 0, 1],
+    "orchid": [218, 112, 214, 1],
+    "palegoldenrod": [238, 232, 170, 1],
+    "palegreen": [152, 251, 152, 1],
+    "paleturquoise": [175, 238, 238, 1],
+    "palevioletred": [219, 112, 147, 1],
+    "papayawhip": [255, 239, 213, 1],
+    "peachpuff": [255, 218, 185, 1],
+    "peru": [205, 133, 63, 1],
+    "pink": [255, 192, 203, 1],
+    "plum": [221, 160, 221, 1],
+    "powderblue": [176, 224, 230, 1],
+    "purple": [128, 0, 128, 1],
+    "red": [255, 0, 0, 1],
+    "rosybrown": [188, 143, 143, 1],
+    "royalblue": [65, 105, 225, 1],
+    "saddlebrown": [139, 69, 19, 1],
+    "salmon": [250, 128, 114, 1],
+    "sandybrown": [244, 164, 96, 1],
+    "seagreen": [46, 139, 87, 1],
+    "seashell": [255, 245, 238, 1],
+    "sienna": [160, 82, 45, 1],
+    "silver": [192, 192, 192, 1],
+    "skyblue": [135, 206, 235, 1],
+    "slateblue": [106, 90, 205, 1],
+    "slategray": [112, 128, 144, 1],
+    "slategrey": [112, 128, 144, 1],
+    "snow": [255, 250, 250, 1],
+    "springgreen": [0, 255, 127, 1],
+    "steelblue": [70, 130, 180, 1],
+    "tan": [210, 180, 140, 1],
+    "teal": [0, 128, 128, 1],
+    "thistle": [216, 191, 216, 1],
+    "tomato": [255, 99, 71, 1],
+    "transparent": [0, 0, 0, 0],
+    "turquoise": [64, 224, 208, 1],
+    "violet": [238, 130, 238, 1],
+    "wheat": [245, 222, 179, 1],
+    "white": [255, 255, 255, 1],
+    "whitesmoke": [245, 245, 245, 1],
+    "yellow": [255, 255, 0, 1],
+    "yellowgreen": [154, 205, 50, 1],
+    "rebeccapurple": [102, 51, 153, 1]
+};
+
+
+export type ColorStr = keyof typeof colors;
+
+
+const BootstrapColors = {
+    "primary": [0, 123, 255, 1],
+    "secondary": [108, 117, 125, 1],
+    "success": [40, 167, 69, 1],
+    "info": [23, 162, 184, 1],
+    "warning": [255, 193, 7, 1],
+    "danger": [220, 53, 69, 1],
+    "light": [248, 249, 250, 1],
+    "dark": [52, 58, 64, 1],
+    // colors-extended.css
+    "indigo": [75, 0, 130, 1],
+    // "indigo": Color.fromHex('#4b0082').rgba.values,
+    "indigo-light": [202, 128, 255, 1],
+    // "indigo-light": Color.fromHex('#ca80ff').rgba.values,
+    "indigo-dark": [25, 0, 51, 1],
+    // "indigo-dark": Color.fromHex('#1e0033').rgba.values,
+
+    "teal": [0, 128, 128, 1],
+    // "teal": Color.fromHex('#1fc794').rgba.values,
+    "teal-light": [233, 252, 246, 1],
+    // "teal-light": Color.fromHex('#e9fcf6').rgba.values,
+    "teal-dark": [0, 51, 51, 1],
+    // "teal-dark": Color.fromHex('#158463').rgba.values,
+
+    "orange": [255, 165, 0, 1],
+    // "orange": Color.fromHex('#ff6600').rgba.values,
+    "orange-light": [255, 209, 179, 1],
+    // "orange-light": Color.fromHex('#ffd1b3').rgba.values,
+    "orange-dark": [204, 102, 0, 1],
+    // "orange-dark": Color.fromHex('#b34700').rgba.values,
+
+    "pink": [255, 0, 255, 1],
+    // "pink": Color.fromHex('#ff33cc').rgba.values,
+    "pink-light": [255, 204, 242, 1],
+    // "pink-light": Color.fromHex('#ffccf2').rgba.values,
+    "pink-dark": [204, 0, 153, 1],
+    // "pink-dark": Color.fromHex('#e600ac').rgba.values,
+
+    "purple": [128, 0, 128, 1],
+    // "maroon": Color.fromHex('#800000').rgba.values,
+    "purple-light": [255, 204, 255, 1],
+    // "maroon-light": Color.fromHex('#ff8080').rgba.values,
+    "purple-dark": [51, 0, 51, 1],
+    // "maroon-dark": Color.fromHex('#330000').rgba.values,
+
+    "navy": [0, 0, 128, 1],
+    // "navy": Color.fromHex('#000066').rgba.values,
+    "navy-light": [204, 204, 255, 1],
+    // "navy-light": Color.fromHex('#6666ff').rgba.values,
+    "navy-dark": [0, 0, 51, 1],
+    // "navy-dark": Color.fromHex('#00001a').rgba.values,
+
+    "yellow": [255, 255, 0, 1],
+    // "yellow": Color.fromHex('#ffff00').rgba.values,
+    "yellow-light": [255, 255, 179, 1],
+    // "yellow-light": Color.fromHex('#ffffb3').rgba.values,
+    "yellow-dark": [204, 204, 0, 1],
+    // "yellow-dark": Color.fromHex('#b3b300').rgba.values,
+
+    "lime": [0, 255, 0, 1],
+    // "lime": Color.fromHex('#00ff00').rgba.values,
+    "lime-light": [179, 255, 179, 1],
+    // "lime-light": Color.fromHex('#b3ffb3').rgba.values,
+    "lime-dark": [0, 153, 0, 1],
+    // "lime-dark": Color.fromHex('#00b300').rgba.values,
+
+    "gray": [128, 128, 128, 1],
+    // "gray": Color.fromHex('#808080').rgba.values,
+    "gray-light": [230, 230, 230, 1],
+    // "gray-light": Color.fromHex('#e6e6e6').rgba.values,
+    "gray-dark": [51, 51, 51, 1],
+    // "gray-dark": Color.fromHex('#595959').rgba.values,
+
+    "brown": [153, 51, 0, 1],
+    // "brown": Color.fromHex('#993300').rgba.values,
+    "brown-light": [255, 187, 153, 1],
+    // "brown-light": Color.fromHex('#ffbb99').rgba.values,
+    "brown-dark": [102, 0, 0, 1],
+    // "brown-dark": Color.fromHex('#4d1a00').rgba.values,
+
+    "grape": [153, 0, 153, 1],
+    // "grape": Color.fromHex('#b9135b').rgba.values,
+    "grape-light": [255, 204, 255, 1],
+    // "grape-light": Color.fromHex('#f5a3c6').rgba.values,
+    "grape-dark": [102, 0, 102, 1],
+    // "grape-dark": Color.fromHex('#730c39').rgba.values,
+
+    "vermillion": [227, 66, 52, 1],
+    // "vermillion": Color.fromHex('#e34234').rgba.values,
+    "vermillion-light": [255, 204, 204, 1],
+    // "vermillion-light": Color.fromHex('#f6c1bc').rgba.values,
+    "vermillion-dark": [179, 0, 0, 1],
+    // "vermillion-dark": Color.fromHex('#b42518').rgba.values,
+
+    "steel": [103, 103, 153, 1],
+    // "steel": Color.fromHex('#878f99').rgba.values,
+    "steel-light": [204, 204, 255, 1],
+    // "steel-light": Color.fromHex('#a2b9bc').rgba.values,
+    "steel-dark": [51, 51, 102, 1],
+    // "steel-dark": Color.fromHex('#6b5b95').rgba.values,
+
+    "green": [0, 128, 0, 1],
+    // "green": Color.fromHex('#006600').rgba.values,
+    "green-light": [179, 255, 179, 1],
+    // "green-light": Color.fromHex('#66ff66').rgba.values,
+    "green-dark": [0, 51, 0, 1],
+    // "green-dark": Color.fromHex('#003300').rgba.values
+}
+
+
+export type BootstrapColor = keyof typeof BootstrapColors;
 export type colorArray = [number, number, number, number];
 
 export type colors = {
@@ -388,156 +454,8 @@ export class Color {
     static get colors(): {
         [key in ColorStr]: colorArray;
     } {
-        return {
-            'aliceblue': [240, 248, 255, 1],
-            'antiquewhite': [250, 235, 215, 1],
-            'aqua': [0, 255, 255, 1],
-            'aquamarine': [127, 255, 212, 1],
-            'azure': [240, 255, 255, 1],
-            'beige': [245, 245, 220, 1],
-            'bisque': [255, 228, 196, 1],
-            'black': [0, 0, 0, 1],
-            'blanchedalmond': [255, 235, 205, 1],
-            'blue': [0, 0, 255, 1],
-            'blueviolet': [138, 43, 226, 1],
-            'brown': [165, 42, 42, 1],
-            'burlywood': [222, 184, 135, 1],
-            'cadetblue': [95, 158, 160, 1],
-            'chartreuse': [127, 255, 0, 1],
-            'chocolate': [210, 105, 30, 1],
-            'coral': [255, 127, 80, 1],
-            'cornflowerblue': [100, 149, 237, 1],
-            'cornsilk': [255, 248, 220, 1],
-            'crimson': [220, 20, 60, 1],
-            'cyan': [0, 255, 255, 1],
-            'darkblue': [0, 0, 139, 1],
-            'darkcyan': [0, 139, 139, 1],
-            'darkgoldenrod': [184, 134, 11, 1],
-            'darkgray': [169, 169, 169, 1],
-            'darkgreen': [0, 100, 0, 1],
-            'darkgrey': [169, 169, 169, 1],
-            'darkkhaki': [189, 183, 107, 1],
-            'darkmagenta': [139, 0, 139, 1],
-            'darkolivegreen': [85, 107, 47, 1],
-            'darkorange': [255, 140, 0, 1],
-            'darkorchid': [153, 50, 204, 1],
-            'darkred': [139, 0, 0, 1],
-            'darksalmon': [233, 150, 122, 1],
-            'darkseagreen': [143, 188, 143, 1],
-            'darkslateblue': [72, 61, 139, 1],
-            'darkslategray': [47, 79, 79, 1],
-            'darkslategrey': [47, 79, 79, 1],
-            'darkturquoise': [0, 206, 209, 1],
-            'darkviolet': [148, 0, 211, 1],
-            'deeppink': [255, 20, 147, 1],
-            'deepskyblue': [0, 191, 255, 1],
-            'dimgray': [105, 105, 105, 1],
-            'dimgrey': [105, 105, 105, 1],
-            'dodgerblue': [30, 144, 255, 1],
-            'firebrick': [178, 34, 34, 1],
-            'floralwhite': [255, 250, 240, 1],
-            'forestgreen': [34, 139, 34, 1],
-            'fuchsia': [255, 0, 255, 1],
-            'gainsboro': [220, 220, 220, 1],
-            'ghostwhite': [248, 248, 255, 1],
-            'gold': [255, 215, 0, 1],
-            'goldenrod': [218, 165, 32, 1],
-            'gray': [128, 128, 128, 1],
-            'green': [0, 128, 0, 1],
-            'greenyellow': [173, 255, 47, 1],
-            'grey': [128, 128, 128, 1],
-            'honeydew': [240, 255, 240, 1],
-            'hotpink': [255, 105, 180, 1],
-            'indianred': [205, 92, 92, 1],
-            'indigo': [75, 0, 130, 1],
-            'ivory': [255, 255, 240, 1],
-            'khaki': [240, 230, 140, 1],
-            'lavender': [230, 230, 250, 1],
-            'lavenderblush': [255, 240, 245, 1],
-            'lawngreen': [124, 252, 0, 1],
-            'lemonchiffon': [255, 250, 205, 1],
-            'lightblue': [173, 216, 230, 1],
-            'lightcoral': [240, 128, 128, 1],
-            'lightcyan': [224, 255, 255, 1],
-            'lightgoldenrodyellow': [250, 250, 210, 1],
-            'lightgray': [211, 211, 211, 1],
-            'lightgreen': [144, 238, 144, 1],
-            'lightgrey': [211, 211, 211, 1],
-            'lightpink': [255, 182, 193, 1],
-            'lightsalmon': [255, 160, 122, 1],
-            'lightseagreen': [32, 178, 170, 1],
-            'lightskyblue': [135, 206, 250, 1],
-            'lightslategray': [119, 136, 153, 1],
-            'lightslategrey': [119, 136, 153, 1],
-            'lightsteelblue': [176, 196, 222, 1],
-            'lightyellow': [255, 255, 224, 1],
-            'lime': [0, 255, 0, 1],
-            'limegreen': [50, 205, 50, 1],
-            'linen': [250, 240, 230, 1],
-            'magenta': [255, 0, 255, 1],
-            'maroon': [128, 0, 0, 1],
-            'mediumaquamarine': [102, 205, 170, 1],
-            'mediumblue': [0, 0, 205, 1],
-            'mediumorchid': [186, 85, 211, 1],
-            'mediumpurple': [147, 112, 219, 1],
-            'mediumseagreen': [60, 179, 113, 1],
-            'mediumslateblue': [123, 104, 238, 1],
-            'mediumspringgreen': [0, 250, 154, 1],
-            'mediumturquoise': [72, 209, 204, 1],
-            'mediumvioletred': [199, 21, 133, 1],
-            'midnightblue': [25, 25, 112, 1],
-            'mintcream': [245, 255, 250, 1],
-            'mistyrose': [255, 228, 225, 1],
-            'moccasin': [255, 228, 181, 1],
-            'navajowhite': [255, 222, 173, 1],
-            'navy': [0, 0, 128, 1],
-            'oldlace': [253, 245, 230, 1],
-            'olive': [128, 128, 0, 1],
-            'olivedrab': [107, 142, 35, 1],
-            'orange': [255, 165, 0, 1],
-            'orangered': [255, 69, 0, 1],
-            'orchid': [218, 112, 214, 1],
-            'palegoldenrod': [238, 232, 170, 1],
-            'palegreen': [152, 251, 152, 1],
-            'paleturquoise': [175, 238, 238, 1],
-            'palevioletred': [219, 112, 147, 1],
-            'papayawhip': [255, 239, 213, 1],
-            'peachpuff': [255, 218, 185, 1],
-            'peru': [205, 133, 63, 1],
-            'pink': [255, 192, 203, 1],
-            'plum': [221, 160, 221, 1],
-            'powderblue': [176, 224, 230, 1],
-            'purple': [128, 0, 128, 1],
-            'red': [255, 0, 0, 1],
-            'rosybrown': [188, 143, 143, 1],
-            'royalblue': [65, 105, 225, 1],
-            'saddlebrown': [139, 69, 19, 1],
-            'salmon': [250, 128, 114, 1],
-            'sandybrown': [244, 164, 96, 1],
-            'seagreen': [46, 139, 87, 1],
-            'seashell': [255, 245, 238, 1],
-            'sienna': [160, 82, 45, 1],
-            'silver': [192, 192, 192, 1],
-            'skyblue': [135, 206, 235, 1],
-            'slateblue': [106, 90, 205, 1],
-            'slategray': [112, 128, 144, 1],
-            'slategrey': [112, 128, 144, 1],
-            'snow': [255, 250, 250, 1],
-            'springgreen': [0, 255, 127, 1],
-            'steelblue': [70, 130, 180, 1],
-            'tan': [210, 180, 140, 1],
-            'teal': [0, 128, 128, 1],
-            'thistle': [216, 191, 216, 1],
-            'tomato': [255, 99, 71, 1],
-            'transparent': [0, 0, 0, 0],
-            'turquoise': [64, 224, 208, 1],
-            'violet': [238, 130, 238, 1],
-            'wheat': [245, 222, 179, 1],
-            'white': [255, 255, 255, 1],
-            'whitesmoke': [245, 245, 245, 1],
-            'yellow': [255, 255, 0, 1],
-            'yellowgreen': [154, 205, 50, 1],
-            'rebeccapurple': [102, 51, 153, 1],
+        return colors as {
+            [key in ColorStr]: colorArray;
         };
     }
 
@@ -547,113 +465,8 @@ export class Color {
     static get bootstrap(): {
         [key in BootstrapColor]: colorArray;
     } {
-        return {
-            'primary': [0, 123, 255, 1],
-            'secondary': [108, 117, 125, 1],
-            'success': [40, 167, 69, 1],
-            'info': [23, 162, 184, 1],
-            'warning': [255, 193, 7, 1],
-            'danger': [220, 53, 69, 1],
-            'light': [248, 249, 250, 1],
-            'dark': [52, 58, 64, 1],
-            // colors-extended.css
-            'indigo': [75, 0, 130, 1],
-            // "indigo": Color.fromHex('#4b0082').rgba.values,
-            'indigo-light': [202, 128, 255, 1],
-            // "indigo-light": Color.fromHex('#ca80ff').rgba.values,
-            'indigo-dark': [25, 0, 51, 1],
-            // "indigo-dark": Color.fromHex('#1e0033').rgba.values,
-
-            'teal': [0, 128, 128, 1],
-            // "teal": Color.fromHex('#1fc794').rgba.values,
-            'teal-light': [233, 252, 246, 1],
-            // "teal-light": Color.fromHex('#e9fcf6').rgba.values,
-            'teal-dark': [0, 51, 51, 1],
-            // "teal-dark": Color.fromHex('#158463').rgba.values,
-
-            'orange': [255, 165, 0, 1],
-            // "orange": Color.fromHex('#ff6600').rgba.values,
-            'orange-light': [255, 209, 179, 1],
-            // "orange-light": Color.fromHex('#ffd1b3').rgba.values,
-            'orange-dark': [204, 102, 0, 1],
-            // "orange-dark": Color.fromHex('#b34700').rgba.values,
-
-            'pink': [255, 0, 255, 1],
-            // "pink": Color.fromHex('#ff33cc').rgba.values,
-            'pink-light': [255, 204, 242, 1],
-            // "pink-light": Color.fromHex('#ffccf2').rgba.values,
-            'pink-dark': [204, 0, 153, 1],
-            // "pink-dark": Color.fromHex('#e600ac').rgba.values,
-
-            'purple': [128, 0, 128, 1],
-            // "maroon": Color.fromHex('#800000').rgba.values,
-            'purple-light': [255, 204, 255, 1],
-            // "maroon-light": Color.fromHex('#ff8080').rgba.values,
-            'purple-dark': [51, 0, 51, 1],
-            // "maroon-dark": Color.fromHex('#330000').rgba.values,
-
-            'navy': [0, 0, 128, 1],
-            // "navy": Color.fromHex('#000066').rgba.values,
-            'navy-light': [204, 204, 255, 1],
-            // "navy-light": Color.fromHex('#6666ff').rgba.values,
-            'navy-dark': [0, 0, 51, 1],
-            // "navy-dark": Color.fromHex('#00001a').rgba.values,
-
-            'yellow': [255, 255, 0, 1],
-            // "yellow": Color.fromHex('#ffff00').rgba.values,
-            'yellow-light': [255, 255, 179, 1],
-            // "yellow-light": Color.fromHex('#ffffb3').rgba.values,
-            'yellow-dark': [204, 204, 0, 1],
-            // "yellow-dark": Color.fromHex('#b3b300').rgba.values,
-
-            'lime': [0, 255, 0, 1],
-            // "lime": Color.fromHex('#00ff00').rgba.values,
-            'lime-light': [179, 255, 179, 1],
-            // "lime-light": Color.fromHex('#b3ffb3').rgba.values,
-            'lime-dark': [0, 153, 0, 1],
-            // "lime-dark": Color.fromHex('#00b300').rgba.values,
-
-            'gray': [128, 128, 128, 1],
-            // "gray": Color.fromHex('#808080').rgba.values,
-            'gray-light': [230, 230, 230, 1],
-            // "gray-light": Color.fromHex('#e6e6e6').rgba.values,
-            'gray-dark': [51, 51, 51, 1],
-            // "gray-dark": Color.fromHex('#595959').rgba.values,
-
-            'brown': [153, 51, 0, 1],
-            // "brown": Color.fromHex('#993300').rgba.values,
-            'brown-light': [255, 187, 153, 1],
-            // "brown-light": Color.fromHex('#ffbb99').rgba.values,
-            'brown-dark': [102, 0, 0, 1],
-            // "brown-dark": Color.fromHex('#4d1a00').rgba.values,
-
-            'grape': [153, 0, 153, 1],
-            // "grape": Color.fromHex('#b9135b').rgba.values,
-            'grape-light': [255, 204, 255, 1],
-            // "grape-light": Color.fromHex('#f5a3c6').rgba.values,
-            'grape-dark': [102, 0, 102, 1],
-            // "grape-dark": Color.fromHex('#730c39').rgba.values,
-
-            'vermillion': [227, 66, 52, 1],
-            // "vermillion": Color.fromHex('#e34234').rgba.values,
-            'vermillion-light': [255, 204, 204, 1],
-            // "vermillion-light": Color.fromHex('#f6c1bc').rgba.values,
-            'vermillion-dark': [179, 0, 0, 1],
-            // "vermillion-dark": Color.fromHex('#b42518').rgba.values,
-
-            'steel': [103, 103, 153, 1],
-            // "steel": Color.fromHex('#878f99').rgba.values,
-            'steel-light': [204, 204, 255, 1],
-            // "steel-light": Color.fromHex('#a2b9bc').rgba.values,
-            'steel-dark': [51, 51, 102, 1],
-            // "steel-dark": Color.fromHex('#6b5b95').rgba.values,
-
-            'green': [0, 128, 0, 1],
-            // "green": Color.fromHex('#006600').rgba.values,
-            'green-light': [179, 255, 179, 1],
-            // "green-light": Color.fromHex('#66ff66').rgba.values,
-            'green-dark': [0, 51, 0, 1],
-            // "green-dark": Color.fromHex('#003300').rgba.values
+        return BootstrapColors as {
+            [key in BootstrapColor]: colorArray;
         };
     }
 
