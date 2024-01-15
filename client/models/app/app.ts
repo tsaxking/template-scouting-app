@@ -32,7 +32,7 @@ export type Point = [...Point2D, number]; // x, y, path (time is the index of th
  * @export
  * @typedef {CollectedData}
  */
-export type CollectedData = ActionState | null;
+export type CollectedData<actions = string> = ActionState<any, actions> | null;
 
 /**
  * Section of the match
@@ -64,7 +64,7 @@ type AppEvents = {
  * @class Tick
  * @typedef {Tick}
  */
-export class Tick {
+export class Tick<actions = string> {
     /**
      * Data collected at this tick
      * @date 1/9/2024 - 3:08:20 AM
@@ -72,7 +72,7 @@ export class Tick {
      * @private
      * @type {CollectedData}
      */
-    private data: CollectedData = null;
+    private data: CollectedData<actions> = null;
 
     /**
      * Point of the robot at this tick
@@ -198,7 +198,7 @@ export class Tick {
  * @class App
  * @typedef {App}
  */
-export class App {
+export class App<actions = string> {
     // ▄▀▀ ▄▀▄ █▄ █ ▄▀▀ ▀█▀ ▄▀▄ █▄ █ ▀█▀ ▄▀▀
     // ▀▄▄ ▀▄▀ █ ▀█ ▄█▀  █  █▀█ █ ▀█  █  ▄█▀
     /**
@@ -267,20 +267,30 @@ export class App {
             height: 1,
         });
 
-        this.canvas.add(this.background, this.buttonCircle, this.path);
+        this.canvas.add(
+            this.background, 
+            // this.buttonCircle, 
+            this.path
+        );
 
+        this.target.appendChild(this.buttonCircle.el);
         this.setView();
     }
 
-    setView() {
+    private setView() {
         const { target } = this;
+
 
         if (target.clientWidth > target.clientHeight * 2) {
             const xOffset = (target.clientWidth - target.clientHeight * 2) / 2;
             this.canvas.ctx.canvas.width = target.clientHeight * 2;
             this.canvas.ctx.canvas.height = target.clientHeight;
+            this.height = target.clientHeight;
+            this.width = target.clientHeight * 2;
             this.canvas.ctx.canvas.style.top = '0px';
             this.canvas.ctx.canvas.style.left = `${xOffset}px`;
+            this.xOffset = xOffset;
+            this.yOffset = 0;
 
             for (const o of this.gameObjects) {
                 const { element, x, y } = o;
@@ -291,8 +301,12 @@ export class App {
             const yOffset = (target.clientHeight - target.clientWidth / 2) / 2;
             this.canvas.ctx.canvas.width = target.clientWidth;
             this.canvas.ctx.canvas.height = target.clientWidth / 2;
+            this.height = target.clientWidth / 2;
+            this.width = target.clientWidth;
             this.canvas.ctx.canvas.style.top = `${yOffset}px`;
             this.canvas.ctx.canvas.style.left = '0px';
+            this.xOffset = 0;
+            this.yOffset = yOffset;
 
             for (const o of this.gameObjects) {
                 const { element, x, y } = o;
@@ -300,7 +314,30 @@ export class App {
                 element.style.top = `${y * this.canvas.height + yOffset}px`;
             }
         }
+
+        this.buttonCircle.draw(this.canvas.ctx);
+
+        // if (target.clientWidth > target.clientHeight * 2) {
+        //     const xOffset = (target.clientWidth - target.clientHeight * 2) / 2;
+        //     this.xOffset = xOffset;
+        //     this.yOffset = 0;
+        //     this.width = target.clientHeight * 2;
+        //     this.height = target.clientHeight;
+        // } else {
+        //     const yOffset = (target.clientHeight - target.clientWidth / 2) / 2;
+        //     this.$xOffset = 0;
+        //     this.$yOffset = yOffset;
+        //     this.width = target.clientWidth;
+        //     this.height = target.clientWidth / 2;
+        // }
+
+        // for (const o of this.gameObjects) {
+        //     const { element, x, y } = o;
+        //     element.style.left = `${x * this.canvas.width + this.xOffset}px`;
+        //     element.style.top = `${y * this.canvas.height + this.yOffset}px`;
+        // }
     }
+
 
     // █ █ ▄▀▄ █▀▄ █ ▄▀▄ ██▄ █   ██▀ ▄▀▀
     // ▀▄▀ █▀█ █▀▄ █ █▀█ █▄█ █▄▄ █▄▄ ▄█▀
@@ -327,7 +364,7 @@ export class App {
      * @public
      * @type {(Tick | undefined)}
      */
-    public currentTick: Tick | undefined = undefined;
+    public currentTick: Tick<actions> | undefined = undefined;
     /**
      * The current location of the robot [x, y]
      * @date 1/9/2024 - 3:08:20 AM
@@ -336,6 +373,45 @@ export class App {
      * @type {(Point2D | undefined)}
      */
     public currentLocation: Point2D | undefined = undefined;
+    public xOffset = 0;
+    public yOffset = 0;
+    public width = 0;
+    public height = 0;
+
+    // public get xOffset() {
+    //     return this.$xOffset;
+    // }
+
+    // public set xOffset(xOffset: number) {
+    //     this.$xOffset = xOffset;
+    //     this.canvas.ctx.canvas.style.left = `${xOffset}px`;
+    // }
+
+    // public get yOffset() {
+    //     return this.$yOffset;
+    // }
+
+    // public set yOffset(yOffset: number) {
+    //     this.$yOffset = yOffset;
+    //     this.canvas.ctx.canvas.style.top = `${yOffset}px`;
+    // }
+
+
+    // public get width() {
+    //     return this.canvas.ctx.canvas.width;
+    // }
+
+    // public set width(width: number) {
+    //     this.canvas.ctx.canvas.width = width;
+    // }
+
+    // public get height() {
+    //     return this.canvas.ctx.canvas.height;
+    // }
+
+    // public set height(height: number) {
+    //     this.canvas.ctx.canvas.height = height;
+    // }
 
     // █▀▄ █▀▄ ▄▀▄ █   █ ▄▀▄ ██▄ █   ██▀ ▄▀▀
     // █▄▀ █▀▄ █▀█ ▀▄▀▄▀ █▀█ █▄█ █▄▄ █▄▄ ▄█▀
@@ -359,7 +435,7 @@ export class App {
      * @readonly
      * @type {*}
      */
-    public readonly buttonCircle = new ButtonCircle(this);
+    public readonly buttonCircle = new ButtonCircle<actions>(this as App<any>);
     /**
      * All the game objects and their respective locations on the field
      * @date 1/9/2024 - 3:08:20 AM
@@ -375,7 +451,7 @@ export class App {
     public readonly gameObjects: {
         x: number;
         y: number;
-        object: AppObject;
+        object: AppObject<any, actions>;
         element: HTMLElement;
     }[] = [];
     /**
@@ -499,7 +575,9 @@ export class App {
      * @readonly
      * @type {Tick[]}
      */
-    public ticks: Tick[];
+    public ticks: Tick<actions>[];
+
+    public isDrawing = false;
 
     /**
      * Launch the app
@@ -711,7 +789,7 @@ export class App {
      */
     addGameObject<T = unknown>(
         point: Point2D,
-        object: AppObject<T>,
+        object: AppObject<T, actions>,
         button: HTMLElement,
         convert?: (state: T) => string,
     ) {
@@ -800,7 +878,7 @@ export class App {
         this.built = true;
         this.ticks = new Array(150 * App.ticksPerSecond).fill(
             null,
-        ).map((_, i) => new Tick(i * App.tickDuration, i, this));
+        ).map((_, i) => new Tick<actions>(i * App.tickDuration, i, this as App<any>));
         this.target.appendChild(this.canvasEl);
         this.setListeners();
         const stopAnimation = this.canvas.animate();
@@ -825,7 +903,7 @@ export class App {
      */
     public setListeners() {
         const push = (x: number, y: number) => {
-            if (!isDrawing) return;
+            if (!this.isDrawing) return;
             this.path.add([x, y]);
             this.currentLocation = [x, y];
             // setTimeout(() => {
@@ -833,17 +911,15 @@ export class App {
             // }, 1000); // clear after 1 second
         };
 
-        let isDrawing = false;
-
         const down = (x: number, y: number) => {
-            isDrawing = true;
+            this.isDrawing = true;
             push(x, y);
         };
         const move = (x: number, y: number) => {
             push(x, y);
         };
         const up = (x: number, y: number) => {
-            isDrawing = false;
+            this.isDrawing = false;
             push(x, y);
         };
 
@@ -873,13 +949,13 @@ export class App {
         });
 
         this.canvasEl.addEventListener('touchend', (e) => {
-            isDrawing = false;
+            this.isDrawing = false;
             // const [[x, y]] = this.canvas.getXY(e);
             // up(x, y);
         });
 
         this.canvasEl.addEventListener('touchcancel', (e) => {
-            isDrawing = false;
+            this.isDrawing = false;
             // const [[x, y]] = this.canvas.getXY(e);
             // up(x, y);
         });
@@ -901,5 +977,17 @@ export class App {
         });
 
         return em;
+    }
+
+
+    pull() {
+        const d = this.ticks.map((t, i) => {
+            const [x, y] = t.point ?? [-1, -1];
+            return [i, x, y, t.get()?.action.abbr ?? 0];
+        }).filter(p => {
+            return p[1] !== -1 && p[2] !== -1;
+        }) as [number, number, number, string | number][];
+        // [index, x, y, action?], action=0 if no action
+        return d;
     }
 }

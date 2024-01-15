@@ -4,7 +4,7 @@
  */
 
 import { Point2D } from '../../../shared/submodules/calculations/src/linear-algebra/point';
-import { Tick } from './app';
+import { App, Tick } from './app';
 
 /**
  * State of an action at a given point in time
@@ -15,7 +15,7 @@ import { Tick } from './app';
  * @typedef {ActionState}
  * @template [T=any]
  */
-export class ActionState<T = any> {
+export class ActionState<T = any, actions = string> {
     /**
      * When the action state was created
      * @date 1/9/2024 - 3:04:36 AM
@@ -32,7 +32,7 @@ export class ActionState<T = any> {
      * @private
      * @type {(Tick | null)}
      */
-    private $tick: Tick | null = null;
+    private $tick: Tick<actions> | null = null;
     /**
      * Creates an instance of ActionState.
      * @date 1/9/2024 - 3:04:36 AM
@@ -81,7 +81,7 @@ export class ActionState<T = any> {
  * @typedef {AppObject}
  * @template [T=any]
  */
-export class AppObject<T = any> {
+export class AppObject<T = any, actions = string> {
     /**
      * Current state of the object
      * @date 1/9/2024 - 3:04:36 AM
@@ -119,6 +119,9 @@ export class AppObject<T = any> {
     private readonly $listeners:
         ((state: ActionState<T>, event: 'new' | 'undo') => void)[] = [];
 
+
+    public readonly abbr: actions | string;
+
     /**
      * Creates an instance of AppObject.
      * @date 1/9/2024 - 3:04:36 AM
@@ -130,7 +133,9 @@ export class AppObject<T = any> {
     constructor(
         public readonly name: string,
         public readonly description: string,
+        abbr?: actions
     ) {
+        this.abbr = abbr ? abbr : name.substring(0, 3).toLowerCase();
     }
 
     /**
@@ -161,7 +166,7 @@ export class AppObject<T = any> {
     public change(point?: Point2D) {
         if (this.$toChange) {
             this.state = this.$toChange(this.state);
-            this.stateHistory.push(new ActionState(this, this.state, point));
+            this.stateHistory.push(new ActionState(this as AppObject<any, string>, this.state, point));
 
             for (const listener of this.$listeners) {
                 listener(
@@ -249,9 +254,10 @@ export class Toggle extends AppObject<boolean> {
     constructor(
         name: string,
         description: string,
+        abbr?: string,
         defaultState: boolean = false,
     ) {
-        super(name, description);
+        super(name, description, abbr);
         this.toChange((state) => !state);
 
         if (defaultState) {
@@ -281,7 +287,7 @@ export class Toggle extends AppObject<boolean> {
  * @typedef {Iterator}
  * @extends {AppObject<number>}
  */
-export class Iterator extends AppObject<number> {
+export class Iterator<actions = string> extends AppObject<number> {
     /**
      * Creates an instance of Iterator.
      * @date 1/9/2024 - 3:04:36 AM
@@ -291,8 +297,9 @@ export class Iterator extends AppObject<number> {
      * @param {string} description
      * @param {number} [defaultState=0]
      */
-    constructor(name: string, description: string, defaultState?: number) {
-        super(name, description);
+    constructor(name: string, description: string, 
+        abbr?: actions,defaultState?: number) {
+        super(name, description, abbr as string);
         this.toChange((state) => state + 1);
 
         if (defaultState !== undefined) {
@@ -326,9 +333,10 @@ export class StateMachine<T> extends AppObject<T> {
     constructor(
         name: string,
         description: string,
+        abbr?: string,
         public readonly states = [] as T[],
     ) {
-        super(name, description);
+        super(name, description, abbr);
         this.toChange((state) => {
             // move through states in a circular fashion
             const index = this.states.indexOf(state);
@@ -369,9 +377,10 @@ export class PingPong<T> extends AppObject<T> {
     constructor(
         name: string,
         description: string,
+        abbr?: string,
         public readonly states = [] as T[],
     ) {
-        super(name, description);
+        super(name, description, abbr);
         this.toChange((state) => {
             // move through states, then reverse direction
             const index = this.states.indexOf(state);
