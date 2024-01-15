@@ -1,5 +1,5 @@
-import { Point } from "./point";
-import { Vector } from "./vector";
+import { Point } from './point';
+import { Vector } from './vector';
 
 /**
  * A curve defined by a series of points

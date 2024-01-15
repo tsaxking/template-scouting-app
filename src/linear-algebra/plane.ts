@@ -1,5 +1,5 @@
-import { Point } from "./point";
-import { Vector } from "./vector";
+import { Point } from './point';
+import { Vector } from './vector';
 
 /**
  * A plane in 3d space, defined by a vector normal to the plane
@@ -47,9 +47,9 @@ export class Plane {
         const t = (this.normal.dot(new Vector(this.normal.point, v.point))) /
             this.normal.dot(v);
         if (t < 0) return null;
-        const x = v.ft("x")(t);
-        const y = v.ft("y")(t);
-        const z = v.ft("z")(t);
+        const x = v.ft('x')(t);
+        const y = v.ft('y')(t);
+        const z = v.ft('z')(t);
         return x === v.rate.x && y === v.rate.y && z === v.rate.z
             ? new Point(x, y, z)
             : null;

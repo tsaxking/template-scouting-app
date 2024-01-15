@@ -1,5 +1,5 @@
-import { Point } from "./linear-algebra/point";
-import { Spline } from "./linear-algebra/spline";
+import { Point } from './linear-algebra/point';
+import { Spline } from './linear-algebra/spline';
 
 /**
  * Options for drawing a point onto a canvas
@@ -16,17 +16,9 @@ export type DrawPointOptions = {
     fillStyle?: string;
 
     transform?: (point: Point) => Point;
-};
+}
 
-/**
- * Draws a point onto a canvas
- * @date 1/10/2024 - 2:43:32 PM
- */
-export const drawPoint = (
-    ctx: CanvasRenderingContext2D,
-    point: Point,
-    options?: DrawPointOptions,
-) => {
+export const drawPoint = (ctx: CanvasRenderingContext2D, point: Point, options?: DrawPointOptions) => {
     let p = new Point(...point.array);
 
     let width = 1;
@@ -86,13 +78,7 @@ export const colorFromPos = (point: Point): [number, number, number] => {
     return [r, g, b];
 };
 
-/**
- * Options for drawing an edge onto a canvas
- * @date 1/10/2024 - 2:43:32 PM
- *
- * @export
- * @typedef {DrawEdgeOptions}
- */
+
 export type DrawEdgeOptions = {
     gradient?: boolean;
     strokeStyle?: string;
@@ -100,15 +86,7 @@ export type DrawEdgeOptions = {
     transform?: (point: Point) => Point;
 };
 
-/**
- * Draws an edge onto a canvas
- * @date 1/10/2024 - 2:43:32 PM
- */
-export const drawEdge = (
-    ctx: CanvasRenderingContext2D,
-    [p1, p2]: [Point, Point],
-    options: DrawEdgeOptions,
-) => {
+export const drawEdge = (ctx: CanvasRenderingContext2D, [p1, p2]: [Point, Point], options: DrawEdgeOptions) => {
     let p1t = p1;
     let p2t = p2;
     let lineWidth: number = 1;
@@ -143,26 +121,14 @@ export const drawEdge = (
     ctx.lineTo(p2t.x * ctx.canvas.height, p2t.y * ctx.canvas.height);
     ctx.stroke();
     ctx.restore();
-};
+}
 
-/**
- * Clears a canvas
- * @date 1/10/2024 - 2:43:32 PM
- */
+
 export const clear = (ctx: CanvasRenderingContext2D) => {
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-};
+}
 
-/**
- * Draws a spline onto a canvas
- * @date 1/10/2024 - 2:43:32 PM
- */
-export const drawSpline = (
-    ctx: CanvasRenderingContext2D,
-    spline: Spline,
-    steps: number,
-    options?: (p: Point) => DrawPointOptions,
-) => {
+export const drawSpline = (ctx: CanvasRenderingContext2D, spline: Spline, steps: number, options?: (p: Point) => DrawPointOptions) => {
     for (let i = 0; i < steps; i++) {
         const t = i / steps;
         // console.log(t);

@@ -1,4 +1,4 @@
-import { Point2D } from "./linear-algebra/point";
+import { Point2D } from './linear-algebra/point';
 
 /**
  * Uses the ray-casting algorithm to test if a point is inside a polygon

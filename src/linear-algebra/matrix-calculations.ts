@@ -26,7 +26,6 @@ type SpatialMatrix = [
  * @date 1/10/2024 - 2:35:33 PM
  *
  * @export
- * @param {Matrix} a
  * @param {Matrix} b
  * @returns {{}}
  */
@@ -34,8 +33,8 @@ export function multiplyMatricies(a: Matrix, b: Matrix) {
     // ensure that the matricies are compatible
     if (a[0].length !== b.length) {
         throw new Error(
-            "Matricies are not compatible, " + "A: " + a.length + "x" +
-                a[0].length + " B: " + b.length + "x" + b[0].length + "",
+            'Matricies are not compatible, ' + 'A: ' + a.length + 'x' +
+                a[0].length + ' B: ' + b.length + 'x' + b[0].length + '',
         );
     }
 

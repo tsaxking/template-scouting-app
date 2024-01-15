@@ -1,5 +1,5 @@
-import { Plane } from "./plane";
-import { Point } from "./point";
+import { Plane } from './plane';
+import { Point } from './point';
 
 /**
  * A 3d vector, defined by a point and a rate of change

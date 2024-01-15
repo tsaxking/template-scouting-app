@@ -15,14 +15,6 @@ export type Point2D = [number, number];
  */
 export type Point3D = [number, number, number];
 
-/**
- * A class representing a point in 2d or 3d space
- * @date 1/10/2024 - 2:39:28 PM
- *
- * @export
- * @class Point
- * @typedef {Point}
- */
 export class Point {
     /**
      * Generates a random point in 3d space
