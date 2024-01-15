@@ -16,16 +16,20 @@ export type DrawPointOptions = {
     fillStyle?: string;
 
     transform?: (point: Point) => Point;
-}
+};
 
-export const drawPoint = (ctx: CanvasRenderingContext2D, point: Point, options?: DrawPointOptions) => {
+export const drawPoint = (
+    ctx: CanvasRenderingContext2D,
+    point: Point,
+    options?: DrawPointOptions,
+) => {
     let p = new Point(...point.array);
 
     let width = 1;
     let height = 1;
     let round = false;
-    let strokeStyle = "black";
-    let fillStyle = "black";
+    let strokeStyle = 'black';
+    let fillStyle = 'black';
 
     ctx.save();
     if (options) {
@@ -78,7 +82,6 @@ export const colorFromPos = (point: Point): [number, number, number] => {
     return [r, g, b];
 };
 
-
 export type DrawEdgeOptions = {
     gradient?: boolean;
     strokeStyle?: string;
@@ -86,11 +89,15 @@ export type DrawEdgeOptions = {
     transform?: (point: Point) => Point;
 };
 
-export const drawEdge = (ctx: CanvasRenderingContext2D, [p1, p2]: [Point, Point], options: DrawEdgeOptions) => {
+export const drawEdge = (
+    ctx: CanvasRenderingContext2D,
+    [p1, p2]: [Point, Point],
+    options: DrawEdgeOptions,
+) => {
     let p1t = p1;
     let p2t = p2;
     let lineWidth: number = 1;
-    let strokeStyle: string | CanvasGradient = "black";
+    let strokeStyle: string | CanvasGradient = 'black';
 
     if (options) {
         if (options.transform) {
@@ -121,14 +128,18 @@ export const drawEdge = (ctx: CanvasRenderingContext2D, [p1, p2]: [Point, Point]
     ctx.lineTo(p2t.x * ctx.canvas.height, p2t.y * ctx.canvas.height);
     ctx.stroke();
     ctx.restore();
-}
-
+};
 
 export const clear = (ctx: CanvasRenderingContext2D) => {
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-}
+};
 
-export const drawSpline = (ctx: CanvasRenderingContext2D, spline: Spline, steps: number, options?: (p: Point) => DrawPointOptions) => {
+export const drawSpline = (
+    ctx: CanvasRenderingContext2D,
+    spline: Spline,
+    steps: number,
+    options?: (p: Point) => DrawPointOptions,
+) => {
     for (let i = 0; i < steps; i++) {
         const t = i / steps;
         // console.log(t);

@@ -1,6 +1,6 @@
-import { Point, Point2D, Point3D } from "./point";
-import { Vector } from "./vector";
-import { Plane } from "./plane";
+import { Point, Point2D, Point3D } from './point';
+import { Vector } from './vector';
+import { Plane } from './plane';
 
 /**
  * A 2d array of numbers

@@ -45,7 +45,7 @@ export class Vector {
      * @param param
      * @returns
      */
-    ft(param: "x" | "y" | "z"): (t: number) => number {
+    ft(param: 'x' | 'y' | 'z'): (t: number) => number {
         return (t: number) => this.point[param] + this.rate[param] * t;
     } /**
      * Description placeholder
