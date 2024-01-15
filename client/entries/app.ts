@@ -1,18 +1,20 @@
 import './../utilities/imports';
-import AppView from '../views/App.svelte';
+// import AppView from '../views/App.svelte';
 import { App } from '../models/app/app';
 import { Color } from '../submodules/colors/color';
 import { BorderPolygon } from '../models/canvas/border';
 import { AppObject, Iterator } from '../models/app/app-object';
 
-const appView = new AppView({
-    target: document.body,
-});
+// const appView = new AppView({
+//     target: document.body,
+// });
+
+document.body.id = 'app'; // just for speeding up build in development
 
 const target = document.getElementById('app') as HTMLElement;
 if (!target) throw new Error('Could not find target element');
 
-export const app = new App(target as HTMLDivElement);
+export const app = new App<'clb' | 'spk' | 'amp' | 'src' | 'trp'>(target as HTMLDivElement);
 
 const blueStageArea = app.addArea(
     [
@@ -185,38 +187,50 @@ app.buttonCircle
     .addButton(
         'Blue Climb',
         'Click when the robot has successfully pulled themselves up for the last time in the match',
+        'clb',
         0,
-        (app: App) =>
-            app.currentLocation
-                ? blueStageArea.isIn(app.currentLocation)
-                : false,
+        (app: App) => true,
+            // app.currentLocation
+            //     ? blueStageArea.isIn(app.currentLocation)
+            //     : false,
+                // 'primary'
+                Color.fromName('blue')
     )
     .addButton(
         'Red Climb',
         'Click when the robot has successfully pulled themselves up for the last time in the match',
+        'clb',
         0,
-        (app: App) =>
-            app.currentLocation
-                ? redStageArea.isIn(app.currentLocation)
-                : false,
+        (app: App) => true,
+            // app.currentLocation
+            //     ? redStageArea.isIn(app.currentLocation)
+            //     : false,
+                // 'danger'
+                Color.fromName('red')
     )
     .addButton(
         'Blue Trap',
         'When the robot has successfully placed an item in the trap',
+        'clb',
         0,
-        (app: App) =>
-            app.currentLocation
-                ? blueStageArea.isIn(app.currentLocation)
-                : false,
+        (app: App) => true,
+            // app.currentLocation
+            //     ? blueStageArea.isIn(app.currentLocation)
+            //     : false,
+                // 'primary'
+                Color.fromName('blue')
     )
     .addButton(
         'Red Trap',
         'When the robot has successfully placed an item in the trap',
+        'trp',
         0,
-        (app: App) =>
-            app.currentLocation
-                ? redStageArea.isIn(app.currentLocation)
-                : false,
+        (app: App) => true,
+            // app.currentLocation
+            //     ? redStageArea.isIn(app.currentLocation)
+            //     : false,
+                // 'danger'
+                Color.fromName('red')
     );
 
 app.launch();
