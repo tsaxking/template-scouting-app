@@ -1,13 +1,13 @@
 import { Color } from './color.ts';
 export class Gradient {
-    colors:Color[];
+    colors: Color[];
 
     /**
      * Creates a a random gradient
      * @param frames The number of frames to fade between the colors
      * @returns {Gradient} Returns a new gradient with the colors faded between each other
      */
-    static random(frames:number = 60):Gradient {
+    static random(frames: number = 60): Gradient {
         return Color.random().linearFade(Color.random(), frames);
     }
 
@@ -16,27 +16,26 @@ export class Gradient {
      * @param gradients The gradients to combine
      * @returns {Gradient} Returns a new gradient with all the colors from the gradients
      */
-    static combine(...gradients:Gradient[]):Gradient {
-        const colors:Color[] = [];
-        gradients.forEach(g => {
+    static combine(...gradients: Gradient[]): Gradient {
+        const colors: Color[] = [];
+        gradients.forEach((g) => {
             colors.push(...g.colors);
         });
 
         return new Gradient(...colors);
     }
 
-    constructor(...colors:Color[]) {
+    constructor(...colors: Color[]) {
         this.colors = colors;
     }
 
     /**
-     * 
      * @param deg The degree of the gradient (0-360)
      * @returns {string} Returns the gradient as a linear-gradient string
      */
-    public toString(deg:number = 90):string {
+    public toString(deg: number = 90): string {
         let gradient = `linear-gradient(${deg}deg`;
-        this.colors.forEach(color => {
+        this.colors.forEach((color) => {
             gradient += `,${color.toString()}`;
         });
         gradient += ')';
@@ -47,15 +46,19 @@ export class Gradient {
      * View each color in the gradient
      */
     public view() {
-        this.colors.forEach(c => c.view());
+        this.colors.forEach((c) => c.view());
     }
 
     /**
      * Logs each character in the gradient to the console
      * @param string The string to log
      */
-    public logText(string:string) {
-        if (typeof string !== 'string') throw new Error('logText() expects a string, received ' + typeof string);
+    public logText(string: string) {
+        if (typeof string !== 'string') {
+            throw new Error(
+                'logText() expects a string, received ' + typeof string,
+            );
+        }
 
         const { colors } = this;
 
@@ -80,7 +83,7 @@ export class Gradient {
 
             gradientIndex += direction;
 
-            return `color: ${colors[gradientIndex].toString()}`
+            return `color: ${colors[gradientIndex].toString()}`;
         });
 
         console.log(gradient, ...gradientString);
@@ -89,8 +92,8 @@ export class Gradient {
     /**
      * Adds colors to the gradient
      */
-    public add(...gradients:Gradient[]) {
-        gradients.forEach(g => {
+    public add(...gradients: Gradient[]) {
+        gradients.forEach((g) => {
             this.colors.push(...g.colors);
         });
     }
@@ -99,8 +102,8 @@ export class Gradient {
      * Randomizes the colors in the gradient
      * @returns {Gradient} Returns the current gradient
      */
-    public random():Gradient {
-        this.colors.forEach(_ => Math.random() - 0.5);
+    public random(): Gradient {
+        this.colors.forEach((_) => Math.random() - 0.5);
         return this;
     }
 }
