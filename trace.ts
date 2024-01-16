@@ -138,7 +138,7 @@ export class Trace {
             if (x1 === x2 && y1 === y2) return false;
         }
 
-        return p[1] !== -1 && p[2] !== -1 && p[3] !== 0;
+        return p[1] !== -1 && p[2] !== -1;
     }
 
     static velocityMap(trace: TraceArray) {
