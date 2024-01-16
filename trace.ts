@@ -127,6 +127,20 @@ export class Trace {
         }
     }
 
+    static filterPipe(p: P, i: number, a: P[]) {
+        if (p[3] !== 0 && a[i - 1]) {
+            const x1 = a[i - 1][1];
+            const y1 = a[i - 1][2];
+
+            const x2 = p[1];
+            const y2 = p[2];
+
+            if (x1 === x2 && y1 === y2) return false;
+        }
+
+        return p[1] !== -1 && p[2] !== -1 && p[3] !== 0;
+    }
+
     static velocityMap(trace: TraceArray) {
         return trace.map((p1, i, a) => {
             if (i === a.length - 1) return null;
