@@ -7,7 +7,7 @@ export class Gradient {
      * @param frames The number of frames to fade between the colors
      * @returns {Gradient} Returns a new gradient with the colors faded between each other
      */
-    static random(frames: number = 60): Gradient {
+    static random(frames = 60): Gradient {
         return Color.random().linearFade(Color.random(), frames);
     }
 
@@ -33,7 +33,7 @@ export class Gradient {
      * @param deg The degree of the gradient (0-360)
      * @returns {string} Returns the gradient as a linear-gradient string
      */
-    public toString(deg: number = 90): string {
+    public toString(deg = 90): string {
         let gradient = `linear-gradient(${deg}deg`;
         this.colors.forEach((color) => {
             gradient += `,${color.toString()}`;

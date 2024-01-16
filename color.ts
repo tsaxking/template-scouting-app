@@ -293,7 +293,7 @@ export class Color {
         if (color[0] === '#') return Color.fromHex(color);
         else {
             // get numbers between parentheses
-            let parsed = color.match(/\(([^)]+)\)/);
+            const parsed = color.match(/\(([^)]+)\)/);
 
             // error parsing
             if (!parsed) return new Color('rgb(0,0,0)');
@@ -564,7 +564,7 @@ export class Color {
             this.b = c.b;
             this.a = c.a;
         } else {
-            let allowed: boolean = false;
+            let allowed = false;
 
             const check: string[] = [
                 'red',
@@ -647,7 +647,7 @@ export class Color {
     }
 
     get hsl() {
-        let h: number, s: number, l: number;
+        let h: number, s: number;
 
         const r = this.r / 255;
         const g = this.g / 255;
@@ -656,7 +656,7 @@ export class Color {
         const max = Math.max(r, g, b);
         const min = Math.min(r, g, b);
 
-        l = (max + min) / 2;
+        const l = (max + min) / 2;
 
         h = s = 0;
 
@@ -848,7 +848,7 @@ export class Color {
         ];
     }
 
-    public interpolate(toColor: Color, distance: number = 0.5): Color {
+    public interpolate(toColor: Color, distance = 0.5): Color {
         if (isNaN(distance)) {
             console.warn(
                 'Distance must be a number between 0 and 1. Defaulting to 0.5',
@@ -894,7 +894,7 @@ export class Color {
         );
     }
 
-    public logarithmicFade(color: Color, frames: number, base: number = 2) {
+    public logarithmicFade(color: Color, frames: number, base = 2) {
         return new Gradient(
             ...new Array(frames).fill(0).map((_, i) => {
                 return new Color(
@@ -921,7 +921,7 @@ export class Color {
         );
     }
 
-    public exponentialFade(color: Color, frames: number, base: number = 2) {
+    public exponentialFade(color: Color, frames: number, base = 2) {
         return new Gradient(
             ...new Array(frames).fill(0).map((_, i) => {
                 return new Color(
