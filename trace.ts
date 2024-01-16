@@ -30,7 +30,7 @@ const compressNum = (num: number) => {
         num = Math.floor(num / chars.length);
     }
     return str;
-}
+};
 
 const decompressNum = (str: string) => {
     let num = 0;
@@ -38,9 +38,13 @@ const decompressNum = (str: string) => {
         num = num * chars.length + chars.indexOf(str[i]);
     }
     return num;
-}
+};
 
-type TraceStatus = 'identical' | 'incorrect-length' | 'incorrect-point' | 'incorrect-action';
+type TraceStatus =
+    | 'identical'
+    | 'incorrect-length'
+    | 'incorrect-point'
+    | 'incorrect-action';
 
 export class Trace {
     static encode(trace: TraceArray) {
@@ -57,8 +61,6 @@ export class Trace {
         // y is a decimal between 0 and 1 (0.1234)
         // a is a 3 character string without any punctuation (spk, amp, src, trp, clb)
         // compress the point to a smaller string
-
-
 
         const iStr = compressI(i);
         const xStr = compressNum(Math.floor(x * 10000));
@@ -78,53 +80,57 @@ export class Trace {
         return [i, x, y, a];
     }
 
-    static compare(trace1: TraceArray, trace2: TraceArray):( {
-        status: 'incorrect-length',
-        l1: number,
-        l2: number,
+    static compare(trace1: TraceArray, trace2: TraceArray): {
+        status: 'incorrect-length';
+        l1: number;
+        l2: number;
     } | {
-        status: 'incorrect-point',
-        i: number,
-        p1: P,
-        p2: P,
+        status: 'incorrect-point';
+        i: number;
+        p1: P;
+        p2: P;
     } | {
-        status: 'incorrect-action',
-        i: number,
-        a1: Action | 0,
-        a2: Action | 0,
+        status: 'incorrect-action';
+        i: number;
+        a1: Action | 0;
+        a2: Action | 0;
     } | {
-        status: 'identical',
-    }) {
-        if (trace1.length !== trace2.length) return  {
-            status: 'incorrect-length',
-            l1: trace1.length,
-            l2: trace2.length,
+        status: 'identical';
+    } {
+        if (trace1.length !== trace2.length) {
+            return {
+                status: 'incorrect-length',
+                l1: trace1.length,
+                l2: trace2.length,
+            };
         }
 
         for (let i = 0; i < trace1.length; i++) {
             const p1 = trace1[i];
             const p2 = trace2[i];
 
-            if (p1[0] !== p2[0] || p1[1] !== p2[1]) return {
-                status: 'incorrect-point',
-                i,
-                p1,
-                p2,
+            if (p1[0] !== p2[0] || p1[1] !== p2[1]) {
+                return {
+                    status: 'incorrect-point',
+                    i,
+                    p1,
+                    p2,
+                };
             }
 
-            if (p1[3] !== p2[3]) return {
-                status: 'incorrect-action',
-                i,
-                a1: p1[3],
-                a2: p2[3],
+            if (p1[3] !== p2[3]) {
+                return {
+                    status: 'incorrect-action',
+                    i,
+                    a1: p1[3],
+                    a2: p2[3],
+                };
             }
         }
-
-
 
         return {
             status: 'identical',
-        }
+        };
     }
 
     static filterPipe(p: P, i: number, a: P[]) {
@@ -141,11 +147,9 @@ export class Trace {
         return p[1] !== -1 && p[2] !== -1;
     }
 
-
     static filterAction(action: Action) {
         return (p: P) => p[3] === action;
     }
-
 
     static velocityMap(trace: TraceArray) {
         return trace.map((p1, i, a) => {
