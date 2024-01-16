@@ -10,15 +10,15 @@ export const isInside = (point: Point2D, points: Point2D[]) => {
 
     // points is an array of [x, y] points
 
-    let [x, y] = point;
+    const [x, y] = point;
 
     let inside = false;
 
     for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
-        let [xi, yi] = points[i];
-        let [xj, yj] = points[j];
+        const [xi, yi] = points[i];
+        const [xj, yj] = points[j];
 
-        let intersect = ((yi > y) != (yj > y)) &&
+        const intersect = ((yi > y) != (yj > y)) &&
             (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
 
         if (intersect) {

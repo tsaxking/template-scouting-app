@@ -96,7 +96,7 @@ export const drawEdge = (
 ) => {
     let p1t = p1;
     let p2t = p2;
-    let lineWidth: number = 1;
+    const lineWidth = 1;
     let strokeStyle: string | CanvasGradient = 'black';
 
     if (options) {
