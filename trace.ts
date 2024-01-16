@@ -141,6 +141,12 @@ export class Trace {
         return p[1] !== -1 && p[2] !== -1;
     }
 
+
+    static filterAction(action: Action) {
+        return (p: P) => p[3] === action;
+    }
+
+
     static velocityMap(trace: TraceArray) {
         return trace.map((p1, i, a) => {
             if (i === a.length - 1) return null;
