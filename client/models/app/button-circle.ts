@@ -1,13 +1,15 @@
 import { GameObject } from './game-object';
 import { toRadians } from '../../../shared/submodules/calculations/src/graphing';
 import { App } from './app';
-import { Point, Point2D } from '../../../shared/submodules/calculations/src/linear-algebra/point';
+import {
+    Point,
+    Point2D,
+} from '../../../shared/submodules/calculations/src/linear-algebra/point';
 import { BootstrapColor, Color } from '../../submodules/colors/color';
 import { EventEmitter } from '../../../shared/event-emitter';
 import { AppObject, Iterator } from './app-object';
 import { Circle } from '../canvas/circle';
 import { CanvasEvent } from '../canvas/canvas';
-
 
 // ▄▀▀ ▄▀▄ █▄ █ ▄▀▀ ▀█▀ ▄▀▄ █▄ █ ▀█▀ ▄▀▀
 // ▀▄▄ ▀▄▀ █ ▀█ ▄█▀  █  █▀█ █ ▀█  █  ▄█▀
@@ -17,7 +19,6 @@ const movingScale = 0.5; // size of the button when the robot is in motion
 const fadeScale = 0.5; // opacity of the button when the robot is not in motion
 const buttonOffset = 90; // deg from 0
 const buttonDiameter = 5;
-
 
 /**
  * Button on the button circle
@@ -63,11 +64,16 @@ class Button<actions = string> {
         defaultState: number,
         public readonly condition: (app: App) => boolean,
         public readonly index: number,
-        public readonly color: Color
+        public readonly color: Color,
         // color: BootstrapColor,
     ) {
         // TODO: add icons
-        this.iterator = new Iterator<actions>(name, description, abbr, defaultState);
+        this.iterator = new Iterator<actions>(
+            name,
+            description,
+            abbr,
+            defaultState,
+        );
         // this.circle = new Circle([0, 0], radius, {
         //     fill: {
         //         color: this.color.toString('rgb'),
@@ -105,7 +111,7 @@ class Button<actions = string> {
  * @typedef {ButtonEvents}
  */
 type ButtonEvents = {
-    'click': CanvasEvent<MouseEvent | TouchEvent>;
+    click: CanvasEvent<MouseEvent | TouchEvent>;
 };
 
 /**
@@ -175,7 +181,7 @@ export class ButtonCircle<actions = string> {
         abbr: actions,
         defaultState = 0,
         condition: (app: App) => boolean = () => true,
-        color: Color
+        color: Color,
         // color: BootstrapColor
     ) {
         if (this.buttons.length > 8) {
@@ -189,7 +195,7 @@ export class ButtonCircle<actions = string> {
             defaultState,
             condition,
             index,
-            color
+            color,
         );
         this.buttons.push(button);
         // this.el.appendChild(button.el);
@@ -285,7 +291,7 @@ export class ButtonCircle<actions = string> {
     }
 
     draw(ctx: CanvasRenderingContext2D) {
-        const btns = this.buttons.filter(e => e.condition(this.app));
+        const btns = this.buttons.filter((e) => e.condition(this.app));
         const numButtons = btns.length;
 
         for (const b of btns) b.draw(ctx);
@@ -318,7 +324,7 @@ export class ButtonCircle<actions = string> {
     //     for (const btn of btns) {
     //         btn.show();
     //         const angle = startAngle - btn.index * intervalAngle; // go clockwise, hence the negative
-            
+
     //         const [dx, dy] = [
     //             Math.cos(angle) * circleRadius,
     //             Math.sin(angle) * circleRadius,
@@ -332,11 +338,11 @@ export class ButtonCircle<actions = string> {
     //         ];
 
     //         if (app.isDrawing) btn.moveTo([
-    //             (cx + mx) - app.xOffset, 
+    //             (cx + mx) - app.xOffset,
     //             (cy + my) - app.yOffset
     //         ]);
     //         else btn.moveTo([
-    //             (cx + dx) - app.xOffset, 
+    //             (cx + dx) - app.xOffset,
     //             (cy + dy) - app.yOffset
     //         ]);
     //     }
