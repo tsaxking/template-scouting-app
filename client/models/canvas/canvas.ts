@@ -292,7 +292,7 @@ export class Canvas {
      * @param {(canvas: this) => void} [update] - The update function, called every frame (optional)
      */
     animate(update?: (canvas: this) => void): () => void {
-        const stop = () => this.animating = false;
+        const stop = () => (this.animating = false);
         if (this.animating) return stop;
 
         this.animating = true;
