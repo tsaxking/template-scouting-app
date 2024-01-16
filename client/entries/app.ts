@@ -14,7 +14,9 @@ document.body.id = 'app'; // just for speeding up build in development
 const target = document.getElementById('app') as HTMLElement;
 if (!target) throw new Error('Could not find target element');
 
-export const app = new App<'clb' | 'spk' | 'amp' | 'src' | 'trp'>(target as HTMLDivElement);
+export const app = new App<'clb' | 'spk' | 'amp' | 'src' | 'trp'>(
+    target as HTMLDivElement,
+);
 
 const blueStageArea = app.addArea(
     [
@@ -25,8 +27,8 @@ const blueStageArea = app.addArea(
         [0.3781284004352557, 0.6626768226332971],
         [0.27529923830250275, 0.5321001088139282],
     ],
-    new Color(0, 0, 256, .25),
-    (path) => app.currentLocation ? path.isIn(app.currentLocation) : false,
+    new Color(0, 0, 256, 0.25),
+    (path) => (app.currentLocation ? path.isIn(app.currentLocation) : false),
 );
 
 const redStageArea = app.addArea(
@@ -38,8 +40,8 @@ const redStageArea = app.addArea(
         [0.6202393906420022, 0.6583242655059848],
         [0.6066376496191512, 0.6420021762785637],
     ],
-    new Color(256, 0, 0, .25),
-    (path) => app.currentLocation ? path.isIn(app.currentLocation) : false,
+    new Color(256, 0, 0, 0.25),
+    (path) => (app.currentLocation ? path.isIn(app.currentLocation) : false),
 );
 
 const blueAmpArea = app.addArea(
@@ -49,8 +51,8 @@ const blueAmpArea = app.addArea(
         [0.27747551686615884, 0.11099020674646355],
         [0.13438520130576714, 0.11099020674646355],
     ],
-    new Color(0, 0, 256, .25),
-    (path) => app.currentLocation ? path.isIn(app.currentLocation) : false,
+    new Color(0, 0, 256, 0.25),
+    (path) => (app.currentLocation ? path.isIn(app.currentLocation) : false),
 );
 
 const redAmpArea = app.addArea(
@@ -60,8 +62,8 @@ const redAmpArea = app.addArea(
         [0.8618063112078346, 0.15669205658324264],
         [0.8618063112078346, 0.10772578890097932],
     ],
-    new Color(256, 0, 0, .25),
-    (path) => app.currentLocation ? path.isIn(app.currentLocation) : false,
+    new Color(256, 0, 0, 0.25),
+    (path) => (app.currentLocation ? path.isIn(app.currentLocation) : false),
 );
 
 const blueSrcArea = app.addArea(
@@ -71,8 +73,8 @@ const blueSrcArea = app.addArea(
         [0.8601741022850925, 0.7606093579978237],
         [0.8612622415669206, 0.808487486398259],
     ],
-    new Color(0, 0, 256, .25),
-    (path) => app.currentLocation ? path.isIn(app.currentLocation) : false,
+    new Color(0, 0, 256, 0.25),
+    (path) => (app.currentLocation ? path.isIn(app.currentLocation) : false),
 );
 
 const redSrcArea = app.addArea(
@@ -82,8 +84,8 @@ const redSrcArea = app.addArea(
         [0.21436343852013057, 0.911860718171926],
         [0.13329706202393907, 0.8073993471164309],
     ],
-    new Color(256, 0, 0, .25),
-    (path) => app.currentLocation ? path.isIn(app.currentLocation) : false,
+    new Color(256, 0, 0, 0.25),
+    (path) => (app.currentLocation ? path.isIn(app.currentLocation) : false),
 );
 
 const blueZone = app.addArea(
@@ -94,8 +96,8 @@ const blueZone = app.addArea(
         [0.21490750816104462, 0.9162132752992383],
         [0.3895538628944505, 0.9096844396082698],
     ],
-    new Color(0, 0, 256, .25),
-    (path) => app.currentLocation ? path.isIn(app.currentLocation) : false,
+    new Color(0, 0, 256, 0.25),
+    (path) => (app.currentLocation ? path.isIn(app.currentLocation) : false),
 );
 
 const redZone = app.addArea(
@@ -106,24 +108,27 @@ const redZone = app.addArea(
         [0.779651795429815, 0.911860718171926],
         [0.6066376496191512, 0.9064200217627857],
     ],
-    new Color(256, 0, 0, .25),
-    (path) => app.currentLocation ? path.isIn(app.currentLocation) : false,
+    new Color(256, 0, 0, 0.25),
+    (path) => (app.currentLocation ? path.isIn(app.currentLocation) : false),
 );
 
-app.border = new BorderPolygon([
-    [0.13438520130576714, 0.11316648531011969],
-    [0.8628944504896626, 0.10772578890097932],
-    [0.8634385201305768, 0.8106637649619152],
-    [0.780739934711643, 0.9162132752992383],
-    [0.21545157780195864, 0.9162132752992383],
-    [0.13329706202393907, 0.808487486398259],
-], {
-    fill: {
-        color: Color.fromName('red').setAlpha(.5).toString('rgba'),
+app.border = new BorderPolygon(
+    [
+        [0.13438520130576714, 0.11316648531011969],
+        [0.8628944504896626, 0.10772578890097932],
+        [0.8634385201305768, 0.8106637649619152],
+        [0.780739934711643, 0.9162132752992383],
+        [0.21545157780195864, 0.9162132752992383],
+        [0.13329706202393907, 0.808487486398259],
+    ],
+    {
+        fill: {
+            color: Color.fromName('red').setAlpha(0.5).toString('rgba'),
+        },
+        drawCondition: (b: BorderPolygon) =>
+            app.currentLocation ? b.isIn(app.currentLocation) : false,
     },
-    drawCondition: (b: BorderPolygon) =>
-        app.currentLocation ? b.isIn(app.currentLocation) : false,
-});
+);
 
 // gameObject buttons
 const blueAmp = document.createElement('button');
@@ -190,11 +195,11 @@ app.buttonCircle
         'clb',
         0,
         (app: App) => true,
-            // app.currentLocation
-            //     ? blueStageArea.isIn(app.currentLocation)
-            //     : false,
-                // 'primary'
-                Color.fromName('blue')
+        // app.currentLocation
+        //     ? blueStageArea.isIn(app.currentLocation)
+        //     : false,
+        // 'primary'
+        Color.fromName('blue'),
     )
     .addButton(
         'Red Climb',
@@ -202,11 +207,11 @@ app.buttonCircle
         'clb',
         0,
         (app: App) => true,
-            // app.currentLocation
-            //     ? redStageArea.isIn(app.currentLocation)
-            //     : false,
-                // 'danger'
-                Color.fromName('red')
+        // app.currentLocation
+        //     ? redStageArea.isIn(app.currentLocation)
+        //     : false,
+        // 'danger'
+        Color.fromName('red'),
     )
     .addButton(
         'Blue Trap',
@@ -214,11 +219,11 @@ app.buttonCircle
         'clb',
         0,
         (app: App) => true,
-            // app.currentLocation
-            //     ? blueStageArea.isIn(app.currentLocation)
-            //     : false,
-                // 'primary'
-                Color.fromName('blue')
+        // app.currentLocation
+        //     ? blueStageArea.isIn(app.currentLocation)
+        //     : false,
+        // 'primary'
+        Color.fromName('blue'),
     )
     .addButton(
         'Red Trap',
@@ -226,11 +231,11 @@ app.buttonCircle
         'trp',
         0,
         (app: App) => true,
-            // app.currentLocation
-            //     ? redStageArea.isIn(app.currentLocation)
-            //     : false,
-                // 'danger'
-                Color.fromName('red')
+        // app.currentLocation
+        //     ? redStageArea.isIn(app.currentLocation)
+        //     : false,
+        // 'danger'
+        Color.fromName('red'),
     );
 
 app.launch();

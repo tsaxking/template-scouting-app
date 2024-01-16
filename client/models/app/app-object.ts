@@ -116,9 +116,10 @@ export class AppObject<T = any, actions = string> {
      * @readonly
      * @type {((state: ActionState<T>) => void)[]}
      */
-    private readonly $listeners:
-        ((state: ActionState<T>, event: 'new' | 'undo') => void)[] = [];
-
+    private readonly $listeners: ((
+        state: ActionState<T>,
+        event: 'new' | 'undo',
+    ) => void)[] = [];
 
     public readonly abbr: actions | string;
 
@@ -133,7 +134,7 @@ export class AppObject<T = any, actions = string> {
     constructor(
         public readonly name: string,
         public readonly description: string,
-        abbr?: actions
+        abbr?: actions,
     ) {
         this.abbr = abbr ? abbr : name.substring(0, 3).toLowerCase();
     }
@@ -166,7 +167,13 @@ export class AppObject<T = any, actions = string> {
     public change(point?: Point2D) {
         if (this.$toChange) {
             this.state = this.$toChange(this.state);
-            this.stateHistory.push(new ActionState(this as AppObject<any, string>, this.state, point));
+            this.stateHistory.push(
+                new ActionState(
+                    this as AppObject<any, string>,
+                    this.state,
+                    point,
+                ),
+            );
 
             for (const listener of this.$listeners) {
                 listener(
@@ -297,8 +304,12 @@ export class Iterator<actions = string> extends AppObject<number> {
      * @param {string} description
      * @param {number} [defaultState=0]
      */
-    constructor(name: string, description: string, 
-        abbr?: actions,defaultState?: number) {
+    constructor(
+        name: string,
+        description: string,
+        abbr?: actions,
+        defaultState?: number,
+    ) {
         super(name, description, abbr as string);
         this.toChange((state) => state + 1);
 

@@ -49,11 +49,11 @@ type Section = 'auto' | 'teleop' | 'endgame';
  * @typedef {AppEvents}
  */
 type AppEvents = {
-    'section': Section;
-    'error': Error;
-    'stop': void;
-    'end': void;
-    'stopped': void;
+    section: Section;
+    error: Error;
+    stop: void;
+    end: void;
+    stopped: void;
 };
 
 /**
@@ -268,9 +268,9 @@ export class App<actions = string> {
         });
 
         this.canvas.add(
-            this.background, 
-            // this.buttonCircle, 
-            this.path
+            this.background,
+            // this.buttonCircle,
+            this.path,
         );
 
         this.target.appendChild(this.buttonCircle.el);
@@ -279,7 +279,6 @@ export class App<actions = string> {
 
     private setView() {
         const { target } = this;
-
 
         if (target.clientWidth > target.clientHeight * 2) {
             const xOffset = (target.clientWidth - target.clientHeight * 2) / 2;
@@ -338,7 +337,6 @@ export class App<actions = string> {
         // }
     }
 
-
     // █ █ ▄▀▄ █▀▄ █ ▄▀▄ ██▄ █   ██▀ ▄▀▀
     // ▀▄▀ █▀█ █▀▄ █ █▀█ █▄█ █▄▄ █▄▄ ▄█▀
     /**
@@ -395,7 +393,6 @@ export class App<actions = string> {
     //     this.$yOffset = yOffset;
     //     this.canvas.ctx.canvas.style.top = `${yOffset}px`;
     // }
-
 
     // public get width() {
     //     return this.canvas.ctx.canvas.width;
@@ -594,7 +591,7 @@ export class App<actions = string> {
         let active = true;
 
         // reset active flag on stop
-        const stop = () => active = false;
+        const stop = () => (active = false);
         this.off('stop');
         this.on('stop', stop);
 
@@ -770,7 +767,8 @@ export class App<actions = string> {
      * @readonly
      * @type {[number, number]}
      */
-    public get timeLeft(): [number, number] { // [minutes, seconds]
+    public get timeLeft(): [number, number] {
+        // [minutes, seconds]
         const left = 150 - this.time;
         return [Math.floor(left / 60), left % 60];
     }
@@ -876,9 +874,16 @@ export class App<actions = string> {
         this.currentTime = 0;
         this.currentTick = undefined;
         this.built = true;
-        this.ticks = new Array(150 * App.ticksPerSecond).fill(
-            null,
-        ).map((_, i) => new Tick<actions>(i * App.tickDuration, i, this as App<any>));
+        this.ticks = new Array(150 * App.ticksPerSecond)
+            .fill(null)
+            .map(
+                (_, i) =>
+                    new Tick<actions>(
+                        i * App.tickDuration,
+                        i,
+                        this as App<any>,
+                    ),
+            );
         this.target.appendChild(this.canvasEl);
         this.setListeners();
         const stopAnimation = this.canvas.animate();
@@ -979,14 +984,15 @@ export class App<actions = string> {
         return em;
     }
 
-
     pull() {
-        const d = this.ticks.map((t, i) => {
-            const [x, y] = t.point ?? [-1, -1];
-            return [i, x, y, t.get()?.action.abbr ?? 0];
-        }).filter(p => {
-            return p[1] !== -1 && p[2] !== -1;
-        }) as [number, number, number, string | number][];
+        const d = this.ticks
+            .map((t, i) => {
+                const [x, y] = t.point ?? [-1, -1];
+                return [i, x, y, t.get()?.action.abbr ?? 0];
+            })
+            .filter((p) => {
+                return p[1] !== -1 && p[2] !== -1;
+            }) as [number, number, number, string | number][];
         // [index, x, y, action?], action=0 if no action
         return d;
     }
