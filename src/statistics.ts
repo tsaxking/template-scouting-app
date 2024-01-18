@@ -146,7 +146,7 @@ export const covariance = (data1: number[], data2: number[]): number => {
  * @date 1/10/2024 - 2:45:36 PM
  */
 export const movingAverage = (data: number[], windowSize: number): number[] => {
-    const averages = [];
+    const averages: number[] = [];
     for (let i = 0; i < data.length - windowSize; i++) {
         const window = data.slice(i, i + windowSize);
         averages.push(mean(window));
