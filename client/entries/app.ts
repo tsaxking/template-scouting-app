@@ -242,6 +242,5 @@ app.launch();
 const em = app.clickPoints();
 em.on('point', console.log);
 
-
 // window.app = app gives you a type error
 Object.defineProperty(window, 'app', app);
