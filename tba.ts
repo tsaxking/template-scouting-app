@@ -11,16 +11,16 @@ export type YearTBAMatch = {
         actual_time: number;
         alliances: {
             blue: {
-                dq_team_keys: (undefined)[];
+                dq_team_keys: undefined[];
                 score: number;
-                surrogate_team_keys: (undefined)[];
-                team_keys: (string)[];
+                surrogate_team_keys: undefined[];
+                team_keys: string[];
             };
             red: {
-                dq_team_keys: (undefined)[];
+                dq_team_keys: undefined[];
                 score: number;
-                surrogate_team_keys: (undefined)[];
-                team_keys: (string)[];
+                surrogate_team_keys: undefined[];
+                team_keys: string[];
             };
         };
         comp_level: string;
@@ -38,7 +38,7 @@ export type YearTBAMatch = {
                 autoChargeStationRobot1: string;
                 autoChargeStationRobot2: string;
                 autoChargeStationRobot3: string;
-                autoCommunity: { B: (string)[]; M: (string)[]; T: (string)[] };
+                autoCommunity: { B: string[]; M: string[]; T: string[] };
                 autoDocked: boolean;
                 autoGamePieceCount: number;
                 autoGamePiecePoints: number;
@@ -55,7 +55,7 @@ export type YearTBAMatch = {
                 foulCount: number;
                 foulPoints: number;
                 linkPoints: number;
-                links: ({ nodes: (number)[]; row: string })[];
+                links: { nodes: number[]; row: string }[];
                 mobilityRobot1: string;
                 mobilityRobot2: string;
                 mobilityRobot3: string;
@@ -63,9 +63,9 @@ export type YearTBAMatch = {
                 sustainabilityBonusAchieved: boolean;
                 techFoulCount: number;
                 teleopCommunity: {
-                    B: (string)[];
-                    M: (string)[];
-                    T: (string)[];
+                    B: string[];
+                    M: string[];
+                    T: string[];
                 };
                 teleopGamePieceCount: number;
                 teleopGamePiecePoints: number;
@@ -81,7 +81,7 @@ export type YearTBAMatch = {
                 autoChargeStationRobot1: string;
                 autoChargeStationRobot2: string;
                 autoChargeStationRobot3: string;
-                autoCommunity: { B: (string)[]; M: (string)[]; T: (string)[] };
+                autoCommunity: { B: string[]; M: string[]; T: string[] };
                 autoDocked: boolean;
                 autoGamePieceCount: number;
                 autoGamePiecePoints: number;
@@ -98,7 +98,7 @@ export type YearTBAMatch = {
                 foulCount: number;
                 foulPoints: number;
                 linkPoints: number;
-                links: ({ nodes: (number)[]; row: string })[];
+                links: { nodes: number[]; row: string }[];
                 mobilityRobot1: string;
                 mobilityRobot2: string;
                 mobilityRobot3: string;
@@ -106,9 +106,9 @@ export type YearTBAMatch = {
                 sustainabilityBonusAchieved: boolean;
                 techFoulCount: number;
                 teleopCommunity: {
-                    B: (string)[];
-                    M: (string)[];
-                    T: (string)[];
+                    B: string[];
+                    M: string[];
+                    T: string[];
                 };
                 teleopGamePieceCount: number;
                 teleopGamePiecePoints: number;
@@ -119,23 +119,23 @@ export type YearTBAMatch = {
         };
         set_number: number;
         time: number;
-        videos: ({ key: string; type: string })[];
+        videos: { key: string; type: string }[];
         winning_alliance: string;
     };
     2022: {
         actual_time: number;
         alliances: {
             blue: {
-                dq_team_keys: (undefined)[];
+                dq_team_keys: undefined[];
                 score: number;
-                surrogate_team_keys: (undefined)[];
-                team_keys: (string)[];
+                surrogate_team_keys: undefined[];
+                team_keys: string[];
             };
             red: {
-                dq_team_keys: (undefined)[];
+                dq_team_keys: undefined[];
                 score: number;
-                surrogate_team_keys: (undefined)[];
-                team_keys: (string)[];
+                surrogate_team_keys: undefined[];
+                team_keys: string[];
             };
         };
         comp_level: string;
@@ -232,7 +232,7 @@ export type YearTBAMatch = {
         };
         set_number: number;
         time: number;
-        videos: ({ key: string; type: string })[];
+        videos: { key: string; type: string }[];
         winning_alliance: string;
     };
     2021: any;
@@ -240,16 +240,16 @@ export type YearTBAMatch = {
         actual_time: number;
         alliances: {
             blue: {
-                dq_team_keys: (undefined)[];
+                dq_team_keys: undefined[];
                 score: number;
-                surrogate_team_keys: (undefined)[];
-                team_keys: (string)[];
+                surrogate_team_keys: undefined[];
+                team_keys: string[];
             };
             red: {
-                dq_team_keys: (undefined)[];
+                dq_team_keys: undefined[];
                 score: number;
-                surrogate_team_keys: (undefined)[];
-                team_keys: (string)[];
+                surrogate_team_keys: undefined[];
+                team_keys: string[];
             };
         };
         comp_level: string;
@@ -334,23 +334,23 @@ export type YearTBAMatch = {
         };
         set_number: number;
         time: number;
-        videos: ({ key: string; type: string })[];
+        videos: { key: string; type: string }[];
         winning_alliance: string;
     };
     2019: {
         actual_time: number;
         alliances: {
             blue: {
-                dq_team_keys: (undefined)[];
+                dq_team_keys: undefined[];
                 score: number;
-                surrogate_team_keys: (undefined)[];
-                team_keys: (string)[];
+                surrogate_team_keys: undefined[];
+                team_keys: string[];
             };
             red: {
-                dq_team_keys: (undefined)[];
+                dq_team_keys: undefined[];
                 score: number;
-                surrogate_team_keys: (undefined)[];
-                team_keys: (string)[];
+                surrogate_team_keys: undefined[];
+                team_keys: string[];
             };
         };
         comp_level: string;
@@ -469,23 +469,23 @@ export type YearTBAMatch = {
         };
         set_number: number;
         time: number;
-        videos: ({ key: string; type: string })[];
+        videos: { key: string; type: string }[];
         winning_alliance: string;
     };
     2018: {
         actual_time: number;
         alliances: {
             blue: {
-                dq_team_keys: (undefined)[];
+                dq_team_keys: undefined[];
                 score: number;
-                surrogate_team_keys: (undefined)[];
-                team_keys: (string)[];
+                surrogate_team_keys: undefined[];
+                team_keys: string[];
             };
             red: {
-                dq_team_keys: (undefined)[];
+                dq_team_keys: undefined[];
                 score: number;
-                surrogate_team_keys: (undefined)[];
-                team_keys: (string)[];
+                surrogate_team_keys: undefined[];
+                team_keys: string[];
             };
         };
         comp_level: string;
@@ -576,23 +576,23 @@ export type YearTBAMatch = {
         };
         set_number: number;
         time: number;
-        videos: ({ key: string; type: string })[];
+        videos: { key: string; type: string }[];
         winning_alliance: string;
     };
     2017: {
         actual_time: number;
         alliances: {
             blue: {
-                dq_team_keys: (undefined)[];
+                dq_team_keys: undefined[];
                 score: number;
-                surrogate_team_keys: (undefined)[];
-                team_keys: (string)[];
+                surrogate_team_keys: undefined[];
+                team_keys: string[];
             };
             red: {
-                dq_team_keys: (undefined)[];
+                dq_team_keys: undefined[];
                 score: number;
-                surrogate_team_keys: (undefined)[];
-                team_keys: (string)[];
+                surrogate_team_keys: undefined[];
+                team_keys: string[];
             };
         };
         comp_level: string;
@@ -677,23 +677,23 @@ export type YearTBAMatch = {
         };
         set_number: number;
         time: number;
-        videos: ({ key: string; type: string })[];
+        videos: { key: string; type: string }[];
         winning_alliance: string;
     };
     2016: {
         actual_time: number;
         alliances: {
             blue: {
-                dq_team_keys: (undefined)[];
+                dq_team_keys: undefined[];
                 score: number;
-                surrogate_team_keys: (undefined)[];
-                team_keys: (string)[];
+                surrogate_team_keys: undefined[];
+                team_keys: string[];
             };
             red: {
-                dq_team_keys: (undefined)[];
+                dq_team_keys: undefined[];
                 score: number;
-                surrogate_team_keys: (undefined)[];
-                team_keys: (string)[];
+                surrogate_team_keys: undefined[];
+                team_keys: string[];
             };
         };
         comp_level: string;
@@ -788,23 +788,23 @@ export type YearTBAMatch = {
         };
         set_number: number;
         time: number;
-        videos: ({ key: string; type: string })[];
+        videos: { key: string; type: string }[];
         winning_alliance: string;
     };
     2015: {
         actual_time: null;
         alliances: {
             blue: {
-                dq_team_keys: (undefined)[];
+                dq_team_keys: undefined[];
                 score: number;
-                surrogate_team_keys: (undefined)[];
-                team_keys: (string)[];
+                surrogate_team_keys: undefined[];
+                team_keys: string[];
             };
             red: {
-                dq_team_keys: (undefined)[];
+                dq_team_keys: undefined[];
                 score: number;
-                surrogate_team_keys: (undefined)[];
-                team_keys: (string)[];
+                surrogate_team_keys: undefined[];
+                team_keys: string[];
             };
         };
         comp_level: string;
@@ -871,23 +871,23 @@ export type YearTBAMatch = {
         };
         set_number: number;
         time: number;
-        videos: ({ key: string; type: string })[];
+        videos: { key: string; type: string }[];
         winning_alliance: string;
     };
     2014: {
         actual_time: null;
         alliances: {
             blue: {
-                dq_team_keys: (undefined)[];
+                dq_team_keys: undefined[];
                 score: number;
-                surrogate_team_keys: (undefined)[];
-                team_keys: (string)[];
+                surrogate_team_keys: undefined[];
+                team_keys: string[];
             };
             red: {
-                dq_team_keys: (undefined)[];
+                dq_team_keys: undefined[];
                 score: number;
-                surrogate_team_keys: (undefined)[];
-                team_keys: (string)[];
+                surrogate_team_keys: undefined[];
+                team_keys: string[];
             };
         };
         comp_level: string;
@@ -899,23 +899,23 @@ export type YearTBAMatch = {
         score_breakdown: null;
         set_number: number;
         time: number;
-        videos: (undefined)[];
+        videos: undefined[];
         winning_alliance: string;
     };
     2013: {
         actual_time: null;
         alliances: {
             blue: {
-                dq_team_keys: (undefined)[];
+                dq_team_keys: undefined[];
                 score: number;
-                surrogate_team_keys: (undefined)[];
-                team_keys: (string)[];
+                surrogate_team_keys: undefined[];
+                team_keys: string[];
             };
             red: {
-                dq_team_keys: (undefined)[];
+                dq_team_keys: undefined[];
                 score: number;
-                surrogate_team_keys: (undefined)[];
-                team_keys: (string)[];
+                surrogate_team_keys: undefined[];
+                team_keys: string[];
             };
         };
         comp_level: string;
@@ -927,7 +927,7 @@ export type YearTBAMatch = {
         score_breakdown: null;
         set_number: number;
         time: null;
-        videos: (undefined)[];
+        videos: undefined[];
         winning_alliance: string;
     };
 };
