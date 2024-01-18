@@ -25,6 +25,7 @@ export const destructureMatch = (
 type Assignment = {
     groups: number[][];
     matchAssignments: number[][];
+    interferences: number;
 };
 
 /**
@@ -42,15 +43,15 @@ export const generateScoutGroups = (
     let interferences = 0;
 
     // only use qualification matches
-    matches = matches.filter((m) => m.comp_level === 'qm').sort((a, b) =>
-        a.match_number - b.match_number
-    );
+    matches = matches
+        .filter((m) => m.comp_level === 'qm')
+        .sort((a, b) => a.match_number - b.match_number);
     teams = teams.sort((a, b) => a.team_number - b.team_number);
 
     // unique teams for each scout group
-    const scoutGroups: TBATeam[][] = new Array(6).fill(0).map(() =>
-        new Array<TBATeam>()
-    );
+    const scoutGroups: TBATeam[][] = new Array(6)
+        .fill(0)
+        .map(() => new Array<TBATeam>());
 
     const tempTeams: TBATeam[] = JSON.parse(JSON.stringify(teams));
 
@@ -68,11 +69,11 @@ export const generateScoutGroups = (
         if (tempTeams.length === 0) break;
     }
 
-    const conflicts = new Array(matches.length).fill(0).map(() =>
-        new Array<TBATeam>()
-    );
+    const conflicts = new Array(matches.length)
+        .fill(0)
+        .map(() => new Array<TBATeam>());
 
-    const scoutLists = scoutGroups.map((scoutTeams, ti, ta) => {
+    const scoutLists = scoutGroups.map((scoutTeams) => {
         return matches.map((m, mi) => {
             const mTeams = destructureMatch(m);
             const teams = scoutTeams.filter((t) =>
@@ -103,6 +104,7 @@ export const generateScoutGroups = (
     return {
         groups: scoutGroups.map((g) => g.map((t) => t.team_number)),
         matchAssignments: scoutLists.map((s) => s.map((t) => t.team_number)),
+        interferences
     };
 };
 
@@ -123,15 +125,18 @@ type AssignmentStatus =
  *
  * @typedef {Status}
  */
-type Status = {
-    status: 'ok';
-} | {
-    status: 'error';
-    error: Error;
-} | {
-    status: AssignmentStatus;
-    data: any;
-};
+type Status =
+    | {
+        status: 'ok';
+    }
+    | {
+        status: 'error';
+        error: Error;
+    }
+    | {
+        status: AssignmentStatus;
+        data: unknown;
+    };
 
 /**
  * Tests an assignment for errors
@@ -173,8 +178,8 @@ export const testAssignments = (assignment: Assignment): Status => {
     }
 
     // ensure all matches are the same length
-    const isCorrectLength = matchAssignments.every((m) =>
-        m.length === matchAssignments[0].length
+    const isCorrectLength = matchAssignments.every(
+        (m) => m.length === matchAssignments[0].length,
     );
     if (!isCorrectLength) {
         return {

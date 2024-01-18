@@ -1,4 +1,9 @@
-export type Action = 'spk' | 'amp' | 'src' | 'trp' | 'clb';
+export type Action2024 = 'spk' | 'amp' | 'src' | 'trp' | 'clb';
+export type Action2023 = 'cone' | 'cube' | 'balance' | 'pick';
+
+export type Action = Action2024 | Action2023;
+
+
 export type P = [number, number, number, Action | 0];
 export type TraceArray = P[];
 
@@ -75,28 +80,35 @@ export class Trace {
         const i = decompressI(iStr);
         const x = decompressNum(xStr) / 10000;
         const y = decompressNum(yStr) / 10000;
-        const a = aStr === '' ? 0 : aStr as Action;
+        const a = aStr === '' ? 0 : (aStr as Action);
 
         return [i, x, y, a];
     }
 
-    static compare(trace1: TraceArray, trace2: TraceArray): {
-        status: 'incorrect-length';
-        l1: number;
-        l2: number;
-    } | {
-        status: 'incorrect-point';
-        i: number;
-        p1: P;
-        p2: P;
-    } | {
-        status: 'incorrect-action';
-        i: number;
-        a1: Action | 0;
-        a2: Action | 0;
-    } | {
-        status: 'identical';
-    } {
+    static compare(
+        trace1: TraceArray,
+        trace2: TraceArray,
+    ):
+        | {
+            status: 'incorrect-length';
+            l1: number;
+            l2: number;
+        }
+        | {
+            status: 'incorrect-point';
+            i: number;
+            p1: P;
+            p2: P;
+        }
+        | {
+            status: 'incorrect-action';
+            i: number;
+            a1: Action | 0;
+            a2: Action | 0;
+        }
+        | {
+            status: 'identical';
+        } {
         if (trace1.length !== trace2.length) {
             return {
                 status: 'incorrect-length',
@@ -147,24 +159,26 @@ export class Trace {
         return p[1] !== -1 && p[2] !== -1;
     }
 
-    static filterAction(action: Action) {
+    static filterAction<T = Action>(action: T) {
         return (p: P) => p[3] === action;
     }
 
     static velocityMap(trace: TraceArray) {
-        return trace.map((p1, i, a) => {
-            if (i === a.length - 1) return null;
+        return trace
+            .map((p1, i, a) => {
+                if (i === a.length - 1) return null;
 
-            const [, x1, y1] = p1;
-            const [, x2, y2] = a[i + 1];
+                const [, x1, y1] = p1;
+                const [, x2, y2] = a[i + 1];
 
-            const dx = x2 - x1;
-            const dy = y2 - y1;
+                const dx = x2 - x1;
+                const dy = y2 - y1;
 
-            const distance = Math.sqrt(dx * dx + dy * dy);
+                const distance = Math.sqrt(dx * dx + dy * dy);
 
-            return distance / .25;
-        }).filter((p) => p !== null) as number[];
+                return distance / 0.25;
+            })
+            .filter((p) => p !== null) as number[];
     }
 
     static velocityHistogram(trace: TraceArray) {
