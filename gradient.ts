@@ -64,9 +64,12 @@ export class Gradient {
 
         const gradientLength = colors.length;
 
-        const gradient = string.split('').map((char) => {
-            return `%c${char}`;
-        }).join('');
+        const gradient = string
+            .split('')
+            .map((char) => {
+                return `%c${char}`;
+            })
+            .join('');
 
         let gradientIndex = 0;
         let direction = 1;
