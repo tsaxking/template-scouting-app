@@ -15,11 +15,7 @@ type Matrix = number[][];
  *
  * @typedef {SpatialMatrix}
  */
-type SpatialMatrix = [
-    Point3D,
-    Point3D,
-    Point3D,
-];
+type SpatialMatrix = [Point3D, Point3D, Point3D];
 
 /**
  * Multiplies two matricies
@@ -33,8 +29,16 @@ export function multiplyMatricies(a: Matrix, b: Matrix) {
     // ensure that the matricies are compatible
     if (a[0].length !== b.length) {
         throw new Error(
-            'Matricies are not compatible, ' + 'A: ' + a.length + 'x' +
-                a[0].length + ' B: ' + b.length + 'x' + b[0].length + '',
+            'Matricies are not compatible, ' +
+                'A: ' +
+                a.length +
+                'x' +
+                a[0].length +
+                ' B: ' +
+                b.length +
+                'x' +
+                b[0].length +
+                '',
         );
     }
 

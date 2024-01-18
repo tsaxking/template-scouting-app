@@ -161,7 +161,7 @@ export const colorToString = (color: [number, number, number]): string => {
  * @date 1/10/2024 - 2:43:31 PM
  */
 export const toRadians = (degrees: number): number => {
-    return degrees * Math.PI / 180;
+    return (degrees * Math.PI) / 180;
 };
 
 /**
@@ -169,5 +169,5 @@ export const toRadians = (degrees: number): number => {
  * @date 1/10/2024 - 2:43:31 PM
  */
 export const toDegrees = (radians: number): number => {
-    return radians * 180 / Math.PI;
+    return (radians * 180) / Math.PI;
 };

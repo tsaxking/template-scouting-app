@@ -44,7 +44,7 @@ export class Plane {
      * @returns {(Point | null)}
      */
     intersect(v: Vector): Point | null {
-        const t = (this.normal.dot(new Vector(this.normal.point, v.point))) /
+        const t = this.normal.dot(new Vector(this.normal.point, v.point)) /
             this.normal.dot(v);
         if (t < 0) return null;
         const x = v.ft('x')(t);

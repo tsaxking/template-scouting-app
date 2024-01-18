@@ -27,7 +27,10 @@ export class Vector {
      * @param {Point} point
      * @param {Point} rate
      */
-    constructor(public point: Point, public rate: Point) {}
+    constructor(
+        public point: Point,
+        public rate: Point,
+    ) {}
 
     /**
      * Returns the magnitude of the vector
@@ -58,8 +61,11 @@ export class Vector {
      * @returns
      */
     dot(v: Vector) {
-        return this.rate.x * v.rate.x + this.rate.y * v.rate.y +
-            this.rate.z * v.rate.z;
+        return (
+            this.rate.x * v.rate.x +
+            this.rate.y * v.rate.y +
+            this.rate.z * v.rate.z
+        );
     } /**
      * Description placeholder
      * @date 1/10/2024 - 2:42:00 PM

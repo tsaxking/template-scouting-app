@@ -36,7 +36,11 @@ export class Point {
      * @param {number} y
      * @param {number} [z=0]
      */
-    constructor(public x: number, public y: number, public z: number = 0) {}
+    constructor(
+        public x: number,
+        public y: number,
+        public z: number = 0,
+    ) {}
 
     /**
      * Returns the point as an array of [x, y, z]
@@ -84,7 +88,8 @@ export class Point {
      */
     distance(point: Point): number {
         return Math.sqrt(
-            Math.pow(this.x - point.x, 2) + Math.pow(this.y - point.y, 2) +
+            Math.pow(this.x - point.x, 2) +
+                Math.pow(this.y - point.y, 2) +
                 Math.pow(this.z - point.z, 2),
         );
     }

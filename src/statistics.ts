@@ -37,10 +37,13 @@ export const median = (data: number[]): number => {
  * @date 1/10/2024 - 2:45:36 PM
  */
 export const mode = (data: number[]): number => {
-    const counts = data.reduce((counts, x) => {
-        counts[x] = counts[x] ? counts[x] + 1 : 1;
-        return counts;
-    }, {} as { [key: number]: number });
+    const counts = data.reduce(
+        (counts, x) => {
+            counts[x] = counts[x] ? counts[x] + 1 : 1;
+            return counts;
+        },
+        {} as { [key: number]: number },
+    );
 
     let max = 0;
     let mode = 0;
@@ -73,11 +76,7 @@ export const quartiles = (data: number[]): [number, number, number] => {
     const lower = sorted.slice(0, mid);
     const upper = sorted.slice(mid + 1);
 
-    return [
-        median(lower),
-        median(sorted),
-        median(upper),
-    ];
+    return [median(lower), median(sorted), median(upper)];
 };
 
 /**
@@ -136,10 +135,9 @@ export const correlation = (data1: number[], data2: number[]): number => {
 export const covariance = (data1: number[], data2: number[]): number => {
     const m1 = mean(data1);
     const m2 = mean(data2);
-    const sum = data1.map((x, i) => (x - m1) * (data2[i] - m2)).reduce(
-        (a, b) => a + b,
-        0,
-    );
+    const sum = data1
+        .map((x, i) => (x - m1) * (data2[i] - m2))
+        .reduce((a, b) => a + b, 0);
     return sum / (data1.length - 1);
 };
 
