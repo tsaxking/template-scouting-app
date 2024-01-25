@@ -37,7 +37,6 @@ stdin.on('build', () => builder.emit('build'));
 
 builder.on('error', (e) => log('Build error:', e));
 
-
 app.use('/*', (req, res, next) => {
     log(`[${req.method}] ${req.url}`);
     next();
@@ -119,7 +118,6 @@ app.post('/*', (req, res, next) => {
     next();
 });
 
-
 app.get('/test/:page', (req, res, next) => {
     if (env.ENVIRONMENT !== 'dev') return next();
     const s = res.sendTemplate('entries/test/' + req.params.page);
@@ -140,7 +138,6 @@ app.get('/', (req, res, next) => {
 app.get('/app', (req, res) => {
     res.sendTemplate('entries/app');
 });
-
 
 app.final<{
     $$files?: FileUpload;

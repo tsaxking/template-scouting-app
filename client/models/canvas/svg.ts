@@ -1,20 +1,19 @@
-import { Point2D } from "../../../shared/submodules/calculations/src/linear-algebra/point";
-import { Drawable } from "./canvas";
-import { TextProperties } from "./shape-properties";
+import { Point2D } from '../../../shared/submodules/calculations/src/linear-algebra/point';
+import { Drawable } from './canvas';
+import { TextProperties } from './shape-properties';
 
 type SVGProperties = {
     text: Partial<TextProperties>;
 };
 
 export class SVG implements Drawable<SVG> {
-
     public readonly img: HTMLImageElement = new Image();
     private ready = false;
 
     constructor(
         public svg: string, // path to svg
         public center: Point2D,
-        public properties?: Partial<SVGProperties>
+        public properties?: Partial<SVGProperties>,
     ) {
         this.img.src = svg;
 
@@ -28,11 +27,8 @@ export class SVG implements Drawable<SVG> {
             if (this.properties?.text?.width) {
                 this.img.width = this.properties.text.width;
             }
-        }
+        };
     }
-
-
-
 
     draw(ctx: CanvasRenderingContext2D) {
         if (!this.ready) return;
@@ -50,7 +46,7 @@ export class SVG implements Drawable<SVG> {
             this.center[0] * ctx.canvas.width,
             this.center[1] * ctx.canvas.height,
             this.img.width,
-            this.img.height
+            this.img.height,
         );
     }
-};
+}
