@@ -23,7 +23,7 @@ export class Img extends Drawable<Img> {
      * @readonly
      * @type {HTMLImageElement}
      */
-    public readonly img: HTMLImageElement;
+    public readonly img: HTMLImageElement = new Image();
     private data: HTMLImageElement | null = null;
 
     constructor(
@@ -31,6 +31,8 @@ export class Img extends Drawable<Img> {
         public readonly options: Partial<CanvasImgOptions> = {},
     ) {
         super();
+
+        this.img.src = src;
 
         this.img.onload = () => {
             const canvas = document.createElement('canvas');

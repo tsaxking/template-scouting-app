@@ -161,6 +161,12 @@ export const messages: {
         code: 400,
         instructions: 'Please try again.',
     },
+    'account:invalid-settings': {
+        message: 'Your settings were invalid, please try again',
+        color: 'danger',
+        code: 404,
+        instructions: '',
+    },
     'account:invalid-username': {
         message: 'That username is invalid.',
         color: 'danger',
@@ -257,6 +263,12 @@ export const messages: {
         color: 'danger',
         code: 500,
         instructions: 'Please try again.',
+    },
+    'account:settings-set': {
+        message: 'Your settings have been saved',
+        color: 'success',
+        code: 200,
+        instructions: '',
     },
     'account:unverified': {
         message: 'Account has been unverified',
@@ -571,6 +583,7 @@ export type StatusId =
     | 'account:invalid-last-name'
     | 'account:invalid-password'
     | 'account:invalid-password-reset-key'
+    | 'account:invalid-settings'
     | 'account:invalid-username'
     | 'account:invalid-verification-key'
     | 'account:logged-in'
@@ -587,6 +600,7 @@ export type StatusId =
     | 'account:role-added'
     | 'account:role-removed'
     | 'account:server-error'
+    | 'account:settings-set'
     | 'account:unverified'
     | 'account:updated'
     | 'account:username-changed'
@@ -652,6 +666,7 @@ export type AccountStatusId =
     | 'invalid-last-name'
     | 'invalid-password'
     | 'invalid-password-reset-key'
+    | 'invalid-settings'
     | 'invalid-username'
     | 'invalid-verification-key'
     | 'logged-in'
@@ -672,7 +687,8 @@ export type AccountStatusId =
     | 'updated'
     | 'username-changed'
     | 'username-taken'
-    | 'verified';
+    | 'verified'
+    | 'settings-set';
 
 export type AdminStatusId = 'invalid-key';
 
@@ -681,8 +697,8 @@ export type FilesStatusId =
     | 'invalid-extension'
     | 'no-files'
     | 'too-large'
-    | 'uploaded'
-    | 'too-many-files';
+    | 'too-many-files'
+    | 'uploaded';
 
 export type MemberStatusId =
     | 'accepted'
