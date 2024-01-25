@@ -3,7 +3,6 @@ export type Action2023 = 'cone' | 'cube' | 'balance' | 'pick';
 
 export type Action = Action2024 | Action2023;
 
-
 export type P = [number, number, number, Action | 0];
 export type TraceArray = P[];
 
@@ -44,12 +43,6 @@ const decompressNum = (str: string) => {
     }
     return num;
 };
-
-type TraceStatus =
-    | 'identical'
-    | 'incorrect-length'
-    | 'incorrect-point'
-    | 'incorrect-action';
 
 export class Trace {
     static encode(trace: TraceArray) {
@@ -163,39 +156,119 @@ export class Trace {
         return (p: P) => p[3] === action;
     }
 
-    static velocityMap(trace: TraceArray) {
-        return trace
-            .map((p1, i, a) => {
-                if (i === a.length - 1) return null;
+    static get distance() {
+        return {
+            map: (trace: TraceArray) => {
+                return trace
+                    .map((p1, i, a) => {
+                        if (i === a.length - 1) return null;
 
-                const [, x1, y1] = p1;
-                const [, x2, y2] = a[i + 1];
+                        const [, x1, y1] = p1;
+                        const [, x2, y2] = a[i + 1];
 
-                const dx = x2 - x1;
-                const dy = y2 - y1;
+                        const dx = x2 - x1;
+                        const dy = y2 - y1;
 
-                const distance = Math.sqrt(dx * dx + dy * dy);
+                        const distance = Math.sqrt(dx * dx + dy * dy);
 
-                return distance / 0.25;
-            })
-            .filter((p) => p !== null) as number[];
+                        return distance;
+                    })
+                    .filter((p) => p !== null) as number[];
+            },
+            total: (trace: TraceArray) => {
+                const map = Trace.distance.map(trace);
+
+                return map.reduce((a, b) => a + b, 0);
+            },
+        };
     }
 
-    static velocityHistogram(trace: TraceArray) {
-        const map = Trace.velocityMap(trace);
+    static get velocity() {
+        return {
+            map: (trace: TraceArray) => {
+                return trace
+                    .map((p1, i, a) => {
+                        if (i === a.length - 1) return null;
 
-        const max = Math.max(...map);
-        const min = Math.min(...map);
+                        const [, x1, y1] = p1;
+                        const [, x2, y2] = a[i + 1];
 
-        const range = max - min;
+                        const dx = x2 - x1;
+                        const dy = y2 - y1;
 
-        const buckets = new Array(10).fill(0) as number[];
+                        const distance = Math.sqrt(dx * dx + dy * dy);
 
-        map.forEach((v) => {
-            const bucket = Math.floor(((v - min) / range) * 10);
-            buckets[bucket]++;
-        });
+                        return distance / 0.25;
+                    })
+                    .filter((p) => p !== null) as number[];
+            },
+            histogram: (trace: TraceArray) => {
+                const map = Trace.velocity.map(trace);
 
-        return buckets;
+                const max = Math.max(...map);
+                const min = Math.min(...map);
+
+                const range = max - min;
+
+                const buckets = new Array(10).fill(0) as number[];
+
+                map.forEach((v) => {
+                    const bucket = Math.floor(((v - min) / range) * 10);
+                    buckets[bucket]++;
+                });
+
+                return buckets;
+            },
+            average: (trace: TraceArray) => {
+                const map = Trace.velocity.map(trace);
+
+                return map.reduce((a, b) => a + b, 0) / map.length;
+            },
+        };
+    }
+
+    static get old() {
+        const chars =
+            'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+{}|:"<>?`~[]\';./=\\,';
+
+        const parse = (str: string): [number, number, number] => {
+            return [
+                +str.slice(0, 2) / 100,
+                +str.slice(2, 4) / 100,
+                +str.slice(4, 10) / 1000,
+            ];
+        };
+
+        return {
+            compress: (str: string | number) => {
+                let num = +str;
+                const base = chars.length;
+                let result = '';
+                while (num > 0) {
+                    result = chars[num % base] + result;
+                    num = Math.floor(num / base);
+                }
+                return result;
+            },
+            decompress: (str: string) => {
+                const base = chars.length;
+                let num = 0;
+                for (let i = 0; i < str.length; i++) {
+                    num += chars.indexOf(str[i]) *
+                        Math.pow(base, str.length - i - 1);
+                }
+                str = num.toString();
+
+                return new Array(10 - str.length).fill('0').join('') + str;
+            },
+            encode: (
+                trace: [string | number, string | number, string | number][],
+            ): string[] => {
+                return trace.map((p) => p.map(Trace.old.compress).join(' '));
+            },
+            decode: (trace: string[]) => {
+                return trace.map(Trace.old.decompress);
+            },
+        };
     }
 }
