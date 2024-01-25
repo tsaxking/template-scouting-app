@@ -104,7 +104,7 @@ export const generateScoutGroups = (
     return {
         groups: scoutGroups.map((g) => g.map((t) => t.team_number)),
         matchAssignments: scoutLists.map((s) => s.map((t) => t.team_number)),
-        interferences
+        interferences,
     };
 };
 

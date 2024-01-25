@@ -1,11 +1,9 @@
 import { Point2D } from '../calculations/src/linear-algebra/point.ts';
 
 type AreaMap = {
-    red: Point2D[],
-    blue: Point2D[]
-}
-
-
+    red: Point2D[];
+    blue: Point2D[];
+};
 
 export const stages: AreaMap = {
     blue: [
@@ -23,7 +21,7 @@ export const stages: AreaMap = {
         [0.7219804134929271, 0.528835690968444],
         [0.6202393906420022, 0.6583242655059848],
         [0.6066376496191512, 0.6420021762785637],
-    ]
+    ],
 };
 
 export const amps: AreaMap = {
@@ -38,8 +36,8 @@ export const amps: AreaMap = {
         [0.719260065288357, 0.15560391730141457],
         [0.8618063112078346, 0.15669205658324264],
         [0.8618063112078346, 0.10772578890097932],
-    ]
-}
+    ],
+};
 
 export const srcs: AreaMap = {
     blue: [
@@ -53,8 +51,8 @@ export const srcs: AreaMap = {
         [0.21545157780195864, 0.8628944504896626],
         [0.21436343852013057, 0.911860718171926],
         [0.13329706202393907, 0.8073993471164309],
-    ]
-}
+    ],
+};
 
 export const zones: AreaMap = {
     blue: [
@@ -70,13 +68,13 @@ export const zones: AreaMap = {
         [0.8623503808487486, 0.8073993471164309],
         [0.779651795429815, 0.911860718171926],
         [0.6066376496191512, 0.9064200217627857],
-    ]
-}
+    ],
+};
 
 export const autoZone: AreaMap = {
     blue: [],
-    red: []
-}
+    red: [],
+};
 
 export const border = [
     [0.13438520130576714, 0.11316648531011969],
