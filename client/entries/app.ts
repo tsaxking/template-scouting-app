@@ -4,8 +4,14 @@ import { App } from '../models/app/app';
 import { Color } from '../submodules/colors/color';
 import { BorderPolygon } from '../models/canvas/border';
 import { Iterator } from '../models/app/app-object';
-import { stages, amps, srcs, zones, autoZone, border } from '../../shared/submodules/tatorscout-calculations/2024-areas';
-
+import {
+    amps,
+    autoZone,
+    border,
+    srcs,
+    stages,
+    zones,
+} from '../../shared/submodules/tatorscout-calculations/2024-areas';
 
 // const appView = new AppView({
 //     target: document.body,
@@ -35,49 +41,46 @@ const redStageArea = app.addArea(
 const blueAmpArea = app.addArea(
     amps.blue,
     new Color(0, 0, 256, 0.25),
-    (path) => (app.currentLocation ? path.isIn(app.currentLocation) : false),
+    (path) => app.currentLocation ? path.isIn(app.currentLocation) : false,
 );
 
 const redAmpArea = app.addArea(
     amps.red,
     new Color(256, 0, 0, 0.25),
-    (path) => (app.currentLocation ? path.isIn(app.currentLocation) : false),
+    (path) => app.currentLocation ? path.isIn(app.currentLocation) : false,
 );
 
 const blueSrcArea = app.addArea(
     srcs.blue,
     new Color(0, 0, 256, 0.25),
-    (path) => (app.currentLocation ? path.isIn(app.currentLocation) : false),
+    (path) => app.currentLocation ? path.isIn(app.currentLocation) : false,
 );
 
 const redSrcArea = app.addArea(
     srcs.red,
     new Color(256, 0, 0, 0.25),
-    (path) => (app.currentLocation ? path.isIn(app.currentLocation) : false),
+    (path) => app.currentLocation ? path.isIn(app.currentLocation) : false,
 );
 
 const blueZone = app.addArea(
     zones.blue,
     new Color(0, 0, 256, 0.25),
-    (path) => (app.currentLocation ? path.isIn(app.currentLocation) : false),
+    (path) => app.currentLocation ? path.isIn(app.currentLocation) : false,
 );
 
 const redZone = app.addArea(
     zones.red,
     new Color(256, 0, 0, 0.25),
-    (path) => (app.currentLocation ? path.isIn(app.currentLocation) : false),
+    (path) => app.currentLocation ? path.isIn(app.currentLocation) : false,
 );
 
-app.border = new BorderPolygon(
-    border as [number, number][],
-    {
-        fill: {
-            color: Color.fromName('red').setAlpha(0.5).toString('rgba'),
-        },
-        drawCondition: (b: BorderPolygon) =>
-            app.currentLocation ? b.isIn(app.currentLocation) : false,
+app.border = new BorderPolygon(border as [number, number][], {
+    fill: {
+        color: Color.fromName('red').setAlpha(0.5).toString('rgba'),
     },
-);
+    drawCondition: (b: BorderPolygon) =>
+        app.currentLocation ? b.isIn(app.currentLocation) : false,
+});
 
 // gameObject buttons
 const blueAmp = document.createElement('button');
