@@ -1,4 +1,5 @@
-import { io } from 'socket.io-client';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { io, Socket } from 'socket.io-client';
 import { SocketEvent } from '../../shared/socket';
 import { ServerRequest } from './requests';
 import { uptime } from '../../shared/clock';
@@ -10,19 +11,23 @@ import { uptime } from '../../shared/clock';
  * @type {*}
  */
 const initialized = new Promise<void>((res) => {
-    ServerRequest.post<{ url: string }>('/socket-url').then(({ url }) => {
-        res();
-        const s = io(url);
-        s.on('disconnect', () => {
-            // this says it doesn't exist but it really does, so I have a small work around :)
-            (s.io as any).reconnect();
-        });
+    ServerRequest.post<{ url: string }>('/socket-url').then((data) => {
+        if (data.isOk()) {
+            const { value } = data;
+            res();
+            const s = io(value.url);
+            s.on('disconnect', () => {
+                s.io['reconnect'](); // reconnect is private, but it is still accessible if I do this
+            });
 
-        s.on('reload', () => {
-            if (uptime() > 1000) location.reload();
-        });
+            s.on('reload', () => {
+                if (uptime() > 1000) location.reload();
+            });
 
-        socket.io = s;
+            socket.socket = s;
+        } else {
+            console.error(data.error);
+        }
     });
 });
 
@@ -46,6 +51,15 @@ export type SocketMetadata = {
  * @typedef {SocketListener}
  */
 export class SocketListener {
+    /**
+     * All socket listeners
+     * @date 1/22/2024 - 2:23:28 AM
+     *
+     * @public
+     * @static
+     * @readonly
+     * @type {Map<string, SocketListener>}
+     */
     public static readonly listeners: Map<string, SocketListener> = new Map();
 
     /**
@@ -117,8 +131,8 @@ export class ViewUpdate {
     constructor(
         public readonly event: string,
         public readonly page: string | null,
-        public readonly callback: (...args: any[]) => void,
-        public readonly filter?: (...args: any[]) => boolean,
+        public readonly callback: (...args: unknown[]) => void,
+        public readonly filter?: (...args: unknown[]) => boolean,
     ) {
         const listener = SocketWrapper.listeners[event];
         if (!listener) throw new Error(`Event ${event} does not exist`);
@@ -176,7 +190,7 @@ export class SocketWrapper {
      * @private
      * @type {?*}
      */
-    private socket?: any;
+    private $$socket?: Socket;
 
     /**
      * Creates an instance of SocketWrapper.
@@ -187,13 +201,13 @@ export class SocketWrapper {
     constructor() {}
 
     /**
-     * This is a getter for the socket so that it can be initialized after the class is created
+     * This is a getter for the socket
      * @date 10/12/2023 - 1:28:35 PM
      *
      * @type {*}
      */
-    get io() {
-        return this.socket?.io;
+    get socket() {
+        return this.$$socket;
     }
 
     /**
@@ -202,9 +216,31 @@ export class SocketWrapper {
      *
      * @type {*}
      */
-    set io(socket: any) {
-        if (this.socket) throw new Error('Socket is already initialized');
-        this.socket = socket;
+    set socket(socket: Socket | undefined) {
+        if (this.$$socket) throw new Error('Socket is already initialized');
+        this.$$socket = socket;
+    }
+
+    /**
+     * Global socket.io object
+     * @date 1/22/2024 - 2:23:28 AM
+     *
+     * @readonly
+     * @type {*}
+     */
+    get io() {
+        return this.$$socket?.io;
+    }
+
+    /**
+     * If the socket is connected
+     * @date 1/22/2024 - 2:23:28 AM
+     *
+     * @readonly
+     * @type {*}
+     */
+    get connected() {
+        return this.$$socket?.connected;
     }
 
     // wrapper for socket so that it can update the model and view if on the correct page with a single listener
@@ -231,7 +267,7 @@ export class SocketWrapper {
         const listener = new SocketListener(event);
         SocketWrapper.listeners[event] = listener;
 
-        this.socket.on(
+        this.$$socket?.on(
             event,
             (/* metadata: SocketMetadata, */ ...args: any[]) => {
                 console.log('socket.on', event, ...args);

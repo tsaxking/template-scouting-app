@@ -3,7 +3,8 @@ import { notify } from './notifications';
 import { EventEmitter } from '../../shared/event-emitter';
 import { StatusJson } from '../../shared/status';
 import { streamDelimiter } from '../../shared/text';
-import { uuid } from '../../server/utilities/uuid';
+import { uuid as _uuid } from '../../server/utilities/uuid';
+import { attemptAsync, Result } from '../../shared/attempt';
 
 /**
  * These are optional options for a request
@@ -135,7 +136,7 @@ export class RetrieveStreamEventEmitter<T = string> extends EventEmitter<
      * @returns {Promise<T[]>}
      */
     get promise() {
-        return new Promise<T[]>((res, rej) => {
+        return new Promise<T[]>((res) => {
             this.on('complete', res);
         });
     }
@@ -286,19 +287,23 @@ export class SendStream {
                         type: 'data',
                     })
                         .then((data) => {
-                            switch (data.status) {
-                                case 'received':
-                                    this.emit('progress', i);
-                                    break;
-                                case 'end':
-                                    this.emit('end', undefined);
-                                    break;
-                                case 'error':
-                                    this.emit(
-                                        'error',
-                                        new Error('Server error'),
-                                    );
-                                    break;
+                            if (data.isOk()) {
+                                const { value } = data;
+
+                                switch (value.status) {
+                                    case 'received':
+                                        this.emit('progress', i);
+                                        break;
+                                    case 'end':
+                                        this.emit('end', undefined);
+                                        break;
+                                    case 'error':
+                                        this.emit(
+                                            'error',
+                                            new Error('Server error'),
+                                        );
+                                        break;
+                                }
                             }
                         })
                         .catch((error: Error) => {
@@ -430,11 +435,13 @@ export class ServerRequest<T = unknown> {
      */
     static async post<T>(
         url: string,
-        body?: any,
+        body?: unknown,
         options?: RequestOptions,
-    ): Promise<T> {
-        const r = new ServerRequest<T>(url, 'post', body, options);
-        return r.send();
+    ): Promise<Result<T>> {
+        return attemptAsync(async () => {
+            const r = new ServerRequest<T>(url, 'post', body, options);
+            return r.send();
+        });
     }
 
     /**
@@ -448,9 +455,14 @@ export class ServerRequest<T = unknown> {
      * @param {?RequestOptions} [options]
      * @returns {Promise<T>}
      */
-    static async get<T>(url: string, options?: RequestOptions): Promise<T> {
-        const r = new ServerRequest<T>(url, 'get', undefined, options);
-        return r.send();
+    static async get<T>(
+        url: string,
+        options?: RequestOptions,
+    ): Promise<Result<T>> {
+        return attemptAsync(async () => {
+            const r = new ServerRequest<T>(url, 'get', undefined, options);
+            return r.send();
+        });
     }
 
     /**
@@ -462,7 +474,7 @@ export class ServerRequest<T = unknown> {
      * @param {ServerRequest[]} requests
      * @returns {Promise<any[]>}
      */
-    static async multiple(requests: ServerRequest[]): Promise<any[]> {
+    static async multiple(requests: ServerRequest[]): Promise<unknown[]> {
         return Promise.all(requests.map((r) => r.send()));
     }
 
@@ -480,7 +492,7 @@ export class ServerRequest<T = unknown> {
     static streamFiles(
         url: string,
         files: FileList,
-        body?: any,
+        body?: unknown,
         options?: StreamOptions,
     ): EventEmitter<keyof SendFileStreamEventData> {
         const emitter = new EventEmitter<keyof SendFileStreamEventData>();
@@ -540,7 +552,7 @@ export class ServerRequest<T = unknown> {
      */
     static retrieveStream<K = string>(
         url: string,
-        body?: any,
+        body?: unknown,
         parser?: (data: string) => K,
     ): RetrieveStreamEventEmitter<K> {
         const output: K[] = [];
@@ -698,7 +710,7 @@ export class ServerRequest<T = unknown> {
     constructor(
         public readonly url: string,
         public readonly method: 'get' | 'post' = 'post',
-        public readonly body?: any,
+        public readonly body?: unknown,
         public readonly options?: RequestOptions,
     ) {
         ServerRequest.all.push(this);

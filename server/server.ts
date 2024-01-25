@@ -11,8 +11,10 @@ import { router as account } from './routes/account.ts';
 import { router as api } from './routes/api.ts';
 import Role from './structure/roles.ts';
 import { validate } from './middleware/data-type.ts';
-import { retrieveStream } from './middleware/stream.ts';
+import { FileUpload, retrieveStream } from './middleware/stream.ts';
 import os from 'https://deno.land/x/dos@v0.11.0/mod.ts';
+import { stdin } from './utilities/utilties.ts';
+import { ReqBody } from './structure/app/req.ts';
 
 console.log('Platform:', os.platform());
 
@@ -29,10 +31,6 @@ export const app = new App(port, domain, {
     ioPort: +(env.SOCKET_PORT || port + 1),
 });
 
-app.get('/*', (req, res) => {
-    console.log('test');
-});
-
 const builder = await runBuild();
 
 // building client listeners
@@ -40,6 +38,8 @@ builder.on('build', () => {
     if (env.ENVIRONMENT === 'dev') app.io.emit('reload');
     log('Build complete');
 });
+
+stdin.on('build', () => builder.emit('build'));
 
 builder.on('error', (e) => log('Build error:', e));
 
@@ -67,17 +67,10 @@ app.post('/ping', (req, res) => {
 
 app.post(
     '/test-validation',
-    validate(
-        {
-            username: (v: any) => v === 'fail',
-            password: (v: any) => v === 'test',
-        },
-        {
-            onspam: (req, res) => {
-                res.sendStatus('test:fail');
-            },
-        },
-    ),
+    validate({
+        username: ['fail'],
+        password: ['test'],
+    }),
     (req, res) => {
         res.sendStatus('test:success');
     },
@@ -95,13 +88,13 @@ app.static('/uploads', resolve(__root, './uploads'));
 
 app.use('/*', Session.middleware());
 
-app.post('/socket-url', (req, res, next) => {
+app.post('/socket-url', (req, res) => {
     res.json({
         url: env.SOCKET_DOMAIN,
     });
 });
 
-app.get('/favicon.ico', (req, res, next) => {
+app.get('/favicon.ico', (req, res) => {
     res.sendFile(resolve(__root, './public/pictures/logo-square.png'));
 });
 
@@ -109,20 +102,20 @@ app.get('/robots.txt', (req, res) => {
     res.sendFile(resolve(__root, './public/pictures/robots.jpg'));
 });
 
-function stripHtml(body: any) {
+function stripHtml(body: ReqBody) {
     if (!body) return body;
-    let files: any;
+    let files: unknown;
 
-    if (body.files) {
-        files = JSON.parse(JSON.stringify(body.files));
+    if (body.$$files) {
+        files = JSON.parse(JSON.stringify(body.$$files));
         delete body.files;
     }
 
-    let obj: any = {};
+    let obj: ReqBody = {};
 
     const remove = (str: string) => str.replace(/(<([^>]+)>)/gi, '');
 
-    const strip = (obj: any): any => {
+    const strip = (obj: unknown): unknown => {
         switch (typeof obj) {
             case 'string':
                 return remove(obj);
@@ -139,21 +132,21 @@ function stripHtml(body: any) {
         }
     };
 
-    obj = strip(body);
+    obj = strip(body) as ReqBody;
 
     if (files) {
-        obj.files = files;
+        obj.$$files = files;
     }
 
     return obj;
 }
 
 app.post('/*', (req, res, next) => {
-    req.body = stripHtml(req.body);
+    req.body = stripHtml(req.body as ReqBody);
 
     try {
         const b = JSON.parse(JSON.stringify(req.body)) as {
-            $$files?: any;
+            $$files?: FileUpload[];
             password?: string;
             confirmPassword?: string;
         }; // remove deep references
@@ -220,7 +213,7 @@ app.get('/app', (req, res) => {
 // });
 
 app.final<{
-    $$files?: any;
+    $$files?: FileUpload;
     password?: string;
     confirmPassword?: string;
 }>((req, res) => {
@@ -239,7 +232,7 @@ app.final<{
                 (() => {
                     let { body } = req;
                     body = JSON.parse(JSON.stringify(body)) as {
-                        $$files?: any;
+                        $$files?: FileUpload;
                         password?: string;
                         confirmPassword?: string;
                     };
