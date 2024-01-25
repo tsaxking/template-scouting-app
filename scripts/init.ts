@@ -31,7 +31,7 @@ const createEnv = () => {
         validation?: (data: string) => boolean,
         allowBlank = true,
     ) => {
-        if (values[key]) return;
+        if (typeof env[key] !== 'undefined') return;
         const value = runPrompt(message, defaultValue, validation, allowBlank);
         if (value) {
             values[key] = value;
@@ -127,12 +127,7 @@ const createEnv = () => {
     );
 
     const e = Object.keys(values)
-        .map(
-            (key) =>
-                `${toSnakeCase(fromCamelCase(key)).toUpperCase()} = '${
-                    values[key]
-                }'`,
-        )
+        .map((key) => `${key} = '${values[key]}'`)
         .join('\n');
     Deno.writeTextFileSync(resolve(__root, './.env'), e);
 
