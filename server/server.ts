@@ -2,16 +2,10 @@ import env, { __root, resolve } from './utilities/env.ts';
 import { log } from './utilities/terminal-logging.ts';
 import { App, ResponseStatus } from './structure/app/app.ts';
 import { Session } from './structure/sessions.ts';
-import { getJSONSync, log as serverLog } from './utilities/files.ts';
-import { homeBuilder } from './utilities/page-builder.ts';
-import Account from './structure/accounts.ts';
+import { log as serverLog } from './utilities/files.ts';
 import { runBuild } from './bundler.ts';
-import { router as admin } from './routes/admin.ts';
-import { router as account } from './routes/account.ts';
 import { router as api } from './routes/api.ts';
-import Role from './structure/roles.ts';
-import { validate } from './middleware/data-type.ts';
-import { FileUpload, retrieveStream } from './middleware/stream.ts';
+import { FileUpload } from './middleware/stream.ts';
 import os from 'https://deno.land/x/dos@v0.11.0/mod.ts';
 import { stdin } from './utilities/utilties.ts';
 import { ReqBody } from './structure/app/req.ts';
@@ -43,38 +37,6 @@ stdin.on('build', () => builder.emit('build'));
 
 builder.on('error', (e) => log('Build error:', e));
 
-app.post('/test-stream', (req, res) => {
-    const data = new Array(1000).fill('').map((_, i) => i.toString());
-    res.stream(data);
-});
-
-app.post(
-    '/test-stream-data',
-    retrieveStream({
-        onData: console.log,
-        onError: console.error,
-        onEnd: console.log,
-    }),
-);
-
-app.post('/test', (req, res) => {
-    res.sendStatus('test:success');
-});
-
-app.post('/ping', (req, res) => {
-    res.send('pong');
-});
-
-app.post(
-    '/test-validation',
-    validate({
-        username: ['fail'],
-        password: ['test'],
-    }),
-    (req, res) => {
-        res.sendStatus('test:success');
-    },
-);
 
 app.use('/*', (req, res, next) => {
     log(`[${req.method}] ${req.url}`);
@@ -98,11 +60,7 @@ app.get('/favicon.ico', (req, res) => {
     res.sendFile(resolve(__root, './public/pictures/logo-square.png'));
 });
 
-app.get('/robots.txt', (req, res) => {
-    res.sendFile(resolve(__root, './public/pictures/robots.jpg'));
-});
-
-function stripHtml(body: ReqBody) {
+function stripHtml(body: any) {
     if (!body) return body;
     let files: unknown;
 
@@ -161,16 +119,6 @@ app.post('/*', (req, res, next) => {
     next();
 });
 
-// TODO: There is an error with the email validation middleware
-// app.post('/*', emailValidation(['email', 'confirmEmail'], {
-//     onspam: (req, res, next) => {
-//         res.sendStatus('spam:detected');
-//     },
-//     // onerror: (req, res, next) => {
-//     //     // res.sendStatus('unknown:error');
-//     //     next();
-//     // }
-// }));
 
 app.get('/test/:page', (req, res, next) => {
     if (env.ENVIRONMENT !== 'dev') return next();
@@ -181,20 +129,9 @@ app.get('/test/:page', (req, res, next) => {
 });
 
 app.route('/api', api);
-app.route('/account', account);
+// app.route('/account', account);
 
-// app.use('/*', Account.autoSignIn(env.AUTO_SIGN_IN));
-
-// app.get('/*', (req, res, next) => {
-//     if (!req.session?.accountId) {
-//         req.session!.prevUrl = req.url;
-//         return res.redirect('/account/sign-in');
-//     }
-
-//     next();
-// });
-
-app.route('/admin', admin);
+// app.route('/admin', admin);
 
 app.get('/', (req, res, next) => {
     res.redirect('/app');
@@ -204,13 +141,6 @@ app.get('/app', (req, res) => {
     res.sendTemplate('entries/app');
 });
 
-// app.get('/user/*', Account.isSignedIn,  (req, res, next) => {
-//     res.sendTemplate('entries/user');
-// });
-
-// app.get('/admin/*', Role.allowRoles('admin'), (req, res, next) => {
-//     res.sendTemplate('entries/admin');
-// });
 
 app.final<{
     $$files?: FileUpload;

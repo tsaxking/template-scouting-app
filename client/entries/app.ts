@@ -3,7 +3,9 @@ import './../utilities/imports';
 import { App } from '../models/app/app';
 import { Color } from '../submodules/colors/color';
 import { BorderPolygon } from '../models/canvas/border';
-import { AppObject, Iterator } from '../models/app/app-object';
+import { Iterator } from '../models/app/app-object';
+import { stages, amps, srcs, zones, autoZone, border } from '../../shared/submodules/tatorscout-calculations/2024-areas';
+
 
 // const appView = new AppView({
 //     target: document.body,
@@ -19,108 +21,55 @@ export const app = new App<'clb' | 'spk' | 'amp' | 'src' | 'trp'>(
 );
 
 const blueStageArea = app.addArea(
-    [
-        [0.27475516866158867, 0.4961915125136017],
-        [0.3781284004352557, 0.36670293797606096],
-        [0.3895538628944505, 0.383025027203482],
-        [0.39227421109902066, 0.6441784548422198],
-        [0.3781284004352557, 0.6626768226332971],
-        [0.27529923830250275, 0.5321001088139282],
-    ],
+    stages.blue,
     new Color(0, 0, 256, 0.25),
     (path) => (app.currentLocation ? path.isIn(app.currentLocation) : false),
 );
 
 const redStageArea = app.addArea(
-    [
-        [0.6066376496191512, 0.3808487486398259],
-        [0.6180631120783461, 0.367791077257889],
-        [0.720348204570185, 0.49836779107725787],
-        [0.7219804134929271, 0.528835690968444],
-        [0.6202393906420022, 0.6583242655059848],
-        [0.6066376496191512, 0.6420021762785637],
-    ],
+    stages.red,
     new Color(256, 0, 0, 0.25),
     (path) => (app.currentLocation ? path.isIn(app.currentLocation) : false),
 );
 
 const blueAmpArea = app.addArea(
-    [
-        [0.13547334058759522, 0.15451577801958652],
-        [0.27747551686615884, 0.15451577801958652],
-        [0.27747551686615884, 0.11099020674646355],
-        [0.13438520130576714, 0.11099020674646355],
-    ],
+    amps.blue,
     new Color(0, 0, 256, 0.25),
     (path) => (app.currentLocation ? path.isIn(app.currentLocation) : false),
 );
 
 const redAmpArea = app.addArea(
-    [
-        [0.7176278563656148, 0.11425462459194777],
-        [0.719260065288357, 0.15560391730141457],
-        [0.8618063112078346, 0.15669205658324264],
-        [0.8618063112078346, 0.10772578890097932],
-    ],
+    amps.red,
     new Color(256, 0, 0, 0.25),
     (path) => (app.currentLocation ? path.isIn(app.currentLocation) : false),
 );
 
 const blueSrcArea = app.addArea(
-    [
-        [0.780739934711643, 0.9140369967355821],
-        [0.780739934711643, 0.8618063112078346],
-        [0.8601741022850925, 0.7606093579978237],
-        [0.8612622415669206, 0.808487486398259],
-    ],
+    srcs.blue,
     new Color(0, 0, 256, 0.25),
     (path) => (app.currentLocation ? path.isIn(app.currentLocation) : false),
 );
 
 const redSrcArea = app.addArea(
-    [
-        [0.13492927094668117, 0.7595212187159956],
-        [0.21545157780195864, 0.8628944504896626],
-        [0.21436343852013057, 0.911860718171926],
-        [0.13329706202393907, 0.8073993471164309],
-    ],
+    srcs.red,
     new Color(256, 0, 0, 0.25),
     (path) => (app.currentLocation ? path.isIn(app.currentLocation) : false),
 );
 
 const blueZone = app.addArea(
-    [
-        [0.3911860718171926, 0.11207834602829161],
-        [0.13547334058759522, 0.11534276387377584],
-        [0.13492927094668117, 0.808487486398259],
-        [0.21490750816104462, 0.9162132752992383],
-        [0.3895538628944505, 0.9096844396082698],
-    ],
+    zones.blue,
     new Color(0, 0, 256, 0.25),
     (path) => (app.currentLocation ? path.isIn(app.currentLocation) : false),
 );
 
 const redZone = app.addArea(
-    [
-        [0.6055495103373232, 0.10990206746463548],
-        [0.8607181719260065, 0.10663764961915125],
-        [0.8623503808487486, 0.8073993471164309],
-        [0.779651795429815, 0.911860718171926],
-        [0.6066376496191512, 0.9064200217627857],
-    ],
+    zones.red,
     new Color(256, 0, 0, 0.25),
     (path) => (app.currentLocation ? path.isIn(app.currentLocation) : false),
 );
 
 app.border = new BorderPolygon(
-    [
-        [0.13438520130576714, 0.11316648531011969],
-        [0.8628944504896626, 0.10772578890097932],
-        [0.8634385201305768, 0.8106637649619152],
-        [0.780739934711643, 0.9162132752992383],
-        [0.21545157780195864, 0.9162132752992383],
-        [0.13329706202393907, 0.808487486398259],
-    ],
+    border as [number, number][],
     {
         fill: {
             color: Color.fromName('red').setAlpha(0.5).toString('rgba'),
