@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { App } from "../../models/app/app";
+import { App } from '../../models/app/app';
 
-    export let app: App;
+export let app: App;
 </script>
