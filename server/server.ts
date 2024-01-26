@@ -9,6 +9,10 @@ import { FileUpload } from './middleware/stream.ts';
 import os from 'https://deno.land/x/dos@v0.11.0/mod.ts';
 import { stdin } from './utilities/utilties.ts';
 import { ReqBody } from './structure/app/req.ts';
+import { validate } from './middleware/data-type.ts';
+import { Match } from '../shared/submodules/tatorscout-calculations/match-submission.ts';
+import { ServerRequest } from './utilities/requests.ts';
+import { getJSONSync } from './utilities/files.ts';
 
 console.log('Platform:', os.platform());
 
@@ -59,6 +63,7 @@ app.get('/favicon.ico', (req, res) => {
     res.sendFile(resolve(__root, './public/pictures/logo-square.png'));
 });
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function stripHtml(body: any) {
     if (!body) return body;
     let files: unknown;
@@ -131,12 +136,56 @@ app.route('/api', api);
 
 // app.route('/admin', admin);
 
-app.get('/', (req, res, next) => {
+app.get('/', (req, res) => {
     res.redirect('/app');
 });
 
 app.get('/app', (req, res) => {
     res.sendTemplate('entries/app');
+});
+
+app.post<Match>('/submit', validate({
+    checks: (v) => Array.isArray(v) && v.every((v) => typeof v === 'string'),
+    comments: (v) => typeof v === 'object' && Object.values(v).every((v) => typeof v === 'string'),
+    matchNumber: 'number',
+    teamNumber: 'number',
+    compLevel: ['pr', 'qm', 'qf', 'sf', 'f'],
+}), async (req, res) => {
+    const { eventKey, checks, comments, matchNumber, teamNumber, compLevel } = req.body;
+
+    const result = await ServerRequest.submitMatch({
+        checks,
+        comments,
+        matchNumber,
+        teamNumber,
+        compLevel,
+        eventKey
+    });
+
+    if (result.isOk()) {
+        res.sendStatus('server-request:match-submitted', {
+            matchNumber,
+            teamNumber,
+            compLevel
+        });
+    } else {
+        res.sendStatus('server-request:match-error', {
+            matchNumber,
+            teamNumber,
+            compLevel
+        });
+    }
+});
+
+app.post('/event-data', async (_req, res) => {
+    let name: string = 'dummy-event-data.json';
+    if (env.ENVIRONMENT === 'prod') name = 'event-data.json';
+    const data = getJSONSync(name);
+    if (data.isOk()) {
+        res.json(data.value);
+    } else {
+        res.status(500).json(data.error);
+    }
 });
 
 app.final<{

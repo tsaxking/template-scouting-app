@@ -16,6 +16,7 @@ branch-transfer/
 
 deno.lock
 
+event-data.json
 credentials.json
 token.json
 

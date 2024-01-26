@@ -17,7 +17,7 @@ import { Polygon } from '../canvas/polygon';
 import { Circle } from '../canvas/circle';
 import { Color } from '../../submodules/colors/color';
 import { Settings } from '../settings';
-import { attempt, Result } from '../../../shared/attempt';
+import { attempt, attemptAsync, Result } from '../../../shared/attempt';
 import { Container } from '../canvas/container';
 import { TraceArray } from '../../../shared/submodules/tatorscout-calculations/trace';
 import {
@@ -28,6 +28,8 @@ import {
 import { generate2024App } from './2024-app';
 import { ServerRequest } from '../../utilities/requests';
 import { alert } from '../../utilities/notifications';
+import { Assignment } from '../../../shared/submodules/tatorscout-calculations/scout-groups';
+import { TBAEvent, TBAMatch, TBATeam } from '../../../shared/submodules/tatorscout-calculations/tba';
 
 /**
  * Description placeholder
@@ -215,6 +217,14 @@ export class Tick<actions = Action> {
     }
 }
 
+type EventData = {
+    assignments: Assignment;
+    matches: TBAMatch[];
+    teams: TBATeam[];
+    eventKey: string;
+    event: TBAEvent
+};
+
 /**
  * The full scouting app, including the canvas and all the buttons
  * @date 1/9/2024 - 3:08:20 AM
@@ -229,6 +239,22 @@ export class App<a = Action, z extends Zones = Zones, p = TraceParse> {
             case 2024:
                 return generate2024App(alliance);
         }
+    }
+
+    private static $eventData?: EventData;
+
+    public static async getEventData(): Promise<Result<EventData>> {
+        return attemptAsync(async () => {
+            if (App.$eventData) return App.$eventData;
+            const res = await ServerRequest.post<EventData>('/event-data');
+            if (res.isOk()) {
+                App.$eventData = res.value;
+                return res.value;
+            } else {
+                alert('Error getting scout groups');
+                throw res.error;
+            }
+        });
     }
 
     // ▄▀▀ ▄▀▄ █▄ █ ▄▀▀ ▀█▀ ▄▀▄ █▄ █ ▀█▀ ▄▀▀
@@ -1238,3 +1264,5 @@ export class App<a = Action, z extends Zones = Zones, p = TraceParse> {
         // download as json file
     }
 }
+
+window.App = App;

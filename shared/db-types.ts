@@ -88,3 +88,4 @@ export type AccountSettings = {
     accountId: string;
     settings: string;
 };
+
