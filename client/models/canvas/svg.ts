@@ -1,3 +1,4 @@
+import { copy } from '../../../shared/copy';
 import { Point2D } from '../../../shared/submodules/calculations/src/linear-algebra/point';
 import { Drawable } from './drawable';
 
@@ -64,5 +65,11 @@ export class SVG extends Drawable<SVG> {
             this.$img.width,
             this.$img.height,
         );
+    }
+
+    clone(): SVG {
+        const s = new SVG(this.src, this.center);
+        copy(this, s);
+        return s;
     }
 }

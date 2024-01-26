@@ -66,14 +66,22 @@ let data: {
 
 const open = active => {
     if (active !== 'Post') return;
-    console.log('Post opened');
-    data.autoMobility.value = app.parsed.mobility;
-    data = data;
-
-
     const res = app.drawRecap(canvas);
     if (res.isErr()) console.warn(res.error);
-    if (res.isOk()) console.log('Recap drawn');
+    if (res.isOk()) {
+        jQuery('#slider').slider({
+            range: true,
+            min: 0,
+            max: res.value.children.length - 1,
+            values: [0, res.value.children.length - 1],
+            slide: (_, ui) => {
+                const [start, end] = ui.values;
+                res.value.filter((_, i) => i >= start && i <= end);
+            }
+        });
+        data.autoMobility.value = app.parsed.mobility;
+        data = data;
+    }
 };
 
 let commentsSections: string[] = [];
@@ -85,6 +93,7 @@ $: {
 }
 
 let generalComment: string = '';
+
 </script>
 
 <div class="container">
@@ -147,6 +156,7 @@ let generalComment: string = '';
         </div>
         <div class="row p-0 m-0">
             <canvas bind:this="{canvas}"></canvas>
+            <div id="slider" class="mt-1"></div>
         </div>
     </div>
 </div>

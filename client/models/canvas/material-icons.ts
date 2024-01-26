@@ -1,3 +1,4 @@
+import { copy } from '../../../shared/copy';
 import { Point2D } from '../../../shared/submodules/calculations/src/linear-algebra/point';
 import { Drawable } from './drawable';
 import { MaterialIcon } from 'material-icons';
@@ -73,5 +74,11 @@ export class Icon extends Drawable<MaterialIcon> {
         const [px, py] = point;
 
         return px >= x - s && px <= x + s && py >= y - s && py <= y + s;
+    }
+
+    clone(): Icon {
+        const i = new Icon(this.icon, this.options);
+        copy(this, i);
+        return i;
     }
 }

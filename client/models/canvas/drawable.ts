@@ -60,6 +60,8 @@ type DrawableEvents = {
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export class Drawable<T = any> {
+    public readonly id = Math.random();
+
     public $canvas?: Canvas;
 
     constructor() {
@@ -241,5 +243,10 @@ export class Drawable<T = any> {
         this.$fadeFrames = frames;
         this.$currentFadeFrame = 1;
         this.$fadeDirection = 1;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    clone(): Drawable<any> {
+        throw new Error(`Method not implemented for ${this.constructor.name}`);
     }
 }
