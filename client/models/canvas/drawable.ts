@@ -1,6 +1,7 @@
 import { Point2D } from '../../../shared/submodules/calculations/src/linear-algebra/point';
 import { EventEmitter } from '../../../shared/event-emitter';
 import { ShapeProperties } from './properties';
+import { Canvas } from './canvas';
 
 /**
  * Event wrapper for drawable events
@@ -9,17 +10,22 @@ import { ShapeProperties } from './properties';
  * @export
  * @class CanvasEvent
  * @typedef {DrawableEvent}
- * @template [event=unknown]
+ * @template [e=unknown]
  */
-export class DrawableEvent<event = unknown> {
+export class DrawableEvent<e = unknown> {
     /**
      * Creates an instance of CanvasEvent.
      * @date 1/25/2024 - 1:25:32 PM
      *
      * @constructor
-     * @param {event} $event
+     * @param {e} event
      */
-    constructor(public readonly $event: event) {}
+    constructor(
+        public readonly event: e,
+        public readonly points: Point2D[],
+        public readonly canvas: Canvas,
+        public readonly drawable: Drawable
+    ) {}
 }
 
 /**
@@ -54,9 +60,12 @@ type DrawableEvents = {
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export class Drawable<T = any> {
+    public $canvas?: Canvas;
+
     constructor() {
         this.show();
 
+        
         this.$emitter.on('draw', () => {
             this.$drawn = true;
         });

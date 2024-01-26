@@ -7,14 +7,26 @@ import { ActionState } from './app-object';
 import { Point2D } from '../../../shared/submodules/calculations/src/linear-algebra/point';
 import { EventEmitter } from '../../../shared/event-emitter';
 import { ButtonCircle } from './button-circle';
-import { Canvas, Drawable } from '../canvas/canvas';
+import { Canvas } from '../canvas/canvas';
 import { AppObject } from './app-object';
 import { Path } from '../canvas/path';
 import { Img } from '../canvas/image';
-import { BorderPolygon } from '../canvas/border';
+import { Border } from '../canvas/border';
 import { Polygon } from '../canvas/polygon';
 import { Circle } from '../canvas/circle';
 import { Color } from '../../submodules/colors/color';
+import { Settings } from '../settings';
+import { Result, attempt } from '../../../shared/attempt';
+import { Container } from '../canvas/container';
+import { TraceArray } from '../../../shared/submodules/tatorscout-calculations/trace';
+import { Action, Zones, TraceParse } from '../../../shared/submodules/tatorscout-calculations/trace';
+import { generate2024App } from './2024-app';
+
+/**
+ * Description placeholder
+ * @date 1/25/2024 - 4:59:07 PM
+ */
+const round = (n: number) => Math.round(n * 10000) / 10000;
 
 /**
  * Point including time
@@ -64,7 +76,7 @@ type AppEvents = {
  * @class Tick
  * @typedef {Tick}
  */
-export class Tick<actions = string> {
+export class Tick<actions = Action> {
     /**
      * Data collected at this tick
      * @date 1/9/2024 - 3:08:20 AM
@@ -148,6 +160,12 @@ export class Tick<actions = string> {
         }
     }
 
+    /**
+     * Removes data collected at this tick
+     * @date 1/25/2024 - 4:59:07 PM
+     *
+     * @public
+     */
     public clear() {
         if (this.data instanceof ActionState) {
             this.data.tick = null;
@@ -198,7 +216,15 @@ export class Tick<actions = string> {
  * @class App
  * @typedef {App}
  */
-export class App<actions = string> {
+export class App<a = Action, z extends Zones = Zones, parse = TraceParse> {
+    public static build(year: 2024, alliance: 'red' | 'blue' | null = null) {
+        switch (year) {
+            case 2024: 
+                return generate2024App(alliance);
+        }
+    }
+
+
     // ▄▀▀ ▄▀▄ █▄ █ ▄▀▀ ▀█▀ ▄▀▄ █▄ █ ▀█▀ ▄▀▀
     // ▀▄▄ ▀▄▀ █ ▀█ ▄█▀  █  █▀█ █ ▀█  █  ▄█▀
     /**
@@ -246,19 +272,29 @@ export class App<actions = string> {
     }
 
     /**
+     * Description placeholder
+     * @date 1/25/2024 - 4:59:07 PM
+     *
+     * @private
+     * @type {?HTMLDivElement}
+     */
+    private $target?: HTMLDivElement;
+
+    public readonly parsed: Partial<parse> = {};
+
+    private clicking = false;
+
+    /**
      * Creates an instance of App.
      * @date 1/9/2024 - 3:08:20 AM
      *
      * @constructor
      * @param {HTMLDivElement} target
      */
-    constructor(public readonly target: HTMLDivElement) {
-        target.style.position = 'relative';
-        target.classList.add('no-scroll');
-        target.style.height = '100vh';
-        target.style.width = '100vw';
-
-        this.canvas.ctx.canvas.style.position = 'absolute';
+    constructor(
+        public readonly currentAlliance: 'red' | 'blue' | null = null,
+    ) {
+        this.canvas.$ctx.canvas.style.position = 'absolute';
 
         this.background = new Img('/public/pictures/field.png', {
             x: 0,
@@ -267,27 +303,82 @@ export class App<actions = string> {
             height: 1,
         });
 
+        this.path.$properties.line = {
+            color: Color.fromName('black').toString('rgba'),
+            width: 1,
+        };
+
         this.canvas.add(
             this.background,
-            // this.buttonCircle,
             this.path,
         );
 
-        this.target.appendChild(this.buttonCircle.el);
+        this.clicking = false;
+
+        const click = () => {
+            this.clicking = true;
+
+            setTimeout(unclick, App.tickDuration)
+        };
+        const unclick = () => (this.clicking = false);
+
+        // this.buttonCircle.on('click', click);
+        this.buttonCircle.on('mousedown', click);
+        this.buttonCircle.on('mouseup', unclick);
+        this.buttonCircle.on('touchstart', click);
+        this.buttonCircle.on('touchend', unclick);
+        this.buttonCircle.on('touchcancel', unclick);
+
         this.setView();
+
+        this.canvas.data = this;
     }
 
+    /**
+     * Description placeholder
+     * @date 1/25/2024 - 4:59:07 PM
+     *
+     * @type {*}
+     */
+    get target() {
+        return this.$target;
+    }
+
+    /**
+     * Description placeholder
+     * @date 1/25/2024 - 4:59:07 PM
+     *
+     * @type {*}
+     */
+    set target(target: HTMLDivElement | undefined) {
+        this.$target = target;
+        if (target) {
+            target.style.position = 'relative';
+            target.classList.add('no-scroll');
+            target.style.height = 'calc(100vh - 42px)';
+            target.style.width = '100%';
+            this.setView();
+        }
+    }
+
+    /**
+     * Description placeholder
+     * @date 1/25/2024 - 4:59:07 PM
+     *
+     * @private
+     */
     private setView() {
         const { target } = this;
+        if (!target) return;
 
         if (target.clientWidth > target.clientHeight * 2) {
             const xOffset = (target.clientWidth - target.clientHeight * 2) / 2;
-            this.canvas.ctx.canvas.width = target.clientHeight * 2;
-            this.canvas.ctx.canvas.height = target.clientHeight;
+            this.canvas.$ctx.canvas.width = target.clientHeight * 2;
+            this.canvas.$ctx.canvas.height = target.clientHeight;
             this.height = target.clientHeight;
             this.width = target.clientHeight * 2;
-            this.canvas.ctx.canvas.style.top = '0px';
-            this.canvas.ctx.canvas.style.left = `${xOffset}px`;
+            this.canvas.$ctx.canvas.style.top = '0px';
+            this.canvas.$ctx.canvas.style.left = `${xOffset}px`;
             this.xOffset = xOffset;
             this.yOffset = 0;
 
@@ -298,12 +389,12 @@ export class App<actions = string> {
             }
         } else {
             const yOffset = (target.clientHeight - target.clientWidth / 2) / 2;
-            this.canvas.ctx.canvas.width = target.clientWidth;
-            this.canvas.ctx.canvas.height = target.clientWidth / 2;
+            this.canvas.$ctx.canvas.width = target.clientWidth;
+            this.canvas.$ctx.canvas.height = target.clientWidth / 2;
             this.height = target.clientWidth / 2;
             this.width = target.clientWidth;
-            this.canvas.ctx.canvas.style.top = `${yOffset}px`;
-            this.canvas.ctx.canvas.style.left = '0px';
+            this.canvas.$ctx.canvas.style.top = `${yOffset}px`;
+            this.canvas.$ctx.canvas.style.left = '0px';
             this.xOffset = 0;
             this.yOffset = yOffset;
 
@@ -313,8 +404,6 @@ export class App<actions = string> {
                 element.style.top = `${y * this.canvas.height + yOffset}px`;
             }
         }
-
-        this.buttonCircle.draw(this.canvas.ctx);
 
         // if (target.clientWidth > target.clientHeight * 2) {
         //     const xOffset = (target.clientWidth - target.clientHeight * 2) / 2;
@@ -362,7 +451,7 @@ export class App<actions = string> {
      * @public
      * @type {(Tick | undefined)}
      */
-    public currentTick: Tick<actions> | undefined = undefined;
+    public currentTick: Tick<a> | undefined = undefined;
     /**
      * The current location of the robot [x, y]
      * @date 1/9/2024 - 3:08:20 AM
@@ -371,44 +460,38 @@ export class App<actions = string> {
      * @type {(Point2D | undefined)}
      */
     public currentLocation: Point2D | undefined = undefined;
+    /**
+     * Description placeholder
+     * @date 1/25/2024 - 4:59:07 PM
+     *
+     * @public
+     * @type {number}
+     */
     public xOffset = 0;
+    /**
+     * Description placeholder
+     * @date 1/25/2024 - 4:59:07 PM
+     *
+     * @public
+     * @type {number}
+     */
     public yOffset = 0;
+    /**
+     * Description placeholder
+     * @date 1/25/2024 - 4:59:07 PM
+     *
+     * @public
+     * @type {number}
+     */
     public width = 0;
+    /**
+     * Description placeholder
+     * @date 1/25/2024 - 4:59:07 PM
+     *
+     * @public
+     * @type {number}
+     */
     public height = 0;
-
-    // public get xOffset() {
-    //     return this.$xOffset;
-    // }
-
-    // public set xOffset(xOffset: number) {
-    //     this.$xOffset = xOffset;
-    //     this.canvas.ctx.canvas.style.left = `${xOffset}px`;
-    // }
-
-    // public get yOffset() {
-    //     return this.$yOffset;
-    // }
-
-    // public set yOffset(yOffset: number) {
-    //     this.$yOffset = yOffset;
-    //     this.canvas.ctx.canvas.style.top = `${yOffset}px`;
-    // }
-
-    // public get width() {
-    //     return this.canvas.ctx.canvas.width;
-    // }
-
-    // public set width(width: number) {
-    //     this.canvas.ctx.canvas.width = width;
-    // }
-
-    // public get height() {
-    //     return this.canvas.ctx.canvas.height;
-    // }
-
-    // public set height(height: number) {
-    //     this.canvas.ctx.canvas.height = height;
-    // }
 
     // █▀▄ █▀▄ ▄▀▄ █   █ ▄▀▄ ██▄ █   ██▀ ▄▀▀
     // █▄▀ █▀▄ █▀█ ▀▄▀▄▀ █▀█ █▄█ █▄▄ █▄▄ ▄█▀
@@ -420,10 +503,7 @@ export class App<actions = string> {
      * @readonly
      * @type {Path}
      */
-    public readonly path: Path = new Path([], {
-        color: Color.fromName('black').toString('rgba'),
-        width: 1,
-    });
+    public readonly path: Path = new Path([]);
     /**
      * The circle of buttons surrounding the robot
      * @date 1/9/2024 - 3:08:20 AM
@@ -432,7 +512,21 @@ export class App<actions = string> {
      * @readonly
      * @type {*}
      */
-    public readonly buttonCircle = new ButtonCircle<actions>(this as App<any>);
+    public readonly buttonCircle = new ButtonCircle<a>(this as App<any, any>);
+
+
+    public readonly appObjects: AppObject<any, a>[] = [];
+
+    get appObjectData() {
+        const output = {} as {
+            [key: string]: unknown;
+        };
+        for (const action of this.appObjects) {
+            output[action.name] = action.state;
+        }
+        return output;
+    }
+
     /**
      * All the game objects and their respective locations on the field
      * @date 1/9/2024 - 3:08:20 AM
@@ -448,9 +542,19 @@ export class App<actions = string> {
     public readonly gameObjects: {
         x: number;
         y: number;
-        object: AppObject<any, actions>;
+        object: AppObject<any, a>;
         element: HTMLElement;
+        alliance: 'red' | 'blue' | null;
     }[] = [];
+
+    public readonly areas = {} as {
+        [key in z]: {
+            area: Polygon | Circle;
+            color: Color;
+            condition: (shape: Polygon) => boolean;
+        }
+    };
+
     /**
      * Whether the robot is drawing or not
      * @date 1/9/2024 - 3:08:20 AM
@@ -466,9 +570,9 @@ export class App<actions = string> {
      * @date 1/9/2024 - 3:23:58 AM
      *
      * @public
-     * @type {?BorderPolygon}
+     * @type {?Border}
      */
-    private $border?: BorderPolygon;
+    private $border?: Border;
     /**
      * The areas of the field (Any area that is of significance)
      * @date 1/9/2024 - 3:23:58 AM
@@ -477,7 +581,7 @@ export class App<actions = string> {
      * @readonly
      * @type {(Polygon | Circle)[]}
      */
-    public readonly areas: (Polygon | Circle)[] = [];
+    // public readonly areas: (Polygon | Circle)[] = [];
 
     /**
      * Sets the border of the field
@@ -489,11 +593,11 @@ export class App<actions = string> {
      */
     setBorder(points: Point2D[], color: Color) {
         if (this.border) throw new Error('Border already set');
-        const b = new BorderPolygon(points, {
-            fill: {
-                color: color.toString('rgba'),
-            },
-        });
+        const b = new Border(points);
+        b.$properties.doDraw = () => (this.currentLocation ? b.isIn(this.currentLocation) : false);
+        b.$properties.fill = {
+            color: color.toString('rgba'),
+        }
 
         this.canvas.add(b);
         this.border = b;
@@ -509,19 +613,35 @@ export class App<actions = string> {
      * @returns {*}
      */
     addArea(
+        zone: z,
         points: Point2D[],
         color: Color,
         condition: (shape: Polygon) => boolean,
     ) {
-        const p = new Polygon(points, {
-            fill: {
-                color: color.toString('rgba'),
-            },
-            drawCondition: condition as any, // TODO: fix the typing on draw polygon condition
-        });
+        const p = new Polygon(points);
+
+        p.$properties.doDraw = () => {
+            if (Settings.get('showAreas') === false) return false;
+
+            const draw = condition(p);
+
+            return draw;
+        };
+        p.$properties.fill = {
+            color: color.toString('rgba'),
+        }
+
+        // p.fade(5);
 
         this.canvas.add(p);
-        this.areas.push(p);
+        // this.areas.push(p);
+
+        this.areas[zone] = {
+            area: p,
+            color: color,
+            condition: condition,
+        }
+
         return p;
     }
 
@@ -542,7 +662,9 @@ export class App<actions = string> {
      * @readonly
      * @type {*}
      */
-    public readonly canvas = new Canvas(this.canvasEl.getContext('2d')!);
+    public readonly canvas = new Canvas<App<a, z>>(this.canvasEl.getContext('2d')!, {
+        events: ['click', 'mousedown', 'mouseup', 'touchstart', 'touchend', 'touchcancel']
+    });
     /**
      * Whether the app has been built or not
      * @date 1/9/2024 - 3:08:20 AM
@@ -572,8 +694,15 @@ export class App<actions = string> {
      * @readonly
      * @type {Tick[]}
      */
-    public ticks: Tick<actions>[];
+    public ticks: Tick<a>[];
 
+    /**
+     * Description placeholder
+     * @date 1/25/2024 - 4:59:07 PM
+     *
+     * @public
+     * @type {boolean}
+     */
     public isDrawing = false;
 
     /**
@@ -585,6 +714,8 @@ export class App<actions = string> {
      * @returns {void) => void}
      */
     public launch(cb?: (tick: Tick) => void) {
+        if (!this.target) return console.error('No target set');
+        const { target } = this;
         this.build();
         this.startTime = Date.now();
         this.currentTime = this.startTime;
@@ -631,12 +762,12 @@ export class App<actions = string> {
 
         const start = () => {
             run(this.ticks[0]);
-            this.target.removeEventListener('mousedown', start);
-            this.target.removeEventListener('touchstart', start);
+            target.removeEventListener('mousedown', start);
+            target.removeEventListener('touchstart', start);
         };
 
-        this.target.addEventListener('mousedown', start);
-        this.target.addEventListener('touchstart', start);
+        target.addEventListener('mousedown', start);
+        target.addEventListener('touchstart', start);
     }
 
     /**
@@ -661,11 +792,25 @@ export class App<actions = string> {
         return null;
     }
 
-    public get border(): BorderPolygon | undefined {
+    /**
+     * Description placeholder
+     * @date 1/25/2024 - 4:59:07 PM
+     *
+     * @public
+     * @type {(Border | undefined)}
+     */
+    public get border(): Border | undefined {
         return this.$border;
     }
 
-    public set border(b: BorderPolygon) {
+    /**
+     * Description placeholder
+     * @date 1/25/2024 - 4:59:07 PM
+     *
+     * @public
+     * @type {*}
+     */
+    public set border(b: Border) {
         this.$border = b;
         this.canvas.add(b);
     }
@@ -787,19 +932,18 @@ export class App<actions = string> {
      */
     addGameObject<T = unknown>(
         point: Point2D,
-        object: AppObject<T, actions>,
+        object: AppObject<T, a>,
         button: HTMLElement,
         convert?: (state: T) => string,
+        alliance: 'red' | 'blue' | null = null
     ) {
         const [x, y] = point;
-        this.gameObjects.push({ x, y, object, element: button });
+        this.gameObjects.push({ x, y, object, element: button, alliance });
 
         button.innerText = object.name;
         button.style.position = 'absolute';
         button.style.zIndex = '100';
         button.style.transform = 'translate(-50%, -50%)';
-
-        this.target.appendChild(button);
 
         object.listen((state, event) => {
             console.log('state change!', state, event);
@@ -845,6 +989,8 @@ export class App<actions = string> {
         button.addEventListener('touchcancel', end);
         button.addEventListener('mouseleave', end);
         button.addEventListener('touchleave', end);
+
+        this.appObjects.push(object);
     }
 
     /**
@@ -859,6 +1005,15 @@ export class App<actions = string> {
             console.error('App already built');
             return;
         }
+
+        const { target } = this;
+
+        if (!target) {
+            console.error('No target');
+            return;
+        }
+
+        this.canvas.add(this.buttonCircle);
 
         let quitView = false;
 
@@ -878,13 +1033,28 @@ export class App<actions = string> {
             .fill(null)
             .map(
                 (_, i) =>
-                    new Tick<actions>(
+                    new Tick<a>(
                         i * App.tickDuration,
                         i,
-                        this as App<any>,
+                        this as App<any, any>
                     ),
             );
-        this.target.appendChild(this.canvasEl);
+        target.appendChild(this.canvasEl);
+
+        for (const o of this.gameObjects) {
+
+            const { element, alliance } = o;
+            let appended = false;
+            const append = () => {
+                if (appended) return;
+                target.appendChild(element);
+            }
+            console.log(alliance, this.currentAlliance);
+            if (alliance === null) append();
+            if (alliance === this.currentAlliance) append();
+            if (this.currentAlliance === null) append();
+        }
+
         this.setListeners();
         const stopAnimation = this.canvas.animate();
 
@@ -911,19 +1081,22 @@ export class App<actions = string> {
             if (!this.isDrawing) return;
             this.path.add([x, y]);
             this.currentLocation = [x, y];
-            // setTimeout(() => {
-            //     this.path.points.shift();
-            // }, 1000); // clear after 1 second
+            setTimeout(() => {
+                this.path.points.shift();
+            }, 1000); // clear after 1 second
         };
 
         const down = (x: number, y: number) => {
+            if (this.clicking) return;
             this.isDrawing = true;
             push(x, y);
         };
         const move = (x: number, y: number) => {
+            if (this.clicking) return;
             push(x, y);
         };
         const up = (x: number, y: number) => {
+            if (this.clicking) return;
             this.isDrawing = false;
             push(x, y);
         };
@@ -984,16 +1157,79 @@ export class App<actions = string> {
         return em;
     }
 
-    pull() {
-        const d = this.ticks
+    /**
+     * Description placeholder
+     * @date 1/25/2024 - 4:59:07 PM
+     *
+     * @returns {TraceArray}
+     */
+    pull(): TraceArray {
+        return this.ticks
             .map((t, i) => {
                 const [x, y] = t.point ?? [-1, -1];
-                return [i, x, y, t.get()?.action.abbr ?? 0];
+                return [i, round(x), round(y), t.get()?.action.abbr ?? 0];
             })
-            .filter((p) => {
+            .filter((p, i, a) => {
+                if (p[3] !== 0) return true;
+                if (i !== 0) {
+                    if (a[i - 1][1] === p[1] && a[i - 1][2] === p[2]) return false;
+                }
                 return p[1] !== -1 && p[2] !== -1;
-            }) as [number, number, number, string | number][];
-        // [index, x, y, action?], action=0 if no action
-        return d;
+            }) as TraceArray;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    /**
+     * Description placeholder
+     * @date 1/25/2024 - 4:59:07 PM
+     *
+     * @param {HTMLCanvasElement} canvas
+     * @returns {Result<Container>}
+     */
+    drawRecap(canvas: HTMLCanvasElement): Result<Container> {
+        return attempt(() => {
+            const ctx = canvas.getContext('2d');
+            if (!ctx) throw new Error('No context');
+            const c = new Canvas(ctx);
+
+            const d = this.pull();
+            const container = new Container();
+
+            container.children = d.map(p => {
+                const [index, x, y, action] = p;
+
+                if (action) return new Circle([x, y], .1);
+                return new Circle([x, y], .05);
+            });
+
+            const from = 0;
+            const to = d.length - 1;
+            container.filter((_, i) => i >= from && i <= to);
+
+            c.add(container);
+            return container;
+        });
     }
 }
