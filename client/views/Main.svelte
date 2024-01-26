@@ -5,6 +5,18 @@ import Page from './components/main/Page.svelte';
 import AppView from './pages/App.svelte';
 import Post from './pages/Post.svelte';
 import Pre from './pages/Pre.svelte';
+import { App } from '../models/app/app';
+import type { EventData } from '../models/app/app';
+import { TBAMatch } from '../../shared/submodules/tatorscout-calculations/tba';
+
+let event: EventData;
+let currentMatch: TBAMatch | undefined = undefined;
+
+App.getEventData().then(data => {
+    if (data.isOk()) {
+        event = data.value;
+    }
+});
 
 const app = generate2024App('blue');
 
@@ -16,7 +28,7 @@ const domain = 'http://localhost:3000';
 <main>
     <NavTabs {tabs} {active} on:change="{e => (active = e.detail)}" />
 
-    <Page {active} {domain} title="Pre"><Pre></Pre></Page>
+    <Page {active} {domain} title="Pre"><Pre {event} {currentMatch}></Pre></Page>
     <Page {active} {domain} title="App"><AppView {app}></AppView></Page>
     <Page {active} {domain} title="Post"><Post {app} {active}></Post></Page>
     <Page {active} {domain} title="Upload"></Page>

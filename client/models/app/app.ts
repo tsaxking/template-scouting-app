@@ -217,7 +217,7 @@ export class Tick<actions = Action> {
     }
 }
 
-type EventData = {
+export type EventData = {
     assignments: Assignment;
     matches: TBAMatch[];
     teams: TBATeam[];
@@ -1264,5 +1264,3 @@ export class App<a = Action, z extends Zones = Zones, p = TraceParse> {
         // download as json file
     }
 }
-
-window.App = App;
