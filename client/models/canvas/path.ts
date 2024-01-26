@@ -39,6 +39,6 @@ export class Path extends Drawable<Path> {
     }
 
     isIn(point: Point2D) {
-        return this.points.some(p => p[0] === point[0] && p[1] === point[1]);
+        return this.points.some((p) => p[0] === point[0] && p[1] === point[1]);
     }
 }
