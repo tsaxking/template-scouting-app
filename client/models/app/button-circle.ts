@@ -1,20 +1,15 @@
-import { GameObject } from './game-object';
 import { toRadians } from '../../../shared/submodules/calculations/src/graphing';
 import { App } from './app';
 import {
-    Point,
     Point2D,
 } from '../../../shared/submodules/calculations/src/linear-algebra/point';
-import { BootstrapColor, Color } from '../../submodules/colors/color';
-import { EventEmitter } from '../../../shared/event-emitter';
-import { AppObject, Iterator } from './app-object';
+import {  Color } from '../../submodules/colors/color';
+import { Iterator } from './app-object';
 import { Circle } from '../canvas/circle';
 import { Drawable } from '../canvas/drawable';
 import { Action } from '../../../shared/submodules/tatorscout-calculations/trace';
 import { Icon } from '../canvas/material-icons';
-import { Action2024 } from '../../../shared/submodules/tatorscout-calculations/trace';
 import { SVG } from '../canvas/svg';
-import { matchInstance } from '../../../shared/match';
 
 const { cos, sin } = Math;
 
@@ -91,6 +86,8 @@ class Button<actions = Action> extends Drawable<Button> {
         this.circle.$properties.fill = {
             color: this.color.toString('rgba'),
         };
+
+        this.icon.color = Color.fromBootstrap('light').toString('rgba')
     }
 
     draw(ctx: CanvasRenderingContext2D) {
@@ -172,6 +169,7 @@ export class ButtonCircle<actions = Action> extends Drawable<ButtonCircle> {
         if (this.buttons.length > 8) {
             throw new Error('Cannot add more than 8 buttons');
         }
+
         const index = this.buttons.length;
         const button = new Button(
             name,

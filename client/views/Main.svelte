@@ -24,6 +24,11 @@ const app = generate2024App('blue');
 let tabs = ['Pre', 'App', 'Post', 'Upload'];
 let active = 'Pre';
 const domain = 'http://localhost:3000';
+
+// if reload, warn
+// window.onbeforeunload = function () {
+//     return 'Are you sure you want to leave? You will lose all your progress on this match!';
+// };
 </script>
 
 <main>

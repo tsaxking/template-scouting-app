@@ -16,6 +16,7 @@ import {
 } from '../../../shared/submodules/tatorscout-calculations/trace';
 import { App, Tick } from './app';
 import { Point2D } from '../../../shared/submodules/calculations/src/linear-algebra/point';
+import { Icon } from '../canvas/material-icons';
 
 /**
  * Builds the app for the 2024 game
@@ -29,34 +30,35 @@ export const generate2024App = (
     const isIn = (d: Drawable) =>
         app.currentLocation ? d.isIn(app.currentLocation) : false;
 
+    // const colors = {
+    //     red: new Color(255, 0, 0),
+    //     redFade: new Color(255, 0, 0, 0.25),
+    //     blue: new Color(0, 0, 255),
+    //     blueFade: new Color(0, 0, 255, 0.25),
+    //     black: new Color(0, 0, 0),
+    //     blackFade: new Color(0, 0, 0, 0.25),
+    // };
+
     const colors = {
-        red: new Color(255, 0, 0),
-        redFade: new Color(255, 0, 0, 0.25),
-        blue: new Color(0, 0, 255),
-        blueFade: new Color(0, 0, 255, 0.25),
-        black: new Color(0, 0, 0),
-        blackFade: new Color(0, 0, 0, 0.25),
-    };
+        red: Color.fromBootstrap('red'),
+        blue: Color.fromBootstrap('blue'),
+        redFade: Color.fromBootstrap('red').setAlpha(0.1),
+        blueFade: Color.fromBootstrap('blue').setAlpha(0.1),
+        black: Color.fromBootstrap('dark'),
+        blackFade: Color.fromBootstrap('dark').setAlpha(0.5),
+    }
 
     app.addArea('blue-stage', stages.blue, colors.blueFade, isIn);
-
-    app.addArea('red-stage', stages.red, colors.redFade, isIn);
-
     app.addArea('blue-amp', amps.blue, colors.blueFade, isIn);
-
-    app.addArea('red-amp', amps.red, colors.redFade, isIn);
-
     app.addArea('blue-src', srcs.blue, colors.blueFade, isIn);
-
-    app.addArea('red-src', srcs.red, colors.redFade, isIn);
-
     app.addArea('blue-zone', zones.blue, colors.blueFade, isIn);
-
-    app.addArea('red-zone', zones.red, colors.redFade, isIn);
-
     app.addArea('blue-auto', autoZone.blue, colors.blueFade, isIn);
 
     app.addArea('red-auto', autoZone.red, colors.redFade, isIn);
+    app.addArea('red-zone', zones.red, colors.redFade, isIn);
+    app.addArea('red-src', srcs.red, colors.redFade, isIn);
+    app.addArea('red-amp', amps.red, colors.redFade, isIn);
+    app.addArea('red-stage', stages.red, colors.redFade, isIn);
 
     app.setBorder(border as Point2D[], colors.blackFade);
 
@@ -79,15 +81,21 @@ export const generate2024App = (
     const redButtonClasses = ['btn', 'btn-danger'];
 
     blueAmp.classList.add(...blueButtonClasses);
+    blueAmp.innerHTML = `<i class="material-icons">campaign</i>`;
     redAmp.classList.add(...redButtonClasses);
+    redAmp.innerHTML = `<i class="material-icons">campaign</i>`;
     blueSpeaker.classList.add(...blueButtonClasses);
+    blueSpeaker.innerHTML = `<i class="material-icons">speaker</i>`;
     redSpeaker.classList.add(...redButtonClasses);
+    redSpeaker.innerHTML = `<i class="material-icons">speaker</i>`;
     blueSource.classList.add(...blueButtonClasses);
+    blueSource.innerHTML = `<i class="material-icons">back_hand</i>`;
     redSource.classList.add(...redButtonClasses);
+    redSource.innerHTML = `<i class="material-icons">back_hand</i>`;
 
     const I = Iterator<Action2024>;
 
-    app.addGameObject(
+    app.addAppObject(
         [0.19624217118997914, 0.060542797494780795],
         new I('Blue Amp', 'Placing any note into the blue amp', 'amp', 0),
         blueAmp,
@@ -95,7 +103,7 @@ export const generate2024App = (
         'blue',
     );
 
-    app.addGameObject(
+    app.addAppObject(
         [0.7974947807933194, 0.06889352818371608],
         new I('Red Amp', 'Placing any note into the red amp', 'amp'),
         redAmp,
@@ -103,7 +111,7 @@ export const generate2024App = (
         'red',
     );
 
-    app.addGameObject(
+    app.addAppObject(
         [0.07828810020876827, 0.3653444676409186],
         new I('Blue Speaker', 'Shot a note into the blue speaker', 'spk'),
         blueSpeaker,
@@ -111,7 +119,7 @@ export const generate2024App = (
         'blue',
     );
 
-    app.addGameObject(
+    app.addAppObject(
         [0.9018789144050104, 0.3695198329853862],
         new I('Red Speaker', 'Shot a note into the red speaker', 'spk'),
         redSpeaker,
@@ -119,7 +127,7 @@ export const generate2024App = (
         'red',
     );
 
-    app.addGameObject(
+    app.addAppObject(
         [0.8423799582463466, 0.8914405010438413],
         new I(
             'Blue Source',
@@ -131,7 +139,7 @@ export const generate2024App = (
         'blue',
     );
 
-    app.addGameObject(
+    app.addAppObject(
         [0.1524008350730689, 0.8914405010438413],
         new I(
             'Red Source',
@@ -163,6 +171,7 @@ export const generate2024App = (
             drawButton('blue-stage'),
             colors.blue,
             'blue',
+            new Icon('dry_cleaning')
         )
         .addButton(
             'Blue Trap',
@@ -172,6 +181,7 @@ export const generate2024App = (
             drawButton('blue-stage'),
             colors.blue,
             'blue',
+            new Icon('place_item')
         )
         .addButton(
             'Red Climb',
@@ -181,6 +191,7 @@ export const generate2024App = (
             drawButton('red-stage'),
             colors.red,
             'red',
+            new Icon('dry_cleaning')
         )
         .addButton(
             'Red Trap',
@@ -190,6 +201,7 @@ export const generate2024App = (
             drawButton('red-stage'),
             colors.red,
             'red',
+            new Icon('place_item')
         );
 
     const em = app.clickPoints();

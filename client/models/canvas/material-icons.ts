@@ -52,7 +52,9 @@ export class Icon extends Drawable<MaterialIcon> {
     }
 
     draw(ctx: CanvasRenderingContext2D) {
-        let { x, y, size, color } = this;
+        let { x, y, size } = this;
+
+        const { color } = this;
 
         size = size * ctx.canvas.height;
         x = x * ctx.canvas.width - size / 2;
@@ -64,7 +66,7 @@ export class Icon extends Drawable<MaterialIcon> {
     }
 
     isIn(point: Point2D) {
-        let { x, y, size } = this;
+        const { x, y, size } = this;
 
         const s = size / 2;
 
