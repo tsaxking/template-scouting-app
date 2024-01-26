@@ -1,16 +1,16 @@
 <script lang="ts">
-    import { generate2024App } from '../models/app/2024-app';
-    import NavTabs from './components/bootstrap/NavTabs.svelte';
-    import Page from './components/main/Page.svelte';
-    import AppView from './pages/App.svelte';
+import { generate2024App } from '../models/app/2024-app';
+import NavTabs from './components/bootstrap/NavTabs.svelte';
+import Page from './components/main/Page.svelte';
+import AppView from './pages/App.svelte';
 import Post from './pages/Post.svelte';
-    import Pre from './pages/Pre.svelte';
+import Pre from './pages/Pre.svelte';
 
 const app = generate2024App('blue');
 
-    let tabs = ['Pre', 'App', 'Post', 'Upload'];
-    let active = 'Pre';
-    const domain = 'http://localhost:3000';
+let tabs = ['Pre', 'App', 'Post', 'Upload'];
+let active = 'Pre';
+const domain = 'http://localhost:3000';
 </script>
 
 <main>
