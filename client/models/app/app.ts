@@ -967,7 +967,7 @@ export class App<a = Action, z extends Zones = Zones, p = TraceParse> {
      * @param {?(state: T) => string} [convert]
      * @returns {string) => void}
      */
-    addGameObject<T = unknown>(
+    addAppObject<T = unknown>(
         point: Point2D,
         object: AppObject<T, a>,
         button: HTMLElement,
@@ -976,8 +976,8 @@ export class App<a = Action, z extends Zones = Zones, p = TraceParse> {
     ) {
         const [x, y] = point;
         this.gameObjects.push({ x, y, object, element: button, alliance });
-
-        button.innerText = object.name;
+        if (!button.innerHTML) button.innerText = object.name;
+        const defaultHTML = button.innerHTML;
         button.style.position = 'absolute';
         button.style.zIndex = '100';
         button.style.transform = 'translate(-50%, -50%)';
@@ -992,7 +992,7 @@ export class App<a = Action, z extends Zones = Zones, p = TraceParse> {
                     break;
             }
 
-            button.innerText = `${object.name}: ${
+            button.innerHTML = `${defaultHTML}: ${
                 convert ? convert(state.state) : state.state
             }`;
         });
@@ -1218,26 +1218,57 @@ export class App<a = Action, z extends Zones = Zones, p = TraceParse> {
      * @returns {Result<Container>}
      */
     drawRecap(canvas: HTMLCanvasElement): Result<Container> {
+        canvas.width = canvas.parentElement?.clientWidth || 0;
+        canvas.height = canvas.width / 2;
+
         return attempt(() => {
             const ctx = canvas.getContext('2d');
             if (!ctx) throw new Error('No context');
             const c = new Canvas(ctx);
 
+            const img = new Img('/public/pictures/field.png');
+            img.options.height = 1;
+            img.options.width = 1;
+            img.options.x = 0;
+            img.options.y = 0;
+
             const d = this.pull();
             const container = new Container();
 
-            container.children = d.map((p) => {
+            container.children = d.map((p, i, a) => {
                 const [_i, x, y, action] = p;
 
-                if (action) return new Circle([x, y], 0.1);
-                return new Circle([x, y], 0.05);
+                const color = Color.fromName(this.currentAlliance ? this.currentAlliance : 'black').toString('rgba');
+
+                if (action) {
+                    const c = new Circle([x, y], 0.01);
+                    c.$properties.fill = {
+                        color: color,
+                    };
+                    return c;
+                }
+                if (a[i - 1]) {
+                    const p = new Path([
+                        [a[i - 1][1], a[i - 1][2]],
+                        [x, y],
+                    ]);
+                    p.$properties.line = {
+                        color: color,
+                        width: 1,
+                    }
+                    return p;
+                } else {
+                    return null;
+                }
             });
 
             const from = 0;
             const to = d.length - 1;
             container.filter((_, i) => i >= from && i <= to);
 
-            c.add(container);
+            c.add(img, container);
+
+            c.animate();
             return container;
         });
     }

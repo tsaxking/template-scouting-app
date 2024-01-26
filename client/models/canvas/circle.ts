@@ -57,7 +57,7 @@ export class Circle extends Drawable<Circle> {
             2 * Math.PI,
         );
         if (this.$properties?.fill) context.fill();
-        context.stroke();
+        if (this.$properties.line) context.stroke();
     }
 
     /**

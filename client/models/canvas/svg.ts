@@ -41,6 +41,11 @@ export class SVG extends Drawable<SVG> {
         this.center[1] = y;
     }
 
+    set color(color: string) {
+        if (!this.$properties.text) this.$properties.text = {};
+        this.$properties.text!.color = color;
+    }
+
     draw(ctx: CanvasRenderingContext2D) {
         if (!this.$ready) return;
 

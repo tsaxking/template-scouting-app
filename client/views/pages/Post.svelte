@@ -2,6 +2,7 @@
 import { App } from '../../models/app/app';
 import Checkboxes from '../components/app/Checkboxes.svelte';
 import type { BootstrapColor } from '../../submodules/colors/color';
+import { capitalize, fromCamelCase } from '../../../shared/text';
 
 export let app: App;
 export let active: string;
@@ -14,8 +15,10 @@ type PostData = {
     comment: string;
 };
 
+type Types = 'autoMobility' | 'parked' | 'playedDefense' | 'tippy' | 'easilyDefended' | 'robotDied' | 'problemsDriving';
+
 let data: {
-    [key: string]: PostData;
+    [key in Types]: PostData;
 } = {
     autoMobility: {
         value: false,
@@ -64,10 +67,13 @@ let data: {
 const open = active => {
     if (active !== 'Post') return;
     console.log('Post opened');
-    app.drawRecap(canvas);
-
     data.autoMobility.value = app.parsed.mobility;
     data = data;
+
+
+    const res = app.drawRecap(canvas);
+    if (res.isErr()) console.warn(res.error);
+    if (res.isOk()) console.log('Recap drawn');
 };
 
 let commentsSections: string[] = [];
@@ -77,6 +83,8 @@ $: {
         .filter(([_, data]) => data.comments && data.value)
         .map(([key]) => key);
 }
+
+let generalComment: string = '';
 </script>
 
 <div class="container">
@@ -87,28 +95,37 @@ $: {
         {#if commentsSections.length > 0}
             <div class="row">
                 <div class="container">
-                    #{#each commentsSections as section}
-                        <div class="row">
-                            <div class="col">
-                                <h3>{section}</h3>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col">
+                    {#each commentsSections as section, i}
+                        <div class="row mb-3">
+                            <div class="form-floating">
                                 <textarea
                                     class="form-control"
                                     rows="3"
-                                    on:change={e => {
-                                        data[section].comment = e.currentTarget.value;
-                                        data = data;
-                                    }}
+                                    id="textarea-{i}"
+                                    bind:value="{data[section].comment}"
                                 ></textarea>
+                                <label for="textarea-{i}">
+                                    Please tell us why you checked "{capitalize(fromCamelCase(section))}" (you don't have to be very detailed, but it's helpful to understand the context of why you checked it)
+                                </label>
                             </div>
                         </div>
                     {/each}
                 </div>
             </div>
         {/if}
+        <div class="row mb-3">
+            <div class="form-floating">
+                <textarea
+                    class="form-control"
+                    rows="5"
+                    id="textarea-general"
+                    bind:value="{generalComment}"
+                ></textarea>
+                <label for="textarea-general">
+                    Please leave a comment here on how the robot performed in the match. (These are very helpful for analyzing the robot's performance, please be detailed)
+                </label>
+            </div>
+        </div>
         <div class="row">
             <button
                 class="btn btn-success btn-lg w-100"
@@ -118,11 +135,12 @@ $: {
                             .map(([key, value]) => (value ? key : null))
                             .filter(Boolean),
                         comments: {
-                            defensive: '',
-                            tippy: '',
-                            easilyDefended: '',
-                            robotDied: '',
-                            problemsDriving: ''
+                            defensive: data.playedDefense.comment,
+                            tippy: data.tippy.comment,
+                            easilyDefended: data.easilyDefended.comment,
+                            robotDied: data.robotDied.comment,
+                            problemsDriving: data.problemsDriving.comment,
+                            general: generalComment
                         }
                     })}">Submit Match</button
             >
