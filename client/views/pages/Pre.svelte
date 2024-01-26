@@ -1,11 +1,15 @@
 <script lang="ts">
 import type { TBAMatch } from '../../../shared/submodules/tatorscout-calculations/tba';
 import { teamsFromMatch } from '../../../shared/submodules/tatorscout-calculations/tba';
+import { EventData } from '../../models/app/app';
 
 export let matches: TBAMatch[] = [];
 export let scoutTeamOrder: number[] = [];
 
 export let currentMatch: TBAMatch | undefined = undefined;
+
+// VVV all of your data you need is stored here to create that table VVV
+export let event: EventData;
 
 let matchData: (TBAMatch & {
     teams: [number, number, number, number, number, number];
