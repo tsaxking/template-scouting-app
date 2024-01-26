@@ -39,7 +39,8 @@ builder.on('build', () => {
     log('Build complete');
 });
 
-stdin.on('build', () => builder.emit('build'));
+stdin.on('rb', () => builder.emit('build'));
+
 stdin.on('data', (data) => {
     const [command, ...args] = data.split(' ');
     switch (command) {

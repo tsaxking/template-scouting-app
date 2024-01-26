@@ -2,6 +2,8 @@ import { Drawable, DrawableEvent } from './drawable';
 import { EventEmitter } from '../../../shared/event-emitter';
 import { attempt } from '../../../shared/attempt';
 import { Point2D } from '../../../shared/submodules/calculations/src/linear-algebra/point';
+import { Color } from '../../submodules/colors/color';
+import { Background } from './background';
 
 /**
  * Description placeholder
@@ -47,6 +49,7 @@ type CanvasOptions = {
      * @type {(keyof CanvasEvents)[]}
      */
     events: (keyof CanvasEvents)[];
+    background: Color;
 };
 
 /**
@@ -67,6 +70,8 @@ export class Canvas<T = unknown> {
     set data(data: T | undefined) {
         this.$data = data;
     }
+
+    public background: Background;
 
     /**
      * All drawables on the canvas
@@ -145,6 +150,9 @@ export class Canvas<T = unknown> {
         this.$canvas = ctx.canvas;
         this.$ctx = ctx;
         this.$options = options;
+        this.background = new Background();
+        this.background.color = options.background || Color.fromName('white');
+        this.add(this.background);
 
         if (this.$options.events) {
             this.$options.events = this.$options.events.filter(
@@ -499,6 +507,7 @@ export class Canvas<T = unknown> {
      */
     clearDrawables() {
         this.$drawables.length = 0;
+        this.add(this.background);
     }
 
     /**

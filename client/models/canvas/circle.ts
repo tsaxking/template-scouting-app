@@ -1,5 +1,8 @@
 import { Drawable } from './drawable';
-import { Point2D } from '../../../shared/submodules/calculations/src/linear-algebra/point';
+import {
+    Point,
+    Point2D,
+} from '../../../shared/submodules/calculations/src/linear-algebra/point';
 import { copy } from '../../../shared/copy';
 
 export class Circle extends Drawable<Circle> {
@@ -102,4 +105,10 @@ export class Circle extends Drawable<Circle> {
         copy(c, this);
         return c;
     }
+
+    // public get $Math() {
+    //     return {
+    //         center: new Point(this.center[0], this.center[1])
+    //     }
+    // }
 }
