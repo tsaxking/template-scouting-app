@@ -13,6 +13,8 @@ import { validate } from './middleware/data-type.ts';
 import { Match } from '../shared/submodules/tatorscout-calculations/match-submission.ts';
 import { ServerRequest } from './utilities/requests.ts';
 import { getJSONSync } from './utilities/files.ts';
+import { runTask } from './utilities/run-task.ts';
+import { attempt } from '../shared/attempt.ts';
 
 console.log('Platform:', os.platform());
 
@@ -38,6 +40,14 @@ builder.on('build', () => {
 });
 
 stdin.on('build', () => builder.emit('build'));
+stdin.on('data', (data) => {
+    const [command, ...args] = data.split(' ');
+    switch (command) {
+        case 'event':
+            attempt(() => runTask('./scripts/event-data.ts', 'getEvent', ...args));
+        break;
+    }
+})
 
 builder.on('error', (e) => log('Build error:', e));
 
