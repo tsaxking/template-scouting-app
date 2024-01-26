@@ -1,7 +1,7 @@
 <script lang="ts">
 import type { TBAMatch } from '../../../shared/submodules/tatorscout-calculations/tba';
 import { teamsFromMatch } from '../../../shared/submodules/tatorscout-calculations/tba';
-import { EventData } from '../../models/app/app';
+import type { EventData } from '../../models/app/app';
 
 export let matches: TBAMatch[] = [];
 export let scoutTeamOrder: number[] = [];

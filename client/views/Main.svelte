@@ -11,6 +11,7 @@ import { TBAMatch } from '../../shared/submodules/tatorscout-calculations/tba';
 
 let event: EventData;
 let currentMatch: TBAMatch | undefined = undefined;
+let scoutingGroup = 0;
 
 App.getEventData().then(data => {
     if (data.isOk()) {
