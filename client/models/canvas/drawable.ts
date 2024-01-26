@@ -64,6 +64,11 @@ export class Drawable<T = any> {
 
     public $canvas?: Canvas;
 
+    public get $Math() {
+        console.warn('Math not implemented on ' + this.constructor.name);
+        return {};
+    }
+
     constructor() {
         this.show();
 
