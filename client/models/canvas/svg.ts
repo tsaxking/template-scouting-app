@@ -25,6 +25,22 @@ export class SVG extends Drawable<SVG> {
         };
     }
 
+    get x() {
+        return this.center[0];
+    }
+
+    set x(x: number) {
+        this.center[0] = x;
+    }
+
+    get y() {
+        return this.center[1];
+    }
+
+    set y(y: number) {
+        this.center[1] = y;
+    }
+
     draw(ctx: CanvasRenderingContext2D) {
         if (!this.$ready) return;
 

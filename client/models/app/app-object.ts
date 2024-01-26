@@ -181,6 +181,8 @@ export class AppObject<T = any, actions = string> {
                     'new',
                 );
             }
+        } else {
+            console.warn('No toChange callback set for action ' + this.name);
         }
 
         return this.state;
@@ -308,7 +310,7 @@ export class Iterator<actions = string> extends AppObject<number> {
         name: string,
         description: string,
         abbr?: actions,
-        defaultState?: number,
+        defaultState = 0,
     ) {
         super(name, description, abbr as string);
         this.toChange((state) => state + 1);
