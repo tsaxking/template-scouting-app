@@ -36,20 +36,78 @@ export const generate2024App = (
         blueFade: new Color(0, 0, 255, 0.25),
         black: new Color(0, 0, 0),
         blackFade: new Color(0, 0, 0, 0.25),
-    };
+    }
 
-    app.addArea('blue-stage', stages.blue, colors.blueFade, isIn);
-    app.addArea('blue-amp', amps.blue, colors.blueFade, isIn);
-    app.addArea('blue-src', srcs.blue, colors.blueFade, isIn);
-    app.addArea('blue-zone', zones.blue, colors.blueFade, isIn);
-    app.addArea('blue-auto', autoZone.blue, colors.blueFade, isIn);
-
-    app.addArea('red-amp', amps.red, colors.redFade, isIn);
-    app.addArea('red-stage', stages.red, colors.redFade, isIn);
-    app.addArea('red-src', srcs.red, colors.redFade, isIn);
-    app.addArea('red-zone', zones.red, colors.redFade, isIn);
-    app.addArea('red-auto', autoZone.red, colors.redFade, isIn);
-
+    app.addArea(
+        'blue-stage',
+        stages.blue,
+        colors.blueFade,
+        isIn,
+    );
+    
+    app.addArea(
+        'red-stage',
+        stages.red,
+        colors.redFade,
+        isIn,
+    );
+    
+    app.addArea(
+        'blue-amp',
+        amps.blue,
+        colors.blueFade,
+        isIn,
+    );
+    
+    app.addArea(
+        'red-amp',
+        amps.red,
+        colors.redFade,
+        isIn,
+    );
+    
+    app.addArea(
+        'blue-src',
+        srcs.blue,
+        colors.blueFade,
+        isIn,
+    );
+    
+    app.addArea(
+        'red-src',
+        srcs.red,
+        colors.redFade,
+        isIn,
+    );
+    
+    app.addArea(
+        'blue-zone',
+        zones.blue,
+        colors.blueFade,
+        isIn,
+    );
+    
+    app.addArea(
+        'red-zone',
+        zones.red,
+        colors.redFade,
+        isIn,
+    );
+    
+    app.addArea(
+        'blue-auto',
+        autoZone.blue,
+        colors.blueFade,
+        isIn,
+    );
+    
+    app.addArea(
+        'red-auto',
+        autoZone.red,
+        colors.redFade,
+        isIn,
+    );
+    
     app.setBorder(border as Point2D[], colors.blackFade);
 
     // app.border = new Border(border as [number, number][]);
@@ -205,31 +263,6 @@ export const update2024 = (tick: Tick) => {
         // if the robot is not in the auto zone during auto, then they crossed the auto line
         if (!redAuto.isIn(currentLocation) && !blueAuto.isIn(currentLocation)) {
             app.parsed.mobility = true;
-        }
-    }
-
-
-
-    const { currentTime } = app;
-    const { area: redStage } = app.areas['red-stage'];
-    const { area: blueStage } = app.areas['blue-stage'];
-    if (currentTime === 600) {
-        // if the latest action is not a climb, then the robot could be parked
-        if (app.latestAction?.get()?.action.abbr !== 'clb') {
-            switch (app.currentAlliance) {
-                case null:
-                    break;
-                case 'red':
-                    if (redStage.isIn(currentLocation)) {
-                        app.parsed.parked = true;
-                    }
-                    break;
-                case 'blue':
-                    if (blueStage.isIn(currentLocation)) {
-                        app.parsed.parked = true;
-                    }
-                    break;
-            }
         }
     }
 };
