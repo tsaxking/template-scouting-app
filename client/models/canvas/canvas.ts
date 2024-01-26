@@ -29,7 +29,7 @@ type CanvasEvents = {
 export class CanvasEvent<T> {
     constructor(
         public readonly event: T,
-        public readonly points: Point2D[]
+        public readonly points: Point2D[],
     ) {}
 }
 
@@ -65,7 +65,7 @@ export class Canvas<T = unknown> {
     }
 
     set data(data: T | undefined) {
-        this.$data = data;    
+        this.$data = data;
     }
 
     /**
@@ -163,7 +163,7 @@ export class Canvas<T = unknown> {
                                         event,
                                         [point],
                                         this,
-                                        drawable
+                                        drawable,
                                     );
                                     console.log('clicked!', drawable);
                                     drawable.emit('click', e);
@@ -185,7 +185,7 @@ export class Canvas<T = unknown> {
                                         event,
                                         points,
                                         this,
-                                        drawable
+                                        drawable,
                                     );
                                     drawable.emit('touchstart', e);
                                 }
@@ -206,7 +206,7 @@ export class Canvas<T = unknown> {
                                         event,
                                         points,
                                         this,
-                                        drawable
+                                        drawable,
                                     );
                                     drawable.emit('touchmove', e);
                                 }
@@ -227,7 +227,7 @@ export class Canvas<T = unknown> {
                                         event,
                                         points,
                                         this,
-                                        drawable
+                                        drawable,
                                     );
                                     drawable.emit('touchend', e);
                                 }
@@ -252,7 +252,7 @@ export class Canvas<T = unknown> {
                                             event,
                                             points,
                                             this,
-                                            drawable
+                                            drawable,
                                         );
                                         drawable.emit('touchcancel', e);
                                     }
@@ -267,12 +267,11 @@ export class Canvas<T = unknown> {
                             this.emit('mousemove', e);
                             for (const drawable of this.$drawables) {
                                 if (drawable.$doDraw && drawable.isIn(point)) {
-                                    
                                     const e = new DrawableEvent(
                                         event,
                                         [point],
                                         this,
-                                        drawable
+                                        drawable,
                                     );
                                     drawable.emit('mousemove', e);
                                 }
@@ -290,7 +289,7 @@ export class Canvas<T = unknown> {
                                         event,
                                         [point],
                                         this,
-                                        drawable
+                                        drawable,
                                     );
                                     drawable.emit('mousedown', e);
                                 }
@@ -304,12 +303,11 @@ export class Canvas<T = unknown> {
                             this.emit('mouseup', e);
                             for (const drawable of this.$drawables) {
                                 if (drawable.$doDraw && drawable.isIn(point)) {
-                                    
                                     const e = new DrawableEvent(
                                         event,
                                         [point],
                                         this,
-                                        drawable
+                                        drawable,
                                     );
                                     drawable.emit('mouseup', e);
                                 }
@@ -323,12 +321,11 @@ export class Canvas<T = unknown> {
                             this.emit('mouseleave', e);
                             for (const drawable of this.$drawables) {
                                 if (drawable.$doDraw && drawable.isIn(point)) {
-                                    
                                     const e = new DrawableEvent(
                                         event,
                                         [point],
                                         this,
-                                        drawable
+                                        drawable,
                                     );
                                     drawable.emit('mouseleave', e);
                                 }
@@ -346,7 +343,7 @@ export class Canvas<T = unknown> {
                                         event,
                                         [point],
                                         this,
-                                        drawable
+                                        drawable,
                                     );
                                     drawable.emit('mouseenter', e);
                                 }
@@ -465,10 +462,12 @@ export class Canvas<T = unknown> {
      * @param {...Drawable[]} drawables
      */
     add(...drawables: Drawable[]) {
-        this.$drawables.push(...drawables.map(d => {
-            d.$canvas = this;
-            return d;
-        }));
+        this.$drawables.push(
+            ...drawables.map((d) => {
+                d.$canvas = this;
+                return d;
+            }),
+        );
     }
 
     /**

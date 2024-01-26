@@ -24,7 +24,7 @@ export class DrawableEvent<e = unknown> {
         public readonly event: e,
         public readonly points: Point2D[],
         public readonly canvas: Canvas,
-        public readonly drawable: Drawable
+        public readonly drawable: Drawable,
     ) {}
 }
 
@@ -65,7 +65,6 @@ export class Drawable<T = any> {
     constructor() {
         this.show();
 
-        
         this.$emitter.on('draw', () => {
             this.$drawn = true;
         });

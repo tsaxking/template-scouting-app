@@ -1,6 +1,6 @@
-import { Point2D } from "../../../shared/submodules/calculations/src/linear-algebra/point";
-import { Drawable } from "./drawable";
-import { MaterialIcon } from "material-icons";
+import { Point2D } from '../../../shared/submodules/calculations/src/linear-algebra/point';
+import { Drawable } from './drawable';
+import { MaterialIcon } from 'material-icons';
 
 const { ceil } = Math;
 
@@ -9,12 +9,12 @@ type TextOptions = {
     size: number;
     x: number;
     y: number;
-}
+};
 
 export class Icon extends Drawable<MaterialIcon> {
     constructor(
         public readonly icon: MaterialIcon,
-        public readonly options: Partial<TextOptions> = {}
+        public readonly options: Partial<TextOptions> = {},
     ) {
         super();
     }
@@ -36,7 +36,7 @@ export class Icon extends Drawable<MaterialIcon> {
     }
 
     get size() {
-        return this.options.size ?? .01;
+        return this.options.size ?? 0.01;
     }
 
     set size(size: number) {

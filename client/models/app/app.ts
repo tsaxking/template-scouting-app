@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * @fileoverview App class
  * @description This contains the main class for the app, which is responsible for running the match and keeping track of the state of the robot over time. The data is collected every 250ms, and the app will run for 150 seconds, so there will be 600 ticks in total.
@@ -16,11 +17,17 @@ import { Polygon } from '../canvas/polygon';
 import { Circle } from '../canvas/circle';
 import { Color } from '../../submodules/colors/color';
 import { Settings } from '../settings';
-import { Result, attempt } from '../../../shared/attempt';
+import { attempt, Result } from '../../../shared/attempt';
 import { Container } from '../canvas/container';
 import { TraceArray } from '../../../shared/submodules/tatorscout-calculations/trace';
-import { Action, Zones, TraceParse } from '../../../shared/submodules/tatorscout-calculations/trace';
+import {
+    Action,
+    TraceParse,
+    Zones,
+} from '../../../shared/submodules/tatorscout-calculations/trace';
 import { generate2024App } from './2024-app';
+import { ServerRequest } from '../../utilities/requests';
+import { alert } from '../../utilities/notifications';
 
 /**
  * Description placeholder
@@ -84,7 +91,7 @@ export class Tick<actions = Action> {
      * @private
      * @type {CollectedData}
      */
-    private data: CollectedData<actions> = null;
+    private data: CollectedData<actions> | null = null;
 
     /**
      * Point of the robot at this tick
@@ -216,14 +223,13 @@ export class Tick<actions = Action> {
  * @class App
  * @typedef {App}
  */
-export class App<a = Action, z extends Zones = Zones, parse = TraceParse> {
+export class App<a = Action, z extends Zones = Zones, p = TraceParse> {
     public static build(year: 2024, alliance: 'red' | 'blue' | null = null) {
         switch (year) {
-            case 2024: 
+            case 2024:
                 return generate2024App(alliance);
         }
     }
-
 
     // ▄▀▀ ▄▀▄ █▄ █ ▄▀▀ ▀█▀ ▄▀▄ █▄ █ ▀█▀ ▄▀▀
     // ▀▄▄ ▀▄▀ █ ▀█ ▄█▀  █  █▀█ █ ▀█  █  ▄█▀
@@ -280,7 +286,7 @@ export class App<a = Action, z extends Zones = Zones, parse = TraceParse> {
      */
     private $target?: HTMLDivElement;
 
-    public readonly parsed: Partial<parse> = {};
+    public readonly parsed: Partial<p> = {};
 
     private clicking = false;
 
@@ -291,9 +297,7 @@ export class App<a = Action, z extends Zones = Zones, parse = TraceParse> {
      * @constructor
      * @param {HTMLDivElement} target
      */
-    constructor(
-        public readonly currentAlliance: 'red' | 'blue' | null = null,
-    ) {
+    constructor(public readonly currentAlliance: 'red' | 'blue' | null = null) {
         this.canvas.$ctx.canvas.style.position = 'absolute';
 
         this.background = new Img('/public/pictures/field.png', {
@@ -308,17 +312,14 @@ export class App<a = Action, z extends Zones = Zones, parse = TraceParse> {
             width: 1,
         };
 
-        this.canvas.add(
-            this.background,
-            this.path,
-        );
+        this.canvas.add(this.background, this.path);
 
         this.clicking = false;
 
         const click = () => {
             this.clicking = true;
 
-            setTimeout(unclick, App.tickDuration)
+            setTimeout(unclick, App.tickDuration);
         };
         const unclick = () => (this.clicking = false);
 
@@ -512,8 +513,7 @@ export class App<a = Action, z extends Zones = Zones, parse = TraceParse> {
      * @readonly
      * @type {*}
      */
-    public readonly buttonCircle = new ButtonCircle<a>(this as App<any, any>);
-
+    public readonly buttonCircle = new ButtonCircle<a>(this as unknown as App);
 
     public readonly appObjects: AppObject<any, a>[] = [];
 
@@ -552,7 +552,7 @@ export class App<a = Action, z extends Zones = Zones, parse = TraceParse> {
             area: Polygon | Circle;
             color: Color;
             condition: (shape: Polygon) => boolean;
-        }
+        };
     };
 
     /**
@@ -594,10 +594,11 @@ export class App<a = Action, z extends Zones = Zones, parse = TraceParse> {
     setBorder(points: Point2D[], color: Color) {
         if (this.border) throw new Error('Border already set');
         const b = new Border(points);
-        b.$properties.doDraw = () => (this.currentLocation ? b.isIn(this.currentLocation) : false);
+        b.$properties.doDraw = () =>
+            this.currentLocation ? b.isIn(this.currentLocation) : false;
         b.$properties.fill = {
             color: color.toString('rgba'),
-        }
+        };
 
         this.canvas.add(b);
         this.border = b;
@@ -629,7 +630,7 @@ export class App<a = Action, z extends Zones = Zones, parse = TraceParse> {
         };
         p.$properties.fill = {
             color: color.toString('rgba'),
-        }
+        };
 
         // p.fade(5);
 
@@ -640,7 +641,7 @@ export class App<a = Action, z extends Zones = Zones, parse = TraceParse> {
             area: p,
             color: color,
             condition: condition,
-        }
+        };
 
         return p;
     }
@@ -662,9 +663,19 @@ export class App<a = Action, z extends Zones = Zones, parse = TraceParse> {
      * @readonly
      * @type {*}
      */
-    public readonly canvas = new Canvas<App<a, z>>(this.canvasEl.getContext('2d')!, {
-        events: ['click', 'mousedown', 'mouseup', 'touchstart', 'touchend', 'touchcancel']
-    });
+    public readonly canvas = new Canvas<App<a, z>>(
+        this.canvasEl.getContext('2d')!,
+        {
+            events: [
+                'click',
+                'mousedown',
+                'mouseup',
+                'touchstart',
+                'touchend',
+                'touchcancel',
+            ],
+        },
+    );
     /**
      * Whether the app has been built or not
      * @date 1/9/2024 - 3:08:20 AM
@@ -752,9 +763,9 @@ export class App<a = Action, z extends Zones = Zones, parse = TraceParse> {
                 return this.stop();
             }
 
-            const end = Date.now();
-            const duration = end - start;
-            const delay = App.tickDuration - duration;
+            // const end = Date.now();
+            // const duration = end - start;
+            // const delay = App.tickDuration - duration;
 
             // there could be a major delay if the callback takes too long, so we need to account for that
             setTimeout(() => run(t.next()), Math.max(0, App.tickDuration));
@@ -935,7 +946,7 @@ export class App<a = Action, z extends Zones = Zones, parse = TraceParse> {
         object: AppObject<T, a>,
         button: HTMLElement,
         convert?: (state: T) => string,
-        alliance: 'red' | 'blue' | null = null
+        alliance: 'red' | 'blue' | null = null,
     ) {
         const [x, y] = point;
         this.gameObjects.push({ x, y, object, element: button, alliance });
@@ -946,8 +957,6 @@ export class App<a = Action, z extends Zones = Zones, parse = TraceParse> {
         button.style.transform = 'translate(-50%, -50%)';
 
         object.listen((state, event) => {
-            console.log('state change!', state, event);
-
             switch (event) {
                 case 'new':
                     this.currentTick?.set(state);
@@ -1033,23 +1042,18 @@ export class App<a = Action, z extends Zones = Zones, parse = TraceParse> {
             .fill(null)
             .map(
                 (_, i) =>
-                    new Tick<a>(
-                        i * App.tickDuration,
-                        i,
-                        this as App<any, any>
-                    ),
+                    new Tick<a>(i * App.tickDuration, i, this as App<any, any>),
             );
         target.appendChild(this.canvasEl);
 
         for (const o of this.gameObjects) {
-
             const { element, alliance } = o;
             let appended = false;
             const append = () => {
                 if (appended) return;
                 target.appendChild(element);
-            }
-            console.log(alliance, this.currentAlliance);
+                appended = true;
+            };
             if (alliance === null) append();
             if (alliance === this.currentAlliance) append();
             if (this.currentAlliance === null) append();
@@ -1126,13 +1130,13 @@ export class App<a = Action, z extends Zones = Zones, parse = TraceParse> {
             move(x, y);
         });
 
-        this.canvasEl.addEventListener('touchend', (e) => {
+        this.canvasEl.addEventListener('touchend', (_e) => {
             this.isDrawing = false;
             // const [[x, y]] = this.canvas.getXY(e);
             // up(x, y);
         });
 
-        this.canvasEl.addEventListener('touchcancel', (e) => {
+        this.canvasEl.addEventListener('touchcancel', (_e) => {
             this.isDrawing = false;
             // const [[x, y]] = this.canvas.getXY(e);
             // up(x, y);
@@ -1172,34 +1176,13 @@ export class App<a = Action, z extends Zones = Zones, parse = TraceParse> {
             .filter((p, i, a) => {
                 if (p[3] !== 0) return true;
                 if (i !== 0) {
-                    if (a[i - 1][1] === p[1] && a[i - 1][2] === p[2]) return false;
+                    if (a[i - 1][1] === p[1] && a[i - 1][2] === p[2]) {
+                        return false;
+                    }
                 }
                 return p[1] !== -1 && p[2] !== -1;
             }) as TraceArray;
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     /**
      * Description placeholder
@@ -1217,11 +1200,11 @@ export class App<a = Action, z extends Zones = Zones, parse = TraceParse> {
             const d = this.pull();
             const container = new Container();
 
-            container.children = d.map(p => {
-                const [index, x, y, action] = p;
+            container.children = d.map((p) => {
+                const [_i, x, y, action] = p;
 
-                if (action) return new Circle([x, y], .1);
-                return new Circle([x, y], .05);
+                if (action) return new Circle([x, y], 0.1);
+                return new Circle([x, y], 0.05);
             });
 
             const from = 0;
@@ -1231,5 +1214,27 @@ export class App<a = Action, z extends Zones = Zones, parse = TraceParse> {
             c.add(container);
             return container;
         });
+    }
+
+    get latestAction(): Tick<a> | undefined {
+        return this.ticks.find((t) => !!t.get());
+    }
+
+    async submit(include: {
+        checks: string[];
+        comments: {
+            [key: string]: string;
+        };
+    }) {
+        // set data to server
+        const res = await ServerRequest.post('/submit', {
+            trace: this.pull(),
+            comments: include.comments,
+            checks: include.checks,
+        });
+        if (res.isErr()) {
+            await alert('Error submitting, the server may be disconnected');
+        }
+        // download as json file
     }
 }

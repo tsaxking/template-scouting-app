@@ -6,5 +6,5 @@ new Main({
     target: document.body,
 });
 
-import {Settings} from '../models/settings';
+import { Settings } from '../models/settings';
 Object.assign(window, { Settings });
