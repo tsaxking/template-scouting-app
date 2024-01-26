@@ -149,64 +149,119 @@ const colors = {
     whitesmoke: [245, 245, 245, 1],
     yellow: [255, 255, 0, 1],
     yellowgreen: [154, 205, 50, 1],
-    rebeccapurple: [102, 51, 153, 1],
+    rebeccapurple: [102, 51, 153, 1]
 };
 
 export type ColorStr = keyof typeof colors;
 
 const BootstrapColors = {
-    primary: [0, 123, 255, 1],
-    secondary: [108, 117, 125, 1],
-    success: [40, 167, 69, 1],
-    info: [23, 162, 184, 1],
-    warning: [255, 193, 7, 1],
-    danger: [220, 53, 69, 1],
-    light: [248, 249, 250, 1],
-    dark: [52, 58, 64, 1],
+    'blue': [13,110,253],
+    'indigo': [102,16,242],
+    'purple': [111,66,193],
+    'pink': [214,51,132],
+    'red': [220,53,69],
+    'orange': [253,126,20],
+    'yellow': [255,193,7],
+    'green': [25,135,84],
+    'teal': [32,201,151],
+    'cyan': [13,202,240],
+    'black': [0,0,0],
+    'white': [240,240,240],
+    'gray': [108,117,125],
+    'grayDark': [52,58,64],
+    'gray100': [248,249,250],
+    'gray200': [233,236,239],
+    'gray300': [222,226,230],
+    'gray400': [206,212,218],
+    'gray500': [173,181,189],
+    'gray600': [108,117,125],
+    'gray700': [73,80,87],
+    'gray800': [52,58,64],
+    'gray900': [33,37,41],
+    'primary': [13,110,253],
+    'secondary': [108,117,125],
+    'success': [25,135,84],
+    'info': [13,202,240],
+    'warning': [255,193,7],
+    'danger': [220,53,69],
+    'light': [248,249,250],
+    'dark': [33,37,41],
+    'primaryText-Emphasis': [5,44,101],
+    'secondaryText-Emphasis': [43,47,50],
+    'successText-Emphasis': [10,54,34],
+    'infoText-Emphasis': [5,81,96],
+    'warningText-Emphasis': [102,77,3],
+    'dangerText-Emphasis': [88,21,28],
+    'lightText-Emphasis': [73,80,87],
+    'darkText-Emphasis': [73,80,87],
+    'primaryBg-Subtle': [207,226,255],
+    'secondaryBg-Subtle': [226,227,229],
+    'successBg-Subtle': [209,231,221],
+    'infoBg-Subtle': [207,244,252],
+    'warningBg-Subtle': [255,243,205],
+    'dangerBg-Subtle': [248,215,218],
+    'lightBg-Subtle': [252,252,253],
+    'darkBg-Subtle': [206,212,218],
+    'primaryBorder-Subtle': [158,197,254],
+    'secondaryBorder-Subtle': [196,200,203],
+    'successBorder-Subtle': [163,207,187],
+    'infoBorder-Subtle': [158,234,249],
+    'warningBorder-Subtle': [255,230,156],
+    'dangerBorder-Subtle': [241,174,181],
+    'lightBorder-Subtle': [233,236,239],
+    'darkBorder-Subtle': [173,181,189],
+    'bodyColor': [33,37,41],
+    'bodyBg': [240,240,240],
+    'emphasisColor': [0,0,0],
+    'secondaryBg': [233,236,239],
+    'tertiaryBg': [248,249,250],
+    'linkColor': [13,110,253],
+    'linkHover-Color': [10,88,202],
+    'codeColor': [214,51,132],
+    'highlightColor': [33,37,41],
+    'highlightBg': [255,243,205],
+    'borderColor': [222,226,230],
+    'formValid-Color': [25,135,84],
+    'formValid-Border-Color': [25,135,84],
+    'formInvalid-Color': [220,53,69],
+    'formInvalid-Border-Color': [220,53,69],
     // colors-extended.css
-    indigo: [75, 0, 130, 1],
     // "indigo": Color.fromHex('#4b0082').rgba.values,
     'indigo-light': [202, 128, 255, 1],
     // "indigo-light": Color.fromHex('#ca80ff').rgba.values,
     'indigo-dark': [25, 0, 51, 1],
     // "indigo-dark": Color.fromHex('#1e0033').rgba.values,
 
-    teal: [0, 128, 128, 1],
     // "teal": Color.fromHex('#1fc794').rgba.values,
     'teal-light': [233, 252, 246, 1],
     // "teal-light": Color.fromHex('#e9fcf6').rgba.values,
     'teal-dark': [0, 51, 51, 1],
     // "teal-dark": Color.fromHex('#158463').rgba.values,
 
-    orange: [255, 165, 0, 1],
     // "orange": Color.fromHex('#ff6600').rgba.values,
     'orange-light': [255, 209, 179, 1],
     // "orange-light": Color.fromHex('#ffd1b3').rgba.values,
     'orange-dark': [204, 102, 0, 1],
     // "orange-dark": Color.fromHex('#b34700').rgba.values,
 
-    pink: [255, 0, 255, 1],
     // "pink": Color.fromHex('#ff33cc').rgba.values,
     'pink-light': [255, 204, 242, 1],
     // "pink-light": Color.fromHex('#ffccf2').rgba.values,
     'pink-dark': [204, 0, 153, 1],
     // "pink-dark": Color.fromHex('#e600ac').rgba.values,
 
-    purple: [128, 0, 128, 1],
     // "maroon": Color.fromHex('#800000').rgba.values,
     'purple-light': [255, 204, 255, 1],
     // "maroon-light": Color.fromHex('#ff8080').rgba.values,
     'purple-dark': [51, 0, 51, 1],
     // "maroon-dark": Color.fromHex('#330000').rgba.values,
 
-    navy: [0, 0, 128, 1],
     // "navy": Color.fromHex('#000066').rgba.values,
     'navy-light': [204, 204, 255, 1],
     // "navy-light": Color.fromHex('#6666ff').rgba.values,
     'navy-dark': [0, 0, 51, 1],
     // "navy-dark": Color.fromHex('#00001a').rgba.values,
 
-    yellow: [255, 255, 0, 1],
     // "yellow": Color.fromHex('#ffff00').rgba.values,
     'yellow-light': [255, 255, 179, 1],
     // "yellow-light": Color.fromHex('#ffffb3').rgba.values,
@@ -220,7 +275,6 @@ const BootstrapColors = {
     'lime-dark': [0, 153, 0, 1],
     // "lime-dark": Color.fromHex('#00b300').rgba.values,
 
-    gray: [128, 128, 128, 1],
     // "gray": Color.fromHex('#808080').rgba.values,
     'gray-light': [230, 230, 230, 1],
     // "gray-light": Color.fromHex('#e6e6e6').rgba.values,
@@ -255,11 +309,10 @@ const BootstrapColors = {
     'steel-dark': [51, 51, 102, 1],
     // "steel-dark": Color.fromHex('#6b5b95').rgba.values,
 
-    green: [0, 128, 0, 1],
     // "green": Color.fromHex('#006600').rgba.values,
     'green-light': [179, 255, 179, 1],
     // "green-light": Color.fromHex('#66ff66').rgba.values,
-    'green-dark': [0, 51, 0, 1],
+    'green-dark': [0, 51, 0, 1]
     // "green-dark": Color.fromHex('#003300').rgba.values
 };
 
@@ -300,7 +353,7 @@ export class Color {
 
             const colors: number[] = parsed[1]
                 .split(',')
-                .map((n) => parseInt(n, 10));
+                .map(n => parseInt(n, 10));
 
             switch (color.split('(')[0]) {
                 case 'rgb':
@@ -308,14 +361,14 @@ export class Color {
                         colors[0],
                         colors[1],
                         colors[2],
-                        colors[3],
+                        colors[3]
                     );
                 case 'hsl':
                     return Color.fromHSL(
                         colors[0],
                         colors[1],
                         colors[2],
-                        colors[3],
+                        colors[3]
                     );
                 default:
                     return new Color('rgb(0,0,0)');
@@ -324,6 +377,15 @@ export class Color {
     }
 
     static fromHex(hex: string): Color {
+        if (hex.length === 4) {
+            const [r, g, b] = hex
+                .slice(1)
+                .split('')
+                .map(n => parseInt(n, 16));
+
+            return new Color(r * 16, g * 16, b * 16);
+        }
+
         const r = parseInt(hex.slice(1, 3), 16);
         const g = parseInt(hex.slice(3, 5), 16);
         const b = parseInt(hex.slice(5, 7), 16);
@@ -342,24 +404,20 @@ export class Color {
         [h, s, l].forEach((v, i) => {
             if (isNaN(v)) {
                 throw new Error(
-                    `Invalid ${params[i]}, ${v} is not a parsable number`,
+                    `Invalid ${params[i]}, ${v} is not a parsable number`
                 );
             }
 
             if (v > 1) {
                 console.warn(
-                    `Invalid ${
-                        params[i]
-                    }, ${v} is greater than 1. It will be set to 1`,
+                    `Invalid ${params[i]}, ${v} is greater than 1. It will be set to 1`
                 );
                 v = 1;
             }
 
             if (v < 0) {
                 console.warn(
-                    `Invalid ${
-                        params[i]
-                    }, ${v} is less than 0. It will be set to 0`,
+                    `Invalid ${params[i]}, ${v} is less than 0. It will be set to 0`
                 );
                 v = 0;
             }
@@ -394,7 +452,7 @@ export class Color {
         return new Color(
             Math.random() * 255,
             Math.random() * 255,
-            Math.random() * 255,
+            Math.random() * 255
         );
     }
 
@@ -418,22 +476,22 @@ export class Color {
             hues: number[];
         };
 
-        const hsls: number[] = colors.map((c) => c.hsl.values[0]);
+        const hsls: number[] = colors.map(c => c.hsl.values[0]);
 
         const intervals = hsls.reduce((intervals, hue, i): interval[] => {
             const next = hsls[i + 1];
             if (next) {
                 intervals.push({
                     diff: Math.abs(hue - next),
-                    hues: [hue, next],
+                    hues: [hue, next]
                 });
             }
 
             return intervals;
         }, [] as interval[]);
 
-        const max = Math.max(...intervals.map((i) => i.diff));
-        let int = intervals.find((i) => i.diff === max);
+        const max = Math.max(...intervals.map(i => i.diff));
+        let int = intervals.find(i => i.diff === max);
         int = int || intervals[0];
 
         const [hue1, hue2] = int.hues;
@@ -481,14 +539,14 @@ export class Color {
                 const distance = Math.sqrt(
                     Math.pow(r - r2, 2) +
                         Math.pow(g - g2, 2) +
-                        Math.pow(b - b2, 2),
+                        Math.pow(b - b2, 2)
                 );
 
                 if (distance < closest.distance) {
                     return {
                         name,
                         distance,
-                        color: new Color(r2, g2, b2),
+                        color: new Color(r2, g2, b2)
                     };
                 }
 
@@ -497,8 +555,8 @@ export class Color {
             {
                 name: '',
                 distance: Infinity,
-                color: new Color(0, 0, 0),
-            } as ClosestColor,
+                color: new Color(0, 0, 0)
+            } as ClosestColor
         );
     }
 
@@ -515,14 +573,14 @@ export class Color {
                 const distance = Math.sqrt(
                     Math.pow(r - r2, 2) +
                         Math.pow(g - g2, 2) +
-                        Math.pow(b - b2, 2),
+                        Math.pow(b - b2, 2)
                 );
 
                 if (distance < closest.distance) {
                     return {
                         name,
                         distance,
-                        color: new Color(r2, g2, b2),
+                        color: new Color(r2, g2, b2)
                     };
                 }
 
@@ -531,8 +589,8 @@ export class Color {
             {
                 name: '',
                 distance: Infinity,
-                color: new Color(0, 0, 0),
-            } as ClosestColor,
+                color: new Color(0, 0, 0)
+            } as ClosestColor
         );
     }
 
@@ -552,7 +610,7 @@ export class Color {
         redOrString: number | string | ColorStr | BootstrapColor,
         green?: number,
         blue?: number,
-        alpha?: number,
+        alpha?: number
     ) {
         if (typeof redOrString === 'string') {
             if (
@@ -561,7 +619,7 @@ export class Color {
                 alpha !== undefined
             ) {
                 throw new Error(
-                    'Invalid arguments. If the first argument is a string, the other arguments must be undefined.',
+                    'Invalid arguments. If the first argument is a string, the other arguments must be undefined.'
                 );
             }
 
@@ -580,26 +638,20 @@ export class Color {
                 if (value === undefined) return;
                 if (isNaN(value)) {
                     throw new Error(
-                        `Invalid ${
-                            check[index]
-                        }, ${value} is not a parsable number`,
+                        `Invalid ${check[index]}, ${value} is not a parsable number`
                     );
                 }
 
                 if (value > 255) {
                     console.warn(
-                        `Invalid ${
-                            check[index]
-                        }, ${value} is greater than 255. It will be set to 255`,
+                        `Invalid ${check[index]}, ${value} is greater than 255. It will be set to 255`
                     );
                     value = 255;
                 }
 
                 if (value < 0) {
                     console.warn(
-                        `Invalid ${
-                            check[index]
-                        }, ${value} is less than 0. It will be set to 0`,
+                        `Invalid ${check[index]}, ${value} is less than 0. It will be set to 0`
                     );
                     value = 0;
                 }
@@ -631,7 +683,7 @@ export class Color {
             setBlue: (value: number) => {
                 this.b = value;
                 return this;
-            },
+            }
         };
     }
 
@@ -640,7 +692,7 @@ export class Color {
             ...this.rgb,
             values: [...this.rgb.values, this.a],
             toString: () => `rgba(${this.r}, ${this.g}, ${this.b}, ${this.a})`,
-            setAlpha: this.setAlpha,
+            setAlpha: this.setAlpha
         };
     }
 
@@ -717,7 +769,7 @@ export class Color {
                 this.b = color.b;
 
                 return this;
-            },
+            }
         };
     }
 
@@ -726,15 +778,13 @@ export class Color {
             ...this.hsl,
             values: [...this.hsl.values, this.a],
             toString: (): string =>
-                `hsla(${this.hsl.values[0]}, ${this.hsl.values[1]}, ${
-                    this.hsl.values[2]
-                }, ${this.a})`,
+                `hsla(${this.hsl.values[0]}, ${this.hsl.values[1]}, ${this.hsl.values[2]}, ${this.a})`,
             setAlpha: this.setAlpha,
             set: (
                 hue: number,
                 saturation: number,
                 lightness: number,
-                alpha: number,
+                alpha: number
             ): Color => {
                 const color = Color.fromHSL(hue, saturation, lightness, alpha);
 
@@ -744,7 +794,7 @@ export class Color {
                 this.a = color.a;
 
                 return this;
-            },
+            }
         };
     }
 
@@ -767,7 +817,7 @@ export class Color {
             setBlue: (value: number) => {
                 this.b = value;
                 return this;
-            },
+            }
         };
     }
 
@@ -781,7 +831,7 @@ export class Color {
             ...this.hex,
             values: [r, g, b, a],
             toString: () => `#${r}${g}${b}${a}`,
-            setAlpha: this.setAlpha,
+            setAlpha: this.setAlpha
         };
     }
 
@@ -791,7 +841,7 @@ export class Color {
     }
 
     public toString(
-        type: 'hex' | 'hexa' | 'hsl' | 'hsla' | 'rgb' | 'rgba' = 'rgba',
+        type: 'hex' | 'hexa' | 'hsl' | 'hsla' | 'rgb' | 'rgba' = 'rgba'
     ): string {
         switch (type) {
             case 'hex':
@@ -823,7 +873,7 @@ export class Color {
 
         const g = [
             this,
-            ...hues.map((h) => Color.fromHSL(h, hsl[1], hsl[2], this.a)),
+            ...hues.map(h => Color.fromHSL(h, hsl[1], hsl[2], this.a))
         ];
 
         return new Gradient(...g);
@@ -833,7 +883,7 @@ export class Color {
         const hsl = this.hsl.values;
         const hues: [number, number] = [hsl[0] - 30 / 360, hsl[0] + 30 / 360];
 
-        const [h1, h2] = hues.map((h) =>
+        const [h1, h2] = hues.map(h =>
             Color.fromHSL(h, hsl[1], hsl[2], this.a)
         );
         return [this, h1, h2];
@@ -842,21 +892,21 @@ export class Color {
     public interpolate(toColor: Color, distance = 0.5): Color {
         if (isNaN(distance)) {
             console.warn(
-                'Distance must be a number between 0 and 1. Defaulting to 0.5',
+                'Distance must be a number between 0 and 1. Defaulting to 0.5'
             );
             distance = 0.5;
         }
 
         if (!(toColor instanceof Color)) {
             console.warn(
-                'toColor must be an instance of Color. Defaulting to black',
+                'toColor must be an instance of Color. Defaulting to black'
             );
             toColor = new Color(0, 0, 0);
         }
 
         if (distance < 0 || distance > 1) {
             console.warn(
-                'Distance must be a number between 0 and 1. Defaulting to 0.5',
+                'Distance must be a number between 0 and 1. Defaulting to 0.5'
             );
             distance = 0.5;
         }
@@ -879,9 +929,9 @@ export class Color {
                     Math.floor(this.r + ((color.r - this.r) / frames) * i),
                     Math.floor(this.g + ((color.g - this.g) / frames) * i),
                     Math.floor(this.b + ((color.b - this.b) / frames) * i),
-                    this.a + ((color.a - this.a) / frames) * i,
+                    this.a + ((color.a - this.a) / frames) * i
                 );
-            }),
+            })
         );
     }
 
@@ -892,23 +942,23 @@ export class Color {
                     Math.floor(
                         this.r +
                             ((color.r - this.r) / Math.pow(base, frames)) *
-                                Math.pow(base, i),
+                                Math.pow(base, i)
                     ),
                     Math.floor(
                         this.g +
                             ((color.g - this.g) / Math.pow(base, frames)) *
-                                Math.pow(base, i),
+                                Math.pow(base, i)
                     ),
                     Math.floor(
                         this.b +
                             ((color.b - this.b) / Math.pow(base, frames)) *
-                                Math.pow(base, i),
+                                Math.pow(base, i)
                     ),
                     this.a +
                         ((color.a - this.a) / Math.pow(base, frames)) *
-                            Math.pow(base, i),
+                            Math.pow(base, i)
                 );
-            }),
+            })
         );
     }
 
@@ -919,31 +969,33 @@ export class Color {
                     Math.floor(
                         this.r +
                             ((color.r - this.r) / Math.pow(base, frames)) *
-                                Math.pow(base, i),
+                                Math.pow(base, i)
                     ),
                     Math.floor(
                         this.g +
                             ((color.g - this.g) / Math.pow(base, frames)) *
-                                Math.pow(base, i),
+                                Math.pow(base, i)
                     ),
                     Math.floor(
                         this.b +
                             ((color.b - this.b) / Math.pow(base, frames)) *
-                                Math.pow(base, i),
+                                Math.pow(base, i)
                     ),
                     this.a +
                         ((color.a - this.a) / Math.pow(base, frames)) *
-                            Math.pow(base, i),
+                            Math.pow(base, i)
                 );
-            }),
+            })
         );
     }
 
     public detectContrast(color: Color): number {
-        const l1 = 0.2126 * Math.pow(this.r / 255, 2.2) +
+        const l1 =
+            0.2126 * Math.pow(this.r / 255, 2.2) +
             0.7152 * Math.pow(this.g / 255, 2.2) +
             0.0722 * Math.pow(this.b / 255, 2.2);
-        const l2 = 0.2126 * Math.pow(color.r / 255, 2.2) +
+        const l2 =
+            0.2126 * Math.pow(color.r / 255, 2.2) +
             0.7152 * Math.pow(color.g / 255, 2.2) +
             0.0722 * Math.pow(color.b / 255, 2.2);
 
