@@ -7,7 +7,7 @@ import Post from './pages/Post.svelte';
 import Pre from './pages/Pre.svelte';
 import { App } from '../models/app/app';
 import type { EventData } from '../models/app/app';
-import { TBAMatch } from '../../shared/submodules/tatorscout-calculations/tba';
+import type { TBAMatch } from '../../shared/submodules/tatorscout-calculations/tba';
 
 let event: EventData;
 let currentMatch: TBAMatch | undefined = undefined;
