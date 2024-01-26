@@ -36,78 +36,28 @@ export const generate2024App = (
         blueFade: new Color(0, 0, 255, 0.25),
         black: new Color(0, 0, 0),
         blackFade: new Color(0, 0, 0, 0.25),
-    }
+    };
 
-    app.addArea(
-        'blue-stage',
-        stages.blue,
-        colors.blueFade,
-        isIn,
-    );
-    
-    app.addArea(
-        'red-stage',
-        stages.red,
-        colors.redFade,
-        isIn,
-    );
-    
-    app.addArea(
-        'blue-amp',
-        amps.blue,
-        colors.blueFade,
-        isIn,
-    );
-    
-    app.addArea(
-        'red-amp',
-        amps.red,
-        colors.redFade,
-        isIn,
-    );
-    
-    app.addArea(
-        'blue-src',
-        srcs.blue,
-        colors.blueFade,
-        isIn,
-    );
-    
-    app.addArea(
-        'red-src',
-        srcs.red,
-        colors.redFade,
-        isIn,
-    );
-    
-    app.addArea(
-        'blue-zone',
-        zones.blue,
-        colors.blueFade,
-        isIn,
-    );
-    
-    app.addArea(
-        'red-zone',
-        zones.red,
-        colors.redFade,
-        isIn,
-    );
-    
-    app.addArea(
-        'blue-auto',
-        autoZone.blue,
-        colors.blueFade,
-        isIn,
-    );
-    
-    app.addArea(
-        'red-auto',
-        autoZone.red,
-        colors.redFade,
-        isIn,
-    );
-    
+    app.addArea('blue-stage', stages.blue, colors.blueFade, isIn);
+
+    app.addArea('red-stage', stages.red, colors.redFade, isIn);
+
+    app.addArea('blue-amp', amps.blue, colors.blueFade, isIn);
+
+    app.addArea('red-amp', amps.red, colors.redFade, isIn);
+
+    app.addArea('blue-src', srcs.blue, colors.blueFade, isIn);
+
+    app.addArea('red-src', srcs.red, colors.redFade, isIn);
+
+    app.addArea('blue-zone', zones.blue, colors.blueFade, isIn);
+
+    app.addArea('red-zone', zones.red, colors.redFade, isIn);
+
+    app.addArea('blue-auto', autoZone.blue, colors.blueFade, isIn);
+
+    app.addArea('red-auto', autoZone.red, colors.redFade, isIn);
+
     app.setBorder(border as Point2D[], colors.blackFade);
 
     // app.border = new Border(border as [number, number][]);
