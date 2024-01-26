@@ -7,6 +7,9 @@ export type Match = {
     teamNumber: number;
     compLevel: 'pr' | 'qm' | 'qf' | 'sf' | 'f';
     eventKey: string;
+    scout: string;
+    date: number;
+    group: number;
 };
 
 export const validateObj = {
@@ -15,4 +18,8 @@ export const validateObj = {
     matchNumber: 'number',
     teamNumber: 'number',
     compLevel: ['pr', 'qm', 'qf', 'sf', 'f'],
+    eventKey: 'string',
+    scout: 'string',
+    date: 'number',
+    group: 'number'
 }
