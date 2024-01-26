@@ -17,6 +17,7 @@ import {
 import { App, Tick } from './app';
 import { Point2D } from '../../../shared/submodules/calculations/src/linear-algebra/point';
 import { Icon } from '../canvas/material-icons';
+import { SVG } from '../canvas/svg';
 
 /**
  * Builds the app for the 2024 game
@@ -25,7 +26,17 @@ import { Icon } from '../canvas/material-icons';
 export const generate2024App = (
     alliance: 'red' | 'blue' | null = null,
 ): App<Action2024> => {
-    const app = new App<Action2024, Zones2024, TraceParse2024>(alliance);
+    const icons: {
+        [key in Action2024]: Icon | SVG;
+    } = {
+        spk: new Icon('speaker'),
+        amp: new Icon('campaign'),
+        src: new Icon('back_hand'),
+        clb: new Icon('dry_cleaning'),
+        trp: new Icon('place_item'),
+    };
+
+    const app = new App<Action2024, Zones2024, TraceParse2024>(2024, alliance, icons);
 
     const isIn = (d: Drawable) =>
         app.currentLocation ? d.isIn(app.currentLocation) : false;
@@ -77,8 +88,8 @@ export const generate2024App = (
     const blueSource = document.createElement('button');
     const redSource = document.createElement('button');
 
-    const blueButtonClasses = ['btn', 'btn-primary'];
-    const redButtonClasses = ['btn', 'btn-danger'];
+    const blueButtonClasses = ['btn', 'btn-primary', 'btn-lg'];
+    const redButtonClasses = ['btn', 'btn-danger', 'btn-lg'];
 
     blueAmp.classList.add(...blueButtonClasses);
     blueAmp.innerHTML = `<i class="material-icons">campaign</i>`;
@@ -96,7 +107,7 @@ export const generate2024App = (
     const I = Iterator<Action2024>;
 
     app.addAppObject(
-        [0.19624217118997914, 0.060542797494780795],
+        [0.16976556184316896, 0.021018593371059015],
         new I('Blue Amp', 'Placing any note into the blue amp', 'amp', 0),
         blueAmp,
         (i) => i.toString(),
@@ -104,7 +115,7 @@ export const generate2024App = (
     );
 
     app.addAppObject(
-        [0.7974947807933194, 0.06889352818371608],
+        [0.8274050121261115, 0.018593371059013743],
         new I('Red Amp', 'Placing any note into the red amp', 'amp'),
         redAmp,
         (i) => i.toString(),
@@ -112,7 +123,7 @@ export const generate2024App = (
     );
 
     app.addAppObject(
-        [0.07828810020876827, 0.3653444676409186],
+        [0.06345998383185125, 0.33063864187550523],
         new I('Blue Speaker', 'Shot a note into the blue speaker', 'spk'),
         blueSpeaker,
         (i) => i.toString(),
@@ -120,7 +131,7 @@ export const generate2024App = (
     );
 
     app.addAppObject(
-        [0.9018789144050104, 0.3695198329853862],
+        [0.9365400161681487, 0.32740501212611156],
         new I('Red Speaker', 'Shot a note into the red speaker', 'spk'),
         redSpeaker,
         (i) => i.toString(),
@@ -128,7 +139,7 @@ export const generate2024App = (
     );
 
     app.addAppObject(
-        [0.8423799582463466, 0.8914405010438413],
+        [0.8823767178658044, 0.9062247372675829],
         new I(
             'Blue Source',
             'Robot retrieves a note from the blue source',
@@ -140,7 +151,7 @@ export const generate2024App = (
     );
 
     app.addAppObject(
-        [0.1524008350730689, 0.8914405010438413],
+        [0.11156022635408246, 0.9086499595796281],
         new I(
             'Red Source',
             'Robot retrieves a note from the red source',
@@ -171,7 +182,7 @@ export const generate2024App = (
             drawButton('blue-stage'),
             colors.blue,
             'blue',
-            new Icon('dry_cleaning')
+            icons.clb
         )
         .addButton(
             'Blue Trap',
@@ -181,7 +192,7 @@ export const generate2024App = (
             drawButton('blue-stage'),
             colors.blue,
             'blue',
-            new Icon('place_item')
+            icons.trp
         )
         .addButton(
             'Red Climb',
@@ -191,7 +202,7 @@ export const generate2024App = (
             drawButton('red-stage'),
             colors.red,
             'red',
-            new Icon('dry_cleaning')
+            icons.clb
         )
         .addButton(
             'Red Trap',
@@ -201,7 +212,7 @@ export const generate2024App = (
             drawButton('red-stage'),
             colors.red,
             'red',
-            new Icon('place_item')
+            icons.trp
         );
 
     const em = app.clickPoints();

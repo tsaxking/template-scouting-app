@@ -1,5 +1,6 @@
 import { Drawable } from './drawable';
 import { Point2D } from '../../../shared/submodules/calculations/src/linear-algebra/point';
+import { copy } from '../../../shared/copy';
 
 export class Circle extends Drawable<Circle> {
     /**
@@ -94,5 +95,11 @@ export class Circle extends Drawable<Circle> {
      */
     set y(y: number) {
         this.center[1] = y;
+    }
+
+    clone(): Circle {
+        const c = new Circle(this.center, this.radius);
+        copy(c, this);
+        return c;
     }
 }

@@ -30,6 +30,8 @@ import { ServerRequest } from '../../utilities/requests';
 import { alert } from '../../utilities/notifications';
 import { Assignment } from '../../../shared/submodules/tatorscout-calculations/scout-groups';
 import { TBAEvent, TBAMatch, TBATeam } from '../../../shared/submodules/tatorscout-calculations/tba';
+import { Icon } from '../canvas/material-icons';
+import { SVG } from '../canvas/svg';
 
 /**
  * Description placeholder
@@ -323,10 +325,12 @@ export class App<a = Action, z extends Zones = Zones, p = TraceParse> {
      * @constructor
      * @param {HTMLDivElement} target
      */
-    constructor(public readonly currentAlliance: 'red' | 'blue' | null = null) {
+    constructor(public readonly year: number, public readonly currentAlliance: 'red' | 'blue' | null = null, public readonly icons: Partial<{
+        [key in Action]: Icon | SVG;
+    }>) {
         this.canvas.$ctx.canvas.style.position = 'absolute';
 
-        this.background = new Img('/public/pictures/field.png', {
+        this.background = new Img(`/public/pictures/${this.year}field.png`, {
             x: 0,
             y: 0,
             width: 1,
@@ -359,6 +363,10 @@ export class App<a = Action, z extends Zones = Zones, p = TraceParse> {
         this.setView();
 
         this.canvas.data = this;
+
+        for (const [action, icon] of Object.entries(this.icons)) {
+            this.icons[action] = icon.clone();
+        }
     }
 
     /**
@@ -1226,7 +1234,7 @@ export class App<a = Action, z extends Zones = Zones, p = TraceParse> {
             if (!ctx) throw new Error('No context');
             const c = new Canvas(ctx);
 
-            const img = new Img('/public/pictures/field.png');
+            const img = new Img(`/public/pictures/${this.year}field.png`);
             img.options.height = 1;
             img.options.width = 1;
             img.options.x = 0;
@@ -1241,11 +1249,28 @@ export class App<a = Action, z extends Zones = Zones, p = TraceParse> {
                 const color = Color.fromName(this.currentAlliance ? this.currentAlliance : 'black').toString('rgba');
 
                 if (action) {
-                    const c = new Circle([x, y], 0.01);
-                    c.$properties.fill = {
+                    const size = 0.03;
+                    const cir = new Circle([x, y], size);
+                    cir.$properties.fill = {
                         color: color,
                     };
-                    return c;
+                    const a = this.icons[action]?.clone();
+                    console.log(a);
+                    if (a instanceof SVG) {
+                        a.center = [x, y];
+                        if (!a.$properties.text) a.$properties.text = {};
+                        a.$properties.text!.height = size;
+                        a.$properties.text!.width = size;
+                        a.$properties.text!.color = Color.fromBootstrap('light').toString('rgba');
+                    }
+                    if (a instanceof Icon) {
+                        a.x = x;
+                        a.y = y;
+                        a.size = size;
+                        a.color = Color.fromBootstrap('light').toString('rgba');
+                    }
+                    const cont = new Container(cir, a || null);
+                    return cont;
                 }
                 if (a[i - 1]) {
                     const p = new Path([

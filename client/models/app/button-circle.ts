@@ -179,7 +179,7 @@ export class ButtonCircle<actions = Action> extends Drawable<ButtonCircle> {
             condition,
             index,
             color,
-            icon ?? new Icon('help'),
+            icon?.clone() ?? new Icon('help'),
             alliance,
         );
 

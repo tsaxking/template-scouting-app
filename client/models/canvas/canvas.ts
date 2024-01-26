@@ -165,7 +165,7 @@ export class Canvas<T = unknown> {
                                         this,
                                         drawable,
                                     );
-                                    console.log('clicked!', drawable);
+                                    // console.log('clicked!', drawable);
                                     drawable.emit('click', e);
                                 }
                             }
