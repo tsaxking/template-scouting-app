@@ -15,6 +15,7 @@ import { ServerRequest } from './utilities/requests.ts';
 import { getJSONSync } from './utilities/files.ts';
 import { runTask } from './utilities/run-task.ts';
 import { attempt } from '../shared/attempt.ts';
+import { startPinger } from './utilities/ping.ts';
 
 console.log('Platform:', os.platform());
 
@@ -32,6 +33,20 @@ export const app = new App(port, domain, {
 });
 
 const builder = await runBuild();
+
+if (Deno.args.includes('--ping')) {
+    const pinger = startPinger();
+    pinger.on('disconnect', () => {
+        console.log('Servers are disconnected!');
+    });
+    pinger.on('connect', () => {
+        console.log('Servers are connected!');
+    });
+    pinger.on('ping', () => {
+        console.log('Pinged!');
+    });
+}
+
 
 // building client listeners
 builder.on('build', () => {

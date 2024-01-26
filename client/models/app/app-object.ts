@@ -4,7 +4,7 @@
  */
 
 import { Point2D } from '../../../shared/submodules/calculations/src/linear-algebra/point';
-import { App, Tick } from './app';
+import { Tick } from './app';
 
 /**
  * State of an action at a given point in time
@@ -13,9 +13,9 @@ import { App, Tick } from './app';
  * @export
  * @class ActionState
  * @typedef {ActionState}
- * @template [T=any]
+ * @template [T=unknown]
  */
-export class ActionState<T = any, actions = string> {
+export class ActionState<T = unknown, actions = string> {
     /**
      * When the action state was created
      * @date 1/9/2024 - 3:04:36 AM
@@ -79,9 +79,9 @@ export class ActionState<T = any, actions = string> {
  * @export
  * @class AppObject
  * @typedef {AppObject}
- * @template [T=any]
+ * @template [T=unknown]
  */
-export class AppObject<T = any, actions = string> {
+export class AppObject<T = unknown, actions = string> {
     /**
      * Current state of the object
      * @date 1/9/2024 - 3:04:36 AM
@@ -168,8 +168,8 @@ export class AppObject<T = any, actions = string> {
         if (this.$toChange) {
             this.state = this.$toChange(this.state);
             this.stateHistory.push(
-                new ActionState(
-                    this as AppObject<any, string>,
+                new ActionState<T>(
+                    this as AppObject<T, string>,
                     this.state,
                     point,
                 ),

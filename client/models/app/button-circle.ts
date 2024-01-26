@@ -187,7 +187,7 @@ export class ButtonCircle<actions = Action> extends Drawable<ButtonCircle> {
 
         this.buttons.push(button);
 
-        button.on('click', (event) => {
+        button.on('click', () => {
             button.iterator.change();
         });
 

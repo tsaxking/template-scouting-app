@@ -12,20 +12,23 @@ if (!SERVER_DOMAIN) console.warn('SERVER_DOMAIN not properly set in .env file');
 
 
 export class ServerRequest {
-    public static post<T>(url: string, body?: unknown): Promise<Result<T>> {
+    private static post<T>(url: string, body?: unknown): Promise<Result<T>> {
         return attemptAsync(async () => {
             const str = JSON.stringify(body) || '';
             const id = uuid();
 
-            DB.run('server-requests/new', {
-                id,
-                url,
-                body: str,
-                date: Date.now().toString()
-            });
+            if (url !== '/ping') {
+                DB.run('server-requests/new', {
+                    id,
+                    url,
+                    body: str,
+                    date: Date.now().toString()
+                });
+            }
+
 
             const data = await fetch(
-                SERVER_DOMAIN + url,
+                SERVER_DOMAIN + '/api/event-server' + url,
                 {
                     method: 'POST',
                     headers: {
@@ -46,17 +49,19 @@ export class ServerRequest {
 
             const json = data.json();
 
-            DB.run('server-requests/update', {
-                id,
-                response: JSON.stringify(json)
-            });
+            if (url !== '/ping') {
+                DB.run('server-requests/update', {
+                    id,
+                    response: JSON.stringify(json)
+                });
+            }
 
             return json as T;
         });
     }
 
     public static async submitMatch(match: Match) {
-        return ServerRequest.post('/api/event-server/match', match);
+        return ServerRequest.post('/match', match);
     }
 
     public static async getScoutGroups(eventKey: string) {
@@ -64,9 +69,36 @@ export class ServerRequest {
             assignments: Assignment,
             matches: TBAMatch[],
             teams: TBATeam[],
+            eventKey: string;
+        }>('/scout-groups', { 
             eventKey
-        }>('/api/event-server/scout-groups', { 
-            eventKey
+        });
+    }
+
+    public static async getAccounts() {
+        // retrieves all usernames from the server, good for autocomplete on sign in
+        return ServerRequest.post<string[]>('/get-accounts');
+    }
+
+    public static async signIn(username: string, password: string) {
+        return ServerRequest.post<boolean>('/sign-in', {
+            username,
+            password
+        });
+    }
+
+    public static async ping() {
+        return attemptAsync(() => {
+            return new Promise<void>((res, rej) => {
+                setTimeout(() => {
+                    rej(new Error('Request timed out'));
+                }, 1000 * 10);
+
+                ServerRequest.post('/ping').then((r) => {
+                    if (r.isOk()) res();
+                    else rej(r.error);
+                })
+            })
         });
     }
 }
