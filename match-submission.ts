@@ -1,3 +1,5 @@
+import { TraceArray } from "./trace";
+
 export type Match = {
     checks: string[];
     comments: {
@@ -10,6 +12,7 @@ export type Match = {
     scout: string;
     date: number;
     group: number;
+    trace: TraceArray
 };
 
 export const validateObj = {
