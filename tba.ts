@@ -1125,3 +1125,15 @@ export type TBATeamSimple = {
         division_keys: string[];
     };
 };
+
+export const teamsFromMatch = (
+    match: TBAMatch
+): [number, number, number, number, number, number] => {
+    return match.alliances.red.team_keys
+        .concat(match.alliances.blue.team_keys)
+        .map((key: string) => {
+            const num = key.match(/[0-9]/g)?.join('');
+            if (!num) return 0;
+            return parseInt(num);
+        }) as [number, number, number, number, number, number];
+};
