@@ -11,7 +11,7 @@ export type Match = {
     eventKey: string;
     scout: string;
     date: number;
-    group: number;
+    group: 0 | 1 | 2 | 3 | 4 | 5;
     trace: TraceArray
 };
 
@@ -24,5 +24,5 @@ export const validateObj = {
     eventKey: 'string',
     scout: 'string',
     date: 'number',
-    group: 'number'
+    group: [0, 1, 2, 3, 4, 5],
 }
