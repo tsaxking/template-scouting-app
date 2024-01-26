@@ -22,7 +22,7 @@ export const destructureMatch = (
  *
  * @typedef {Assignment}
  */
-type Assignment = {
+export type Assignment = {
     groups: number[][];
     matchAssignments: number[][];
     interferences: number;
@@ -113,7 +113,7 @@ export const generateScoutGroups = (
  *
  * @typedef {AssignmentStatus}
  */
-type AssignmentStatus =
+export type AssignmentStatus =
     | 'duplicate-in-group'
     | 'duplicate-between-groups'
     | 'incorrect-match-length'
@@ -125,7 +125,7 @@ type AssignmentStatus =
  *
  * @typedef {Status}
  */
-type Status =
+export type Status =
     | {
           status: 'ok';
       }
