@@ -9,11 +9,11 @@ import { TBATeam } from './tba.ts';
  * @returns {[number, number, number, number, number, number]} The team numbers
  */
 export const destructureMatch = (
-    match: TBAMatch,
+    match: TBAMatch
 ): [number, number, number, number, number, number] => {
     return [
-        ...match.alliances.red.team_keys.map((t) => parseInt(t.substring(3))),
-        ...match.alliances.blue.team_keys.map((t) => parseInt(t.substring(3))),
+        ...match.alliances.red.team_keys.map(t => parseInt(t.substring(3))),
+        ...match.alliances.blue.team_keys.map(t => parseInt(t.substring(3)))
     ] as [number, number, number, number, number, number];
 };
 
@@ -38,13 +38,13 @@ type Assignment = {
  */
 export const generateScoutGroups = (
     teams: TBATeam[],
-    matches: TBAMatch[],
+    matches: TBAMatch[]
 ): Assignment => {
     let interferences = 0;
 
     // only use qualification matches
     matches = matches
-        .filter((m) => m.comp_level === 'qm')
+        .filter(m => m.comp_level === 'qm')
         .sort((a, b) => a.match_number - b.match_number);
     teams = teams.sort((a, b) => a.team_number - b.team_number);
 
@@ -59,7 +59,7 @@ export const generateScoutGroups = (
         const mTeams = destructureMatch(match);
 
         for (let i = 0; i < mTeams.length; i++) {
-            const team = tempTeams.find((t) => t.team_number === mTeams[i]);
+            const team = tempTeams.find(t => t.team_number === mTeams[i]);
             if (team) {
                 scoutGroups[i].push(team);
                 tempTeams.splice(tempTeams.indexOf(team), 1);
@@ -73,10 +73,10 @@ export const generateScoutGroups = (
         .fill(0)
         .map(() => new Array<TBATeam>());
 
-    const scoutLists = scoutGroups.map((scoutTeams) => {
+    const scoutLists = scoutGroups.map(scoutTeams => {
         return matches.map((m, mi) => {
             const mTeams = destructureMatch(m);
-            const teams = scoutTeams.filter((t) =>
+            const teams = scoutTeams.filter(t =>
                 mTeams.includes(t.team_number)
             );
 
@@ -102,9 +102,9 @@ export const generateScoutGroups = (
     }
 
     return {
-        groups: scoutGroups.map((g) => g.map((t) => t.team_number)),
-        matchAssignments: scoutLists.map((s) => s.map((t) => t.team_number)),
-        interferences,
+        groups: scoutGroups.map(g => g.map(t => t.team_number)),
+        matchAssignments: scoutLists.map(s => s.map(t => t.team_number)),
+        interferences
     };
 };
 
@@ -127,16 +127,16 @@ type AssignmentStatus =
  */
 type Status =
     | {
-        status: 'ok';
-    }
+          status: 'ok';
+      }
     | {
-        status: 'error';
-        error: Error;
-    }
+          status: 'error';
+          error: Error;
+      }
     | {
-        status: AssignmentStatus;
-        data: unknown;
-    };
+          status: AssignmentStatus;
+          data: unknown;
+      };
 
 /**
  * Tests an assignment for errors
@@ -157,21 +157,21 @@ export const testAssignments = (assignment: Assignment): Status => {
             return {
                 status: 'duplicate-in-group',
                 data: {
-                    group: i,
-                },
+                    group: i
+                }
             };
         }
 
         // ensure no duplicates between groups
         for (let j = 0; j < groups.length; j++) {
             if (i === j) continue;
-            if (teams.some((t) => groups[j].includes(t))) {
+            if (teams.some(t => groups[j].includes(t))) {
                 return {
                     status: 'duplicate-between-groups',
                     data: {
                         group1: i,
-                        group2: j,
-                    },
+                        group2: j
+                    }
                 };
             }
         }
@@ -179,15 +179,15 @@ export const testAssignments = (assignment: Assignment): Status => {
 
     // ensure all matches are the same length
     const isCorrectLength = matchAssignments.every(
-        (m) => m.length === matchAssignments[0].length,
+        m => m.length === matchAssignments[0].length
     );
     if (!isCorrectLength) {
         return {
             status: 'incorrect-match-length',
             data: {
                 expectedLength: matchAssignments[0].length,
-                actualLengths: matchAssignments.map((m) => m.length),
-            },
+                actualLengths: matchAssignments.map(m => m.length)
+            }
         };
     }
 
@@ -195,12 +195,12 @@ export const testAssignments = (assignment: Assignment): Status => {
     for (let i = 0; i < matchAssignments.length; i++) {
         const matches = matchAssignments[i];
         // ensure a team is populated for each match
-        if (matches.some((t) => !t)) {
+        if (matches.some(t => !t)) {
             return {
                 status: 'missing-team-in-match',
                 data: {
-                    match: i,
-                },
+                    match: i
+                }
             };
         }
 
@@ -211,14 +211,14 @@ export const testAssignments = (assignment: Assignment): Status => {
                     status: 'duplicate-between-matches',
                     data: {
                         match1: i,
-                        match2: j,
-                    },
+                        match2: j
+                    }
                 };
             }
         }
     }
 
     return {
-        status: 'ok',
+        status: 'ok'
     };
 };
