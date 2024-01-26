@@ -6,7 +6,7 @@
 import Post from './pages/Post.svelte';
     import Pre from './pages/Pre.svelte';
 
-    const app = generate2024App('blue');
+const app = generate2024App('blue');
 
     let tabs = ['Pre', 'App', 'Post', 'Upload'];
     let active = 'Pre';
