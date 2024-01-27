@@ -1,5 +1,5 @@
 import env, { __root, resolve } from './utilities/env.ts';
-import { log } from './utilities/terminal-logging.ts';
+import { log, error } from './utilities/terminal-logging.ts';
 import { App, ResponseStatus } from './structure/app/app.ts';
 import { Session } from './structure/sessions.ts';
 import { log as serverLog } from './utilities/files.ts';
@@ -214,6 +214,7 @@ app.post<Match>('/submit', validate(validateObj as {
             data: result.value
         });
     } else {
+        error('Match submission error:', result.error);
         res.sendStatus('server-request:match-error', {
             matchNumber,
             teamNumber,

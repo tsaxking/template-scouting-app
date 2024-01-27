@@ -179,16 +179,6 @@ export const generate2024App = (
 
     app.buttonCircle
         .addButton(
-            'Blue Climb',
-            'Click when the robot has successfully pulled themselves up for the last time in the match',
-            'clb',
-            0,
-            drawButton('blue-stage'),
-            colors.blue,
-            'blue',
-            icons.clb,
-        )
-        .addButton(
             'Blue Trap',
             'When the robot has successfully placed an item in the trap',
             'trp',
@@ -199,13 +189,13 @@ export const generate2024App = (
             icons.trp,
         )
         .addButton(
-            'Red Climb',
+            'Blue Climb',
             'Click when the robot has successfully pulled themselves up for the last time in the match',
             'clb',
             0,
-            drawButton('red-stage'),
-            colors.red,
-            'red',
+            drawButton('blue-stage'),
+            colors.blue,
+            'blue',
             icons.clb,
         )
         .addButton(
@@ -217,6 +207,16 @@ export const generate2024App = (
             colors.red,
             'red',
             icons.trp,
+        )
+        .addButton(
+            'Red Climb',
+            'Click when the robot has successfully pulled themselves up for the last time in the match',
+            'clb',
+            0,
+            drawButton('red-stage'),
+            colors.red,
+            'red',
+            icons.clb,
         );
 
     const em = app.clickPoints();

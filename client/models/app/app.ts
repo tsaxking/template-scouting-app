@@ -37,6 +37,8 @@ import {
 import { Icon } from '../canvas/material-icons';
 import { SVG } from '../canvas/svg';
 import { Match } from '../../../shared/submodules/tatorscout-calculations/match-submission';
+import { downloadText } from '../../utilities/downloads';
+import { choose } from '../../utilities/notifications';
 
 /**
  * Description placeholder
@@ -243,12 +245,70 @@ export type EventData = {
  * @class App
  * @typedef {App}
  */
-export class App<a = Action, z extends Zones = Zones, p = TraceParse> {
+export class App<a extends Action = Action, z extends Zones = Zones, p extends TraceParse = TraceParse> {
     public static build(year: 2024, alliance: 'red' | 'blue' | null = null) {
         switch (year) {
             case 2024:
                 return generate2024App(alliance);
         }
+    }
+
+    static cache(): {
+        trace: TraceArray;
+        tick: number;
+        location: Point2D;
+    } | null {
+        const data = window.localStorage.getItem('app');
+        if (!data) return null;
+        return JSON.parse(data);
+    }
+
+    static restore(app: App) {
+        const d = App.cache();
+        if (!d) return;
+        const { trace, location, tick } = d;
+        const { currentTick } = app;
+
+        app.build();
+        // simulate ticks
+        for (let i = 0; i < app.ticks.length; i++) {
+            const tick = app.ticks[i];
+            const p = trace.find(p => p[0] === i);
+            if (!p) continue;
+
+            app.currentTick = tick;
+            tick.point = [p[1], p[2]];
+            app.currentLocation = tick.point;
+            const obj = app.appObjects[p[3]] as AppObject<unknown, Action>;
+            obj.change(app.currentLocation);
+        }
+
+        app.currentLocation = location !== undefined ? location : app.currentLocation;
+        app.currentTick = tick !== undefined ? app.ticks[tick] : currentTick;
+    }
+
+    
+    static save(app: App) {
+        window.localStorage.setItem('app', JSON.stringify({
+            trace: app.pull(),
+            tick: app.currentTick?.index,
+            location: app.currentLocation
+        }));
+    }
+
+    static clearCache() {
+        window.localStorage.removeItem('app');
+    }
+
+    static async upload(...matches: Match[]) {
+        return attemptAsync(async () => {
+            return Promise.all(
+                matches.map(async (m) => {
+                    const d = await ServerRequest.post('/submit', m);
+                    return d.isOk();
+                })
+            );
+        });
     }
 
     private static $eventData?: EventData;
@@ -381,6 +441,22 @@ export class App<a = Action, z extends Zones = Zones, p = TraceParse> {
 
         for (const [action, icon] of Object.entries(this.icons)) {
             this.icons[action] = icon.clone();
+        }
+
+        if (App.cache()) {
+            choose('You have a cached match. Would you like to restore it?', 'Yes', 'No').then((res) => {
+                switch (res) {
+                    case 'Yes':
+                        App.restore(this as App<any, any, any>);
+                        break;
+                    case 'No': 
+                        App.clearCache();
+                        break;
+                    case null:
+                        App.clearCache();
+                        break;
+                }
+            });
         }
     }
 
@@ -809,7 +885,7 @@ export class App<a = Action, z extends Zones = Zones, p = TraceParse> {
 
             try {
                 const s = Date.now();
-                await cb?.(t);
+                cb?.(t);
                 if (Date.now() - s > 250) {
                     console.warn('Callback took too long');
                 }
@@ -824,11 +900,11 @@ export class App<a = Action, z extends Zones = Zones, p = TraceParse> {
 
             // there could be a major delay if the callback takes too long, so we need to account for that
             setTimeout(() => run(this.currentTick?.next(), i++), Math.max(0, App.tickDuration));
+            App.save(this as App<any, any, any>);
         };
 
         const start = () => {
-            console.log('start');
-            run(this.ticks[0], 0);
+            run(this.currentTick || this.ticks[0], 0);
             target.removeEventListener('mousedown', start);
             target.removeEventListener('touchstart', start);
         };
@@ -1339,8 +1415,10 @@ export class App<a = Action, z extends Zones = Zones, p = TraceParse> {
             [key: string]: string;
         };
     }) {
-        // set data to server
-        const res = await ServerRequest.post('/submit', {
+        // remove from cache when submitted. It's not needed anymore
+        App.clearCache();
+
+        const d: Match = {
             trace: this.pull(),
             comments: include.comments,
             checks: include.checks,
@@ -1351,10 +1429,14 @@ export class App<a = Action, z extends Zones = Zones, p = TraceParse> {
             teamNumber: 0, // TODO: implement team number 
             group: 0, // TODO: implement scout group
             compLevel: 'qm', // TODO: implement comp level
-        } as Match);
-        if (res.isErr()) {
-            await alert('Error submitting, the server may be disconnected');
-        }
-        // download as json file
+        };
+
+        downloadText(
+            JSON.stringify(d), 
+            `${d.eventKey}-${d.matchNumber}-${d.compLevel}.json`
+        );
+
+        // set data to server
+        return App.upload(d);
     }
 }

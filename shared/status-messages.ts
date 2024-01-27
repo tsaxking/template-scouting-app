@@ -514,7 +514,7 @@ export const messages: {
     },
     'server-request:match-error': {
         message:
-            'Your match failed, it has been saved onto the event server, but it did not submit to the tatorscout.org server. You may have lost internet access',
+            'Your match submission failed, it has been saved onto the event server, but it did not submit to the tatorscout.org server. You may have lost internet access',
         color: 'warning',
         code: 404,
         instructions: '',

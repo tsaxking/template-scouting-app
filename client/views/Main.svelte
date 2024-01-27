@@ -8,6 +8,7 @@ import Pre from './pages/Pre.svelte';
 import { App } from '../models/app/app';
 import type { EventData } from '../models/app/app';
 import type { TBAMatch } from '../../shared/submodules/tatorscout-calculations/tba';
+import Upload from './pages/Upload.svelte';
 
 let event: EventData;
 let currentMatch: TBAMatch | undefined = undefined;
@@ -37,5 +38,5 @@ const domain = 'http://localhost:3000';
     <Page {active} {domain} title="Pre"><Pre {event} {currentMatch}></Pre></Page>
     <Page {active} {domain} title="App"><AppView {app}></AppView></Page>
     <Page {active} {domain} title="Post"><Post {app} {active}></Post></Page>
-    <Page {active} {domain} title="Upload"></Page>
+    <Page {active} {domain} title="Upload"><Upload /></Page>
 </main>
