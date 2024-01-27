@@ -47,7 +47,7 @@ export class ServerRequest {
                 throw new Error('Server error');
             }
 
-            const json = data.json();
+            const json = await data.json();
 
             if (url !== '/ping') {
                 DB.run('server-requests/update', {
@@ -67,7 +67,7 @@ export class ServerRequest {
                 error: string;
             } | {
                 success: true;
-            }>('/match', match);
+            }>('/submit-match', match);
 
             if (result.isOk()) {
                 if (result.value.success) {
