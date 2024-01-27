@@ -1,15 +1,16 @@
-import env from './env.ts'
+import env from './env.ts';
 import { attemptAsync, Result } from '../../shared/attempt.ts';
 import { Match } from '../../shared/submodules/tatorscout-calculations/match-submission.ts';
 import { DB } from './databases.ts';
 import { uuid } from './uuid.ts';
 import { Assignment } from '../../shared/submodules/tatorscout-calculations/scout-groups.ts';
-import { TBAMatch, TBATeam } from '../../shared/submodules/tatorscout-calculations/tba.ts';
+import {
+    TBAMatch,
+    TBATeam,
+} from '../../shared/submodules/tatorscout-calculations/tba.ts';
 
 const { SERVER_DOMAIN, SERVER_KEY } = env;
 if (!SERVER_DOMAIN) console.warn('SERVER_DOMAIN not properly set in .env file');
-
-
 
 export class ServerRequest {
     private static post<T>(url: string, body?: unknown): Promise<Result<T>> {
@@ -22,10 +23,9 @@ export class ServerRequest {
                     id,
                     url,
                     body: str,
-                    date: Date.now().toString()
+                    date: Date.now().toString(),
                 });
             }
-
 
             const data = await fetch(
                 SERVER_DOMAIN + '/api/event-server' + url,
@@ -33,10 +33,10 @@ export class ServerRequest {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'x-auth-key': SERVER_KEY as string
+                        'x-auth-key': SERVER_KEY as string,
                     },
                     body: str,
-                }
+                },
             );
 
             if (data.status.toString().startsWith('4')) {
@@ -52,7 +52,7 @@ export class ServerRequest {
             if (url !== '/ping') {
                 DB.run('server-requests/update', {
                     id,
-                    response: JSON.stringify(json)
+                    response: JSON.stringify(json),
                 });
             }
 
@@ -61,17 +61,34 @@ export class ServerRequest {
     }
 
     public static async submitMatch(match: Match) {
-        return ServerRequest.post('/match', match);
+        return attemptAsync(async () => {
+            const result = await ServerRequest.post<{
+                success: false;
+                error: string;
+            } | {
+                success: true;
+            }>('/match', match);
+
+            if (result.isOk()) {
+                if (result.value.success) {
+                    return;
+                } else {
+                    throw new Error(result.value.error);
+                }
+            } else {
+                throw result.error;
+            }
+        });
     }
 
-    public static async getScoutGroups(eventKey: string) {
+    public static async getEventData(eventKey: string) {
         return ServerRequest.post<{
-            assignments: Assignment,
-            matches: TBAMatch[],
-            teams: TBATeam[],
+            assignments: Assignment;
+            matches: TBAMatch[];
+            teams: TBATeam[];
             eventKey: string;
-        }>('/scout-groups', { 
-            eventKey
+        }>('/scout-groups', {
+            eventKey,
         });
     }
 
@@ -83,7 +100,7 @@ export class ServerRequest {
     public static async signIn(username: string, password: string) {
         return ServerRequest.post<boolean>('/sign-in', {
             username,
-            password
+            password,
         });
     }
 
@@ -97,8 +114,8 @@ export class ServerRequest {
                 ServerRequest.post('/ping').then((r) => {
                     if (r.isOk()) res();
                     else rej(r.error);
-                })
-            })
+                });
+            });
         });
     }
 }
