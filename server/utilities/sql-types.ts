@@ -362,14 +362,14 @@ export type Queries = {
                 body: string;
                 date: string;
                 url: string;
-            }
-        ]
+            },
+        ],
     ];
     'server-requests/update': [
         [{
             id: string;
             response: string;
-        }]
+        }],
     ];
     'server-requests/all': [
         [],
@@ -379,21 +379,21 @@ export type Queries = {
             date: string;
             response: string;
             url: string;
-        }
+        },
     ];
     'server-requests/delete': [
         [
             {
                 id: string;
-            }
+            },
         ],
-        unknown
+        unknown,
     ];
     'server-requests/get': [
         [
             {
                 id: string;
-            }
+            },
         ],
         {
             id: string;
@@ -401,6 +401,6 @@ export type Queries = {
             date: string;
             response: string;
             url: string;
-        }
+        },
     ];
 };

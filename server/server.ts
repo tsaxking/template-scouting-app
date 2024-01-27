@@ -10,7 +10,7 @@ import os from 'https://deno.land/x/dos@v0.11.0/mod.ts';
 import { stdin } from './utilities/utilties.ts';
 import { ReqBody } from './structure/app/req.ts';
 import { validate } from './middleware/data-type.ts';
-import { Match } from '../shared/submodules/tatorscout-calculations/match-submission.ts';
+import { Match, validateObj } from '../shared/submodules/tatorscout-calculations/match-submission.ts';
 import { ServerRequest } from './utilities/requests.ts';
 import { getJSONSync } from './utilities/files.ts';
 import { runTask } from './utilities/run-task.ts';
@@ -55,6 +55,11 @@ builder.on('build', () => {
 });
 
 stdin.on('rb', () => builder.emit('build'));
+stdin.on('ping', async () => {
+    const result = await ServerRequest.ping();
+    if (result.isOk()) console.log('Servers are connected!');
+    else console.log('Servers are disconnected!');
+});
 
 stdin.on('data', (data) => {
     const [command, ...args] = data.split(' ');
@@ -63,7 +68,7 @@ stdin.on('data', (data) => {
             attempt(() => runTask('./scripts/event-data.ts', 'getEvent', ...args));
         break;
     }
-})
+});
 
 builder.on('error', (e) => log('Build error:', e));
 
@@ -170,35 +175,50 @@ app.get('/app', (req, res) => {
     res.sendTemplate('entries/app');
 });
 
-app.post<Match>('/submit', validate({
-    checks: (v) => Array.isArray(v) && v.every((v) => typeof v === 'string'),
-    comments: (v) => typeof v === 'object' && Object.values(v).every((v) => typeof v === 'string'),
-    matchNumber: 'number',
-    teamNumber: 'number',
-    compLevel: ['pr', 'qm', 'qf', 'sf', 'f'],
+app.post<Match>('/submit', validate(validateObj as {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [key in keyof Match]: any; // TODO: export IsValid type
 }), async (req, res) => {
-    const { eventKey, checks, comments, matchNumber, teamNumber, compLevel } = req.body;
+    const { 
+        eventKey, 
+        checks, 
+        comments, 
+        matchNumber, 
+        teamNumber,
+        compLevel,
+        scout,
+        date,
+        group,
+        trace
+    } = req.body;
 
+    // I don't want to pass in req.body because it can have extra unneeded properties
     const result = await ServerRequest.submitMatch({
         checks,
         comments,
         matchNumber,
         teamNumber,
         compLevel,
-        eventKey
+        eventKey,
+        scout,
+        date,
+        group,
+        trace
     });
 
     if (result.isOk()) {
         res.sendStatus('server-request:match-submitted', {
             matchNumber,
             teamNumber,
-            compLevel
+            compLevel,
+            data: result.value
         });
     } else {
         res.sendStatus('server-request:match-error', {
             matchNumber,
             teamNumber,
-            compLevel
+            compLevel,
+            error: result.error
         });
     }
 });

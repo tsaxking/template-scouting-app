@@ -36,7 +36,11 @@ export const generate2024App = (
         trp: new Icon('place_item'),
     };
 
-    const app = new App<Action2024, Zones2024, TraceParse2024>(2024, alliance, icons);
+    const app = new App<Action2024, Zones2024, TraceParse2024>(
+        2024,
+        alliance,
+        icons,
+    );
 
     const isIn = (d: Drawable) =>
         app.currentLocation ? d.isIn(app.currentLocation) : false;
@@ -57,7 +61,7 @@ export const generate2024App = (
         blueFade: Color.fromBootstrap('blue').setAlpha(0.1),
         black: Color.fromBootstrap('dark'),
         blackFade: Color.fromBootstrap('dark').setAlpha(0.5),
-    }
+    };
 
     app.addArea('blue-stage', stages.blue, colors.blueFade, isIn);
     app.addArea('blue-amp', amps.blue, colors.blueFade, isIn);
@@ -182,7 +186,7 @@ export const generate2024App = (
             drawButton('blue-stage'),
             colors.blue,
             'blue',
-            icons.clb
+            icons.clb,
         )
         .addButton(
             'Blue Trap',
@@ -192,7 +196,7 @@ export const generate2024App = (
             drawButton('blue-stage'),
             colors.blue,
             'blue',
-            icons.trp
+            icons.trp,
         )
         .addButton(
             'Red Climb',
@@ -202,7 +206,7 @@ export const generate2024App = (
             drawButton('red-stage'),
             colors.red,
             'red',
-            icons.clb
+            icons.clb,
         )
         .addButton(
             'Red Trap',
@@ -212,7 +216,7 @@ export const generate2024App = (
             drawButton('red-stage'),
             colors.red,
             'red',
-            icons.trp
+            icons.trp,
         );
 
     const em = app.clickPoints();

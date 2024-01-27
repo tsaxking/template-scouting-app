@@ -3,7 +3,7 @@ import { App } from './app';
 import {
     Point2D,
 } from '../../../shared/submodules/calculations/src/linear-algebra/point';
-import {  Color } from '../../submodules/colors/color';
+import { Color } from '../../submodules/colors/color';
 import { Iterator } from './app-object';
 import { Circle } from '../canvas/circle';
 import { Drawable } from '../canvas/drawable';
@@ -87,7 +87,7 @@ class Button<actions = Action> extends Drawable<Button> {
             color: this.color.toString('rgba'),
         };
 
-        this.icon.color = Color.fromBootstrap('light').toString('rgba')
+        this.icon.color = Color.fromBootstrap('light').toString('rgba');
     }
 
     draw(ctx: CanvasRenderingContext2D) {

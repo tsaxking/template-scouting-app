@@ -29,9 +29,14 @@ import { generate2024App } from './2024-app';
 import { ServerRequest } from '../../utilities/requests';
 import { alert } from '../../utilities/notifications';
 import { Assignment } from '../../../shared/submodules/tatorscout-calculations/scout-groups';
-import { TBAEvent, TBAMatch, TBATeam } from '../../../shared/submodules/tatorscout-calculations/tba';
+import {
+    TBAEvent,
+    TBAMatch,
+    TBATeam,
+} from '../../../shared/submodules/tatorscout-calculations/tba';
 import { Icon } from '../canvas/material-icons';
 import { SVG } from '../canvas/svg';
+import { Match } from '../../../shared/submodules/tatorscout-calculations/match-submission';
 
 /**
  * Description placeholder
@@ -63,7 +68,7 @@ export type CollectedData<actions = string> = ActionState<any, actions> | null;
  *
  * @typedef {Section}
  */
-type Section = 'auto' | 'teleop' | 'endgame';
+export type Section = 'auto' | 'teleop' | 'endgame' | 'end';
 
 /**
  * Events emitted by the app
@@ -77,6 +82,8 @@ type AppEvents = {
     stop: void;
     end: void;
     stopped: void;
+    tick: Tick;
+    second: number;
 };
 
 /**
@@ -130,7 +137,8 @@ export class Tick<actions = Action> {
      * @type {number}
      */
     public get second(): number {
-        return Math.round(this.index / 250);
+        // console.log(this.index);
+        return Math.round(this.index / App.ticksPerSecond);
     }
 
     /**
@@ -224,7 +232,7 @@ export type EventData = {
     matches: TBAMatch[];
     teams: TBATeam[];
     eventKey: string;
-    event: TBAEvent
+    event: TBAEvent;
 };
 
 /**
@@ -277,8 +285,9 @@ export class App<a = Action, z extends Zones = Zones, p = TraceParse> {
     } = {
         // [sectionName]: [start, end]
         auto: [0, 15],
-        teleop: [15, 135],
-        endgame: [135, 150],
+        teleop: [16, 135],
+        endgame: [136, 150],
+        end: [151, 160] // goes a hair over if the user is a little late
     };
 
     /**
@@ -325,9 +334,15 @@ export class App<a = Action, z extends Zones = Zones, p = TraceParse> {
      * @constructor
      * @param {HTMLDivElement} target
      */
-    constructor(public readonly year: number, public readonly currentAlliance: 'red' | 'blue' | null = null, public readonly icons: Partial<{
-        [key in Action]: Icon | SVG;
-    }>) {
+    constructor(
+        public readonly year: number,
+        public readonly currentAlliance: 'red' | 'blue' | null = null,
+        public readonly icons: Partial<
+            {
+                [key in Action]: Icon | SVG;
+            }
+        >,
+    ) {
         this.canvas.$ctx.canvas.style.position = 'absolute';
 
         this.background = new Img(`/public/pictures/${this.year}field.png`, {
@@ -772,7 +787,8 @@ export class App<a = Action, z extends Zones = Zones, p = TraceParse> {
         this.on('stop', stop);
 
         // adaptive loop to be as close to 250ms as possible
-        const run = async (t: Tick | undefined) => {
+        const run = async (t: Tick | undefined, i: number) => {
+            // console.log(t);
             const start = Date.now();
 
             const { section } = this;
@@ -783,8 +799,13 @@ export class App<a = Action, z extends Zones = Zones, p = TraceParse> {
 
             if (!t) return this.emit('end');
             if (!active) return this.emit('stopped');
+            this.emit('tick', t);
             this.currentTime = start - this.startTime;
             if (this.currentLocation) t.point = this.currentLocation;
+
+            if (i % 4 === 0) {
+                this.emit('second', t.second);
+            }
 
             try {
                 const s = Date.now();
@@ -802,11 +823,12 @@ export class App<a = Action, z extends Zones = Zones, p = TraceParse> {
             // const delay = App.tickDuration - duration;
 
             // there could be a major delay if the callback takes too long, so we need to account for that
-            setTimeout(() => run(t.next()), Math.max(0, App.tickDuration));
+            setTimeout(() => run(this.currentTick?.next(), i++), Math.max(0, App.tickDuration));
         };
 
         const start = () => {
-            run(this.ticks[0]);
+            console.log('start');
+            run(this.ticks[0], 0);
             target.removeEventListener('mousedown', start);
             target.removeEventListener('touchstart', start);
         };
@@ -1072,7 +1094,7 @@ export class App<a = Action, z extends Zones = Zones, p = TraceParse> {
         this.currentTime = 0;
         this.currentTick = undefined;
         this.built = true;
-        this.ticks = new Array(150 * App.ticksPerSecond)
+        this.ticks = new Array(160 * App.ticksPerSecond)
             .fill(null)
             .map(
                 (_, i) =>
@@ -1218,6 +1240,12 @@ export class App<a = Action, z extends Zones = Zones, p = TraceParse> {
             }) as TraceArray;
     }
 
+    changeSection(section: Section) {
+        const tick = this.ticks.find(t => t.section === section);
+        if (!tick) return console.error('No tick found');
+        this.currentTick = tick;
+    }
+
     /**
      * Description placeholder
      * @date 1/25/2024 - 4:59:07 PM
@@ -1246,7 +1274,9 @@ export class App<a = Action, z extends Zones = Zones, p = TraceParse> {
             container.children = d.map((p, i, a) => {
                 const [_i, x, y, action] = p;
 
-                const color = Color.fromName(this.currentAlliance ? this.currentAlliance : 'black').toString('rgba');
+                const color = Color.fromName(
+                    this.currentAlliance ? this.currentAlliance : 'black',
+                ).toString('rgba');
 
                 if (action) {
                     const size = 0.03;
@@ -1261,7 +1291,8 @@ export class App<a = Action, z extends Zones = Zones, p = TraceParse> {
                         if (!a.$properties.text) a.$properties.text = {};
                         a.$properties.text!.height = size;
                         a.$properties.text!.width = size;
-                        a.$properties.text!.color = Color.fromBootstrap('light').toString('rgba');
+                        a.$properties.text!.color = Color.fromBootstrap('light')
+                            .toString('rgba');
                     }
                     if (a instanceof Icon) {
                         a.x = x;
@@ -1280,7 +1311,7 @@ export class App<a = Action, z extends Zones = Zones, p = TraceParse> {
                     p.$properties.line = {
                         color: color,
                         width: 1,
-                    }
+                    };
                     return p;
                 } else {
                     return null;
@@ -1313,7 +1344,14 @@ export class App<a = Action, z extends Zones = Zones, p = TraceParse> {
             trace: this.pull(),
             comments: include.comments,
             checks: include.checks,
-        });
+            date: Date.now(),
+            scout: '', // TODO: implement scout name
+            eventKey: App.$eventData?.eventKey || 'no-event',
+            matchNumber: 0, // TODO: implement match number
+            teamNumber: 0, // TODO: implement team number 
+            group: 0, // TODO: implement scout group
+            compLevel: 'qm', // TODO: implement comp level
+        } as Match);
         if (res.isErr()) {
             await alert('Error submitting, the server may be disconnected');
         }
