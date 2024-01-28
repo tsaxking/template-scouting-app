@@ -6,7 +6,6 @@ import { log as serverLog } from './utilities/files.ts';
 import { runBuild } from './bundler.ts';
 import { router as api } from './routes/api.ts';
 import { FileUpload } from './middleware/stream.ts';
-import os from 'https://deno.land/x/dos@v0.11.0/mod.ts';
 import { stdin } from './utilities/utilties.ts';
 import { ReqBody } from './structure/app/req.ts';
 import { validate } from './middleware/data-type.ts';
@@ -16,8 +15,6 @@ import { getJSONSync } from './utilities/files.ts';
 import { runTask } from './utilities/run-task.ts';
 import { attempt } from '../shared/attempt.ts';
 import { startPinger } from './utilities/ping.ts';
-
-console.log('Platform:', os.platform());
 
 const port = +(env.PORT || 3000);
 const domain = env.DOMAIN || `http://localhost:${port}`;
@@ -214,7 +211,7 @@ app.post<Match>('/submit', validate(validateObj as {
             data: result.value
         });
     } else {
-        error('Match submission error:', result.error);
+        error
         res.sendStatus('server-request:match-error', {
             matchNumber,
             teamNumber,
