@@ -469,7 +469,7 @@ export const messages: {
         code: 401,
         instructions: '',
     },
-    profanity: {
+    'profanity': {
         message: 'Profanity detected',
         color: 'danger',
         code: 400,
@@ -510,6 +510,19 @@ export const messages: {
             'There was an unknown error. If this persists, please contact an administrator/developer.',
         color: 'danger',
         code: 500,
+        instructions: '',
+    },
+    'server-request:match-error': {
+        message:
+            'Your match submission failed, it has been saved onto the event server, but it did not submit to the tatorscout.org server. You may have lost internet access',
+        color: 'warning',
+        code: 404,
+        instructions: '',
+    },
+    'server-request:match-submitted': {
+        message: 'Your match has been submitted to the tatorscout.org server!',
+        color: 'success',
+        code: 200,
         instructions: '',
     },
     'skills:added': {
@@ -639,6 +652,8 @@ export type StatusId =
     | 'roles:invalid-role'
     | 'roles:not-found'
     | 'roles:removed'
+    | 'server-request:match-error'
+    | 'server-request:match-submitted'
     | 'server:invalid-data'
     | 'server:unknown-server-error'
     | 'skills:added'
@@ -683,12 +698,12 @@ export type AccountStatusId =
     | 'role-added'
     | 'role-removed'
     | 'server-error'
+    | 'settings-set'
     | 'unverified'
     | 'updated'
     | 'username-changed'
     | 'username-taken'
-    | 'verified'
-    | 'settings-set';
+    | 'verified';
 
 export type AdminStatusId = 'invalid-key';
 
@@ -728,9 +743,19 @@ export type PermissionsStatusId =
 
 export type ProfanityStatusId = 'undefined';
 
-export type RolesStatusId = 'added' | 'invalid-role' | 'not-found' | 'removed';
+export type RolesStatusId =
+    | 'added'
+    | 'invalid-role'
+    | 'not-found'
+    | 'removed';
 
-export type ServerStatusId = 'invalid-data' | 'unknown-server-error';
+export type ServerStatusId =
+    | 'invalid-data'
+    | 'unknown-server-error';
+
+export type ServerrequestStatusId =
+    | 'match-submitted'
+    | 'match-error';
 
 export type SkillsStatusId =
     | 'added'
@@ -741,6 +766,8 @@ export type SkillsStatusId =
 
 export type SpamStatusId = 'detected';
 
-export type TestStatusId = 'fail' | 'success';
+export type TestStatusId =
+    | 'fail'
+    | 'success';
 
 export type UnknownStatusId = 'error';
