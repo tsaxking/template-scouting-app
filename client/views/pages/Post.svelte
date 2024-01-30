@@ -97,66 +97,64 @@ let generalComment: string = '';
 </script>
 
 <div class="container">
-    <div class="container">
-        <div class="row d-flex justify-content-center w-100 p-0">
-            <Checkboxes bind:data />
-        </div>
-        {#if commentsSections.length > 0}
-            <div class="row">
-                <div class="container">
-                    {#each commentsSections as section, i}
-                        <div class="row mb-3">
-                            <div class="form-floating">
-                                <textarea
-                                    class="form-control"
-                                    rows="3"
-                                    id="textarea-{i}"
-                                    bind:value="{data[section].comment}"
-                                ></textarea>
-                                <label for="textarea-{i}">
-                                    Please tell us why you checked "{capitalize(fromCamelCase(section))}" (you don't have to be very detailed, but it's helpful to understand the context of why you checked it)
-                                </label>
-                            </div>
-                        </div>
-                    {/each}
-                </div>
-            </div>
-        {/if}
-        <div class="row mb-3">
-            <div class="form-floating">
-                <textarea
-                    class="form-control"
-                    rows="5"
-                    id="textarea-general"
-                    bind:value="{generalComment}"
-                ></textarea>
-                <label for="textarea-general">
-                    Please leave a comment here on how the robot performed in the match. (These are very helpful for analyzing the robot's performance, please be detailed)
-                </label>
-            </div>
-        </div>
+    <div class="row d-flex justify-content-center w-100 p-0">
+        <Checkboxes bind:data />
+    </div>
+    {#if commentsSections.length > 0}
         <div class="row">
-            <button
-                class="btn btn-success btn-lg w-100"
-                on:click="{() =>
-                    app.submit({
-                        checks: Object.entries(data)
-                            .map(([key, value]) => (value ? key : null))
-                            .filter(Boolean),
-                        comments: {
-                            defensive: data.playedDefense.comment,
-                            tippy: data.tippy.comment,
-                            easilyDefended: data.easilyDefended.comment,
-                            robotDied: data.robotDied.comment,
-                            problemsDriving: data.problemsDriving.comment,
-                            general: generalComment
-                        }
-                    })}">Submit Match</button
-            >
+            <div class="container">
+                {#each commentsSections as section, i}
+                    <div class="row mb-3">
+                        <div class="form-floating">
+                            <textarea
+                                class="form-control"
+                                rows="3"
+                                id="textarea-{i}"
+                                bind:value="{data[section].comment}"
+                            ></textarea>
+                            <label for="textarea-{i}">
+                                Please tell us why you checked "{capitalize(fromCamelCase(section))}" (you don't have to be very detailed, but it's helpful to understand the context of why you checked it)
+                            </label>
+                        </div>
+                    </div>
+                {/each}
+            </div>
         </div>
-        <div class="row p-0 m-0">
-            <canvas bind:this="{canvas}"></canvas>
-            <div id="slider" class="mt-1"></div>
+    {/if}
+    <div class="row mb-3">
+        <div class="form-floating">
+            <textarea
+                class="form-control"
+                rows="5"
+                id="textarea-general"
+                bind:value="{generalComment}"
+            ></textarea>
+            <label for="textarea-general">
+                Please leave a comment here on how the robot performed in the match. (These are very helpful for analyzing the robot's performance, please be detailed)
+            </label>
         </div>
+    </div>
+    <div class="row">
+        <button
+            class="btn btn-success btn-lg w-100"
+            on:click="{() =>
+                app.submit({
+                    checks: Object.entries(data)
+                        .map(([key, value]) => (value ? key : null))
+                        .filter(Boolean),
+                    comments: {
+                        defensive: data.playedDefense.comment,
+                        tippy: data.tippy.comment,
+                        easilyDefended: data.easilyDefended.comment,
+                        robotDied: data.robotDied.comment,
+                        problemsDriving: data.problemsDriving.comment,
+                        general: generalComment
+                    }
+                })}">Submit Match</button
+        >
+    </div>
+    <div class="row p-0 m-0">
+        <canvas bind:this="{canvas}"></canvas>
+        <div id="slider" class="mt-1"></div>
     </div>
 </div>

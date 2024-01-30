@@ -2,23 +2,22 @@ import env, { __root, resolve } from './utilities/env.ts';
 import { log, error } from './utilities/terminal-logging.ts';
 import { App, ResponseStatus } from './structure/app/app.ts';
 import { Session } from './structure/sessions.ts';
-import { getJSON, log as serverLog } from './utilities/files.ts';
-import { homeBuilder } from './utilities/page-builder.ts';
 import Account from './structure/accounts.ts';
 import { log as serverLog } from './utilities/files.ts';
 import { runBuild } from './bundler.ts';
 import { router as api } from './routes/api.ts';
-import Role from './structure/roles.ts';
 import { FileUpload } from './middleware/stream.ts';
 import { stdin } from './utilities/utilties.ts';
 import { ReqBody } from './structure/app/req.ts';
 import { validate } from './middleware/data-type.ts';
-import { Match, validateObj } from '../shared/submodules/tatorscout-calculations/match-submission.ts';
+import { Match, validateObj } from '../shared/submodules/tatorscout-calculations/trace.ts';
 import { ServerRequest } from './utilities/requests.ts';
 import { getJSONSync } from './utilities/files.ts';
 import { runTask } from './utilities/run-task.ts';
 import { attempt } from '../shared/attempt.ts';
 import { startPinger } from './utilities/ping.ts';
+import { router as account } from './routes/account.ts';
+import { router as admin } from './routes/admin.ts';
 
 const port = +(env.PORT || 3000);
 const domain = env.DOMAIN || `http://localhost:${port}`;
@@ -164,16 +163,27 @@ app.get('/test/:page', (req, res, next) => {
 });
 
 app.route('/api', api);
-// app.route('/account', account);
+app.route('/account', account);
 
-// app.route('/admin', admin);
+// app.use('/*', Account.autoSignIn(env.AUTO_SIGN_IN));
 
-app.get('/', (req, res) => {
-    res.redirect('/app');
-});
+// app.get('/*', (req, res, next) => {
+//     if (!req.session?.accountId) {
+//         req.session!.prevUrl = req.url;
+//         return res.redirect('/account/sign-in');
+//     }
+
+//     next();
+// });
+
+app.route('/admin', admin);
 
 app.get('/app', (req, res) => {
     res.sendTemplate('entries/app');
+});
+
+app.get('/*', (req, res) => {
+    res.redirect('/app');
 });
 
 app.post<Match>('/submit', validate(validateObj as {

@@ -36,7 +36,7 @@ import {
 } from '../../../shared/submodules/tatorscout-calculations/tba';
 import { Icon } from '../canvas/material-icons';
 import { SVG } from '../canvas/svg';
-import { Match } from '../../../shared/submodules/tatorscout-calculations/match-submission';
+import { Match } from '../../../shared/submodules/tatorscout-calculations/trace'
 import { downloadText } from '../../utilities/downloads';
 import { choose } from '../../utilities/notifications';
 
@@ -246,6 +246,9 @@ export type EventData = {
  * @typedef {App}
  */
 export class App<a extends Action = Action, z extends Zones = Zones, p extends TraceParse = TraceParse> {
+    private static $eventData?: EventData;
+
+
     public static build(year: 2024, alliance: 'red' | 'blue' | null = null) {
         switch (year) {
             case 2024:
@@ -311,7 +314,6 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
         });
     }
 
-    private static $eventData?: EventData;
 
     public static async getEventData(): Promise<Result<EventData>> {
         return attemptAsync(async () => {
@@ -487,6 +489,30 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
         }
     }
 
+    private readonly $fieldOrientation: {
+        x: boolean; // flip around y axis
+        y: boolean; // flip around x axis
+    } = {
+        x: false,
+        y: false,
+    };
+
+    get flipX() {
+        return this.$fieldOrientation.x;
+    }
+
+    set flipX(flip: boolean) {
+        this.$fieldOrientation.x = flip;
+    }
+
+    get flipY() {
+        return this.$fieldOrientation.y;
+    }
+
+    set flipY(flip: boolean) {
+        this.$fieldOrientation.y = flip;
+    }
+
     /**
      * Description placeholder
      * @date 1/25/2024 - 4:59:07 PM
@@ -531,25 +557,9 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
             }
         }
 
-        // if (target.clientWidth > target.clientHeight * 2) {
-        //     const xOffset = (target.clientWidth - target.clientHeight * 2) / 2;
-        //     this.xOffset = xOffset;
-        //     this.yOffset = 0;
-        //     this.width = target.clientHeight * 2;
-        //     this.height = target.clientHeight;
-        // } else {
-        //     const yOffset = (target.clientHeight - target.clientWidth / 2) / 2;
-        //     this.$xOffset = 0;
-        //     this.$yOffset = yOffset;
-        //     this.width = target.clientWidth;
-        //     this.height = target.clientWidth / 2;
-        // }
-
-        // for (const o of this.gameObjects) {
-        //     const { element, x, y } = o;
-        //     element.style.left = `${x * this.canvas.width + this.xOffset}px`;
-        //     element.style.top = `${y * this.canvas.height + this.yOffset}px`;
-        // }
+        // flip x and y axis based on field orientation
+        // const { background } = this;
+        // background.$properties
     }
 
     // █ █ ▄▀▄ █▀▄ █ ▄▀▄ ██▄ █   ██▀ ▄▀▀
