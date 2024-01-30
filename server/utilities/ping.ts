@@ -9,9 +9,9 @@ import { Result } from '../../shared/attempt.ts';
  * @typedef {Events}
  */
 type Events = {
-    'connect': void;
-    'disconnect': void;
-    'ping': Result<void>;
+    connect: void;
+    disconnect: void;
+    ping: Result<void>;
 };
 
 /**

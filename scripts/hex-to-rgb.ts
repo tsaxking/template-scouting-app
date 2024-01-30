@@ -15,7 +15,9 @@ for (const match of matches) {
     if (!value.trim().startsWith('#')) continue;
     const c = Color.fromHex(value.trim());
     colorStr += `'${
-        toCamelCase(fromSnakeCase(key.replace('--', ''), '-'))
+        toCamelCase(
+            fromSnakeCase(key.replace('--', ''), '-'),
+        )
     }': [${[c.r, c.g, c.b]}],\n`;
 }
 

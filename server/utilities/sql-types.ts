@@ -366,10 +366,12 @@ export type Queries = {
         ],
     ];
     'server-requests/update': [
-        [{
-            id: string;
-            response: string;
-        }],
+        [
+            {
+                id: string;
+                response: string;
+            },
+        ],
     ];
     'server-requests/all': [
         [],
