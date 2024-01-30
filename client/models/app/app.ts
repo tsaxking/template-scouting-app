@@ -276,7 +276,7 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
         // simulate ticks
         for (let i = 0; i < app.ticks.length; i++) {
             const tick = app.ticks[i];
-            const p = trace.find(p => p[0] === i);
+            const p = trace.find((p) => p[0] === i);
             if (!p) continue;
 
             app.currentTick = tick;
@@ -286,17 +286,21 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
             obj.change(app.currentLocation);
         }
 
-        app.currentLocation = location !== undefined ? location : app.currentLocation;
+        app.currentLocation = location !== undefined
+            ? location
+            : app.currentLocation;
         app.currentTick = tick !== undefined ? app.ticks[tick] : currentTick;
     }
 
-    
     static save(app: App) {
-        window.localStorage.setItem('app', JSON.stringify({
-            trace: app.pull(),
-            tick: app.currentTick?.index,
-            location: app.currentLocation
-        }));
+        window.localStorage.setItem(
+            'app',
+            JSON.stringify({
+                trace: app.pull(),
+                tick: app.currentTick?.index,
+                location: app.currentLocation,
+            }),
+        );
     }
 
     static clearCache() {
@@ -309,7 +313,7 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
                 matches.map(async (m) => {
                     const d = await ServerRequest.post('/submit', m);
                     return d.isOk();
-                })
+                }),
             );
         });
     }
@@ -349,7 +353,7 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
         auto: [0, 15],
         teleop: [16, 135],
         endgame: [136, 150],
-        end: [151, 160] // goes a hair over if the user is a little late
+        end: [151, 160], // goes a hair over if the user is a little late
     };
 
     /**
@@ -446,12 +450,16 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
         }
 
         if (App.cache()) {
-            choose('You have a cached match. Would you like to restore it?', 'Yes', 'No').then((res) => {
+            choose(
+                'You have a cached match. Would you like to restore it?',
+                'Yes',
+                'No',
+            ).then((res) => {
                 switch (res) {
                     case 'Yes':
                         App.restore(this as App<any, any, any>);
                         break;
-                    case 'No': 
+                    case 'No':
                         App.clearCache();
                         break;
                     case null:
@@ -909,7 +917,10 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
             // const delay = App.tickDuration - duration;
 
             // there could be a major delay if the callback takes too long, so we need to account for that
-            setTimeout(() => run(this.currentTick?.next(), i++), Math.max(0, App.tickDuration));
+            setTimeout(
+                () => run(this.currentTick?.next(), i++),
+                Math.max(0, App.tickDuration),
+            );
             App.save(this as App<any, any, any>);
         };
 
@@ -1327,7 +1338,7 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
     }
 
     changeSection(section: Section) {
-        const tick = this.ticks.find(t => t.section === section);
+        const tick = this.ticks.find((t) => t.section === section);
         if (!tick) return console.error('No tick found');
         this.currentTick = tick;
     }
@@ -1436,14 +1447,14 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
             scout: '', // TODO: implement scout name
             eventKey: App.$eventData?.eventKey || 'no-event',
             matchNumber: 0, // TODO: implement match number
-            teamNumber: 0, // TODO: implement team number 
+            teamNumber: 0, // TODO: implement team number
             group: 0, // TODO: implement scout group
             compLevel: 'qm', // TODO: implement comp level
         };
 
         downloadText(
-            JSON.stringify(d), 
-            `${d.eventKey}-${d.matchNumber}-${d.compLevel}.json`
+            JSON.stringify(d),
+            `${d.eventKey}-${d.matchNumber}-${d.compLevel}.json`,
         );
 
         // set data to server

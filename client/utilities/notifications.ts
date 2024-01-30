@@ -212,7 +212,10 @@ export const prompt = async (question: string): Promise<string | null> => {
     });
 };
 
-export const select = async (question: string, options: string[]): Promise<number> => {
+export const select = async (
+    question: string,
+    options: string[],
+): Promise<number> => {
     return new Promise<number>((res) => {
         const id = 'alert-' + Math.random().toString(36).substring(2, 9);
         const m = new Modal({
@@ -291,7 +294,11 @@ export const select = async (question: string, options: string[]): Promise<numbe
     });
 };
 
-export const choose = async <A extends string, B extends string>(question: string, option1: A, option2: B): Promise<null | A | B> => {
+export const choose = async <A extends string, B extends string>(
+    question: string,
+    option1: A,
+    option2: B,
+): Promise<null | A | B> => {
     return new Promise<null | A | B>((res) => {
         const id = 'alert-' + Math.random().toString(36).substring(2, 9);
         const m = new Modal({
@@ -336,7 +343,6 @@ export const choose = async <A extends string, B extends string>(question: strin
 
         m.$on('close', () => submit(null));
 
-
         $(modal).modal('show');
     });
-}
+};
