@@ -2,6 +2,7 @@
 import type { TBAMatch } from '../../../shared/submodules/tatorscout-calculations/tba';
 import { teamsFromMatch } from '../../../shared/submodules/tatorscout-calculations/tba';
 import type { EventData } from '../../models/app/app';
+import MatchSelector from '../components/MatchSelector.svelte'
 
 export let matches: TBAMatch[] = [];
 export let scoutTeamOrder: number[] = [];
@@ -30,6 +31,7 @@ $: {
 </script>
 
 <div>
+    <MatchSelector></MatchSelector>
     <table class="table table-dark table-striped">
         <thead>
             <tr>
