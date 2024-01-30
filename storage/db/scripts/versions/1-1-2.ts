@@ -1,13 +1,11 @@
 import Account from '../../../../server/structure/accounts.ts';
 
-const accounts = new Array(6).fill(0).map((_, i) => i);
-
-for (const a of accounts) {
-    Account.create(
-        'Tablet ' + a,
+await Promise.all(new Array(6).fill(0).map((_, i) => {
+    return Account.create(
+        'Tablet-' + (i + 1),
         '2122',
-        'no@email.com',
+        'tablet-' + (i + 1) + '@gmail.com',
         'Tator',
-        'Scout'
-    );
-}
+        'Scout',
+    )
+}));

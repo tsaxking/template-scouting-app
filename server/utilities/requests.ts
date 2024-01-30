@@ -1,6 +1,6 @@
 import env from './env.ts';
 import { attemptAsync, Result } from '../../shared/attempt.ts';
-import { Match } from '../../shared/submodules/tatorscout-calculations/match-submission.ts';
+import { Match } from '../../shared/submodules/tatorscout-calculations/trace.ts';
 import { DB } from './databases.ts';
 import { uuid } from './uuid.ts';
 import { Assignment } from '../../shared/submodules/tatorscout-calculations/scout-groups.ts';
