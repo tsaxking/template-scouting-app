@@ -1,0 +1,1 @@
+<input class='w-100' placeholder="Scout Name">
