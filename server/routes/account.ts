@@ -33,10 +33,9 @@ router.get('/sign-in', (req, res, next) => {
     res.sendTemplate('entries/account/sign-in');
 });
 
-router.get('/sign-up', (req, res, next) => {
-    if (req.session.account) return next();
-    res.sendTemplate('entries/account/sign-up');
-});
+// router.get('/sign-up', (_req, res) => {
+//     res.sendTemplate('entries/account/sign-up');
+// });
 
 router.get('/reset-password/:key', (req, res, next) => {
     const { key } = req.params;

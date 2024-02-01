@@ -31,6 +31,7 @@ export type SocketEvent =
     | 'page:open'
     | 'roles:added'
     | 'roles:removed'
+    | 'server-request:match-submitted'
     | 'skills:added'
     | 'skills:removed'
     | 'test:success'
