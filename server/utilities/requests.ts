@@ -62,12 +62,15 @@ export class ServerRequest {
 
     public static async submitMatch(match: Match) {
         return attemptAsync(async () => {
-            const result = await ServerRequest.post<{
-                success: false;
-                error: string;
-            } | {
-                success: true;
-            }>('/submit-match', match);
+            const result = await ServerRequest.post<
+                | {
+                    success: false;
+                    error: string;
+                }
+                | {
+                    success: true;
+                }
+            >('/submit-match', match);
 
             if (result.isOk()) {
                 if (result.value.success) {

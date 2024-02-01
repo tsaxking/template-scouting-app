@@ -1,8 +1,6 @@
 import { toRadians } from '../../../shared/submodules/calculations/src/graphing';
 import { App } from './app';
-import {
-    Point2D,
-} from '../../../shared/submodules/calculations/src/linear-algebra/point';
+import { Point2D } from '../../../shared/submodules/calculations/src/linear-algebra/point';
 import { Color } from '../../submodules/colors/color';
 import { Iterator } from './app-object';
 import { Circle } from '../canvas/circle';

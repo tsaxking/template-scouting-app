@@ -1,5 +1,5 @@
 import env, { __root, resolve } from './utilities/env.ts';
-import { log, error } from './utilities/terminal-logging.ts';
+import { error, log } from './utilities/terminal-logging.ts';
 import { App, ResponseStatus } from './structure/app/app.ts';
 import { Session } from './structure/sessions.ts';
 import Account from './structure/accounts.ts';
@@ -10,7 +10,10 @@ import { FileUpload } from './middleware/stream.ts';
 import { stdin } from './utilities/utilties.ts';
 import { ReqBody } from './structure/app/req.ts';
 import { validate } from './middleware/data-type.ts';
-import { Match, validateObj } from '../shared/submodules/tatorscout-calculations/trace.ts';
+import {
+    Match,
+    validateObj,
+} from '../shared/submodules/tatorscout-calculations/trace.ts';
 import { ServerRequest } from './utilities/requests.ts';
 import { getJSONSync } from './utilities/files.ts';
 import { runTask } from './utilities/run-task.ts';
@@ -47,7 +50,6 @@ if (Deno.args.includes('--ping')) {
     });
 }
 
-
 // building client listeners
 builder.on('build', () => {
     if (env.ENVIRONMENT === 'dev') app.io.emit('reload');
@@ -65,8 +67,10 @@ stdin.on('data', (data) => {
     const [command, ...args] = data.split(' ');
     switch (command) {
         case 'event':
-            attempt(() => runTask('./scripts/event-data.ts', 'getEvent', ...args));
-        break;
+            attempt(() =>
+                runTask('./scripts/event-data.ts', 'getEvent', ...args)
+            );
+            break;
     }
 });
 
@@ -230,8 +234,29 @@ app.post<Match>('/submit', validate(validateObj as {
             matchNumber,
             teamNumber,
             compLevel,
-            error: result.error
+            eventKey,
+            scout,
+            date,
+            group,
+            trace,
         });
+
+        if (result.isOk()) {
+            res.sendStatus('server-request:match-submitted', {
+                matchNumber,
+                teamNumber,
+                compLevel,
+                data: result.value,
+            });
+        } else {
+            error('Match submission error:', result.error);
+            res.sendStatus('server-request:match-error', {
+                matchNumber,
+                teamNumber,
+                compLevel,
+                error: result.error,
+            });
+        }
     }
 });
 
