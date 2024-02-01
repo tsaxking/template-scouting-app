@@ -404,4 +404,54 @@ export type Queries = {
         ],
         unknown,
     ];
+    'server-requests/new': [
+        [
+            {
+                id: string;
+                body: string;
+                date: string;
+                url: string;
+            },
+        ],
+    ];
+    'server-requests/update': [
+        [
+            {
+                id: string;
+                response: string;
+            },
+        ],
+    ];
+    'server-requests/all': [
+        [],
+        {
+            id: string;
+            body: string;
+            date: string;
+            response: string;
+            url: string;
+        },
+    ];
+    'server-requests/delete': [
+        [
+            {
+                id: string;
+            },
+        ],
+        unknown,
+    ];
+    'server-requests/get': [
+        [
+            {
+                id: string;
+            },
+        ],
+        {
+            id: string;
+            body: string;
+            date: string;
+            response: string;
+            url: string;
+        },
+    ];
 };
