@@ -98,6 +98,10 @@ export const alert = async (message: string): Promise<void> => {
             $(modal).modal('hide');
         });
 
+        m.$on('hide', () => {
+            $(modal).modal('hide');
+        });
+
         $(modal).modal('show');
 
         $(modal).on('hidden.bs.modal', () => {
@@ -113,8 +117,8 @@ export const alert = async (message: string): Promise<void> => {
  *  @param {string} message The prompt to display to the user
  * @returns {Promise<boolean>}
  */
-export const confirm = async (message: string): Promise<boolean> => {
-    return new Promise<boolean>((res) => {
+export const confirm = async (message: string): Promise<boolean | null> => {
+    return new Promise<boolean | null>((res) => {
         const id = 'alert-' + Math.random().toString(36).substring(2, 9);
         const m = new Modal({
             target: document.body,
@@ -147,7 +151,17 @@ export const confirm = async (message: string): Promise<boolean> => {
             res(false);
         });
 
+        m.$on('hide', () => {
+            $(modal).modal('hide');
+            res(null);
+        });
+
         $(modal).modal('show');
+
+        $(modal).on('hidden.bs.modal', () => {
+            m.$destroy();
+            res(null);
+        });
     });
 };
 
@@ -208,7 +222,17 @@ export const prompt = async (question: string): Promise<string | null> => {
             res(null);
         });
 
+        m.$on('hide', () => {
+            $(modal).modal('hide');
+            res(null);
+        });
+
         $(modal).modal('show');
+
+        $(modal).on('hidden.bs.modal', () => {
+            m.$destroy();
+            res(null);
+        });
     });
 };
 
@@ -252,14 +276,6 @@ export const select = async (
             },
         });
 
-        const cancelButton = new Button({
-            target: modal.querySelector('.modal-footer') as HTMLElement,
-            props: {
-                text: 'Cancel',
-                color: 'secondary',
-            },
-        });
-
         const submit = () => {
             $(modal).modal('hide');
             res(parseInt(select.value));
@@ -278,15 +294,18 @@ export const select = async (
             .querySelector('button.btn-primary')
             ?.addEventListener('click', submit);
 
-        cancelButton.$$.root
-            .querySelector('button.btn-secondary')
-            ?.addEventListener('click', () => {
-                $(modal).modal('hide');
-                res(-1);
-            });
-
         m.$on('close', () => {
             $(modal).modal('hide');
+            res(-1);
+        });
+
+        m.$on('hide', () => {
+            $(modal).modal('hide');
+            res(-1);
+        });
+
+        $(modal).on('hidden.bs.modal', () => {
+            m.$destroy();
             res(-1);
         });
 
@@ -312,36 +331,32 @@ export const choose = async <A extends string, B extends string>(
 
         const modal = m.$$.root.querySelector('#' + id) as HTMLElement;
 
-        const b1 = new Button({
-            target: modal.querySelector('.modal-footer') as HTMLElement,
-            props: {
-                text: option1,
-                color: 'primary',
-            },
-        });
-
-        const b2 = new Button({
-            target: modal.querySelector('.modal-footer') as HTMLElement,
-            props: {
-                text: option2,
-                color: 'secondary',
-            },
-        });
-
         const submit = (i: null | A | B) => {
             $(modal).modal('hide');
             res(i);
         };
 
-        b1.$$.root
-            .querySelector('button.btn-primary')
-            ?.addEventListener('click', () => submit(option1));
+        const createButton = (text: string, value: null | A | B) => {
+            const b = document.createElement('button');
+            b.innerText = text;
+            b.classList.add('btn', 'btn-primary');
+            b.onclick = () => submit(value);
+            modal.querySelector('.modal-footer')?.appendChild(b);
 
-        b2.$$.root
-            .querySelector('button.btn-secondary')
-            ?.addEventListener('click', () => submit(option2));
+            return b;
+        };
+
+        createButton(option1, option1);
+        createButton(option2, option2);
+
+        m.$on('hide', () => submit(null));
 
         m.$on('close', () => submit(null));
+
+        $(modal).on('hidden.bs.modal', () => {
+            m.$destroy();
+            res(null);
+        });
 
         $(modal).modal('show');
     });
