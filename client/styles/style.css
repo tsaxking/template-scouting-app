@@ -1,6 +1,6 @@
 :root {
-    --offCanvas-width: 270px;
-    --topNavbarHeight: 54px;
+    --offCanvas-width: 0px;
+    --topNavbarHeight: 0px;
 }
 
 body {
