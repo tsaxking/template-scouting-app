@@ -110,6 +110,7 @@ export const messages: {
         color: 'success',
         code: 200,
         instructions: 'You will be redirected to the login page',
+        redirect: '/account/sign-in',
     },
     'account:email-change-expired': {
         message: 'Your email change expired',
@@ -203,6 +204,7 @@ export const messages: {
         color: 'success',
         code: 200,
         instructions: 'You will be redirected to the home page.',
+        redirect: '/home',
     },
     'account:no-role': {
         message: 'This account does not have this role',
@@ -312,6 +314,7 @@ export const messages: {
         color: 'success',
         code: 200,
         instructions: 'You will be redirected to the home page.',
+        redirect: '/home',
     },
     'admin:invalid-key': {
         message: 'Invalid key',
@@ -482,7 +485,7 @@ export const messages: {
         code: 401,
         instructions: '',
     },
-    profanity: {
+    'profanity:detected': {
         message: 'Profanity detected',
         color: 'danger',
         code: 400,
@@ -668,7 +671,7 @@ export type StatusId =
     | 'permissions:forbidden'
     | 'permissions:invalid'
     | 'permissions:unauthorized'
-    | 'profanity'
+    | 'profanity:detected'
     | 'role:not-found'
     | 'roles:added'
     | 'roles:invalid-role'
@@ -787,3 +790,5 @@ export type TestStatusId = 'fail' | 'success';
 export type UnknownStatusId = 'error';
 
 export type RoleStatusId = 'not-found';
+
+export type Profanity = 'detected';
