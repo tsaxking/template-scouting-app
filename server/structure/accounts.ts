@@ -9,7 +9,6 @@ import { Member } from './member.ts';
 import {
     Account as AccountObject,
     AccountSettings,
-    Permission,
 } from '../../shared/db-types.ts';
 import env from '../utilities/env.ts';
 import { deleteUpload } from '../utilities/files.ts';
@@ -22,6 +21,7 @@ import {
 } from '../../shared/status-messages.ts';
 import { validate } from '../middleware/data-type.ts';
 import { Role as RoleObj } from '../../shared/db-types.ts';
+import { Permission } from '../../shared/permissions.ts';
 
 /**
  * Properties that can be changed dynamically
@@ -791,17 +791,14 @@ export default class Account {
      * @param {string} role
      * @returns {(AccountStatusId|RolesStatusId)}
      */
-    addRole(role: string): AccountStatusId | RolesStatusId {
-        const r = Role.fromName(role);
-        if (!r) return 'not-found';
-
-        if (this.roles.find((_r) => _r.name === r.name)) {
+    addRole(role: Role): AccountStatusId | RolesStatusId {
+        if (this.roles.find((_r) => _r.name === role.name)) {
             return 'has-role';
         }
 
         DB.run('account/add-role', {
             accountId: this.id,
-            roleId: r.id,
+            roleId: role.id,
         });
 
         return 'role-added';
@@ -814,17 +811,14 @@ export default class Account {
      * @param {string} role
      * @returns {(AccountStatusId|RolesStatusId)}
      */
-    removeRole(role: string): AccountStatusId | RolesStatusId {
-        const r = Role.fromName(role);
-        if (!r) return 'not-found';
-
-        if (!this.roles.find((_r) => _r.name === r.name)) {
+    removeRole(role: Role): AccountStatusId | RolesStatusId {
+        if (!this.roles.find((_r) => _r.name === role.name)) {
             return 'no-role';
         }
 
         DB.run('account/remove-role', {
             accountId: this.id,
-            roleId: r.id,
+            roleId: role.id,
         });
 
         return 'role-removed';
