@@ -15,7 +15,14 @@ type PostData = {
     comment: string;
 };
 
-type Types = 'autoMobility' | 'parked' | 'playedDefense' | 'tippy' | 'easilyDefended' | 'robotDied' | 'problemsDriving';
+type Types =
+    | 'autoMobility'
+    | 'parked'
+    | 'playedDefense'
+    | 'tippy'
+    | 'easilyDefended'
+    | 'robotDied'
+    | 'problemsDriving';
 
 let data: {
     [key in Types]: PostData;
@@ -93,7 +100,6 @@ $: {
 }
 
 let generalComment: string = '';
-
 </script>
 
 <div class="container">

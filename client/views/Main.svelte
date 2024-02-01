@@ -35,7 +35,8 @@ const domain = 'http://localhost:3000';
 <main>
     <NavTabs {tabs} {active} on:change="{e => (active = e.detail)}" />
 
-    <Page {active} {domain} title="Pre"><Pre {event} {currentMatch}></Pre></Page>
+    <Page {active} {domain} title="Pre"><Pre {event} {currentMatch}></Pre></Page
+    >
     <Page {active} {domain} title="App"><AppView {app}></AppView></Page>
     <Page {active} {domain} title="Post"><Post {app} {active}></Post></Page>
     <Page {active} {domain} title="Upload"><Upload /></Page>
