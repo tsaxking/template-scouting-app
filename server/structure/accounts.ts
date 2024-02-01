@@ -492,27 +492,11 @@ export default class Account {
             firstName,
             lastName,
             email,
-            verified: 0,
-            verification: uuid(),
+            verified: 1,
+            verification: '',
             created: Date.now(),
             phoneNumber: '',
         });
-
-        const a = new Account({
-            id: uuid(),
-            username,
-            key,
-            salt,
-            firstName,
-            lastName,
-            email,
-            verified: 0,
-            verification: uuid(),
-            created: Date.now(),
-            phoneNumber: '',
-        });
-
-        a.sendVerification();
 
         return 'created';
     }
