@@ -313,8 +313,7 @@ export const messages: {
         message: 'Account has been verified.',
         color: 'success',
         code: 200,
-        instructions: 'You will be redirected to the home page.',
-        redirect: '/home',
+        instructions: '',
     },
     'admin:invalid-key': {
         message: 'Invalid key',
@@ -527,6 +526,12 @@ export const messages: {
         code: 400,
         instructions: '',
     },
+    'server:not-implemented': {
+        message: "This request's handler has not been implemented yet.",
+        color: 'warning',
+        code: 501,
+        instructions: '',
+    },
     'server:unknown-server-error': {
         message:
             'There was an unknown error. If this persists, please contact an administrator/developer.',
@@ -680,6 +685,7 @@ export type StatusId =
     | 'server-request:match-error'
     | 'server-request:match-submitted'
     | 'server:invalid-data'
+    | 'server:not-implemented'
     | 'server:unknown-server-error'
     | 'skills:added'
     | 'skills:has-skill'
@@ -768,11 +774,16 @@ export type PermissionsStatusId =
     | 'invalid'
     | 'unauthorized';
 
-export type ProfanityStatusId = 'undefined';
+export type ProfanityStatusId = 'detected';
+
+export type RoleStatusId = 'not-found';
 
 export type RolesStatusId = 'added' | 'invalid-role' | 'not-found' | 'removed';
 
-export type ServerStatusId = 'invalid-data' | 'unknown-server-error';
+export type ServerStatusId =
+    | 'invalid-data'
+    | 'unknown-server-error'
+    | 'not-implemented';
 
 export type ServerrequestStatusId = 'match-submitted' | 'match-error';
 
@@ -788,7 +799,3 @@ export type SpamStatusId = 'detected';
 export type TestStatusId = 'fail' | 'success';
 
 export type UnknownStatusId = 'error';
-
-export type RoleStatusId = 'not-found';
-
-export type Profanity = 'detected';
