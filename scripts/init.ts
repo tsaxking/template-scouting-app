@@ -147,6 +147,14 @@ const createEnv = () => {
         undefined,
         true,
     );
+    setKey(
+        'SERVER_DOMAIN',
+        'Server Domain: (default: localhost:6000)',
+        'http://localhost:6000',
+        (i) => i.length > 0,
+        true,
+    );
+    setKey('SERVER_KEY', 'Server Key: (no default)', '', undefined, true);
 
     const e = Object.keys(values)
         .map((key) => `${key} = '${values[key]}'`)
