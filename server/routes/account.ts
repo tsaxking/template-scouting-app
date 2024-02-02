@@ -18,6 +18,7 @@ router.post('/get-account', async (req, res) => {
                 memberInfo: true,
                 permissions: true,
                 email: true,
+                id: true,
             }),
         );
     } else res.sendStatus('account:not-logged-in');
@@ -80,7 +81,13 @@ router.post<{
 
         req.session.signIn(account);
 
-        res.sendStatus('account:logged-in', { username });
+        console.log('prevUrl', req.session.prevUrl);
+
+        res.sendStatus(
+            'account:logged-in',
+            { username },
+            req.session.prevUrl || '/home',
+        );
     },
 );
 
@@ -125,8 +132,17 @@ router.post<{
         );
 
         res.sendStatus(('account:' + status) as StatusId, { username });
+
+        if (status === 'created') {
+            req.io.emit('account:created', username);
+        }
     },
 );
+
+router.get('/sign-out', (req, res) => {
+    req.session.signOut();
+    res.redirect('/home');
+});
 
 // req.session.account is always available when Account.allowRoles/Permissions is used
 // however, typescript doesn't know that, so we have to cast it
@@ -150,6 +166,10 @@ router.post<{
         if (!a) return res.sendStatus('account:not-found');
         const status = a.verify();
         res.sendStatus(('account:' + status) as StatusId, { id });
+
+        if (status === 'verified') {
+            req.io.emit('account:verified', id);
+        }
     },
 );
 
@@ -177,6 +197,10 @@ router.post<{
 
         const status = Account.delete(id);
         res.sendStatus(('account:' + status) as StatusId, { id });
+
+        if (status === 'removed') {
+            req.io.emit('account:removed', id);
+        }
     },
 );
 
@@ -215,6 +239,10 @@ router.post<{
 
         const status = Account.delete(id);
         res.sendStatus(('account:' + status) as StatusId, { id });
+
+        if (status === 'removed') {
+            req.io.emit('account:removed', id);
+        }
     },
 );
 
@@ -238,6 +266,8 @@ router.post<{
         Status.from(('account:' + a.unverify()) as StatusId, req, {
             id,
         }).send(res);
+
+        req.io.emit('account:unverified', id);
     },
 );
 
@@ -265,6 +295,9 @@ router.post<{
         if (!role) return res.sendStatus('role:not-found', { roleId });
 
         const status = account.addRole(role);
+        if (status === 'role-added') {
+            req.io.emit('account:role-added', accountId, roleId);
+        }
         if (!messages[('role:' + status) as keyof typeof messages]) {
             return res.sendStatus(('account:' + status) as StatusId, {
                 accountId,
@@ -299,12 +332,16 @@ router.post<{
         if (!role) return res.sendStatus('role:not-found', { roleId });
 
         const status = account.removeRole(role);
+        if (status === 'role-removed') {
+            req.io.emit('account:role-removed', accountId, roleId);
+        }
         if (!messages[('role:' + status) as keyof typeof messages]) {
             return res.sendStatus(('account:' + status) as StatusId, {
                 accountId,
                 roleId,
             });
         }
+
         res.sendStatus(('role:' + status) as StatusId, { accountId, roleId });
     },
 );
@@ -459,6 +496,7 @@ router.post('/all', (req, res) => {
                     email: true,
                     memberInfo: true,
                     permissions: true,
+                    id: true,
                 })
             ),
         );
