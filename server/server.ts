@@ -180,6 +180,10 @@ app.route('/account', account);
 //     next();
 // });
 
+app.get('/dashboard/admin', Role.allowRoles('admin'), (_req, res) => {
+    res.sendTemplate('entries/admin');
+});
+
 app.route('/admin', admin);
 
 app.get('/app', (req, res) => {
@@ -307,6 +311,6 @@ app.final<{
     });
 
     if (!res.fulfilled) {
-        return res.sendStatus('page:not-found', { page: req.url });
+        res.sendStatus('page:not-found');
     }
 });
