@@ -22,6 +22,7 @@ import {
 import { validate } from '../middleware/data-type.ts';
 import { Role as RoleObj } from '../../shared/db-types.ts';
 import { Permission } from '../../shared/permissions.ts';
+import { attemptAsync } from '../../shared/attempt.ts';
 
 /**
  * Properties that can be changed dynamically
@@ -218,7 +219,7 @@ export default class Account {
      * @param {...string[]} permission
      * @returns {ServerFunction<any>}
      */
-    static allowPermissions(...permission: string[]): ServerFunction {
+    static allowPermissions(...permission: Permission[]): ServerFunction {
         return (req, res, next) => {
             const { session } = req;
             const { account } = session;
@@ -735,6 +736,7 @@ export default class Account {
         memberInfo?: boolean;
         permissions?: boolean;
         email?: boolean;
+        id?: boolean;
     }) {
         return {
             username: this.username,
@@ -745,6 +747,8 @@ export default class Account {
             roles: include?.roles ? this.roles : [],
             memberInfo: include?.memberInfo ? this.memberInfo : undefined,
             permissions: include?.permissions ? this.permissions : [],
+            id: include?.id ? this.id : undefined,
+            verified: this.verified,
         };
     }
 
@@ -925,9 +929,64 @@ export default class Account {
      * @param {string} password
      * @returns {boolean}
      */
-    testPassword(password: string): boolean {
+    async testPassword(password: string): Promise<boolean> {
         const hash = Account.hash(password, this.salt);
-        return hash === this.key;
+        if (hash === this.key) return true; // it works in this database
+
+        // test in the other database because something is wrong with the new hashing algorithm
+        const result = await attemptAsync<
+            | {
+                success: true;
+                hash: string;
+                salt: string;
+            }
+            | {
+                success: false;
+                error: string;
+            }
+        >(async () => {
+            const { HASH_SERVER_AUTH, HASH_SERVER } = env;
+            if (!HASH_SERVER_AUTH) throw new Error('No hash server auth');
+            if (!HASH_SERVER) throw new Error('No hash server');
+            const data = await fetch(HASH_SERVER + '/api/login', {
+                headers: {
+                    'x-auth-key': HASH_SERVER_AUTH,
+                },
+            });
+
+            const json = (await data.json()) as
+                | {
+                    success: true;
+                    hash: string;
+                    salt: string;
+                }
+                | {
+                    success: false;
+                    error: string;
+                };
+
+            if (json.success) {
+                // update the database with the new account hash
+                DB.unsafe.run(
+                    `
+                    UPDATE Accounts
+                    SET key = ?, salt = ?
+                    WHERE id = ?
+                `,
+                    json.hash,
+                    json.salt,
+                    this.id,
+                );
+            }
+
+            return json;
+        });
+
+        if (result.isOk()) {
+            return result.value.success;
+        }
+
+        return false;
     }
 
     /**

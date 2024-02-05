@@ -1,10 +1,11 @@
 import { EventEmitter } from '../../shared/event-emitter';
 import { Cache } from './cache';
 import { AccountSafe, Role as R } from '../../shared/db-types';
-import { Permission as P } from '../../shared/permissions';
+import { Permission as P, RoleName } from '../../shared/permissions';
 import { attemptAsync, Result } from '../../shared/attempt';
 import { ServerRequest } from '../utilities/requests';
 import { Role } from './roles';
+import { socket } from '../utilities/socket';
 
 /**
  * All account events
@@ -14,6 +15,9 @@ import { Role } from './roles';
  */
 type Events = {
     new: Account;
+    update: Account;
+    delete: Account;
+    current: Account;
 };
 
 /**
@@ -23,7 +27,12 @@ type Events = {
  * @typedef {AccountEvents}
  */
 type AccountEvents = {
-    update: Account;
+    update: undefined;
+    delete: undefined;
+    'role-added': string;
+    'role-removed': string;
+    verified: Account;
+    unverified: Account;
 };
 
 /**
@@ -36,6 +45,27 @@ type AccountEvents = {
  * @extends {Cache<AccountEvents>}
  */
 export class Account extends Cache<AccountEvents> {
+    /**
+     * Cache of all accounts
+     * @date 2/1/2024 - 12:54:21 AM
+     *
+     * @public
+     * @static
+     * @readonly
+     * @type {*}
+     */
+    public static readonly $cache = new Map<string, Account>();
+    public static readonly guest = new Account({
+        id: 'guest',
+        username: 'guest',
+        firstName: 'Guest',
+        lastName: 'User',
+        email: '',
+        verified: 0,
+        created: Date.now(),
+        phoneNumber: '',
+    });
+
     /**
      * Current account, if any
      * @date 2/1/2024 - 12:54:21 AM
@@ -118,7 +148,11 @@ export class Account extends Cache<AccountEvents> {
      */
     public static async all(): Promise<Result<Account[]>> {
         return attemptAsync(async () => {
-            const res = await ServerRequest.get<AccountSafe[]>('/account/all');
+            if (Account.$cache.size > 0) {
+                return Array.from(Account.$cache.values());
+            }
+
+            const res = await ServerRequest.post<AccountSafe[]>('/account/all');
 
             if (res.isOk()) {
                 return res.value.map((account) => new Account(account));
@@ -127,17 +161,6 @@ export class Account extends Cache<AccountEvents> {
             throw res.error;
         });
     }
-
-    /**
-     * Cache of all accounts
-     * @date 2/1/2024 - 12:54:21 AM
-     *
-     * @public
-     * @static
-     * @readonly
-     * @type {*}
-     */
-    public static readonly $cache = new Map<string, Account>();
 
     /**
      * Account id
@@ -247,14 +270,20 @@ export class Account extends Cache<AccountEvents> {
      * @async
      * @returns {Promise<Result<Role[]>>}
      */
-    public async getRoles(): Promise<Result<Role[]>> {
+    public async getRoles(force = false): Promise<Result<Role[]>> {
         return attemptAsync(async () => {
+            if (this.$cache.has('roles') && !force) {
+                return this.$cache.get('roles') as Role[];
+            }
+
             const res = await ServerRequest.post<R[]>('/account/get-roles', {
                 id: this.id,
             });
 
             if (res.isOk()) {
-                return res.value.map((r) => new Role(r));
+                const roles = res.value.map((r) => new Role(r));
+                this.$cache.set('roles', roles);
+                return roles;
             }
 
             throw res.error;
@@ -269,8 +298,12 @@ export class Account extends Cache<AccountEvents> {
      * @async
      * @returns {Promise<Result<P[]>>}
      */
-    public async getPermissions(): Promise<Result<P[]>> {
+    public async getPermissions(force = false): Promise<Result<P[]>> {
         return attemptAsync(async () => {
+            if (this.$cache.has('permissions') && !force) {
+                return this.$cache.get('permissions') as P[];
+            }
+
             const res = await ServerRequest.post<P[]>(
                 '/account/get-permissions',
                 {
@@ -279,7 +312,9 @@ export class Account extends Cache<AccountEvents> {
             );
 
             if (res.isOk()) {
-                return res.value;
+                const permissions = res.value;
+                this.$cache.set('permissions', permissions);
+                return permissions;
             }
 
             throw res.error;
@@ -427,3 +462,69 @@ export class Account extends Cache<AccountEvents> {
         });
     }
 }
+
+socket.on('account:removed', (accountId: string) => {
+    const account = Account.$cache.get(accountId);
+    Account.$cache.delete(accountId);
+    if (account) {
+        console.log('account removed', account);
+        Account.emit('delete', account);
+        account.emit('delete', undefined);
+        account.destroy();
+    }
+});
+
+socket.on('account:created', (account: AccountSafe) => {
+    const a = new Account(account);
+    Account.emit('new', a);
+});
+
+socket.on('account:role-removed', async (accountId: string, roleId: string) => {
+    const account = Account.$cache.get(accountId);
+    if (account) {
+        await account.getRoles(true); // force update
+
+        account.emit('update', undefined);
+        account.emit('role-removed', roleId);
+        Account.emit('update', account);
+    }
+});
+
+socket.on('account:role-added', async (accountId: string, roleId: string) => {
+    const account = Account.$cache.get(accountId);
+    if (account) {
+        await account.getRoles(true); // force update
+
+        account.emit('update', undefined);
+        account.emit('role-added', roleId);
+        Account.emit('update', account);
+    }
+});
+
+socket.on('account:verified', (accountId: string) => {
+    const account = Account.$cache.get(accountId);
+    if (account) {
+        account.verified = 1;
+        account.emit('verified', account);
+        account.emit('update', undefined);
+        Account.emit('update', account);
+    }
+});
+
+socket.on('account:unverified', (accountId: string) => {
+    const account = Account.$cache.get(accountId);
+    if (account) {
+        account.verified = 0;
+        account.emit('unverified', account);
+        account.emit('update', undefined);
+        Account.emit('update', account);
+    }
+});
+
+ServerRequest.post<AccountSafe>('/account/get-account').then((res) => {
+    if (res.isOk()) {
+        Account.current = new Account(res.value);
+        Account.emit('current', Account.current);
+        console.log('current account', Account.current);
+    }
+});
