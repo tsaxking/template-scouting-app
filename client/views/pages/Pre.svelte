@@ -5,11 +5,12 @@ import type { EventData } from '../../models/app/app';
 import MatchSelector from '../components/MatchSelector.svelte'
 import MenuButtons from '../components/MenuButtons.svelte'
 import ScoutSelect from '../components/ScoutSelect.svelte';
-
+import {App} from './../../models/app/app';
 export let matches: TBAMatch[] = [];
 export let scoutTeamOrder: number[] = [];
 
 export let currentMatch: TBAMatch | undefined = undefined;
+export let app: App;
 
 // VVV all of your data you need is stored here to create that table VVV
 export let event: EventData;
@@ -18,6 +19,7 @@ let matchData: (TBAMatch & {
     teams: [number, number, number, number, number, number];
     scoutIndex: number | undefined;
 })[] = [];
+
 $: {
     matchData = matches.map((m, i) => {
         if (!scoutTeamOrder[i])
@@ -33,7 +35,7 @@ $: {
 </script>
 
 <div>
-    <MenuButtons></MenuButtons>
+    <MenuButtons {app}></MenuButtons>
     <ScoutSelect></ScoutSelect>
     <MatchSelector></MatchSelector>
     <table class="table table-dark table-striped">
