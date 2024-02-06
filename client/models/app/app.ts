@@ -470,6 +470,16 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
         }
     }
 
+    matchData: {
+        compLevel: 'pr' | 'qm' | 'qf' | 'sf' | 'f';
+        number: number;
+        teamNumber: number;
+    } = {
+        compLevel: 'pr',
+        number: 0,
+        teamNumber: 0
+    };
+
     /**
      * Description placeholder
      * @date 1/25/2024 - 4:59:07 PM

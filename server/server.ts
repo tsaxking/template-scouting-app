@@ -14,6 +14,7 @@ import {
     Match,
     validateObj,
 } from '../shared/submodules/tatorscout-calculations/trace.ts';
+import Role from './structure/roles.ts';
 import { ServerRequest } from './utilities/requests.ts';
 import { getJSONSync } from './utilities/files.ts';
 import { runTask } from './utilities/run-task.ts';
