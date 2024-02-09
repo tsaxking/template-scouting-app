@@ -6,6 +6,8 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 
+*.js
+
 */templates/entries/
 
 */dir-tree.txt
@@ -14,6 +16,7 @@ branch-transfer/
 
 deno.lock
 
+event-data.json
 credentials.json
 token.json
 

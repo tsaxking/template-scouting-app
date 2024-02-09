@@ -21,7 +21,7 @@ const submit = () => {
 };
 
 const isValid = (username: string, password: string) => {
-    return isUsernameValid(username) && password.length > 8;
+    return isUsernameValid(username) && password.length > 3;
 };
 
 const isUsernameValid = (username: string): boolean => {
@@ -44,19 +44,27 @@ const onInput = () => {
 };
 </script>
 
-<main>
-    <div class="container pt-5">
-        <div class="row">
-            <div class="col-md-6">
-                <div class="row mb-3">
-                    <h1>
-                        {title}: Sign in
-                    </h1>
-                </div>
-
-                <div class="row mb-3">
-                    <a href="/account/sign-up" class="link-primary nav-link"
-                        >Sign Up</a
+<div class="container pt-5">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="row mb-3">
+                <h1>
+                    {title}: Sign in
+                </h1>
+            </div>
+            <form on:submit|preventDefault="{submit}">
+                <div class="mb-3 form-floating">
+                    <input
+                        class="form-control"
+                        type="text"
+                        name="username"
+                        id="username"
+                        bind:value="{username}"
+                        placeholder="Username or Email"
+                        on:input="{onInput}"
+                    />
+                    <label class="form-label" for="username"
+                        >Username or Email</label
                     >
                 </div>
                 <form on:submit|preventDefault="{submit}">
@@ -123,4 +131,3 @@ const onInput = () => {
             </div>
         </div>
     </div>
-</main>
