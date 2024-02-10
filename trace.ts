@@ -469,17 +469,19 @@ export type Match = {
     scout: string;
     date: number;
     group: 0 | 1 | 2 | 3 | 4 | 5;
-    trace: TraceArray
+    trace: TraceArray;
 };
 
 export const validateObj = {
-    checks: (v) => Array.isArray(v) && v.every((v) => typeof v === 'string'),
-    comments: (v) => typeof v === 'object' && Object.values(v).every((v) => typeof v === 'string'),
+    checks: v => Array.isArray(v) && v.every(v => typeof v === 'string'),
+    comments: v =>
+        typeof v === 'object' &&
+        Object.values(v).every(v => typeof v === 'string'),
     matchNumber: 'number',
     teamNumber: 'number',
     compLevel: ['pr', 'qm', 'qf', 'sf', 'f'],
     eventKey: 'string',
     scout: 'string',
     date: 'number',
-    group: [0, 1, 2, 3, 4, 5],
-}
+    group: [0, 1, 2, 3, 4, 5]
+};
