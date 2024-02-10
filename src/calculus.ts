@@ -9,7 +9,7 @@
  */
 export function derivative(
     fn: (x: number) => number,
-    sigFigs = 4,
+    sigFigs = 4
 ): (x: number) => number {
     const accuracy = Math.pow(10, -sigFigs);
     return (x: number) => (fn(x + accuracy) - fn(x)) / accuracy;
@@ -26,7 +26,7 @@ export function derivative(
  */
 export function integral(
     fn: (x: number) => number,
-    sigFigs = 4,
+    sigFigs = 4
 ): (x: number) => number {
     const accuracy = Math.pow(10, -sigFigs);
     return (x: number) => {

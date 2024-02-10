@@ -39,7 +39,7 @@ export class Point {
     constructor(
         public x: number,
         public y: number,
-        public z: number = 0,
+        public z: number = 0
     ) {}
 
     /**
@@ -64,7 +64,7 @@ export class Point {
         return new Point(
             this.x + vector.x,
             this.y + vector.y,
-            this.z + vector.z,
+            this.z + vector.z
         );
     }
 
@@ -90,7 +90,7 @@ export class Point {
         return Math.sqrt(
             Math.pow(this.x - point.x, 2) +
                 Math.pow(this.y - point.y, 2) +
-                Math.pow(this.z - point.z, 2),
+                Math.pow(this.z - point.z, 2)
         );
     }
 
@@ -107,7 +107,7 @@ export class Point {
         return new Point(
             this.x + (point.x - this.x) * ratio,
             this.y + (point.y - this.y) * ratio,
-            this.z + (point.z - this.z) * ratio,
+            this.z + (point.z - this.z) * ratio
         );
     }
 }

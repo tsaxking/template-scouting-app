@@ -18,8 +18,8 @@ export const isInside = (point: Point2D, points: Point2D[]) => {
         const [xi, yi] = points[i];
         const [xj, yj] = points[j];
 
-        const intersect = yi > y != yj > y &&
-            x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
+        const intersect =
+            yi > y != yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
 
         if (intersect) {
             inside = !inside;

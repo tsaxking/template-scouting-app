@@ -21,7 +21,7 @@ export type DrawPointOptions = {
 export const drawPoint = (
     ctx: CanvasRenderingContext2D,
     point: Point,
-    options?: DrawPointOptions,
+    options?: DrawPointOptions
 ) => {
     let p = new Point(...point.array);
 
@@ -54,7 +54,7 @@ export const drawPoint = (
             p.y * ctx.canvas.height,
             width,
             0,
-            2 * Math.PI,
+            2 * Math.PI
         );
         ctx.fill();
         ctx.stroke();
@@ -63,7 +63,7 @@ export const drawPoint = (
             p.x * ctx.canvas.height - width / 2,
             p.y * ctx.canvas.height - height / 2,
             width,
-            height,
+            height
         );
     }
     ctx.restore();
@@ -92,7 +92,7 @@ export type DrawEdgeOptions = {
 export const drawEdge = (
     ctx: CanvasRenderingContext2D,
     [p1, p2]: [Point, Point],
-    options: DrawEdgeOptions,
+    options: DrawEdgeOptions
 ) => {
     let p1t = p1;
     let p2t = p2;
@@ -110,7 +110,7 @@ export const drawEdge = (
                 p1t.x * ctx.canvas.height,
                 p1t.y * ctx.canvas.height,
                 p2t.x * ctx.canvas.height,
-                p2t.y * ctx.canvas.height,
+                p2t.y * ctx.canvas.height
             );
 
             g.addColorStop(0, colorToString(colorFromPos(p1)));
@@ -138,7 +138,7 @@ export const drawSpline = (
     ctx: CanvasRenderingContext2D,
     spline: Spline,
     steps: number,
-    options?: (p: Point) => DrawPointOptions,
+    options?: (p: Point) => DrawPointOptions
 ) => {
     for (let i = 0; i < steps; i++) {
         const t = i / steps;

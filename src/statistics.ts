@@ -5,7 +5,7 @@
 export const standardDeviation = (data: number[]): number => {
     const mean = data.reduce((a, b) => a + b, 0) / data.length;
     const variance =
-        data.map((x) => Math.pow(x - mean, 2)).reduce((a, b) => a + b, 0) /
+        data.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b, 0) /
         data.length;
     return Math.sqrt(variance);
 };
@@ -42,7 +42,7 @@ export const mode = (data: number[]): number => {
             counts[x] = counts[x] ? counts[x] + 1 : 1;
             return counts;
         },
-        {} as { [key: number]: number },
+        {} as { [key: number]: number }
     );
 
     let max = 0;
@@ -95,7 +95,7 @@ export const interquartileRange = (data: number[]): number => {
 export const outliers = (data: number[]): number[] => {
     const [lower, _, upper] = quartiles(data);
     const iqr = interquartileRange(data);
-    return data.filter((x) => x < lower - 1.5 * iqr || x > upper + 1.5 * iqr);
+    return data.filter(x => x < lower - 1.5 * iqr || x > upper + 1.5 * iqr);
 };
 
 /**
@@ -113,7 +113,7 @@ export const zScore = (data: number[], value: number): number => {
 export const zScores = (data: number[]): number[] => {
     const m = mean(data);
     const sd = standardDeviation(data);
-    return data.map((x) => (x - m) / sd);
+    return data.map(x => (x - m) / sd);
 };
 
 /**

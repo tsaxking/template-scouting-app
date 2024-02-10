@@ -38,7 +38,7 @@ export function multiplyMatricies(a: Matrix, b: Matrix) {
                 b.length +
                 'x' +
                 b[0].length +
-                '',
+                ''
         );
     }
 
@@ -124,7 +124,7 @@ export function rotate2D(point: Point2D, angle: number): Point2D {
     const [x, y] = point;
     return [
         x * Math.cos(angle) - y * Math.sin(angle),
-        x * Math.sin(angle) + y * Math.cos(angle),
+        x * Math.sin(angle) + y * Math.cos(angle)
     ];
 }
 
@@ -141,7 +141,7 @@ export function rotate2D(point: Point2D, angle: number): Point2D {
 export function rotate3D(
     point: Point3D,
     about: Point3D,
-    angle: Point3D,
+    angle: Point3D
 ): Point3D {
     let [x, y, z] = point;
     const [ax, ay, az] = about;
@@ -172,7 +172,7 @@ export function perspective(
     point: Point3D,
     cameraDistance: number,
     viewPlane: Vector,
-    viewAngle: number,
+    viewAngle: number
 ): Point2D | undefined {
     const cameraPoint = new Point(0, 0, -1 * cameraDistance);
     const cameraVector = new Vector(cameraPoint, new Point(...point));

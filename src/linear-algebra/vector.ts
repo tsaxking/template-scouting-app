@@ -29,7 +29,7 @@ export class Vector {
      */
     constructor(
         public point: Point,
-        public rate: Point,
+        public rate: Point
     ) {}
 
     /**
@@ -90,8 +90,8 @@ export class Vector {
             new Point(
                 this.rate.y * v.rate.z - this.rate.z * v.rate.y,
                 this.rate.z * v.rate.x - this.rate.x * v.rate.z,
-                this.rate.x * v.rate.y - this.rate.y * v.rate.x,
-            ),
+                this.rate.x * v.rate.y - this.rate.y * v.rate.x
+            )
         );
     }
 
