@@ -2,7 +2,6 @@ import env, { __root, resolve } from './utilities/env.ts';
 import { error, log } from './utilities/terminal-logging.ts';
 import { App, ResponseStatus } from './structure/app/app.ts';
 import { Session } from './structure/sessions.ts';
-import Role from './structure/roles.ts';
 import Account from './structure/accounts.ts';
 import { log as serverLog } from './utilities/files.ts';
 import { runBuild } from './bundler.ts';
