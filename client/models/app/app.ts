@@ -1382,7 +1382,6 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
                         color: color,
                     };
                     const a = this.icons[action]?.clone();
-                    console.log(a);
                     if (a instanceof SVG) {
                         a.center = [x, y];
                         if (!a.$properties.text) a.$properties.text = {};
