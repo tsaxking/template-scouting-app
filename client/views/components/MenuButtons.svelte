@@ -4,7 +4,9 @@
     import Modal from './bootstrap/Modal.svelte';
     export let app: App;
     const idInfo: string = 'custom-info-modal';
-    const idTeams: string = 'assigned-teams'
+    const idTeams: string = 'assigned-teams';
+    const idTuto: string = 'tutorial-modal';
+    const idFlip: string = 'flip-orientation';
     let matchNum: number;
     let teamNum: number;
     let matchType: string;
@@ -39,13 +41,13 @@
     <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#{idInfo}">
         Enter Custom Match Info
     </button>
-    <button type="button" class="btn btn-warning">
+    <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#{idTuto}">
         Tutorial
     </button>
-    <button type="button" class="btn btn-info">
+    <button type="button" class="btn btn-info" data-toggle="modal" data-target="#{idTeams}">
         Your Assigned Teams
     </button>
-    <button type="button" class="btn btn-success">
+    <button type="button" class="btn btn-success" data-toggle="modal" data-target='#{idFlip}'>
         Flip Field Orientation
     </button>
 </div>
@@ -67,6 +69,10 @@
         Team number:
         <input placeholder="Input team number here" bind:value={teamNum}>
     </div>
+    <button slot="buttons" type="button" class="btn btn-primary" on:click="{() => {updateData}}">Save Info</button>
+</Modal>
+
+<Modal title="Your Assigned Teams" id={idTeams}>
     <div>
         {#each teams as assignedTeam}
             <div>
@@ -74,11 +80,23 @@
             </div>
         {/each}
     </div>
-    <button slot="buttons" type="button" class="btn btn-primary" on:click="{() => {updateData}}">Save Info</button>
 </Modal>
 
-<Modal title="Your Assigned Teams" id={idTeams}>
-    {#each teams as assignedTeam}
-        Assigned Team
-    {/each}
+<Modal title="Tutorial" id={idTuto}>
+    Get good
+</Modal>
+
+<Modal title="Flip Field Orientation" id={idFlip}>
+    <div class="form-check">
+        <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault">
+        <label class="form-check-label" for="flexCheckDefault">
+            Flip across X
+        </label>
+    </div>
+    <div class="form-check">
+        <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault">
+        <label class="form-check-label" for="flexCheckDefault">
+            Flip across Y
+        </label>
+    </div>
 </Modal>
