@@ -66,27 +66,42 @@ const onInput = () => {
                     <label class="form-label" for="username"
                         >Username or Email</label
                     >
-                    {#if username.includes('@')}
-                        {#if username.split('@')[1]?.split('.')[0]?.length}
-                            {#if !username
-                                .split('@')[1]
-                                ?.split('.')[1]?.length || !username
+                </div>
+                <form on:submit|preventDefault="{submit}">
+                    <div class="mb-3 form-floating">
+                        <input
+                            class="form-control"
+                            type="text"
+                            name="username"
+                            id="username"
+                            bind:value="{username}"
+                            placeholder="Username or Email"
+                            on:input="{onInput}"
+                        />
+                        <label class="form-label" for="username"
+                            >Username or Email</label
+                        >
+                        {#if username.includes('@')}
+                            {#if username.split('@')[1]?.split('.')[0]?.length}
+                                {#if !username
                                     .split('@')[1]
-                                    ?.split('.')[username
+                                    ?.split('.')[1]?.length || !username
                                         .split('@')[1]
-                                        ?.split('.').length - 1]?.length}
+                                        ?.split('.')[username
+                                            .split('@')[1]
+                                            ?.split('.').length - 1]?.length}
+                                    <small class="text-danger">
+                                        Invalid email extension
+                                    </small>
+                                {/if}
+                            {:else}
                                 <small class="text-danger">
-                                    Invalid email extension
+                                    Invalid email domain
                                 </small>
                             {/if}
-                        {:else}
-                            <small class="text-danger">
-                                Invalid email domain
-                            </small>
                         {/if}
-                    {/if}
-                </div>
-                <!-- <div class="mb-3 form-floating">
+                    </div>
+                    <!-- <div class="mb-3 form-floating">
                     <input
                         class="form-control"
                         type="password"
@@ -98,21 +113,21 @@ const onInput = () => {
                     />
                     <label class="form-label" for="password">Password</label>
                 </div> -->
-                <Password
-                    bind:value="{password}"
-                    on:input="{onInput}"
-                    placeholder="Password"
-                    label="Password"
-                />
+                    <Password
+                        bind:value="{password}"
+                        on:input="{onInput}"
+                        placeholder="Password"
+                        label="Password"
+                    />
 
-                <input
-                    type="submit"
-                    class="btn btn-primary"
-                    disabled="{!valid}"
-                    value="Submit"
-                    on:click|preventDefault="{submit}"
-                />
-            </form>
+                    <input
+                        type="submit"
+                        class="btn btn-primary"
+                        disabled="{!valid}"
+                        value="Submit"
+                        on:click|preventDefault="{submit}"
+                    />
+                </form>
+            </div>
         </div>
     </div>
-</div>

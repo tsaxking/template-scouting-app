@@ -10,7 +10,7 @@ import {
 import { Next, ServerFunction } from '../structure/app/app.ts';
 import { Req } from '../structure/app/req.ts';
 import { Res } from '../structure/app/res.ts';
-import { Result } from '../../shared/attempt.ts';
+import { Result } from '../../shared/check.ts';
 import env from './env.ts';
 
 /**
@@ -176,12 +176,15 @@ export class Status {
         this.request = req;
 
         // Log the status message in the ./storage/logs/status.csv file
-        log('status', {
-            ...message,
-            data: data ? JSON.stringify(data) : 'No data provided.',
-            ip: req.session.ip,
-            username: req.session.account?.username,
-            sessionId: req.session.id,
+        setTimeout(async () => {
+            const a = await req.session.getAccount();
+            log('status', {
+                ...message,
+                data: data ? JSON.stringify(data) : 'No data provided.',
+                ip: req.session.ip,
+                username: a?.username,
+                sessionId: req.session.id,
+            });
         });
 
         // TODO: Send email to admins if server error

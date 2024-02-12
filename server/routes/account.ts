@@ -9,19 +9,19 @@ export const router = new Route();
 
 // gets the account from the session
 router.post('/get-account', async (req, res) => {
-    const { account } = req.session;
+    // const account = await req.session.getAccount();
+    const account = await Account.fromUsername('tsaxking');
 
     if (account) {
-        res.json(
-            account.safe({
-                roles: true,
-                memberInfo: true,
-                permissions: true,
-                email: true,
-                id: true,
-            }),
-        );
-    } else res.sendStatus('account:not-logged-in');
+        const safe = await account.safe({
+            roles: true,
+            email: true,
+            memberInfo: true,
+            permissions: true,
+            id: true,
+        });
+        res.json(safe);
+    } else res.status(404).json({ error: 'Not logged in' });
 });
 
 // gets all roles available
@@ -30,7 +30,7 @@ router.post('/get-all-roles', (req, res) => {
 });
 
 router.get('/sign-in', (req, res, next) => {
-    if (req.session.account) return next();
+    if (req.session.accountId) return next();
     res.sendTemplate('entries/account/sign-in');
 });
 
@@ -56,11 +56,15 @@ router.post<{
         username: 'string',
         password: 'string',
     }),
-    (req, res) => {
+    async (req, res) => {
         const { username, password } = req.body;
 
-        const account = Account.fromUsername(username) ||
-            Account.fromEmail(username);
+        const [u, e] = await Promise.all([
+            Account.fromUsername(username),
+            Account.fromEmail(username),
+        ]);
+
+        const account = u || e;
 
         // send the same error for both username and password to prevent username enumeration
         if (!account) {
@@ -69,7 +73,7 @@ router.post<{
 
         const hash = Account.hash(password, account.salt);
         if (hash !== account.key) {
-            return Status.from('account:password-mismatch', req, {
+            return Status.from('account:incorrect-username-or-password', req, {
                 username: username,
             }).send(res);
         }
@@ -79,10 +83,9 @@ router.post<{
             });
         }
 
-        req.session.signIn(account);
+        const r = await req.session.signIn(account);
 
-        console.log('prevUrl', req.session.prevUrl);
-
+        if (r.isErr()) return res.sendStatus('unknown:error');
         res.sendStatus(
             'account:logged-in',
             { username },
@@ -155,14 +158,14 @@ router.post<{
     validate({
         id: 'string',
     }),
-    (req, res) => {
+    async (req, res) => {
         const { id } = req.body;
 
-        if (id === req.session.account?.id) {
+        if (id === req.session.accountId) {
             return res.sendStatus('account:cannot-edit-self');
         }
 
-        const a = Account.fromId(id);
+        const a = await Account.fromId(id);
         if (!a) return res.sendStatus('account:not-found');
         const status = a.verify();
         res.sendStatus(('account:' + status) as StatusId, { id });
@@ -181,21 +184,21 @@ router.post<{
     validate({
         id: 'string',
     }),
-    (req, res) => {
+    async (req, res) => {
         const { id } = req.body;
 
-        if (id === req.session.account?.id) {
+        if (id === req.session.accountId) {
             return res.sendStatus('account:cannot-edit-self');
         }
 
-        const account = Account.fromUsername(id);
+        const account = await Account.fromId(id);
         if (!account) return res.sendStatus('account:not-found', { id });
 
         if (account.verified) {
             return res.sendStatus('account:cannot-reject-verified');
         }
 
-        const status = Account.delete(id);
+        const status = await Account.delete(id);
         res.sendStatus(('account:' + status) as StatusId, { id });
 
         if (status === 'removed') {
@@ -207,8 +210,8 @@ router.post<{
 router.post(
     '/get-pending-accounts',
     Account.allowPermissions('verify'),
-    (_req, res) => {
-        const accounts = Account.unverifiedAccounts;
+    async (_req, res) => {
+        const accounts = await Account.getUnverifiedAccounts();
         res.json(
             accounts.map((a) =>
                 a.safe({
@@ -230,14 +233,14 @@ router.post<{
     validate({
         id: 'string',
     }),
-    (req, res) => {
+    async (req, res) => {
         const { id } = req.body;
 
-        if (id === req.session.account?.id) {
+        if (id === req.session.accountId) {
             return res.sendStatus('account:cannot-edit-self', { id });
         }
 
-        const status = Account.delete(id);
+        const status = await Account.delete(id);
         res.sendStatus(('account:' + status) as StatusId, { id });
 
         if (status === 'removed') {
@@ -254,14 +257,14 @@ router.post<{
     validate({
         id: 'string',
     }),
-    (req, res) => {
+    async (req, res) => {
         const { id } = req.body;
 
-        if (id === req.session.account?.id) {
+        if (id === req.session.accountId) {
             return res.sendStatus('account:cannot-edit-self', { id });
         }
 
-        const a = Account.fromId(id);
+        const a = await Account.fromId(id);
         if (!a) return res.sendStatus('account:not-found');
         Status.from(('account:' + a.unverify()) as StatusId, req, {
             id,
@@ -281,20 +284,23 @@ router.post<{
         accountId: 'string',
         roleId: 'string',
     }),
-    (req, res) => {
+    async (req, res) => {
         const { accountId, roleId } = req.body;
 
-        if (accountId === req.session.account?.username) {
+        if (accountId === req.session.accountId) {
             return res.sendStatus('account:cannot-edit-self', { accountId });
         }
 
-        const account = Account.fromId(accountId);
+        const [account, role] = await Promise.all([
+            Account.fromId(accountId),
+            Role.fromId(roleId),
+        ]);
+
         if (!account) return res.sendStatus('account:not-found', { accountId });
 
-        const role = Role.fromId(roleId);
         if (!role) return res.sendStatus('role:not-found', { roleId });
 
-        const status = account.addRole(role);
+        const status = await account.addRole(role);
         if (status === 'role-added') {
             req.io.emit('account:role-added', accountId, roleId);
         }
@@ -318,20 +324,23 @@ router.post<{
         accountId: 'string',
         roleId: 'string',
     }),
-    (req, res) => {
+    async (req, res) => {
         const { accountId, roleId } = req.body;
 
-        if (accountId === req.session.account?.username) {
+        if (accountId === req.session.accountId) {
             return res.sendStatus('account:cannot-edit-self', { accountId });
         }
 
-        const account = Account.fromId(accountId);
+        const [account, role] = await Promise.all([
+            Account.fromId(accountId),
+            Role.fromId(roleId),
+        ]);
+
         if (!account) return res.sendStatus('account:not-found', { accountId });
 
-        const role = Role.fromId(roleId);
         if (!role) return res.sendStatus('role:not-found', { roleId });
 
-        const status = account.removeRole(role);
+        const status = await account.removeRole(role);
         if (status === 'role-removed') {
             req.io.emit('account:role-removed', accountId, roleId);
         }
@@ -353,14 +362,14 @@ router.post<{
     validate({
         settings: 'string',
     }),
-    (req, res) => {
+    async (req, res) => {
         const { settings } = req.body;
 
-        const account = req.session.account;
-        if (!account) return res.sendStatus('account:not-logged-in');
+        const account = await req.session.getAccount();
+        if (!account) return res.status(404).json({ error: 'Not logged in' });
 
         try {
-            account.settings = JSON.parse(settings);
+            account.setSettings(JSON.parse(settings));
         } catch (e) {
             return res.sendStatus('account:invalid-settings');
         }
@@ -374,19 +383,17 @@ router.post<{
     },
 );
 
-router.post('/get-settings', (req, res) => {
-    const account = req.session.account;
+router.post('/get-settings', async (req, res) => {
+    const account = await req.session.getAccount();
     if (!account) return res.status(404).json({ error: 'Not logged in' });
 
-    res.json(
-        account.settings
-            ? JSON.parse(account.settings.settings || '[]')
-            : undefined,
-    );
+    const settings = await account.getSettings();
+
+    res.json(settings || []);
 });
 
-router.post('/request-password-reset', validate({}), (req, res) => {
-    const a = req.session.account;
+router.post('/request-password-reset', validate({}), async (req, res) => {
+    const a = await req.session.getAccount();
     if (!a) return res.sendStatus('account:not-logged-in');
 
     a.requestPasswordChange();
@@ -405,10 +412,10 @@ router.post<{
         confirmPassword: 'string',
         key: 'string',
     }),
-    (req, res) => {
+    async (req, res) => {
         const { password, confirmPassword, key } = req.body;
 
-        const a = Account.fromPasswordChangeKey(key);
+        const a = await Account.fromPasswordChangeKey(key);
 
         if (!a) return res.sendStatus('account:invalid-password-reset-key');
 
@@ -429,16 +436,16 @@ router.post<{
     validate({
         id: 'string',
     }),
-    (req, res) => {
+    async (req, res) => {
         const { id } = req.body;
 
-        const { account } = req.session;
+        const account = await req.session.getAccount();
         if (!account) return res.sendStatus('account:not-logged-in');
 
         if (account.id !== id) {
-            const perms = account.permissions;
+            const perms = await account.getPermissions();
             if (perms.includes('editRoles')) {
-                const roles = Account.fromId(id)?.roles;
+                const roles = await (await Account.fromId(id))?.getRoles();
                 if (roles) {
                     return res.json(roles);
                 } else {
@@ -449,7 +456,7 @@ router.post<{
             return res.sendStatus('account:cannot-edit-other-account');
         }
 
-        res.json(account.roles);
+        res.json(await account.getRoles());
     },
 );
 
@@ -460,16 +467,18 @@ router.post<{
     validate({
         id: 'string',
     }),
-    (req, res) => {
+    async (req, res) => {
         const { id } = req.body;
 
-        const { account } = req.session;
+        const account = await req.session.getAccount();
         if (!account) return res.sendStatus('account:not-logged-in');
 
         if (account.id !== id) {
-            const perms = account.permissions;
+            const perms = await account.getPermissions();
             if (perms.includes('editRoles')) {
-                const permissions = Account.fromId(id)?.permissions;
+                const permissions = await (
+                    await Account.fromId(id)
+                )?.getPermissions();
                 if (permissions) {
                     return res.json(permissions);
                 } else {
@@ -480,24 +489,26 @@ router.post<{
             return res.sendStatus('account:cannot-edit-other-account');
         }
 
-        res.json(account.permissions);
+        res.json(await account.getPermissions());
     },
 );
 
-router.post('/all', (req, res) => {
-    const { account } = req.session;
+router.post('/all', async (req, res) => {
+    const account = await req.session.getAccount();
     if (!account) return res.sendStatus('account:not-logged-in');
 
-    if (account.permissions.includes('admin')) {
+    if ((await account.getPermissions()).includes('admin')) {
         return res.json(
-            Account.all.map((a) =>
-                a.safe({
-                    roles: true,
-                    email: true,
-                    memberInfo: true,
-                    permissions: true,
-                    id: true,
-                })
+            await Promise.all(
+                (await Account.getAll()).map((a) =>
+                    a.safe({
+                        roles: true,
+                        email: true,
+                        memberInfo: true,
+                        permissions: true,
+                        id: true,
+                    })
+                ),
             ),
         );
     }

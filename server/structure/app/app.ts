@@ -13,6 +13,7 @@ import { parseCookie } from '../../../shared/cookie.ts';
 import { Req } from './req.ts';
 import { Res } from './res.ts';
 import { ReqBody } from './req.ts';
+import { DB } from '../../utilities/databases.ts';
 
 /**
  * All file types that can be sent (can be expanded)
@@ -369,7 +370,7 @@ export class App {
      * @readonly
      * @type {Deno.Server}
      */
-    public readonly server: Deno.Server;
+    public readonly server: Deno.HttpServer;
 
     /**
      * Creates an instance of App.
@@ -448,6 +449,29 @@ export class App {
         denoReq: Request,
         info: Deno.ServeHandlerInfo,
     ): Promise<Response> {
+        const { ssid } = parseCookie(denoReq.headers.get('cookie') || '');
+        let s = await Session.get(ssid);
+
+        let setSsid = false;
+
+        if (!s) {
+            setSsid = true;
+            const obj = {
+                id: Session.newId(),
+                ip: info.remoteAddr.hostname,
+                latestActivity: Date.now(),
+                accountId: '',
+                userAgent: denoReq.headers.get('user-agent') || '',
+                prevUrl: '',
+                requests: 1,
+                created: Date.now(),
+            };
+
+            await DB.run('sessions/new', obj);
+
+            s = Session.fromSessObj(obj);
+        }
+
         return new Promise<Response>(async (resolve, _reject) => {
             const url = new URL(denoReq.url, this.domain);
 
@@ -479,8 +503,17 @@ export class App {
 
             // log(`[${denoReq.method}] ${denoReq.url}`, fns);
 
-            const req = new Req(denoReq, info, this.io);
+            if (!s) {
+                throw new Error('No session. This should not have happened');
+            }
+
+            const req = new Req(denoReq, info, this.io, s as Session);
             const res = new Res(this, req);
+
+            if (setSsid) {
+                console.log('Sending cookie...');
+                res.cookie('ssid', s.id, Session.cookieOptions);
+            }
 
             // log(parseCookie(denoReq.headers.get('cookie') || ''));
 

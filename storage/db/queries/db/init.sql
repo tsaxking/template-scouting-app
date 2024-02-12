@@ -11,16 +11,16 @@ CREATE TABLE IF NOT EXISTS Accounts (
     verified INTEGER NOT NULL DEFAULT 0,
     verification TEXT,
     emailChange TEXT,
-    passwordChangeDate TEXT,
+    passwordChangeDate BIGINT,
     phoneNumber TEXT,
-    created TEXT NOT NULL
+    created BIGINT NOT NULL
 );
 
 
 CREATE TABLE IF NOT EXISTS Members (
     id TEXT PRIMARY KEY,
     title TEXT,
-    status TEXT,
+    status TEXT DEFAULT 'pending',
     bio TEXT,
     resume TEXT,
     board INTEGER NOT NULL DEFAULT 0
@@ -41,11 +41,13 @@ CREATE TABLE IF NOT EXISTS AccountRoles (
 );
 
 CREATE TABLE IF NOT EXISTS Permissions (
-    -- removed in 1-2-0.sql
+    permission TEXT NOT NULL,
+    description TEXT
+);
+
+CREATE TABLE IF NOT EXISTS RolePermissions (
     roleId TEXT NOT NULL,
     permission TEXT NOT NULL
-
-    -- added description in 1-2-0.sql
 );
 
 
@@ -57,7 +59,9 @@ CREATE TABLE IF NOT EXISTS Permissions (
 
 
 CREATE TABLE IF NOT EXISTS Version (
-    version INTEGER NOT NULL
+    major INTEGER NOT NULL DEFAULT 1,
+    minor INTEGER NOT NULL DEFAULT 0,
+    patch INTEGER NOT NULL DEFAULT 0
 );
 
 
@@ -66,12 +70,16 @@ CREATE TABLE IF NOT EXISTS Sessions (
     accountId TEXT,
     ip TEXT,
     userAgent TEXT,
-    latestActivity TEXT,
+    latestActivity BIGINT,
     requests INTEGER NOT NULL DEFAULT 0,
-    created INTEGER NOT NULL,
+    created BIGINT NOT NULL,
     prevUrl TEXT
 );
 
+CREATE TABLE IF NOT EXISTS AccountSettings (
+    accountId TEXT NOT NULL PRIMARY KEY,
+    settings TEXT NOT NULL -- JSON
+);
 
 -- CREATE TABLE IF NOT EXISTS BlockList (
 --     ip TEXT PRIMARY KEY,
@@ -83,9 +91,20 @@ CREATE TABLE IF NOT EXISTS Sessions (
 -- Reset the version number
 DELETE FROM Version;
 
-
 INSERT INTO Version (
-    version
+    major,
+    minor,
+    patch
 ) VALUES (
-    1
+    1,
+    0,
+    0
+);
+
+CREATE TABLE IF NOT EXISTS ServerRequests (
+    id TEXT PRIMARY KEY,
+    url TEXT NOT NULL,
+    body TEXT NOT NULL,
+    response TEXT,
+    date TEXT NOT NULL
 );
