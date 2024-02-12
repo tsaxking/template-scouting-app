@@ -2,6 +2,7 @@ import env, { __root, resolve } from './utilities/env.ts';
 import { error, log } from './utilities/terminal-logging.ts';
 import { App, ResponseStatus } from './structure/app/app.ts';
 import { Session } from './structure/sessions.ts';
+import Role from './structure/roles.ts';
 import Account from './structure/accounts.ts';
 import { log as serverLog } from './utilities/files.ts';
 import { runBuild } from './bundler.ts';
@@ -87,8 +88,6 @@ app.static('/public', resolve(__root, './public'));
 app.static('/dist', resolve(__root, './dist'));
 app.static('/uploads', resolve(__root, './uploads'));
 
-app.use('/*', Session.middleware());
-
 app.post('/socket-url', (req, res) => {
     res.json({
         url: env.SOCKET_DOMAIN,
@@ -142,6 +141,7 @@ function stripHtml(body: any) {
 app.post('/*', (req, res, next) => {
     req.body = stripHtml(req.body as ReqBody);
 
+    log('[POST]', req.url);
     try {
         const b = JSON.parse(JSON.stringify(req.body)) as {
             $$files?: FileUpload[];

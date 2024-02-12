@@ -9,3 +9,5 @@ await Promise.all(new Array(6).fill(0).map((_, i) => {
         'Scout',
     )
 }));
+
+Deno.exit();

@@ -1,20 +1,17 @@
-import { select } from './prompt.ts';
+import { repeatPrompt, select } from './prompt.ts';
 import { Colors } from '../server/utilities/colors.ts';
 import { sleep } from '../shared/sleep.ts';
 import { attemptAsync, Result } from '../shared/check.ts';
 import { __root, relative, resolve } from '../server/utilities/env.ts';
 import Filter from 'npm:bad-words';
 import { capitalize, fromCamelCase } from '../shared/text.ts';
-import { resetRoles } from './set-role-info.ts';
-
 import { accounts } from './manager/accounts.ts';
 import { roles } from './manager/roles.ts';
 import { statuses } from './manager/status.ts';
 import { permissions } from './manager/permissions.ts';
 import { databases } from './manager/database.ts';
 import { general } from './manager/general.ts';
-
-resetRoles();
+import { serverController } from './manager/server-controller.ts';
 
 export const icons = {
     success: '✅',
@@ -33,6 +30,7 @@ export const icons = {
     create: '➕',
     restore: '🔄',
     back: '⬅️',
+    controller: '🎮',
 };
 
 export const filter = (str: string): boolean => {
@@ -157,6 +155,83 @@ export const selectFile = async (
     return data;
 };
 
+export const selectDir = async (
+    dir: string,
+    message = 'Select a directory',
+): Promise<Result<string>> => {
+    const root = relative(__root, dir);
+    // dir = root;
+    // console.log({ dir });
+    // return attemptAsync(async () =>  {
+    //     return '';
+    // });
+    const dirIcon = '📁';
+    const rootTest = (file: string) => {
+        const rel = relative(dir, file);
+        return !rel.startsWith('..');
+    };
+
+    const run = async (dir: string): Promise<string | null> => {
+        const entries = Array.from(Deno.readDirSync(dir)).filter(
+            (e) => e.isDirectory,
+        );
+        entries.push({
+            name: '..',
+            isDirectory: true,
+            isFile: false,
+            isSymlink: false,
+        });
+        entries.unshift({
+            name: '[Select this directory]',
+            isDirectory: false,
+            isFile: false,
+            isSymlink: false,
+        });
+
+        const data = await select(
+            message,
+            entries.map((e) => ({
+                name: e.isDirectory
+                    ? `${dirIcon} ${e.name}`
+                    : `${dirIcon} ${e.name}`,
+                value: e,
+            })),
+        );
+
+        if (data) {
+            if (data.isDirectory) {
+                return run(`${dir}/${data.name}`);
+            } else {
+                // if they reached this point, they selected the current directory
+                if (!rootTest(dir)) {
+                    console.log(
+                        `Invalid directory, the directory must be in ${root}`,
+                    );
+                    return run(dir);
+                }
+
+                return resolve(dir);
+            }
+        }
+
+        return null;
+    };
+
+    const data = await attemptAsync(async () => {
+        const res = await run(resolve(dir));
+        if (res) {
+            return relative(__root, res);
+        } else {
+            throw new Error('no-dir');
+        }
+    });
+
+    if (data.isOk()) console.log(data.value);
+    else console.error(data.error);
+
+    return data;
+};
+
 export const main = async () => {
     title('Welcome to the Task Manager!');
     const exit = () => {
@@ -214,6 +289,9 @@ export const main = async () => {
     };
 
     const fn = await select<() => unknown>('Please select a task', [
+        ...(serverController.length
+            ? [makeObj('Server Controller', serverController, icons.controller)]
+            : []),
         makeObj('General', general, icons.entry),
         makeObj('Accounts', accounts, icons.account),
         makeObj('Roles', roles, icons.role),
