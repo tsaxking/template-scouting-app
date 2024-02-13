@@ -5,10 +5,8 @@ import { Session } from './structure/sessions.ts';
 import Role from './structure/roles.ts';
 import Account from './structure/accounts.ts';
 import { log as serverLog } from './utilities/files.ts';
-import { runBuild } from './bundler.ts';
 import { router as api } from './routes/api.ts';
 import { FileUpload } from './middleware/stream.ts';
-import { stdin } from './utilities/utilties.ts';
 import { ReqBody } from './structure/app/req.ts';
 import { validate } from './middleware/data-type.ts';
 import {
@@ -24,9 +22,8 @@ import { router as account } from './routes/account.ts';
 import { router as admin } from './routes/admin.ts';
 
 const port = +(env.PORT || 3000);
-const domain = env.DOMAIN || `http://localhost:${port}`;
 
-export const app = new App(port, domain, {
+export const app = new App(port, env.DOMAIN || `http://localhost:${port}`, {
     // onListen: () => {
     // log(`Listening on ${domain}`);
     // },
@@ -36,7 +33,6 @@ export const app = new App(port, domain, {
     ioPort: +(env.SOCKET_PORT || port + 1),
 });
 
-const builder = await runBuild();
 
 if (Deno.args.includes('--ping')) {
     const pinger = startPinger();
@@ -50,32 +46,6 @@ if (Deno.args.includes('--ping')) {
         console.log('Pinged!');
     });
 }
-
-// building client listeners
-builder.on('build', () => {
-    if (env.ENVIRONMENT === 'dev') app.io.emit('reload');
-    log('Build complete');
-});
-
-stdin.on('rb', () => builder.emit('build'));
-stdin.on('ping', async () => {
-    const result = await ServerRequest.ping();
-    if (result.isOk()) console.log('Servers are connected!');
-    else console.log('Servers are disconnected!');
-});
-
-stdin.on('data', (data) => {
-    const [command, ...args] = data.split(' ');
-    switch (command) {
-        case 'event':
-            attempt(() =>
-                runTask('./scripts/event-data.ts', 'getEvent', ...args)
-            );
-            break;
-    }
-});
-
-builder.on('error', (e) => log('Build error:', e));
 
 app.use('/*', (req, res, next) => {
     log(`[${req.method}] ${req.url}`);
