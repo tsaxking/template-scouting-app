@@ -520,27 +520,11 @@ export default class Account {
             firstName,
             lastName,
             email,
-            verified: 0,
-            verification,
-            created,
+            verified: 1,
+            verification: '',
+            created: Date.now(),
             phoneNumber: '',
         });
-
-        const a = new Account({
-            id,
-            username,
-            key,
-            salt,
-            firstName,
-            lastName,
-            email,
-            verified: 0,
-            verification,
-            created,
-            phoneNumber: '',
-        });
-
-        a.sendVerification();
 
         return 'created';
     }
