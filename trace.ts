@@ -315,20 +315,14 @@ export class Trace {
         return (p: P) => p[3] === action;
     }
 
-    /**
-     * Description placeholder
-     * @date 1/25/2024 - 4:58:48 PM
-     *
-     * @static
-     * @readonly
-     * @type {{ map: (trace: {}) => {}; total: (trace: {}) => any; }}
-     */
-    static get distance() {
-        return {
-            map: (trace: TraceArray) => {
-                return trace
-                    .map((p1, i, a) => {
-                        if (i === a.length - 1) return null;
+    static filterIndex(from: number, to: number) {
+        return (p: P) => from <= p[0] && p[0] <= to; 
+    }
+
+    static velocityMap(trace: TraceArray) {
+        return trace
+            .map((p1, i, a) => {
+                if (i === a.length - 1) return null;
 
                         const [, x1, y1] = p1;
                         const [, x2, y2] = a[i + 1];
@@ -338,69 +332,52 @@ export class Trace {
 
                         const distance = Math.sqrt(dx * dx + dy * dy);
 
-                        return distance;
-                    })
-                    .filter(p => p !== null) as number[];
-            },
-            total: (trace: TraceArray) => {
-                const map = Trace.distance.map(trace);
-
-                return map.reduce((a, b) => a + b, 0);
-            }
-        };
+                return distance / 0.25;
+            })
+            .filter(p => p !== null) as number[];
     }
 
-    /**
-     * Description placeholder
-     * @date 1/25/2024 - 4:58:48 PM
-     *
-     * @static
-     * @readonly
-     * @type {{ map: (trace: {}) => {}; histogram: (trace: {}) => {}; average: (trace: {}) => number; }}
-     */
-    static get velocity() {
-        return {
-            map: (trace: TraceArray) => {
-                return trace
-                    .map((p1, i, a) => {
-                        if (i === a.length - 1) return null;
+    // static get velocity() {
+    //     return {
+    //         map: (trace: TraceArray) => {
+    //             return trace
+    //                 .map((p1, i, a) => {
+    //                     if (i === a.length - 1) return null;
 
-                        const [, x1, y1] = p1;
-                        const [, x2, y2] = a[i + 1];
+    //                     const [, x1, y1] = p1;
+    //                     const [, x2, y2] = a[i + 1];
 
-                        const dx = x2 - x1;
-                        const dy = y2 - y1;
+    //                     const dx = x2 - x1;
+    //                     const dy = y2 - y1;
 
-                        const distance = Math.sqrt(dx * dx + dy * dy);
+    //                     const distance = Math.sqrt(dx * dx + dy * dy);
 
-                        return distance / 0.25;
-                    })
-                    .filter(p => p !== null) as number[];
-            },
-            histogram: (trace: TraceArray) => {
-                const map = Trace.velocity.map(trace);
+    //     map.forEach(v => {
+    //         const bucket = Math.floor(((v - min) / range) * 10);
+    //         buckets[bucket]++;
+    //     });
 
-                const max = Math.max(...map);
-                const min = Math.min(...map);
+    //             const max = Math.max(...map);
+    //             const min = Math.min(...map);
 
-                const range = max - min;
+    //             const range = max - min;
 
-                const buckets = new Array(10).fill(0) as number[];
+    //             const buckets = new Array(10).fill(0) as number[];
 
-                map.forEach(v => {
-                    const bucket = Math.floor(((v - min) / range) * 10);
-                    buckets[bucket]++;
-                });
+    //             map.forEach((v) => {
+    //                 const bucket = Math.floor(((v - min) / range) * 10);
+    //                 buckets[bucket]++;
+    //             });
 
-                return buckets;
-            },
-            average: (trace: TraceArray) => {
-                const map = Trace.velocity.map(trace);
+    //             return buckets;
+    //         },
+    //         average: (trace: TraceArray) => {
+    //             const map = Trace.velocity.map(trace);
 
-                return map.reduce((a, b) => a + b, 0) / map.length;
-            }
-        };
-    }
+    //             return map.reduce((a, b) => a + b, 0) / map.length;
+    //         },
+    //     };
+    // }
 
     /**
      * Description placeholder
