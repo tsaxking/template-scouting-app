@@ -1,17 +1,25 @@
 import env, { __root, resolve } from './utilities/env.ts';
-import { log } from './utilities/terminal-logging.ts';
+import { error, log } from './utilities/terminal-logging.ts';
 import { App, ResponseStatus } from './structure/app/app.ts';
-import { getJSON, log as serverLog } from './utilities/files.ts';
-import { homeBuilder } from './utilities/page-builder.ts';
-import Account from './structure/accounts.ts';
-import { router as admin } from './routes/admin.ts';
-import { router as account } from './routes/account.ts';
-import { router as api } from './routes/api.ts';
+import { Session } from './structure/sessions.ts';
 import Role from './structure/roles.ts';
+import Account from './structure/accounts.ts';
+import { log as serverLog } from './utilities/files.ts';
+import { router as api } from './routes/api.ts';
 import { FileUpload } from './middleware/stream.ts';
 import { ReqBody } from './structure/app/req.ts';
-import { parseCookie } from '../shared/cookie.ts';
-import { stdin } from './utilities/stdin.ts';
+import { validate } from './middleware/data-type.ts';
+import {
+    Match,
+    validateObj,
+} from '../shared/submodules/tatorscout-calculations/trace.ts';
+import { ServerRequest } from './utilities/requests.ts';
+import { getJSONSync } from './utilities/files.ts';
+import { runTask } from './utilities/run-task.ts';
+import { attempt } from '../shared/attempt.ts';
+import { startPinger } from './utilities/ping.ts';
+import { router as account } from './routes/account.ts';
+import { router as admin } from './routes/admin.ts';
 
 const port = +(env.PORT || 3000);
 
@@ -25,25 +33,21 @@ export const app = new App(port, env.DOMAIN || `http://localhost:${port}`, {
     ioPort: +(env.SOCKET_PORT || port + 1),
 });
 
-if (env.ENVIRONMENT === 'dev') {
-    stdin.on('rb', () => {
-        console.log('Reloading clients...');
-        app.io.emit('reload');
+
+if (Deno.args.includes('--ping')) {
+    const pinger = startPinger();
+    pinger.on('disconnect', () => {
+        console.log('Servers are disconnected!');
+    });
+    pinger.on('connect', () => {
+        console.log('Servers are connected!');
+    });
+    pinger.on('ping', () => {
+        console.log('Pinged!');
     });
 }
 
-app.post('/env', (req, res) => {
-    res.json({
-        ENVIRONMENT: env.ENVIRONMENT,
-    });
-});
-
-app.post('/socket-init', (req, res) => {
-    const cookie = req.headers.get('cookie');
-    res.json(parseCookie(cookie));
-});
-
-app.get('/*', (req, res, next) => {
+app.use('/*', (req, res, next) => {
     log(`[${req.method}] ${req.url}`);
     next();
 });
@@ -63,11 +67,8 @@ app.get('/favicon.ico', (req, res) => {
     res.sendFile(resolve(__root, './public/pictures/logo-square.png'));
 });
 
-app.get('/robots.txt', (req, res) => {
-    res.sendFile(resolve(__root, './public/pictures/robots.jpg'));
-});
-
-function stripHtml(body: ReqBody) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function stripHtml(body: any) {
     if (!body) return body;
     let files: unknown;
 
@@ -119,37 +120,11 @@ app.post('/*', (req, res, next) => {
         delete b?.password;
         delete b?.confirmPassword;
         delete b?.$$files;
-        log(b);
+        console.log(b);
     } catch {
-        log(req.body);
+        console.log(req.body);
     }
 
-    next();
-});
-
-// TODO: There is an error with the email validation middleware
-// app.post('/*', emailValidation(['email', 'confirmEmail'], {
-//     onspam: (req, res, next) => {
-//         res.sendStatus('spam:detected');
-//     },
-//     // onerror: (req, res, next) => {
-//     //     // res.sendStatus('unknown:error');
-//     //     next();
-//     // }
-// }));
-
-app.get('/', (req, res) => {
-    res.redirect('/home');
-});
-
-app.get('/*', async (req, res, next) => {
-    const homePages = await getJSON<string[]>('pages/home');
-    if (homePages.isOk()) {
-        if (homePages.value.includes(req.url.slice(1))) {
-            const r = await homeBuilder(req.url);
-            if (r.isOk()) res.send(r.value);
-        }
-    }
     next();
 });
 
@@ -164,16 +139,16 @@ app.get('/test/:page', (req, res, next) => {
 app.route('/api', api);
 app.route('/account', account);
 
-app.use('/*', Account.autoSignIn(env.AUTO_SIGN_IN));
+// app.use('/*', Account.autoSignIn(env.AUTO_SIGN_IN));
 
-app.get('/*', (req, res, next) => {
-    if (!req.session.accountId) {
-        req.session.prevUrl = req.url;
-        return res.redirect('/account/sign-in');
-    }
+// app.get('/*', (req, res, next) => {
+//     if (!req.session?.accountId) {
+//         req.session!.prevUrl = req.url;
+//         return res.redirect('/account/sign-in');
+//     }
 
-    next();
-});
+//     next();
+// });
 
 app.get('/dashboard/admin', Role.allowRoles('admin'), (_req, res) => {
     res.sendTemplate('entries/admin');
@@ -181,16 +156,93 @@ app.get('/dashboard/admin', Role.allowRoles('admin'), (_req, res) => {
 
 app.route('/admin', admin);
 
-app.get('/dashboard/:dashboard', (req, res) => {
-    res.sendTemplate('entries/dashboard/' + req.params.dashboard);
+app.get('/app', (req, res) => {
+    res.sendTemplate('entries/app');
 });
 
-app.get('/user/*', Account.isSignedIn, (req, res) => {
-    res.sendTemplate('entries/user');
+app.get('/*', (req, res) => {
+    res.redirect('/app');
 });
 
-app.get('/admin/*', Role.allowRoles('admin'), (req, res) => {
-    res.sendTemplate('entries/admin');
+app.post<Match>('/submit', validate(validateObj as {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [key in keyof Match]: any; // TODO: export IsValid type
+}), async (req, res) => {
+    const { 
+        eventKey, 
+        checks, 
+        comments, 
+        matchNumber, 
+        teamNumber,
+        compLevel,
+        scout,
+        date,
+        group,
+        trace
+    } = req.body;
+
+    // I don't want to pass in req.body because it can have extra unneeded properties
+    const result = await ServerRequest.submitMatch({
+        checks,
+        comments,
+        matchNumber,
+        teamNumber,
+        compLevel,
+        eventKey,
+        scout,
+        date,
+        group,
+        trace
+    });
+
+    if (result.isOk()) {
+        res.sendStatus('server-request:match-submitted', {
+            matchNumber,
+            teamNumber,
+            compLevel,
+            data: result.value
+        });
+    } else {
+        error
+        res.sendStatus('server-request:match-error', {
+            matchNumber,
+            teamNumber,
+            compLevel,
+            eventKey,
+            scout,
+            date,
+            group,
+            trace,
+        });
+
+        if (result.isOk()) {
+            res.sendStatus('server-request:match-submitted', {
+                matchNumber,
+                teamNumber,
+                compLevel,
+                data: result.value,
+            });
+        } else {
+            error('Match submission error:', result.error);
+            res.sendStatus('server-request:match-error', {
+                matchNumber,
+                teamNumber,
+                compLevel,
+                error: result.error,
+            });
+        }
+    }
+});
+
+app.post('/event-data', async (_req, res) => {
+    let name: string = 'dummy-event-data.json';
+    if (env.ENVIRONMENT === 'prod') name = 'event-data.json';
+    const data = getJSONSync(name);
+    if (data.isOk()) {
+        res.json(data.value);
+    } else {
+        res.status(500).json(data.error);
+    }
 });
 
 app.final<{

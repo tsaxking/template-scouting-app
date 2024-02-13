@@ -37,12 +37,9 @@ router.get('/sign-in', (req, res, next) => {
     });
 });
 
-router.get('/sign-up', (req, res, next) => {
-    if (req.session.accountId) return next();
-    res.sendTemplate('entries/account/sign-up', {
-        RECAPTCHA_SITE_KEY: env.RECAPTCHA_SITE_KEY,
-    });
-});
+// router.get('/sign-up', (_req, res) => {
+//     res.sendTemplate('entries/account/sign-up');
+// });
 
 router.get('/reset-password/:key', (req, res, next) => {
     const { key } = req.params;
