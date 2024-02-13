@@ -26,7 +26,6 @@
     document.querySelectorAll(`#${id} button.close-modal`).forEach(m => {
         jQuery(m).modal('hide');
     });
-});
 </script>
 
 <div class="modal fade" tabindex="-1" aria-modal="true" role="dialog" {id}>
@@ -59,3 +58,4 @@
             </div>
         </div>
     </div>
+</div>
