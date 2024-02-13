@@ -62,6 +62,14 @@ export type Sessions = {
     prevUrl: string | undefined;
 };
 
+export type Blacklist = {
+    id: string;
+    ip: string;
+    created: number;
+    accountId: string | undefined;
+    reason: string;
+};
+
 export type AccountSettings = {
     accountId: string;
     settings: string;
@@ -365,3 +373,4 @@ export type Delete_permissions_remove_from_role = {
     permission: string;
 };
 
+export type Select_blacklist_all = undefined;

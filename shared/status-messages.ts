@@ -539,6 +539,12 @@ export const messages: {
         code: 500,
         instructions: '',
     },
+    'session:rate-limited': {
+        message: 'You are being rate limited',
+        color: 'warning',
+        code: 418,
+        instructions: ''
+    },
     'server-request:match-error': {
         message:
             'Your match submission failed, it has been saved onto the event server, but it did not submit to the tatorscout.org server. You may have lost internet access',
@@ -687,6 +693,7 @@ export type StatusId =
     | 'server:invalid-data'
     | 'server:not-implemented'
     | 'server:unknown-server-error'
+    | 'session:rate-limited'
     | 'skills:added'
     | 'skills:has-skill'
     | 'skills:invalid-skill'
@@ -782,8 +789,8 @@ export type RolesStatusId = 'added' | 'invalid-role' | 'not-found' | 'removed';
 
 export type ServerStatusId =
     | 'invalid-data'
-    | 'unknown-server-error'
-    | 'not-implemented';
+    | 'not-implemented'
+    | 'unknown-server-error';
 
 export type ServerrequestStatusId = 'match-submitted' | 'match-error';
 
@@ -799,3 +806,5 @@ export type SpamStatusId = 'detected';
 export type TestStatusId = 'fail' | 'success';
 
 export type UnknownStatusId = 'error';
+
+export type SessionStatusId = 'rate-limited';
