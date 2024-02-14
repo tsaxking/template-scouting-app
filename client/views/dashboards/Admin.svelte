@@ -3,8 +3,6 @@ import Main from '../components/main/Main.svelte';
 import Page from '../components/main/Page.svelte';
 import { getOpenPage } from '../../utilities/page';
 import Dashboard from '../pages/Dashboard.svelte';
-import Accounts from '../pages/Accounts.svelte';
-import Roles from '../pages/Roles.svelte';
 
 const groups = [
     {
@@ -15,18 +13,14 @@ const groups = [
                 icon: 'home'
             },
             {
-                name: 'accounts',
+                name: 'account',
                 icon: 'person'
-            },
-            {
-                name: 'roles',
-                icon: 'admin_panel_settings'
             }
         ]
     }
 ];
 
-let active: string = 'dashboard';
+let active: string = getOpenPage();
 const domain = '';
 
 const openPage = ({ detail }) => {
@@ -51,6 +45,4 @@ const accountLinks = [
     {accountLinks}
 >
     <Page {active} {domain} title="dashboard"><Dashboard></Dashboard></Page>
-    <Page {active} {domain} title="accounts"><Accounts></Accounts></Page>
-    <Page {active} {domain} title="roles"><Roles></Roles></Page>
 </Main>

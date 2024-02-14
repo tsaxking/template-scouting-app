@@ -108,9 +108,9 @@ export class Session {
      * @returns {(Session | undefined)}
      */
     static async get(id: string): Promise<Session | undefined> {
-        // if (Session.cache.has(id)) {
-        //     return Session.cache.get(id);
-        // }
+        if (Session.cache.has(id)) {
+            return Session.cache.get(id);
+        }
         const res = await DB.get('sessions/get', { id });
         if (res.isOk() && res.value) {
             return Session.fromSessObj(res.value);
@@ -355,7 +355,10 @@ export class Session {
      */
     signIn(account: Account) {
         this.accountId = account.id;
-        this.save();
+        return DB.run('sessions/sign-in', {
+            id: this.id,
+            accountId: account.id,
+        });
     }
 
     /**
@@ -364,7 +367,7 @@ export class Session {
      */
     signOut() {
         this.accountId = undefined;
-        this.save();
+        return DB.run('sessions/sign-out', { id: this.id });
     }
 
     /**
