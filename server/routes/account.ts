@@ -1,19 +1,12 @@
-import { Next, Route } from '../structure/app/app.ts';
+import { Route } from '../structure/app/app.ts';
 import Account from '../structure/accounts.ts';
 import { Status } from '../utilities/status.ts';
 import Role from '../structure/roles.ts';
 import { messages, StatusId } from '../../shared/status-messages.ts';
 import { validate } from '../middleware/data-type.ts';
 import env from '../utilities/env.ts';
-import { Req } from '../structure/app/req.ts';
-import { Res } from '../structure/app/res.ts';
 
 export const router = new Route();
-
-const redirect = (req: Req, res: Res, next: Next) => {
-    if (!req.session.accountId) return next();
-    res.redirect(req.session.prevUrl || '/');
-};
 
 // gets the account from the session
 router.post('/get-account', async (req, res) => {
@@ -37,7 +30,7 @@ router.post('/get-all-roles', (req, res) => {
     res.json(Role.all());
 });
 
-router.get('/sign-in', redirect, (req, res, next) => {
+router.get('/sign-in', (req, res, next) => {
     if (req.session.accountId) return next();
     res.sendTemplate('entries/account/sign-in', {
         RECAPTCHA_SITE_KEY: env.RECAPTCHA_SITE_KEY,
@@ -62,7 +55,6 @@ router.post<{
 }>(
     '/sign-in',
     Account.notSignedIn,
-    redirect,
     validate({
         username: 'string',
         password: 'string',
@@ -96,7 +88,7 @@ router.post<{
 
         const r = await req.session.signIn(account);
 
-        // if (r.isErr()) return res.sendStatus('unknown:error');
+        if (r.isErr()) return res.sendStatus('unknown:error');
         res.sendStatus(
             'account:logged-in',
             { username },
@@ -115,7 +107,6 @@ router.post<{
 }>(
     '/sign-up',
     Account.notSignedIn,
-    redirect,
     validate({
         username: 'string',
         password: 'string',
@@ -455,7 +446,8 @@ router.post<{
         if (!account) return res.sendStatus('account:not-logged-in');
 
         if (account.id !== id) {
-            if (await account.hasPermission('editRoles')) {
+            const perms = await account.getPermissions();
+            if (perms.includes('editRoles')) {
                 const roles = await (await Account.fromId(id))?.getRoles();
                 if (roles) {
                     return res.json(roles);
@@ -485,7 +477,8 @@ router.post<{
         if (!account) return res.sendStatus('account:not-logged-in');
 
         if (account.id !== id) {
-            if (await account.hasPermission('editRoles')) {
+            const perms = await account.getPermissions();
+            if (perms.includes('editRoles')) {
                 const permissions = await (
                     await Account.fromId(id)
                 )?.getPermissions();
@@ -507,7 +500,7 @@ router.post('/all', async (req, res) => {
     const account = await req.session.getAccount();
     if (!account) return res.sendStatus('account:not-logged-in');
 
-    if (await account.hasPermission('editRoles')) {
+    if ((await account.getPermissions()).includes('admin')) {
         return res.json(
             await Promise.all(
                 (await Account.getAll()).map((a) =>

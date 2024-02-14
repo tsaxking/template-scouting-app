@@ -23,7 +23,6 @@ import { validate } from '../middleware/data-type.ts';
 import { Role as RoleObj } from '../../shared/db-types.ts';
 import { Permission } from '../../shared/permissions.ts';
 import { attemptAsync } from '../../shared/check.ts';
-import { RolePermission } from '../../shared/db-types.ts';
 
 /**
  * Properties that can be changed dynamically
@@ -252,7 +251,7 @@ export default class Account {
 
             if (
                 permission.every((p: string) =>
-                    permissions.find((_p) => _p.permission === p)
+                    permissions.find((_p) => _p === p)
                 )
             ) {
                 return next();
@@ -887,16 +886,11 @@ export default class Account {
      *
      * @returns {Permission[]}
      */
-    async getPermissions(): Promise<RolePermission[]> {
+    async getPermissions(): Promise<Permission[]> {
         const roles = await this.getRoles();
         return (
             await Promise.all(roles.map((role) => role.getPermissions()))
         ).flat();
-    }
-
-    async hasPermission(permission: Permission) {
-        const permissions = await this.getPermissions();
-        return permissions.some((p) => p.permission === permission);
     }
 
     /**
