@@ -197,6 +197,7 @@ export const messages: {
         color: 'success',
         code: 200,
         instructions: 'You will be redirected to the home page.',
+        redirect: '/app'
     },
     'account:logged-out': {
         message: 'You have been logged out.',
@@ -608,6 +609,19 @@ export const messages: {
         message: 'You are being rate limited',
         color: 'warning',
         code: 418,
+        instructions: ''
+    },
+    'server-request:match-error': {
+        message:
+            'Your match submission failed, it has been saved onto the event server, but it did not submit to the tatorscout.org server. You may have lost internet access',
+        color: 'warning',
+        code: 404,
+        instructions: '',
+    },
+    'server-request:match-submitted': {
+        message: 'Your match has been submitted to the tatorscout.org server!',
+        color: 'success',
+        code: 200,
         instructions: '',
     },
     'skills:added': {
@@ -751,6 +765,8 @@ export type StatusId =
     | 'roles:removed'
     | 'roles:removed-permission'
     | 'roles:updated'
+    | 'server-request:match-error'
+    | 'server-request:match-submitted'
     | 'server:invalid-data'
     | 'server:not-implemented'
     | 'server:unknown-server-error'
@@ -869,6 +885,7 @@ export type ServerStatusId =
     | 'unknown-server-error';
 
 export type SessionStatusId = 'rate-limited';
+export type ServerrequestStatusId = 'match-submitted' | 'match-error';
 
 export type SkillsStatusId =
     | 'added'

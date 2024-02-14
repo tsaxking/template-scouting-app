@@ -38,6 +38,7 @@ export type SocketEvent =
     | 'roles:removed-permission'
     | 'roles:removed'
     | 'roles:updated'
+    | 'server-request:match-submitted'
     | 'skills:added'
     | 'skills:removed'
     | 'test:success'
