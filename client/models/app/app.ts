@@ -411,6 +411,7 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
     ) {
         this.canvas.$ctx.canvas.style.position = 'absolute';
 
+
         this.background = new Img(`/public/pictures/${this.year}field.png`, {
             x: 0,
             y: 0,
@@ -494,8 +495,33 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
             target.style.height = 'calc(100vh - 42px)';
             target.style.width = '100%';
             this.setView();
+
+            this.cover.style.position = 'absolute';
+            this.cover.style.width = '100%';
+            this.cover.style.height = '100%';
+            this.cover.style.backgroundColor = Color.fromBootstrap('dark').setAlpha(0.5).toString('rgba');
+            this.cover.style.display = 'block';
+            this.cover.innerHTML = `
+                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 2em;">
+                    Click to Start
+                </div>
+            `;
+            target.appendChild(this.cover);
+
+            this.cancel.classList.add('btn', 'btn-secondary');
+            this.cancel.style.position = 'absolute';
+            this.cancel.style.bottom = '10px';
+            this.cancel.style.right = '10px';
+            this.cancel.style.zIndex = '100';
+            this.cancel.innerHTML = 'Cancel';
+            this.cancel.onclick = () => this.build(true);
+            target.appendChild(this.cover);
         }
     }
+
+    private readonly cover = document.createElement('div');
+
+    private readonly cancel = document.createElement('button');
 
     private readonly $fieldOrientation: {
         x: boolean; // flip around y axis
@@ -868,8 +894,7 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
      * @returns {void) => void}
      */
     public launch(cb?: (tick: Tick) => void) {
-        if (!this.target) return console.error('No target set');
-        const { target } = this;
+        const { cover } = this;
         this.build();
         this.startTime = Date.now();
         this.currentTime = this.startTime;
@@ -925,13 +950,14 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
         };
 
         const start = () => {
+            cover.style.display = 'none';
             run(this.currentTick || this.ticks[0], 0);
-            target.removeEventListener('mousedown', start);
-            target.removeEventListener('touchstart', start);
+            cover.removeEventListener('mousedown', start);
+            cover.removeEventListener('touchstart', start);
         };
 
-        target.addEventListener('mousedown', start);
-        target.addEventListener('touchstart', start);
+        cover.addEventListener('mousedown', start);
+        cover.addEventListener('touchstart', start);
     }
 
     /**
@@ -1162,8 +1188,8 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
      * @public
      * @returns {Function} Stops the app
      */
-    public build(): undefined | (() => void) {
-        if (this.built) {
+    public build(force = false): undefined | (() => void) {
+        if (this.built && !force) {
             console.error('App already built');
             return;
         }
@@ -1175,6 +1201,7 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
             return;
         }
 
+        this.cover.style.display = 'block';
         this.canvas.add(this.buttonCircle);
 
         let quitView = false;
