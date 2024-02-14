@@ -1,6 +1,13 @@
 import env, { __root, resolve } from './utilities/env.ts';
 import { error, log } from './utilities/terminal-logging.ts';
 import { App, ResponseStatus } from './structure/app/app.ts';
+import { getJSON, log as serverLog } from './utilities/files.ts';
+import { homeBuilder } from './utilities/page-builder.ts';
+import Account from './structure/accounts.ts';
+import { router as admin } from './routes/admin.ts';
+import { router as account } from './routes/account.ts';
+import { router as api } from './routes/api.ts';
+import { router as role } from './routes/roles.ts';
 import { Session } from './structure/sessions.ts';
 import Role from './structure/roles.ts';
 import Account from './structure/accounts.ts';
@@ -55,7 +62,7 @@ app.use('/*', (req, res, next) => {
 app.static('/client', resolve(__root, './client'));
 app.static('/public', resolve(__root, './public'));
 app.static('/dist', resolve(__root, './dist'));
-app.static('/uploads', resolve(__root, './uploads'));
+app.static('/uploads', resolve(__root, './storage/uploads'));
 
 app.post('/socket-url', (req, res) => {
     res.json({
@@ -138,6 +145,7 @@ app.get('/test/:page', (req, res, next) => {
 
 app.route('/api', api);
 app.route('/account', account);
+app.route('/roles', role);
 
 // app.use('/*', Account.autoSignIn(env.AUTO_SIGN_IN));
 
@@ -151,7 +159,7 @@ app.route('/account', account);
 // });
 
 app.get('/dashboard/admin', Role.allowRoles('admin'), (_req, res) => {
-    res.sendTemplate('entries/admin');
+    res.sendTemplate('entries/dashboard/admin');
 });
 
 app.route('/admin', admin);

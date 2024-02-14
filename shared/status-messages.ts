@@ -351,6 +351,12 @@ export const messages: {
         code: 413,
         instructions: 'please upload fewer files',
     },
+    'files:unknown-error': {
+        message: 'Unknown file uploading error',
+        color: 'danger',
+        code: 500,
+        instructions: '',
+    },
     'files:uploaded': {
         message: 'File uploaded',
         color: 'success',
@@ -460,6 +466,12 @@ export const messages: {
         instructions:
             'This page was not found. Please check your link and try again.',
     },
+    'permissions:added': {
+        message: 'Added permission to role',
+        color: 'success',
+        code: 200,
+        instructions: '',
+    },
     'permissions:error': {
         message: 'Permissions error',
         color: 'danger',
@@ -476,6 +488,18 @@ export const messages: {
         message: 'Invalid permissions',
         color: 'danger',
         code: 401,
+        instructions: '',
+    },
+    'permissions:not-found': {
+        message: 'Permission not found',
+        color: 'danger',
+        code: 404,
+        instructions: '',
+    },
+    'permissions:removed': {
+        message: 'Removed permissions from role',
+        color: 'success',
+        code: 200,
         instructions: '',
     },
     'permissions:unauthorized': {
@@ -502,10 +526,40 @@ export const messages: {
         code: 200,
         instructions: '',
     },
+    'roles:added-permission': {
+        message: 'Permission added to role',
+        color: 'success',
+        code: 200,
+        instructions: '',
+    },
+    'roles:already-exists': {
+        message: 'Role already exists',
+        color: 'danger',
+        code: 400,
+        instructions: '',
+    },
+    'roles:cannot-edit-admin': {
+        message: 'Cannot edit admin role',
+        color: 'danger',
+        code: 403,
+        instructions: '',
+    },
+    'roles:deleted': {
+        message: 'Role deleted',
+        color: 'success',
+        code: 200,
+        instructions: '',
+    },
     'roles:invalid-role': {
         message: 'Invalid role',
         color: 'danger',
         code: 400,
+        instructions: '',
+    },
+    'roles:new': {
+        message: 'Role created',
+        color: 'success',
+        code: 200,
         instructions: '',
     },
     'roles:not-found': {
@@ -516,6 +570,18 @@ export const messages: {
     },
     'roles:removed': {
         message: 'Role removed',
+        color: 'success',
+        code: 200,
+        instructions: '',
+    },
+    'roles:removed-permission': {
+        message: 'Permission removed from role',
+        color: 'success',
+        code: 200,
+        instructions: '',
+    },
+    'roles:updated': {
+        message: 'Role updated',
         color: 'success',
         code: 200,
         instructions: '',
@@ -660,6 +726,7 @@ export type StatusId =
     | 'files:no-files'
     | 'files:too-large'
     | 'files:too-many-files'
+    | 'files:unknown-error'
     | 'files:uploaded'
     | 'member:accepted'
     | 'member:add-skill'
@@ -678,16 +745,26 @@ export type StatusId =
     | 'member:update-resume'
     | 'member:update-title'
     | 'page:not-found'
+    | 'permissions:added'
     | 'permissions:error'
     | 'permissions:forbidden'
     | 'permissions:invalid'
+    | 'permissions:not-found'
+    | 'permissions:removed'
     | 'permissions:unauthorized'
     | 'profanity:detected'
     | 'role:not-found'
     | 'roles:added'
+    | 'roles:added-permission'
+    | 'roles:already-exists'
+    | 'roles:cannot-edit-admin'
+    | 'roles:deleted'
     | 'roles:invalid-role'
+    | 'roles:new'
     | 'roles:not-found'
     | 'roles:removed'
+    | 'roles:removed-permission'
+    | 'roles:updated'
     | 'server-request:match-error'
     | 'server-request:match-submitted'
     | 'server:invalid-data'
@@ -753,6 +830,7 @@ export type FilesStatusId =
     | 'no-files'
     | 'too-large'
     | 'too-many-files'
+    | 'unknown-error'
     | 'uploaded';
 
 export type MemberStatusId =
@@ -776,22 +854,37 @@ export type MemberStatusId =
 export type PageStatusId = 'not-found';
 
 export type PermissionsStatusId =
+    | 'added'
     | 'error'
     | 'forbidden'
     | 'invalid'
+    | 'not-found'
+    | 'removed'
     | 'unauthorized';
 
 export type ProfanityStatusId = 'detected';
 
 export type RoleStatusId = 'not-found';
 
-export type RolesStatusId = 'added' | 'invalid-role' | 'not-found' | 'removed';
+export type RolesStatusId =
+    | 'added'
+    | 'added-permission'
+    | 'cannot-edit-admin'
+    | 'deleted'
+    | 'invalid-role'
+    | 'new'
+    | 'not-found'
+    | 'removed'
+    | 'removed-permission'
+    | 'updated'
+    | 'already-exists';
 
 export type ServerStatusId =
     | 'invalid-data'
     | 'not-implemented'
     | 'unknown-server-error';
 
+export type SessionStatusId = 'rate-limited';
 export type ServerrequestStatusId = 'match-submitted' | 'match-error';
 
 export type SkillsStatusId =
@@ -806,5 +899,3 @@ export type SpamStatusId = 'detected';
 export type TestStatusId = 'fail' | 'success';
 
 export type UnknownStatusId = 'error';
-
-export type SessionStatusId = 'rate-limited';
