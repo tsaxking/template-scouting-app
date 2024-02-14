@@ -12,7 +12,6 @@ import { Req } from '../structure/app/req.ts';
 import { Res } from '../structure/app/res.ts';
 import { StatusId } from '../../shared/status-messages.ts';
 import { EventEmitter } from '../../shared/event-emitter.ts';
-import { error } from '../utilities/terminal-logging.ts';
 
 /**
  * Options for file upload streams
@@ -52,8 +51,8 @@ export const fileStream = (opts?: FileStreamOptions): ServerFunction => {
         extensions = extensions?.map((e) => e.toLowerCase()) || [];
         maxFileSize = maxFileSize ? maxFileSize : 1024 * 1024 * 10;
 
-        const generateFileId = (ext: string) => {
-            return uuid() + '-' + Date.now() + '.' + ext;
+        const generateFileId = () => {
+            return uuid() + '-' + Date.now();
         };
 
         let sent = false;
@@ -81,8 +80,7 @@ export const fileStream = (opts?: FileStreamOptions): ServerFunction => {
             });
         }
 
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i];
+        files.forEach(async (file, i, a) => {
             if (file instanceof File) {
                 const name = file.name;
                 const ext = name.split('.').pop()?.toLowerCase() || '';
@@ -111,21 +109,19 @@ export const fileStream = (opts?: FileStreamOptions): ServerFunction => {
 
                 let id: string;
                 do {
-                    id = generateFileId(ext);
+                    id = generateFileId();
                 } while (fs.existsSync(path.join(__uploads, id)));
 
                 const buffer = new Uint8Array(await file.arrayBuffer());
-                const result = await saveUpload(id, buffer);
-                if (result.isOk()) {
-                    req.files.push({ name, id, ext, size });
-                } else {
-                    error(result.error);
-                    return res.sendStatus('files:unknown-error');
-                }
-            }
-        }
+                await saveUpload(id, buffer);
 
-        next();
+                req.files.push({ name, id, ext, size });
+            }
+
+            if (i === a.length - 1) {
+                next();
+            }
+        });
     };
 };
 

@@ -393,7 +393,6 @@ export const statuses = [
     {
         icon: '📝',
         value: createStatus,
-        description: 'Create a front-end status message',
     },
     // {
     //     icon: '🗑️',
@@ -402,7 +401,6 @@ export const statuses = [
     {
         icon: '🔌',
         value: addSocketEvent,
-        description: 'Create a socket event',
     },
     // {
     //     icon: '🗑️',

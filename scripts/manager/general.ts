@@ -5,17 +5,18 @@ import { __root, resolve } from '../../server/utilities/env.ts';
 import { DB } from '../../server/utilities/databases.ts';
 import Account from '../../server/structure/accounts.ts';
 import { uuid } from '../../server/utilities/uuid.ts';
+import { time } from '../../shared/clock.ts';
 import { dateTime } from '../../shared/clock.ts';
-// import { run } from '../../server/utilities/run-task.ts';
+// import { runCommand } from '../../server/utilities/run-task.ts';
 
 // const format = async () => {
-//     return run('fmt', '.');
+//     return runCommand('deno fmt .');
 // };
 // const check = async () => {
-//     return run('lint', '.');
+//     return runCommand('deno lint .');
 // };
 // const build = async () => {
-//     return run('task', 'build');
+//     return runCommand('deno task build');
 // };
 const createEntry = async () => {
     const entryName = repeatPrompt(

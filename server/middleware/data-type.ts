@@ -50,7 +50,7 @@ export const emitter = (() => {
         | 'invalid-primitive'
         | 'missing-key';
 
-    class DataValidationFaliure<T extends keyof Updates> {
+    class Event<T extends keyof Updates> {
         constructor(
             public readonly type: T,
             public readonly data: Updates[T],
@@ -65,14 +65,14 @@ export const emitter = (() => {
 
         on<K extends keyof Updates>(
             event: K,
-            callback: (data: DataValidationFaliure<K>) => void,
+            callback: (data: Event<K>) => void,
         ): void {
             this.emitter.on(event, callback);
         }
 
         off<K extends keyof Updates>(
             event: K,
-            callback?: (data: DataValidationFaliure<K>) => void,
+            callback?: (data: Event<K>) => void,
         ): void {
             this.emitter.off(event, callback);
         }
@@ -83,13 +83,7 @@ export const emitter = (() => {
             req: Req,
             reason: Reason,
         ): void {
-            const e = new DataValidationFaliure(
-                event,
-                data,
-                req.url,
-                req.method,
-                reason,
-            );
+            const e = new Event(event, data, req.url, req.method, reason);
             this.emitter.emit(event, e);
         }
     }
@@ -109,12 +103,7 @@ export const validate = <type = unknown>(
     options?: ValidateOptions,
 ): ServerFunction<type> => {
     return (req, res, next) => {
-        let { body } = req;
-
-        // body can be stored here because it could be a file stream
-        if (!Object.entries(body as any).length) {
-            body = JSON.parse(req.headers.get('X-Body') || '{}');
-        }
+        const { body } = req;
 
         let passed = true;
         const missing: string[] = [];
