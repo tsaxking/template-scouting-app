@@ -1,11 +1,11 @@
 import env, { __root, resolve } from './utilities/env.ts';
 import { error, log } from './utilities/terminal-logging.ts';
 import { App, ResponseStatus } from './structure/app/app.ts';
-import { Session } from './structure/sessions.ts';
-import Role from './structure/roles.ts';
-import Account from './structure/accounts.ts';
 import { log as serverLog } from './utilities/files.ts';
+import { router as admin } from './routes/admin.ts';
+import { router as account } from './routes/account.ts';
 import { router as api } from './routes/api.ts';
+import Role from './structure/roles.ts';
 import { FileUpload } from './middleware/stream.ts';
 import { ReqBody } from './structure/app/req.ts';
 import { validate } from './middleware/data-type.ts';
@@ -15,11 +15,7 @@ import {
 } from '../shared/submodules/tatorscout-calculations/trace.ts';
 import { ServerRequest } from './utilities/requests.ts';
 import { getJSONSync } from './utilities/files.ts';
-import { runTask } from './utilities/run-task.ts';
-import { attempt } from '../shared/attempt.ts';
 import { startPinger } from './utilities/ping.ts';
-import { router as account } from './routes/account.ts';
-import { router as admin } from './routes/admin.ts';
 
 const port = +(env.PORT || 3000);
 
