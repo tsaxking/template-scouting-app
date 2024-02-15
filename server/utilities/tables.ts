@@ -374,3 +374,24 @@ export type Delete_permissions_remove_from_role = {
 };
 
 export type Select_blacklist_all = undefined;
+
+export type TBARequests = {
+    url: string;
+    response: string | undefined;
+    updated: number;
+    update: number;
+};
+
+export type Update_db_versions______ = undefined;
+
+export type Select_tba_from_url = {
+    url: string;
+};
+
+export type Insert_tba_new = {
+    url: string;
+    response: string | undefined;
+    updated: number;
+    update: number;
+};
+
