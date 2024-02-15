@@ -149,7 +149,7 @@ const colors = {
     whitesmoke: [245, 245, 245, 1],
     yellow: [255, 255, 0, 1],
     yellowgreen: [154, 205, 50, 1],
-    rebeccapurple: [102, 51, 153, 1]
+    rebeccapurple: [102, 51, 153, 1],
 };
 
 export type ColorStr = keyof typeof colors;
@@ -312,7 +312,7 @@ const BootstrapColors = {
     // "green": Color.fromHex('#006600').rgba.values,
     'green-light': [179, 255, 179, 1],
     // "green-light": Color.fromHex('#66ff66').rgba.values,
-    'green-dark': [0, 51, 0, 1]
+    'green-dark': [0, 51, 0, 1],
     // "green-dark": Color.fromHex('#003300').rgba.values
 };
 
@@ -353,7 +353,7 @@ export class Color {
 
             const colors: number[] = parsed[1]
                 .split(',')
-                .map(n => parseInt(n, 10));
+                .map((n) => parseInt(n, 10));
 
             switch (color.split('(')[0]) {
                 case 'rgb':
@@ -361,14 +361,14 @@ export class Color {
                         colors[0],
                         colors[1],
                         colors[2],
-                        colors[3]
+                        colors[3],
                     );
                 case 'hsl':
                     return Color.fromHSL(
                         colors[0],
                         colors[1],
                         colors[2],
-                        colors[3]
+                        colors[3],
                     );
                 default:
                     return new Color('rgb(0,0,0)');
@@ -381,7 +381,7 @@ export class Color {
             const [r, g, b] = hex
                 .slice(1)
                 .split('')
-                .map(n => parseInt(n, 16));
+                .map((n) => parseInt(n, 16));
 
             return new Color(r * 16, g * 16, b * 16);
         }
@@ -404,20 +404,24 @@ export class Color {
         [h, s, l].forEach((v, i) => {
             if (isNaN(v)) {
                 throw new Error(
-                    `Invalid ${params[i]}, ${v} is not a parsable number`
+                    `Invalid ${params[i]}, ${v} is not a parsable number`,
                 );
             }
 
             if (v > 1) {
                 console.warn(
-                    `Invalid ${params[i]}, ${v} is greater than 1. It will be set to 1`
+                    `Invalid ${
+                        params[i]
+                    }, ${v} is greater than 1. It will be set to 1`,
                 );
                 v = 1;
             }
 
             if (v < 0) {
                 console.warn(
-                    `Invalid ${params[i]}, ${v} is less than 0. It will be set to 0`
+                    `Invalid ${
+                        params[i]
+                    }, ${v} is less than 0. It will be set to 0`,
                 );
                 v = 0;
             }
@@ -452,7 +456,7 @@ export class Color {
         return new Color(
             Math.random() * 255,
             Math.random() * 255,
-            Math.random() * 255
+            Math.random() * 255,
         );
     }
 
@@ -476,22 +480,22 @@ export class Color {
             hues: number[];
         };
 
-        const hsls: number[] = colors.map(c => c.hsl.values[0]);
+        const hsls: number[] = colors.map((c) => c.hsl.values[0]);
 
         const intervals = hsls.reduce((intervals, hue, i): interval[] => {
             const next = hsls[i + 1];
             if (next) {
                 intervals.push({
                     diff: Math.abs(hue - next),
-                    hues: [hue, next]
+                    hues: [hue, next],
                 });
             }
 
             return intervals;
         }, [] as interval[]);
 
-        const max = Math.max(...intervals.map(i => i.diff));
-        let int = intervals.find(i => i.diff === max);
+        const max = Math.max(...intervals.map((i) => i.diff));
+        let int = intervals.find((i) => i.diff === max);
         int = int || intervals[0];
 
         const [hue1, hue2] = int.hues;
@@ -539,14 +543,14 @@ export class Color {
                 const distance = Math.sqrt(
                     Math.pow(r - r2, 2) +
                         Math.pow(g - g2, 2) +
-                        Math.pow(b - b2, 2)
+                        Math.pow(b - b2, 2),
                 );
 
                 if (distance < closest.distance) {
                     return {
                         name,
                         distance,
-                        color: new Color(r2, g2, b2)
+                        color: new Color(r2, g2, b2),
                     };
                 }
 
@@ -555,8 +559,8 @@ export class Color {
             {
                 name: '',
                 distance: Infinity,
-                color: new Color(0, 0, 0)
-            } as ClosestColor
+                color: new Color(0, 0, 0),
+            } as ClosestColor,
         );
     }
 
@@ -573,14 +577,14 @@ export class Color {
                 const distance = Math.sqrt(
                     Math.pow(r - r2, 2) +
                         Math.pow(g - g2, 2) +
-                        Math.pow(b - b2, 2)
+                        Math.pow(b - b2, 2),
                 );
 
                 if (distance < closest.distance) {
                     return {
                         name,
                         distance,
-                        color: new Color(r2, g2, b2)
+                        color: new Color(r2, g2, b2),
                     };
                 }
 
@@ -589,8 +593,8 @@ export class Color {
             {
                 name: '',
                 distance: Infinity,
-                color: new Color(0, 0, 0)
-            } as ClosestColor
+                color: new Color(0, 0, 0),
+            } as ClosestColor,
         );
     }
 
@@ -610,7 +614,7 @@ export class Color {
         redOrString: number | string | ColorStr | BootstrapColor,
         green?: number,
         blue?: number,
-        alpha?: number
+        alpha?: number,
     ) {
         if (typeof redOrString === 'string') {
             if (
@@ -619,7 +623,7 @@ export class Color {
                 alpha !== undefined
             ) {
                 throw new Error(
-                    'Invalid arguments. If the first argument is a string, the other arguments must be undefined.'
+                    'Invalid arguments. If the first argument is a string, the other arguments must be undefined.',
                 );
             }
 
@@ -638,20 +642,26 @@ export class Color {
                 if (value === undefined) return;
                 if (isNaN(value)) {
                     throw new Error(
-                        `Invalid ${check[index]}, ${value} is not a parsable number`
+                        `Invalid ${
+                            check[index]
+                        }, ${value} is not a parsable number`,
                     );
                 }
 
                 if (value > 255) {
                     console.warn(
-                        `Invalid ${check[index]}, ${value} is greater than 255. It will be set to 255`
+                        `Invalid ${
+                            check[index]
+                        }, ${value} is greater than 255. It will be set to 255`,
                     );
                     value = 255;
                 }
 
                 if (value < 0) {
                     console.warn(
-                        `Invalid ${check[index]}, ${value} is less than 0. It will be set to 0`
+                        `Invalid ${
+                            check[index]
+                        }, ${value} is less than 0. It will be set to 0`,
                     );
                     value = 0;
                 }
@@ -683,7 +693,7 @@ export class Color {
             setBlue: (value: number) => {
                 this.b = value;
                 return this;
-            }
+            },
         };
     }
 
@@ -692,7 +702,7 @@ export class Color {
             ...this.rgb,
             values: [...this.rgb.values, this.a],
             toString: () => `rgba(${this.r}, ${this.g}, ${this.b}, ${this.a})`,
-            setAlpha: this.setAlpha
+            setAlpha: this.setAlpha,
         };
     }
 
@@ -769,7 +779,7 @@ export class Color {
                 this.b = color.b;
 
                 return this;
-            }
+            },
         };
     }
 
@@ -778,13 +788,15 @@ export class Color {
             ...this.hsl,
             values: [...this.hsl.values, this.a],
             toString: (): string =>
-                `hsla(${this.hsl.values[0]}, ${this.hsl.values[1]}, ${this.hsl.values[2]}, ${this.a})`,
+                `hsla(${this.hsl.values[0]}, ${this.hsl.values[1]}, ${
+                    this.hsl.values[2]
+                }, ${this.a})`,
             setAlpha: this.setAlpha,
             set: (
                 hue: number,
                 saturation: number,
                 lightness: number,
-                alpha: number
+                alpha: number,
             ): Color => {
                 const color = Color.fromHSL(hue, saturation, lightness, alpha);
 
@@ -794,7 +806,7 @@ export class Color {
                 this.a = color.a;
 
                 return this;
-            }
+            },
         };
     }
 
@@ -817,7 +829,7 @@ export class Color {
             setBlue: (value: number) => {
                 this.b = value;
                 return this;
-            }
+            },
         };
     }
 
@@ -831,7 +843,7 @@ export class Color {
             ...this.hex,
             values: [r, g, b, a],
             toString: () => `#${r}${g}${b}${a}`,
-            setAlpha: this.setAlpha
+            setAlpha: this.setAlpha,
         };
     }
 
@@ -841,7 +853,7 @@ export class Color {
     }
 
     public toString(
-        type: 'hex' | 'hexa' | 'hsl' | 'hsla' | 'rgb' | 'rgba' = 'rgba'
+        type: 'hex' | 'hexa' | 'hsl' | 'hsla' | 'rgb' | 'rgba' = 'rgba',
     ): string {
         switch (type) {
             case 'hex':
@@ -873,7 +885,7 @@ export class Color {
 
         const g = [
             this,
-            ...hues.map(h => Color.fromHSL(h, hsl[1], hsl[2], this.a))
+            ...hues.map((h) => Color.fromHSL(h, hsl[1], hsl[2], this.a)),
         ];
 
         return new Gradient(...g);
@@ -883,7 +895,7 @@ export class Color {
         const hsl = this.hsl.values;
         const hues: [number, number] = [hsl[0] - 30 / 360, hsl[0] + 30 / 360];
 
-        const [h1, h2] = hues.map(h =>
+        const [h1, h2] = hues.map((h) =>
             Color.fromHSL(h, hsl[1], hsl[2], this.a)
         );
         return [this, h1, h2];
@@ -892,21 +904,21 @@ export class Color {
     public interpolate(toColor: Color, distance = 0.5): Color {
         if (isNaN(distance)) {
             console.warn(
-                'Distance must be a number between 0 and 1. Defaulting to 0.5'
+                'Distance must be a number between 0 and 1. Defaulting to 0.5',
             );
             distance = 0.5;
         }
 
         if (!(toColor instanceof Color)) {
             console.warn(
-                'toColor must be an instance of Color. Defaulting to black'
+                'toColor must be an instance of Color. Defaulting to black',
             );
             toColor = new Color(0, 0, 0);
         }
 
         if (distance < 0 || distance > 1) {
             console.warn(
-                'Distance must be a number between 0 and 1. Defaulting to 0.5'
+                'Distance must be a number between 0 and 1. Defaulting to 0.5',
             );
             distance = 0.5;
         }
@@ -929,9 +941,9 @@ export class Color {
                     Math.floor(this.r + ((color.r - this.r) / frames) * i),
                     Math.floor(this.g + ((color.g - this.g) / frames) * i),
                     Math.floor(this.b + ((color.b - this.b) / frames) * i),
-                    this.a + ((color.a - this.a) / frames) * i
+                    this.a + ((color.a - this.a) / frames) * i,
                 );
-            })
+            }),
         );
     }
 
@@ -942,23 +954,23 @@ export class Color {
                     Math.floor(
                         this.r +
                             ((color.r - this.r) / Math.pow(base, frames)) *
-                                Math.pow(base, i)
+                                Math.pow(base, i),
                     ),
                     Math.floor(
                         this.g +
                             ((color.g - this.g) / Math.pow(base, frames)) *
-                                Math.pow(base, i)
+                                Math.pow(base, i),
                     ),
                     Math.floor(
                         this.b +
                             ((color.b - this.b) / Math.pow(base, frames)) *
-                                Math.pow(base, i)
+                                Math.pow(base, i),
                     ),
                     this.a +
                         ((color.a - this.a) / Math.pow(base, frames)) *
-                            Math.pow(base, i)
+                            Math.pow(base, i),
                 );
-            })
+            }),
         );
     }
 
@@ -969,33 +981,31 @@ export class Color {
                     Math.floor(
                         this.r +
                             ((color.r - this.r) / Math.pow(base, frames)) *
-                                Math.pow(base, i)
+                                Math.pow(base, i),
                     ),
                     Math.floor(
                         this.g +
                             ((color.g - this.g) / Math.pow(base, frames)) *
-                                Math.pow(base, i)
+                                Math.pow(base, i),
                     ),
                     Math.floor(
                         this.b +
                             ((color.b - this.b) / Math.pow(base, frames)) *
-                                Math.pow(base, i)
+                                Math.pow(base, i),
                     ),
                     this.a +
                         ((color.a - this.a) / Math.pow(base, frames)) *
-                            Math.pow(base, i)
+                            Math.pow(base, i),
                 );
-            })
+            }),
         );
     }
 
     public detectContrast(color: Color): number {
-        const l1 =
-            0.2126 * Math.pow(this.r / 255, 2.2) +
+        const l1 = 0.2126 * Math.pow(this.r / 255, 2.2) +
             0.7152 * Math.pow(this.g / 255, 2.2) +
             0.0722 * Math.pow(this.b / 255, 2.2);
-        const l2 =
-            0.2126 * Math.pow(color.r / 255, 2.2) +
+        const l2 = 0.2126 * Math.pow(color.r / 255, 2.2) +
             0.7152 * Math.pow(color.g / 255, 2.2) +
             0.0722 * Math.pow(color.b / 255, 2.2);
 

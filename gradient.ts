@@ -18,7 +18,7 @@ export class Gradient {
      */
     static combine(...gradients: Gradient[]): Gradient {
         const colors: Color[] = [];
-        gradients.forEach(g => {
+        gradients.forEach((g) => {
             colors.push(...g.colors);
         });
 
@@ -35,7 +35,7 @@ export class Gradient {
      */
     public toString(deg = 90): string {
         let gradient = `linear-gradient(${deg}deg`;
-        this.colors.forEach(color => {
+        this.colors.forEach((color) => {
             gradient += `,${color.toString()}`;
         });
         gradient += ')';
@@ -46,7 +46,7 @@ export class Gradient {
      * View each color in the gradient
      */
     public view() {
-        this.colors.forEach(c => c.view());
+        this.colors.forEach((c) => c.view());
     }
 
     /**
@@ -56,7 +56,7 @@ export class Gradient {
     public logText(string: string) {
         if (typeof string !== 'string') {
             throw new Error(
-                'logText() expects a string, received ' + typeof string
+                'logText() expects a string, received ' + typeof string,
             );
         }
 
@@ -66,7 +66,7 @@ export class Gradient {
 
         const gradient = string
             .split('')
-            .map(char => {
+            .map((char) => {
                 return `%c${char}`;
             })
             .join('');
@@ -96,7 +96,7 @@ export class Gradient {
      * Adds colors to the gradient
      */
     public add(...gradients: Gradient[]) {
-        gradients.forEach(g => {
+        gradients.forEach((g) => {
             this.colors.push(...g.colors);
         });
     }
@@ -106,7 +106,7 @@ export class Gradient {
      * @returns {Gradient} Returns the current gradient
      */
     public random(): Gradient {
-        this.colors.forEach(_ => Math.random() - 0.5);
+        this.colors.forEach((_) => Math.random() - 0.5);
         return this;
     }
 }
