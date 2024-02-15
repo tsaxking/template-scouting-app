@@ -1,7 +1,7 @@
 <script lang="ts">
 import { loadFileContents } from '../../utilities/downloads';
 import { App } from '../../models/app/app';
-import type { Match } from '../../../shared/submodules/tatorscout-calculations/match-submission';
+import type { Match } from '../../../shared/submodules/tatorscout-calculations/trace';
 
 const validate = (d: string): boolean => {
     if (!d) return false;

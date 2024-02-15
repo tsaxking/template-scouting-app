@@ -3,6 +3,7 @@ import { App } from '../../models/app/app';
 import Checkboxes from '../components/app/Checkboxes.svelte';
 import type { BootstrapColor } from '../../submodules/colors/color';
 import { capitalize, fromCamelCase } from '../../../shared/text';
+import { Trace } from '../../../shared/submodules/tatorscout-calculations/trace';
 
 export let app: App;
 export let active: string;
@@ -71,8 +72,16 @@ let data: {
     }
 };
 
-const open = active => {
+const open = (active: string) => {
     if (active !== 'Post') return;
+
+    const traceArray = app.pull();
+    const secondsNotMoving = Trace.secondsNotMoving(traceArray, false);
+    if (secondsNotMoving > 20) {
+        // robot likely died, was intermitent, or had problems driving
+        data.robotDied.value = true;
+    }
+
     const res = app.drawRecap(canvas);
     if (res.isErr()) console.warn(res.error);
     if (res.isOk()) {
@@ -87,8 +96,9 @@ const open = active => {
             }
         });
         data.autoMobility.value = app.parsed.mobility;
-        data = data;
     }
+    // reset the view
+    data = data;
 };
 
 let commentsSections: string[] = [];
