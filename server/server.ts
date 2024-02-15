@@ -1,32 +1,26 @@
 import env, { __root, resolve } from './utilities/env.ts';
 import { error, log } from './utilities/terminal-logging.ts';
 import { App, ResponseStatus } from './structure/app/app.ts';
-import { Session } from './structure/sessions.ts';
-import Account from './structure/accounts.ts';
 import { log as serverLog } from './utilities/files.ts';
-import { runBuild } from './bundler.ts';
+import { router as admin } from './routes/admin.ts';
+import { router as account } from './routes/account.ts';
 import { router as api } from './routes/api.ts';
+import Role from './structure/roles.ts';
 import { FileUpload } from './middleware/stream.ts';
-import { stdin } from './utilities/utilties.ts';
 import { ReqBody } from './structure/app/req.ts';
 import { validate } from './middleware/data-type.ts';
+import { parseCookie } from '../shared/cookie.ts';
 import {
     Match,
     validateObj,
 } from '../shared/submodules/tatorscout-calculations/trace.ts';
-import Role from './structure/roles.ts';
 import { ServerRequest } from './utilities/requests.ts';
 import { getJSONSync } from './utilities/files.ts';
-import { runTask } from './utilities/run-task.ts';
-import { attempt } from '../shared/attempt.ts';
 import { startPinger } from './utilities/ping.ts';
-import { router as account } from './routes/account.ts';
-import { router as admin } from './routes/admin.ts';
 
 const port = +(env.PORT || 3000);
-const domain = env.DOMAIN || `http://localhost:${port}`;
 
-export const app = new App(port, domain, {
+export const app = new App(port, env.DOMAIN || `http://localhost:${port}`, {
     // onListen: () => {
     // log(`Listening on ${domain}`);
     // },
@@ -36,7 +30,6 @@ export const app = new App(port, domain, {
     ioPort: +(env.SOCKET_PORT || port + 1),
 });
 
-const builder = await runBuild();
 
 if (Deno.args.includes('--ping')) {
     const pinger = startPinger();
@@ -51,36 +44,22 @@ if (Deno.args.includes('--ping')) {
     });
 }
 
-// building client listeners
-builder.on('build', () => {
-    if (env.ENVIRONMENT === 'dev') app.io.emit('reload');
-    log('Build complete');
-});
-
-stdin.on('rb', () => builder.emit('build'));
-stdin.on('ping', async () => {
-    const result = await ServerRequest.ping();
-    if (result.isOk()) console.log('Servers are connected!');
-    else console.log('Servers are disconnected!');
-});
-
-stdin.on('data', (data) => {
-    const [command, ...args] = data.split(' ');
-    switch (command) {
-        case 'event':
-            attempt(() =>
-                runTask('./scripts/event-data.ts', 'getEvent', ...args)
-            );
-            break;
-    }
-});
-
-builder.on('error', (e) => log('Build error:', e));
-
 app.use('/*', (req, res, next) => {
     log(`[${req.method}] ${req.url}`);
     next();
 });
+
+app.post('/env', (req, res) => {
+    res.json({
+        ENVIRONMENT: env.ENVIRONMENT,
+    });
+});
+
+app.post('/socket-init', (req, res) => {
+    const cookie = req.headers.get('cookie');
+    res.json(parseCookie(cookie));
+});
+
 
 app.static('/client', resolve(__root, './client'));
 app.static('/public', resolve(__root, './public'));

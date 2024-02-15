@@ -2,7 +2,7 @@ import { TBAEvent } from '../../../shared/submodules/tatorscout-calculations/tba
 import { DB } from '../databases.ts';
 import env from '../env.ts';
 import { error } from '../terminal-logging.ts';
-import { saveEvent } from '../../../scripts/tba-update.ts';
+// import { saveEvent } from '../../../scripts/tba-update.ts';
 import { attemptAsync, Result } from '../../../shared/check.ts';
 // import { TBAEvent } from "../../../shared/tba.ts";
 // import { TBA_Event } from './event.ts';
@@ -103,7 +103,6 @@ export class TBA {
                     updated: Date.now(),
                     update: options?.cached ? 1 : 0,
                 });
-
                 return json as T;
             } catch (e) {
                 error('Error requesting from TBA:', e);
@@ -119,67 +118,95 @@ export class TBA {
     // }
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// -----------------------------
+// since this file is duplicated on the dashboard, and is unecessary, I'm commenting out the rest of the file
+// -----------------------------
+
 /**
  * Update interval for TBA
  * @date 1/10/2024 - 9:34:20 PM
  *
  * @type {(number | undefined)}
  */
-let interval: number | undefined = undefined;
+// let interval: number | undefined = undefined;
 
 /**
  * Run the TBA update
  * @date 1/10/2024 - 9:34:20 PM
  */
-const update = () => {
-    TBA.get<TBAEvent[]>(
-        `/team/frc2122/events/${new Date().getFullYear()}/simple`,
-    )
-        .then((result) => {
-            if (result.isErr()) return;
-            const events = result.value;
-            if (!events) return;
-            const now = Date.now();
+// const update = () => {
+//     TBA.get<TBAEvent[]>(
+//         `/team/frc2122/events/${new Date().getFullYear()}/simple`,
+//     )
+//         .then((result) => {
+//             if (result.isErr()) return;
+//             const events = result.value;
+//             if (!events) return;
+//             const now = Date.now();
 
-            const [closest] = events.sort((a, b) => {
-                const aDate = new Date(a.start_date).getTime();
-                const bDate = new Date(b.start_date).getTime();
+//             const [closest] = events.sort((a, b) => {
+//                 const aDate = new Date(a.start_date).getTime();
+//                 const bDate = new Date(b.start_date).getTime();
 
-                return Math.abs(aDate - now) - Math.abs(bDate - now);
-            });
+//                 return Math.abs(aDate - now) - Math.abs(bDate - now);
+//             });
 
-            console.log('Closest event:', closest.key);
+//             console.log('Closest event:', closest.key);
 
-            if (interval) clearInterval(interval);
+//             if (interval) clearInterval(interval);
 
-            const start = new Date(closest.start_date);
-            const end = new Date(closest.end_date);
-            const diff = (() => {
-                const beforeStart = Math.abs(start.getTime() - now);
-                const beforeEnd = Math.abs(end.getTime() - now);
-                const afterStart = Math.abs(now - start.getTime());
-                const afterEnd = Math.abs(now - end.getTime());
+//             const start = new Date(closest.start_date);
+//             const end = new Date(closest.end_date);
+//             const diff = (() => {
+//                 const beforeStart = Math.abs(start.getTime() - now);
+//                 const beforeEnd = Math.abs(end.getTime() - now);
+//                 const afterStart = Math.abs(now - start.getTime());
+//                 const afterEnd = Math.abs(now - end.getTime());
 
-                return Math.min(beforeStart, beforeEnd, afterStart, afterEnd);
-            })();
+//                 return Math.min(beforeStart, beforeEnd, afterStart, afterEnd);
+//             })();
 
-            if (diff < 1000 * 60 * 60 * 24 * 3) {
-                // event is within 3 days
-                interval = setInterval(
-                    () => {
-                        saveEvent(closest.key);
-                    },
-                    1000 * 60 * 10,
-                ); // update every 10 minutes during event
-            } else {
-                // update every day
-                saveEvent(closest.key);
-            }
-        })
-        .catch(error);
-};
+//             if (diff < 1000 * 60 * 60 * 24 * 3) {
+//                 // event is within 3 days
+//                 interval = setInterval(
+//                     () => {
+//                         saveEvent(closest.key);
+//                     },
+//                     1000 * 60 * 10,
+//                 ); // update every 10 minutes during event
+//             } else {
+//                 // update every day
+//                 saveEvent(closest.key);
+//             }
+//         })
+//         .catch(error);
+// };
 
-if (Deno.args.includes('--update-interval')) {
-    setInterval(update, 1000 * 60 * 60 * 24);
-    update();
-}
+// if (Deno.args.includes('--update-interval')) {
+//     setInterval(update, 1000 * 60 * 60 * 24);
+//     update();
+// }

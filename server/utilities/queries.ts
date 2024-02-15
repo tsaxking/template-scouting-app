@@ -7,6 +7,7 @@ import { AccountRoles } from './tables.ts';
 import { Permissions } from './tables.ts';
 import { Version } from './tables.ts';
 import { Sessions } from './tables.ts';
+import { Blacklist } from './tables.ts';
 import { AccountSettings } from './tables.ts';
 import { Select_permissions_all } from './tables.ts';
 import { Select_roles_from_name } from './tables.ts';
@@ -69,6 +70,11 @@ import { Delete_db_delete_version } from './tables.ts';
 import { Insert_db_change_version } from './tables.ts';
 import { Insert_permissions_add_to_role } from './tables.ts';
 import { Delete_permissions_remove_from_role } from './tables.ts';
+import { Select_blacklist_all } from './tables.ts';
+import { TBARequests } from './tables.ts';
+import { Update_db_versions______ } from './tables.ts';
+import { Select_tba_from_url } from './tables.ts';
+import { Insert_tba_new } from './tables.ts';
 
 
 export type Queries = {
@@ -80,19 +86,19 @@ export type Queries = {
     ];
 'permissions/from-role': [
         [
-            {roleId:string;},
+            {roleId:string}
         ],
         Permissions
     ];
 'permissions/remove-from-role': [
         [
-            {roleId:string;permission:string;},
+            Delete_permissions_remove_from_role
         ],
         unknown
     ];
 'permissions/add-to-role': [
         [
-            {roleId:string;permission:string;},
+            Insert_permissions_add_to_role
         ],
         unknown
     ];
@@ -134,7 +140,7 @@ export type Queries = {
     ];
 'roles/from-username': [
         [
-            {username:string;},
+            {username:string}
         ],
         Roles
     ];
@@ -176,13 +182,13 @@ export type Queries = {
     ];
 'sessions/sign-in': [
         [
-            {id:string;accountId:string;},
+            Update_sessions_sign_in
         ],
         unknown
     ];
 'sessions/sign-out': [
         [
-            {id:string;},
+            Update_sessions_sign_out
         ],
         unknown
     ];
@@ -242,7 +248,7 @@ export type Queries = {
     ];
 'member/from-username': [
         [
-            {username:string;},
+            {username:string}
         ],
         Members
     ];
@@ -386,7 +392,7 @@ export type Queries = {
     ];
 'account/roles': [
         [
-            {id:string;},
+            {id:string}
         ],
         Roles
     ];
@@ -398,21 +404,63 @@ export type Queries = {
     ];
 'db/change-version': [
         [
-            Update_db_change_version
+            Insert_db_change_version
         ],
         unknown
     ];
 'db/delete-version': [
         [
-            
+            Delete_db_delete_version
         ],
-        
+        unknown
     ];
 'db/init': [
         [
             Insert_db_init
         ],
         unknown
+    ];
+'blacklist/all': [
+        [
+            Select_blacklist_all
+        ],
+        Blacklist
+    ];
+'blacklist/new': [
+        [
+            {id:string;ip:string;created:number;accountId:string|undefined;reason:string;},
+        ],
+        unknown
+    ];
+'blacklist/delete': [
+        [
+            {id:string;}
+        ],
+        unknown
+    ];
+'blacklist/from-account': [
+        [
+            {accountId:string;},
+        ],
+        Blacklist
+    ];
+'blacklist/from-ip': [
+        [
+            {ip:string;},
+        ],
+        Blacklist
+    ];
+'blacklist/delete-by-ip': [
+        [
+            {ip:string;},
+        ],
+        
+    ];
+'blacklist/delete-by-account': [
+        [
+            {accountId:string;},
+        ],
+        
     ];
 'server-requests/new': [
         [
@@ -443,5 +491,23 @@ export type Queries = {
             Select_server_requests_all
         ],
         ServerRequests
+    ];
+'db/versions/1-3-1': [
+        [
+            Update_db_versions______
+        ],
+        unknown
+    ];
+'tba/from-url': [
+        [
+            Select_tba_from_url
+        ],
+        TBARequests
+    ];
+'tba/new': [
+        [
+            Insert_tba_new
+        ],
+        unknown
     ];
 };

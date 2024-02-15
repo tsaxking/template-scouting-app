@@ -20,7 +20,10 @@ App.getEventData().then(data => {
     }
 });
 
-const app = generate2024App(null);
+let app = generate2024App(null);
+
+// reassign app at restart
+app.on('restart', () => app = generate2024App(null));
 
 let tabs = ['Pre', 'App', 'Post', 'Upload'];
 let active = 'Pre';

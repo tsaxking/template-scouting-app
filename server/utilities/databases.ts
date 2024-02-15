@@ -4,7 +4,7 @@ import { error, log } from './terminal-logging.ts';
 import { Queries } from './queries.ts';
 import { exists, readDir, readFile, readFileSync, saveFile } from './files.ts';
 import { attemptAsync, Result } from '../../shared/check.ts';
-import { runTask } from './run-task.ts';
+import { run } from './run-task.ts';
 import {
     capitalize,
     fromCamelCase,
@@ -100,13 +100,24 @@ export class DB {
         port: Number(DATABASE_PORT),
     });
 
+    private static connected = false;
+
     static async connect() {
         return attemptAsync(async () => {
+            if (DB.connected) await DB.disconnect();
             return new Promise((res, rej) => {
                 setTimeout(() => {
                     rej('Database connection timed out');
                 }, 20 * 1000);
-                return DB.db.connect().then(res).catch(rej);
+                DB.db
+                    .connect()
+                    .then(() => {
+                        DB.connected = true;
+                        res('Connected to the database');
+                    })
+                    .catch(() => {
+                        rej('Error connecting to the database');
+                    });
             });
         });
     }
@@ -195,12 +206,7 @@ export class DB {
         });
     }
 
-    // version info
-    private static version?: Version;
-
     static async getVersion(): Promise<Version> {
-        if (DB.version) return DB.version;
-
         const v = await DB.get('db/get-version');
         if (v.isOk() && v.value) {
             const { major, minor, patch } = v.value;
@@ -223,8 +229,7 @@ export class DB {
             patch,
         });
 
-        if (res.isOk()) DB.version = v;
-        else console.log('Error setting version', res.error);
+        if (res.isErr()) console.log('Error setting version', res.error);
         return res;
     }
 
@@ -327,7 +332,14 @@ export class DB {
                     const scriptExists = await exists(script);
 
                     if (scriptExists) {
-                        const scriptRes = await runTask(script);
+                        console.log('Running update script', version.join('.'));
+                        const scriptRes = await run(
+                            'run',
+                            '--allow-all',
+                            script,
+                            '--update',
+                            version.join('.'),
+                        );
                         if (scriptRes.isErr()) {
                             console.log(
                                 'Error running update script',
@@ -337,6 +349,8 @@ export class DB {
                             await DB.restoreBackup(b.value);
                             throw scriptRes.error;
                         }
+
+                        console.log('Update script ran successfully');
                     }
 
                     DB.setVersion(version);
@@ -374,10 +388,10 @@ export class DB {
                 DB.getVersion(),
             ]);
 
-            if (['0.0.0', '-1.-1.-1'].includes(version.join('.'))) {
-                console.log('Database not initialized');
-                throw new Error('Database not initialized');
-            }
+            // if (['0.0.0', '-1.-1.-1'].includes(version.join('.'))) {
+            //     console.log('Database not initialized');
+            //     throw new Error('Database not initialized');
+            // }
 
             if (tables.isErr()) throw tables.error;
             const backup: {
@@ -410,8 +424,14 @@ export class DB {
 
     static async reset(): Promise<Result<string>> {
         return attemptAsync(async () => {
-            const b = await DB.makeBackup();
-            if (b.isErr()) throw b.error;
+            let b = await DB.makeBackup();
+            if (b.isErr()) {
+                if (b.error.message.includes('not initialized')) {
+                    b = b.handle('0.0.0_0.json');
+                } else {
+                    throw b.error;
+                }
+            }
 
             const tables = await DB.getTables();
             if (tables.isErr()) throw tables.error;
@@ -614,7 +634,6 @@ export class DB {
             }
         });
     }
-
     static async runAllUpdates() {
         const res = await DB.init();
         if (res.isErr()) {
@@ -701,7 +720,7 @@ export class DB {
     private static async prepare<T extends keyof Queries>(
         type: T,
         ...args: QParams<T> extends [undefined] ? [] : QParams<T>
-    ): Promise<Result<[string, Queries[T][0]]>> {
+    ): Promise<Result<[string, Parameter[]]>> {
         return attemptAsync(async () => {
             const sql = readFileSync('/storage/db/queries/' + type + '.sql');
             if (sql.isOk()) {
@@ -709,11 +728,58 @@ export class DB {
                     sql.value,
                     args,
                 );
-                return [parsedQuery, parsedArgs] as [string, QParams<T>];
+                return [parsedQuery, parsedArgs] as [string, Parameter[]];
             } else {
                 throw new Error('Unable to read query file: ' + type);
             }
         });
+    }
+
+    private static async runQuery(
+        query: string,
+        args: Parameter[],
+    ): Promise<Result<QueryResult<unknown>>> {
+        const run = () =>
+            attemptAsync(async () => {
+                const q = DB.parseQuery(query, args);
+                const [sql, newArgs] = q;
+
+                const result = await DB.db.queryObject(sql, newArgs);
+                if (result.warnings.length) {
+                    log('Database warnings:', result.warnings);
+                }
+
+                return {
+                    rows: bigIntDecode(DB.parseObj(result.rows) as unknown[]),
+                    params: newArgs,
+                    query: sql,
+                };
+            });
+
+        let res = await run();
+        let maxRetries = 5;
+        const disconnectedErrors = [
+            'Connection terminated',
+            'Connection lost',
+            'Broken pipe',
+            'Connection closed',
+        ];
+
+        while (res.isErr() && maxRetries > 0) {
+            const { error } = res;
+            if (disconnectedErrors.some((e) => error.message.includes(e))) {
+                log('Database disconnected, reconnecting...');
+                await DB.connect();
+            }
+            res = await run();
+            maxRetries--;
+        }
+
+        if (res.isErr()) {
+            error('Error running query:', res.error);
+        }
+
+        return res;
     }
 
     /**
@@ -728,7 +794,7 @@ export class DB {
      * @param {...Queries[T][0]} args
      * @returns {(Queries[T][1] | undefined)}
      */
-    private static runQuery<T extends keyof Queries>(
+    private static pipeSafe<T extends keyof Queries>(
         query: T,
         ...args: QParams<T> extends [undefined] ? [] : QParams<T>
     ): Promise<Result<QueryResult<Queries[T][1]>>> {
@@ -739,22 +805,35 @@ export class DB {
                 throw q.error;
             }
 
-            const [sql, newArgs] = q.value;
+            const [newQuery, newArgs] = q.value;
+            const result = await DB.runQuery(newQuery, newArgs);
 
-            const result = await DB.db.queryObject(sql, newArgs);
-            if (result.warnings.length) {
-                log('Database warnings:', result.warnings);
+            if (result.isErr()) {
+                throw result.error;
             }
 
-            return {
-                rows: DB.parseObj(result.rows) as Queries[T][1][],
-                params: newArgs,
-                query: sql,
-            };
+            return result.value;
         });
     }
 
-    public static async close() {
+    static async pipeUnsafe<T = unknown>(
+        query: string,
+        ...args: Parameter[]
+    ): Promise<Result<QueryResult<T>>> {
+        return attemptAsync(async () => {
+            const [q, p] = DB.parseQuery(query, args);
+
+            const result = await DB.runQuery(q, p);
+
+            if (result.isErr()) {
+                throw result.error;
+            }
+
+            return result.value as QueryResult<T>;
+        });
+    }
+
+    public static async disconnect() {
         log('Closing database...');
         return DB.db.end();
     }
@@ -774,7 +853,7 @@ export class DB {
         ...args: QParams<T> extends [undefined] ? [] : QParams<T>
     ): Promise<Result<Queries[T][1]>> {
         return attemptAsync(async () => {
-            const q = await DB.runQuery(type, ...args);
+            const q = await DB.pipeSafe(type, ...args);
             if (q.isErr()) {
                 console.error(q.error);
                 throw q.error;
@@ -798,7 +877,7 @@ export class DB {
         ...args: QParams<T> extends [undefined] ? [] : QParams<T>
     ): Promise<Result<Queries[T][1] | undefined>> {
         return attemptAsync(async () => {
-            const q = await DB.runQuery(type, ...args);
+            const q = await DB.pipeSafe(type, ...args);
             if (q.isErr()) {
                 console.error(q.error);
                 throw q.error;
@@ -822,7 +901,7 @@ export class DB {
         ...args: QParams<T> extends [undefined] ? [] : QParams<T>
     ): Promise<Result<Queries[T][1][]>> {
         return attemptAsync(async () => {
-            const q = await DB.runQuery(type, ...args);
+            const q = await DB.pipeSafe(type, ...args);
             if (q.isErr()) {
                 console.error(q.error);
                 throw q.error;
@@ -841,38 +920,13 @@ export class DB {
      * @type {{ run: (query: string, ...args: {}) => number; get: <type = unknown>(query: string, ...args: {}) => any; all: <type>(query: string, ...args: {}) => {}; }}
      */
     static get unsafe() {
-        const runUnsafe = async <T = unknown>(
-            query: string,
-            ...args: Parameter[]
-        ): Promise<Result<QueryResult<T>>> => {
-            return attemptAsync(async () => {
-                const [q, p] = DB.parseQuery(query, args);
-                try {
-                    const result = await DB.db.queryObject(q, p);
-                    if (result.warnings.length) {
-                        log('Database warnings:', result.warnings);
-                    }
-                    return {
-                        rows: DB.parseObj(result.rows) as T[],
-                        query: q,
-                        params: p,
-                    };
-                } catch (error) {
-                    console.error('Error running query:', error);
-                    console.log('Query:', q);
-                    console.log('Parameters:', p);
-                    throw error;
-                }
-            });
-        };
-
         return {
             run: (
                 query: string,
                 ...args: Parameter[]
             ): Promise<Result<unknown>> => {
                 return attemptAsync(async () => {
-                    const r = await runUnsafe(query, ...args);
+                    const r = await DB.pipeUnsafe(query, ...args);
                     if (r.isErr()) {
                         console.error(r.error);
                         throw r.error;
@@ -885,7 +939,7 @@ export class DB {
                 ...args: Parameter[]
             ): Promise<Result<type | undefined>> => {
                 return attemptAsync(async () => {
-                    const r = await runUnsafe(query, ...args);
+                    const r = await DB.pipeUnsafe(query, ...args);
                     if (r.isErr()) {
                         console.error(r.error);
                         throw r.error;
@@ -898,7 +952,7 @@ export class DB {
                 ...args: Parameter[]
             ): Promise<Result<type[]>> => {
                 return attemptAsync(async () => {
-                    const r = await runUnsafe(query, ...args);
+                    const r = await DB.pipeUnsafe(query, ...args);
                     if (r.isErr()) {
                         console.error(r.error);
                         throw r.error;
@@ -915,6 +969,7 @@ export class DB {
 await DB.connect().then(async (result) => {
     if (result.isOk()) {
         log('Connected to the database');
+        if (Deno.args.includes('--update')) return;
         await DB.runAllUpdates();
         await DB.makeBackup();
         await DB.setIntervals();
@@ -929,5 +984,5 @@ await DB.connect().then(async (result) => {
 });
 // if the program exits, close the database
 Deno.addSignalListener('SIGINT', () => {
-    DB.close();
+    DB.disconnect();
 });

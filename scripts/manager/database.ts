@@ -1,16 +1,14 @@
 import { backToMain, main, selectFile } from '../manager.ts';
 import { __root } from '../../server/utilities/env.ts';
-import { addQuery, getTables, merge, parseSql } from '../parse-sql.ts';
+import { addQuery, merge, parseSql } from '../parse-sql.ts';
 import { DB } from '../../server/utilities/databases.ts';
-import { confirm, repeatPrompt, select } from '../prompt.ts';
+import { confirm, repeatPrompt, search, select } from '../prompt.ts';
 import {
     readDir,
     readFile,
     saveFileSync,
 } from '../../server/utilities/files.ts';
 import { relative, resolve } from '../../server/utilities/env.ts';
-import { fromCamelCase, toSnakeCase } from '../../shared/text.ts';
-import { attemptAsync, Err, Result } from '../../shared/check.ts';
 import * as cliffy from 'https://deno.land/x/cliffy@v1.0.0-rc.3/table/mod.ts';
 
 export const buildQueries = async () => {
@@ -56,7 +54,7 @@ export const newVersion = async () => {
     if (doScript) {
         saveFileSync(
             `storage/db/scripts/versions/1-${minor}-${patch}.ts`,
-            `// New version 1.${minor}.${patch}\n\n`,
+            `// New version 1.${minor}.${patch}\n\nDeno.exit(0) // Please do not remove this`,
         );
     }
 
@@ -77,7 +75,18 @@ export const viewTables = async () => {
             // using cliffy to display the data
             const tableData = data.value;
             const keys = Object.keys(tableData[0] || {});
-            const values = tableData.map((d) => Object.values(d));
+            const values = tableData.map((d) =>
+                Object.values(d).map((a) => {
+                    switch (typeof a) {
+                        case 'bigint':
+                            return a.toString() + 'n';
+                        case 'object':
+                            return JSON.stringify(a);
+                        default:
+                            return a;
+                    }
+                })
+            );
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const table = new cliffy.Table().header(keys).body(values as any);
             console.log(table.toString());
@@ -152,152 +161,6 @@ export const addQueryType = async () => {
     }
 };
 
-export const makeDefaultQueries = async () => {
-    return backToMain('Not implemented');
-    const tables = await getTables();
-
-    const name = await select<string>(
-        'Select table to make default queries for',
-        Object.keys(tables),
-    );
-
-    const t = tables[name];
-    if (!t) return backToMain('Table not found');
-
-    const parsedName = toSnakeCase(fromCamelCase(name), '-');
-
-    const hasNew = await readFile(`/storage/db/queries/${parsedName}/new.sql`);
-    const hasGet = await readFile(`/storage/db/queries/${parsedName}/get.sql`);
-    const hasDelete = await readFile(
-        `/storage/db/queries/${parsedName}/delete.sql`,
-    );
-};
-
-// export const reset = async () => {
-//     const doReset = await confirm(
-//         'Are you sure you want to reset the database?',
-//     );
-//     const version = await DB.getVersion();
-
-//     if (doReset) {
-//         await DB.makeBackup();
-//         const tables = await DB.getTables();
-//         if (tables.isOk()) {
-//             const reset = async (): Promise<Result<void>> => {
-//                 return attemptAsync(async () => {
-//                     const res = await Promise.all(
-//                         tables.value.map((t) =>
-//                             DB.unsafe.run(`DROP TABLE ${t}`)
-//                         ),
-//                     );
-//                     if (res.every((r) => r.isOk())) {
-//                         DB.setVersion([0, 0, 0]);
-//                         return DB.runAllUpdates();
-//                     } else {
-//                         const errors = res.filter((r) => r.isErr()) as Err[];
-//                         throw new Error(
-//                             'Error resetting database: ' +
-//                                 errors.map((e) => e.error).join('\n'),
-//                         );
-//                     }
-//                 });
-//             };
-
-//             const saveData = await select(
-//                 'Do you want to save all data currently stored?',
-//                 [
-//                     {
-//                         name: 'Yes, Save, Reset, and reapply data.',
-//                         value: true,
-//                     },
-//                     {
-//                         name: 'No, Reset and delete all data',
-//                         value: false,
-//                     },
-//                 ],
-//             );
-
-//             if (saveData) {
-//                 const data = await Promise.all(
-//                     tables.value.map((t) => {
-//                         return DB.unsafe.all<{
-//                             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-//                             [key: string]: any;
-//                         }>(`SELECT * FROM ${t}`);
-//                     }),
-//                 );
-
-//                 if (data.every((d) => d.isOk())) {
-//                     const res = await reset();
-//                     if (res.isOk()) {
-//                         await Promise.all(
-//                             data.map((d, i) => {
-//                                 // this shouldn't ever happen, but typescript, for some reason, doesn't know that
-//                                 if (d.isErr()) throw new Error(d.error.message);
-//                                 const table = tables.value[i];
-//                                 for (const col of d.value) {
-//                                     const cols = Object.keys(col);
-//                                     DB.unsafe
-//                                         .run(
-//                                             `
-//                                         INSERT INTO ${table} (${
-//                                                 cols.join(
-//                                                     ', ',
-//                                                 )
-//                                             })
-//                                         VALUES (${
-//                                                 cols
-//                                                     .map((c) => ':' + c)
-//                                                     .join(', ')
-//                                             }
-//                                     `,
-//                                             col,
-//                                         )
-//                                         .then((r) => {
-//                                             if (r.isErr()) {
-//                                                 throw new Error(
-//                                                     r.error.message,
-//                                                 );
-//                                             }
-//                                         });
-//                                 }
-//                             }),
-//                         );
-//                         return backToMain(
-//                             'Database reset and updated to latest version. All data was saved.',
-//                         );
-//                     } else {
-//                         DB.restoreBackup(version);
-//                     }
-//                 } else {
-//                     const errors = data.filter((d) => d.isErr()) as Err[];
-//                     return backToMain(
-//                         'Error saving data: ' +
-//                             errors.map((e) => e.error.message).join('\n'),
-//                     );
-//                 }
-//             } else {
-//                 const res = await reset();
-
-//                 if (res.isOk()) {
-//                     return backToMain(
-//                         'Database reset and updated to latest version. All data was deleted.',
-//                     );
-//                 } else {
-//                     DB.restoreBackup(version);
-//                     return backToMain(
-//                         'Error resetting database: ' + res.error.message,
-//                     );
-//                 }
-//             }
-//         } else {
-//             return backToMain('Error getting tables: ' + tables.error.message);
-//         }
-//     } else {
-//         return backToMain('Reset cancelled');
-//     }
-// };
-
 export const reset = async () => {
     const doReset = await confirm(
         'Are you sure you want to reset the database?',
@@ -315,6 +178,7 @@ export const reset = async () => {
                 'Error resetting database: ' + reset.error.message,
             );
         }
+        return backToMain('Database reset and updated to latest version.');
     } else {
         return backToMain('Reset cancelled');
     }
@@ -357,15 +221,19 @@ export const restoreBackup = async () => {
         return backToMain('Error reading backups: ' + backups.error.message);
     }
 
-    const backup = await select(
-        'Select backup to restore',
+    const backup = await search(
+        'Search for a backup to restore',
         backups.value.map((b) => ({
             name: b.name,
             value: b.name,
         })),
     );
 
-    const res = await DB.restoreBackup(backup);
+    if (backup.isErr()) {
+        return backToMain('Error selecting backup: ' + backup.error);
+    }
+
+    const res = await DB.restoreBackup(backup.value);
     if (res.isOk()) {
         backToMain('Backup restored');
     } else {
@@ -386,49 +254,52 @@ export const databases = [
     {
         value: buildQueries,
         icon: '🔨',
+        description: 'Builds the query types from the sql files',
     },
     {
         value: mergeQueries,
         icon: '🔀',
+        description: 'Merges the query files into a single file',
     },
     {
         value: versionInfo,
         icon: '📊',
+        description: 'Shows the current and latest version of the database',
     },
     {
         value: newVersion,
         icon: '🆕',
+        description:
+            'Creates a new version of the database, can create a .ts file if you need to also run a script',
     },
     {
         value: viewTables,
         icon: '📇',
+        description: 'View the data in a table',
     },
-    // {
-    //     value: addQueryType,
-    //     icon: '📝',
-    // },
-    // {
-    //     value: makeDefaultQueries,
-    //     icon: '📄',
-    // },
     {
         value: reset,
         icon: '🔄',
+        description: 'Resets the database to the latest version',
     },
     {
         value: runUpdates,
         icon: '🔃',
+        description: 'Runs any available updates',
     },
     {
         value: clearTable,
         icon: '🗑️',
+        description: 'Clears all data from a table',
     },
     {
         value: restoreBackup,
         icon: '🔙',
+        description: 'Restores a backup',
     },
     {
         value: backup,
         icon: '💾',
+        description: 'Creates a backup',
     },
 ];

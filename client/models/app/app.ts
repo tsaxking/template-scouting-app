@@ -27,7 +27,7 @@ import {
 } from '../../../shared/submodules/tatorscout-calculations/trace';
 import { generate2024App } from './2024-app';
 import { ServerRequest } from '../../utilities/requests';
-import { alert } from '../../utilities/notifications';
+import { alert, choose, confirm } from '../../utilities/notifications';
 import { Assignment } from '../../../shared/submodules/tatorscout-calculations/scout-groups';
 import {
     TBAEvent,
@@ -38,7 +38,6 @@ import { Icon } from '../canvas/material-icons';
 import { SVG } from '../canvas/svg';
 import { Match } from '../../../shared/submodules/tatorscout-calculations/trace'
 import { downloadText } from '../../utilities/downloads';
-import { choose } from '../../utilities/notifications';
 
 /**
  * Description placeholder
@@ -86,6 +85,8 @@ type AppEvents = {
     stopped: void;
     tick: Tick;
     second: number;
+    restart: void;
+    destroy: void;
 };
 
 /**
@@ -279,11 +280,15 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
             const p = trace.find((p) => p[0] === i);
             if (!p) continue;
 
-            app.currentTick = tick;
-            tick.point = [p[1], p[2]];
-            app.currentLocation = tick.point;
-            const obj = app.appObjects[p[3]] as AppObject<unknown, Action>;
-            obj.change(app.currentLocation);
+            try {
+                app.currentTick = tick;
+                tick.point = [p[1], p[2]];
+                app.currentLocation = tick.point;
+                const obj = app.appObjects[p[3]] as AppObject<unknown, Action>;
+                obj.change(app.currentLocation);
+            } catch (e) {
+                console.error(e);
+            }
         }
 
         app.currentLocation = location !== undefined
@@ -411,6 +416,7 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
     ) {
         this.canvas.$ctx.canvas.style.position = 'absolute';
 
+
         this.background = new Img(`/public/pictures/${this.year}field.png`, {
             x: 0,
             y: 0,
@@ -451,16 +457,16 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
 
         if (App.cache()) {
             choose(
-                'You have a cached match. Would you like to restore it?',
-                'Yes',
-                'No',
+                'You have a cached match. Would you like to restore it or destroy it?',
+                'Restore cached',
+                'Delete cached',
             ).then((res) => {
                 switch (res) {
-                    case 'Yes':
-                        App.restore(this as App<any, any, any>);
-                        break;
-                    case 'No':
+                    case 'Delete cached':
                         App.clearCache();
+                        break;
+                    case 'Restore cached':
+                        App.restore(this as App<any, any, any>);
                         break;
                     case null:
                         App.clearCache();
@@ -504,8 +510,39 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
             target.style.height = 'calc(100vh - 42px)';
             target.style.width = '100%';
             this.setView();
+
+            this.cover.style.position = 'absolute';
+            this.cover.style.width = '100%';
+            this.cover.style.height = '100%';
+            this.cover.style.zIndex = '1000';
+            this.cover.style.backgroundColor = Color.fromBootstrap('dark').setAlpha(0.75).toString('rgba');
+            this.cover.style.display = 'block';
+            this.cover.innerHTML = `
+                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 2em;">
+                    Click to Start
+                </div>
+            `;
+            target.appendChild(this.cover);
+
+            this.cancel.classList.add('btn', 'btn-secondary');
+            this.cancel.style.position = 'absolute';
+            this.cancel.style.bottom = '10px';
+            this.cancel.style.right = '10px';
+            this.cancel.style.zIndex = '100';
+            this.cancel.innerHTML = 'Cancel';
+            this.cancel.onclick = async () => {
+                const confirmed = await confirm('Are you sure you want to cancel?');
+                if (!confirmed) return;
+                this.destroy();
+                this.emit('restart');
+            };
+            target.appendChild(this.cancel);
         }
     }
+
+    private readonly cover = document.createElement('div');
+
+    private readonly cancel = document.createElement('button');
 
     private readonly $fieldOrientation: {
         x: boolean; // flip around y axis
@@ -878,8 +915,7 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
      * @returns {void) => void}
      */
     public launch(cb?: (tick: Tick) => void) {
-        if (!this.target) return console.error('No target set');
-        const { target } = this;
+        const { cover } = this;
         this.build();
         this.startTime = Date.now();
         this.currentTime = this.startTime;
@@ -935,13 +971,14 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
         };
 
         const start = () => {
+            cover.style.display = 'none';
             run(this.currentTick || this.ticks[0], 0);
-            target.removeEventListener('mousedown', start);
-            target.removeEventListener('touchstart', start);
+            cover.removeEventListener('mousedown', start);
+            cover.removeEventListener('touchstart', start);
         };
 
-        target.addEventListener('mousedown', start);
-        target.addEventListener('touchstart', start);
+        cover.addEventListener('mousedown', start);
+        cover.addEventListener('touchstart', start);
     }
 
     /**
@@ -1164,7 +1201,6 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
 
         this.appObjects.push(object);
     }
-
     /**
      * Resets every state in the app
      * @date 1/9/2024 - 3:08:19 AM
@@ -1185,6 +1221,7 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
             return;
         }
 
+        this.cover.style.display = 'block';
         this.canvas.add(this.buttonCircle);
 
         let quitView = false;
@@ -1469,5 +1506,12 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
 
         // set data to server
         return App.upload(d);
+    }
+
+
+    // TODO: Destroy without reloading
+    destroy() {
+        App.clearCache();
+        location.reload();
     }
 }
