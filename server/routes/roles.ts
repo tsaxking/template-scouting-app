@@ -1,82 +1,41 @@
 import { validate } from '../middleware/data-type.ts';
 import { Route } from '../structure/app/app.ts';
-import Role from '../structure/roles.ts';
-import { Permission } from '../../shared/permissions.ts';
 
-export const router = new Route();
+const router = new Route();
 
-router.post('/all', async (req, res) => {
-    const roles = await Role.all();
-    res.json(
-        await Promise.all(
-            roles.map(async (r) => ({
-                ...r,
-                permissions: await r.getPermissions(),
-            })),
-        ),
-    );
-});
+export default router;
 
-router.post('/all-permissions', async (_req, res) => {
-    const perms = await Role.getAllPermissions();
+router.post('/all', async (req, res) => {});
+// TODO: implement role routes
 
-    res.json(perms);
+router.post('/*', async (req, res) => {
+    res.sendStatus('server:not-implemented');
 });
 
 router.post<{
     name: string;
     description: string;
-    rank: number;
 }>(
     '/new',
     validate({
         name: 'string',
         description: 'string',
-        rank: 'number',
     }),
-    async (req, res) => {
-        const { name, description, rank } = req.body;
-
-        const roles = await Role.all();
-        if (roles.find((r) => r.name === name)) {
-            return res.sendStatus('roles:already-exists');
-        }
-
-        const role = Role.new(name, description, rank);
-
-        res.sendStatus('roles:new');
-
-        req.io.emit('roles:new', role);
-    },
+    async (req, res) => {},
 );
 
 router.post<{
     id: string;
     name: string;
     description: string;
-    rank: number;
 }>(
     '/update',
     validate({
         id: 'string',
         name: 'string',
         description: 'string',
-        rank: 'number',
     }),
-    async (req, res) => {
-        const { id, name, description, rank } = req.body;
-        const role = await Role.fromId(id);
-
-        if (!role) return res.sendStatus('role:not-found');
-
-        role.name = name;
-        role.description = description;
-        role.rank = rank;
-        role.save();
-
-        res.sendStatus('roles:updated', role);
-        req.io.emit('roles:update', role);
-    },
+    async (req, res) => {},
 );
 
 router.post<{
@@ -86,20 +45,7 @@ router.post<{
     validate({
         id: 'string',
     }),
-    async (req, res) => {
-        const { id } = req.body;
-        const role = await Role.fromId(id);
-
-        if (!role) return res.sendStatus('role:not-found');
-        if (role.name === 'admin') {
-            return res.sendStatus('roles:cannot-edit-admin');
-        }
-
-        role.delete();
-
-        res.sendStatus('roles:deleted', role);
-        req.io.emit('roles:delete', role);
-    },
+    async (req, res) => {},
 );
 
 router.post<{
@@ -111,41 +57,7 @@ router.post<{
         id: 'string',
         permission: 'string',
     }),
-    async (req, res) => {
-        const { id, permission } = req.body;
-        const role = await Role.fromId(id);
-
-        if (!role) return res.sendStatus('role:not-found');
-        if (role.name === 'admin') {
-            return res.sendStatus('roles:cannot-edit-admin');
-        }
-
-        const perms = await role.getPermissions();
-
-        if (perms.find((p) => p.permission === permission)) {
-            // permission already exists on role
-            return res.sendStatus('permissions:error');
-        }
-
-        const p = await Role.getAllPermissions();
-
-        if (!p.find((p) => p.permission === permission)) {
-            return res.sendStatus('permissions:not-found');
-        }
-
-        await role.addPermission(permission as Permission);
-
-        res.sendStatus('roles:added-permission', {
-            id: role.id,
-            permission,
-        });
-
-        req.io.emit(
-            'roles:added-permission',
-            role.id,
-            await role.getPermissions(),
-        );
-    },
+    async (req, res) => {},
 );
 
 router.post<{
@@ -157,33 +69,15 @@ router.post<{
         id: 'string',
         permission: 'string',
     }),
-    async (req, res) => {
-        const { id, permission } = req.body;
+    async (req, res) => {},
+);
 
-        const role = await Role.fromId(id);
-
-        if (!role) return res.sendStatus('role:not-found');
-        if (role.name === 'admin') {
-            return res.sendStatus('roles:cannot-edit-admin');
-        }
-
-        const perms = await role.getPermissions();
-
-        if (!perms.find((p) => p.permission === permission)) {
-            return res.sendStatus('permissions:error');
-        }
-
-        await role.removePermission(permission as Permission);
-
-        res.sendStatus('roles:removed-permission', {
-            id: role.id,
-            permission,
-        });
-
-        req.io.emit(
-            'roles:added-permission',
-            role.id,
-            await role.getPermissions(),
-        );
-    },
+router.post<{
+    id: string;
+}>(
+    '/permissions',
+    validate({
+        id: 'string',
+    }),
+    async (req, res) => {},
 );

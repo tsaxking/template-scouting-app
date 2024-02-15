@@ -1,5 +1,6 @@
-import { select } from './prompt.ts';
+import { repeatPrompt, select } from './prompt.ts';
 import { Colors } from '../server/utilities/colors.ts';
+import { sleep } from '../shared/sleep.ts';
 import { attemptAsync, Result } from '../shared/check.ts';
 import { __root, relative, resolve } from '../server/utilities/env.ts';
 import Filter from 'npm:bad-words';
@@ -32,8 +33,6 @@ export const icons = {
     controller: '🎮',
 };
 
-const colorTitle = (str: string) => name(str, Colors.FgBlue);
-
 export const filter = (str: string): boolean => {
     if (str.length < 3) return false;
     const filter = new Filter();
@@ -47,7 +46,7 @@ export const filter = (str: string): boolean => {
 
 export const backToMain = async (message: string) => {
     console.log(message);
-    await select('', ['[Ok]']);
+    await sleep(2000);
     main();
 };
 
@@ -233,9 +232,6 @@ export const selectDir = async (
     return data;
 };
 
-const name = (str: string, color: Colors) =>
-    `${color}[${capitalize(fromCamelCase(str))}]${Colors.Reset}`;
-
 export const main = async () => {
     title('Welcome to the Task Manager!');
     const exit = () => {
@@ -295,7 +291,6 @@ export const main = async () => {
         data: {
             icon: string;
             value: () => void;
-            description?: string;
         }[],
         icon: string,
     ) => {
@@ -314,7 +309,7 @@ export const main = async () => {
                                         fromCamelCase(d.value.name),
                                     )
                                 }`,
-                                value: async () => {
+                                value: () => {
                                     title(
                                         `${name} > ${
                                             capitalize(
@@ -327,7 +322,7 @@ export const main = async () => {
                                         return d.value();
                                     } catch (e) {
                                         console.error(e);
-                                        return await select('', ['[Ok]']);
+                                        return backToMain('Error occurred');
                                     }
                                 },
                             })),

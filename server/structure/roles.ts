@@ -68,10 +68,12 @@ export default class Role {
         };
     }
 
-    static async getAllPermissions(): Promise<RolePermission[]> {
+    static async getAllPermissions(): Promise<Permission[]> {
         const res = await DB.all('permissions/all');
         if (res.isOk()) {
-            return res.value;
+            return res.value.map(
+                (p: RolePermission) => p.permission as Permission,
+            );
         }
         return [];
     }
@@ -148,21 +150,21 @@ export default class Role {
      *
      * @type {string}
      */
-    name: string;
+    readonly name: string;
     /**
      * Description of the role
      * @date 1/9/2024 - 12:48:41 PM
      *
      * @type {string}
      */
-    description: string | undefined;
+    readonly description: string | undefined;
     /**
      * Rank of the role (higher rank = fewer permissions)
      * @date 1/9/2024 - 12:48:41 PM
      *
      * @type {number}
      */
-    rank: number;
+    readonly rank: number;
     /**
      * The uuid of the role
      * @date 1/9/2024 - 12:48:41 PM
@@ -191,28 +193,27 @@ export default class Role {
      *
      * @returns {Permission[]}
      */
-    async getPermissions(): Promise<RolePermission[]> {
+    async getPermissions(): Promise<Permission[]> {
         const data = await DB.all('permissions/from-role', {
             roleId: this.id,
         });
         if (data.isOk()) {
-            return data.value.filter((p, i, a) => {
-                return a.findIndex((pp) => pp.permission === p.permission) ===
-                    i;
-            });
+            return data.value.map(
+                (d: RolePermission) => d.permission,
+            ) as Permission[];
         }
         return [];
     }
 
-    addPermission(permission: string) {
-        return DB.run('permissions/add-to-role', {
+    addPermission(permission: Permission) {
+        DB.run('permissions/add-to-role', {
             permission,
             roleId: this.id,
         });
     }
 
-    removePermission(permission: string) {
-        return DB.run('permissions/remove-from-role', {
+    removePermission(permission: Permission) {
+        DB.run('permissions/remove-from-role', {
             roleId: this.id,
             permission,
         });
@@ -222,20 +223,11 @@ export default class Role {
         // Remove all permissions
         const permissions = await this.getPermissions();
         for (const permission of permissions) {
-            this.removePermission(permission.permission);
+            this.removePermission(permission);
         }
 
         DB.run('roles/delete', {
             id: this.id,
-        });
-    }
-
-    async save() {
-        return DB.run('roles/update', {
-            id: this.id,
-            name: this.name,
-            description: this.description,
-            rank: this.rank,
         });
     }
 }
