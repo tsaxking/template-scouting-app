@@ -9,6 +9,7 @@ import Role from './structure/roles.ts';
 import { FileUpload } from './middleware/stream.ts';
 import { ReqBody } from './structure/app/req.ts';
 import { validate } from './middleware/data-type.ts';
+import { parseCookie } from '../shared/cookie.ts';
 import {
     Match,
     validateObj,
@@ -47,6 +48,18 @@ app.use('/*', (req, res, next) => {
     log(`[${req.method}] ${req.url}`);
     next();
 });
+
+app.post('/env', (req, res) => {
+    res.json({
+        ENVIRONMENT: env.ENVIRONMENT,
+    });
+});
+
+app.post('/socket-init', (req, res) => {
+    const cookie = req.headers.get('cookie');
+    res.json(parseCookie(cookie));
+});
+
 
 app.static('/client', resolve(__root, './client'));
 app.static('/public', resolve(__root, './public'));
