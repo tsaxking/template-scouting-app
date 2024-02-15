@@ -40,8 +40,7 @@ export const notify = (data: {
  */
 export const alert = async (message: string): Promise<void> => {
     return new Promise<void>((res) => {
-        const id = 'alert-' + Math.random().toString(36).substring(2, 9);
-        const m = new Modal(id);
+        const m = new Modal();
         m.setTitle('Alert');
         const p = document.createElement('p');
         p.innerText = message;
@@ -63,8 +62,14 @@ export const alert = async (message: string): Promise<void> => {
  */
 export const confirm = async (message: string): Promise<boolean | null> => {
     return new Promise<boolean | null>((res) => {
-        const id = 'alert-' + Math.random().toString(36).substring(2, 9);
-        const m = new Modal(id);
+        let resolved = false;
+        const doRes = (val: boolean | null) => {
+            if (resolved) return;
+            resolved = true;
+            res(val);
+            m.hide();
+        };
+        const m = new Modal();
 
         m.setTitle('Confirm');
         m.setBody(message);
@@ -75,15 +80,13 @@ export const confirm = async (message: string): Promise<boolean | null> => {
         yes.innerText = 'Confirm';
         yes.classList.add('btn', 'btn-primary');
         yes.onclick = () => {
-            m.hide();
-            res(true);
+            doRes(true);
         };
 
         no.innerText = 'Cancel';
         no.classList.add('btn', 'btn-secondary');
         no.onclick = () => {
-            m.hide();
-            res(false);
+            doRes(false);
         };
 
         const group = document.createElement('div');
@@ -95,7 +98,7 @@ export const confirm = async (message: string): Promise<boolean | null> => {
 
         m.show();
         m.on('hide', () => {
-            res(null);
+            doRes(null);
             m.destroy();
         });
     });
@@ -108,8 +111,13 @@ export const confirm = async (message: string): Promise<boolean | null> => {
  */
 export const prompt = async (question: string): Promise<string | null> => {
     return new Promise<string | null>((res) => {
-        const id = 'alert-' + Math.random().toString(36).substring(2, 9);
-        const m = new Modal(id);
+        let resolved = false;
+        const doRes = (val: string | null) => {
+            if (resolved) return;
+            resolved = true;
+            res(val);
+        };
+        const m = new Modal();
         m.setTitle('Prompt');
         m.setBody(question);
 
@@ -124,16 +132,16 @@ export const prompt = async (question: string): Promise<string | null> => {
         confirm.innerText = 'Confirm';
         confirm.classList.add('btn', 'btn-primary');
         confirm.onclick = () => {
+            if (input.value === '') doRes(null);
+            else doRes(input.value);
             m.hide();
-            if (input.value === '') return res(null);
-            res(input.value);
         };
 
         cancel.innerText = 'Cancel';
         cancel.classList.add('btn', 'btn-secondary');
         cancel.onclick = () => {
+            doRes(null);
             m.hide();
-            res(null);
         };
 
         const group = document.createElement('div');
@@ -145,7 +153,7 @@ export const prompt = async (question: string): Promise<string | null> => {
 
         m.show();
         m.on('hide', () => {
-            res(null);
+            doRes(null);
             m.destroy();
         });
     });
@@ -156,8 +164,14 @@ export const select = async (
     options: string[],
 ): Promise<number> => {
     return new Promise<number>((res) => {
-        const id = 'alert-' + Math.random().toString(36).substring(2, 9);
-        const m = new Modal(id);
+        let resolved = false;
+        const doRes = (val: number) => {
+            if (resolved) return;
+            resolved = true;
+            res(val);
+        };
+
+        const m = new Modal();
         m.setTitle('Select');
 
         const formGroup = document.createElement('div');
@@ -189,15 +203,15 @@ export const select = async (
         confirm.innerText = 'Confirm';
         confirm.classList.add('btn', 'btn-primary');
         confirm.onclick = () => {
+            doRes(parseInt(select.value));
             m.hide();
-            res(parseInt(select.value));
         };
 
         cancel.innerText = 'Cancel';
         cancel.classList.add('btn', 'btn-secondary');
         cancel.onclick = () => {
+            doRes(-1);
             m.hide();
-            res(-1);
         };
 
         const group = document.createElement('div');
@@ -209,7 +223,7 @@ export const select = async (
 
         m.show();
         m.on('hide', () => {
-            res(-1);
+            doRes(-1);
             m.destroy();
         });
     });
@@ -221,8 +235,15 @@ export const choose = async <A extends string, B extends string>(
     option2: B,
 ): Promise<null | A | B> => {
     return new Promise<null | A | B>((res) => {
-        const id = 'alert-' + Math.random().toString(36).substring(2, 9);
-        const m = new Modal(id);
+        let resolved = false;
+        const doRes = (val: null | A | B) => {
+            if (resolved) return;
+            resolved = true;
+            res(val);
+            m.hide();
+        };
+
+        const m = new Modal();
         m.setTitle('Choose');
 
         m.setBody(question);
@@ -234,22 +255,19 @@ export const choose = async <A extends string, B extends string>(
         a.innerText = option1;
         a.classList.add('btn', 'btn-primary');
         a.onclick = () => {
-            m.hide();
-            res(option1);
+            doRes(option1);
         };
 
         b.innerText = option2;
         b.classList.add('btn', 'btn-primary');
         b.onclick = () => {
-            m.hide();
-            res(option2);
+            doRes(option2);
         };
 
         cancel.innerText = 'Cancel';
         cancel.classList.add('btn', 'btn-secondary');
         cancel.onclick = () => {
-            m.hide();
-            res(null);
+            doRes(null);
         };
 
         const group = document.createElement('div');
@@ -262,7 +280,7 @@ export const choose = async <A extends string, B extends string>(
 
         m.show();
         m.on('hide', () => {
-            res(null);
+            doRes(null);
             m.destroy();
         });
     });

@@ -1,6 +1,5 @@
-import { repeatPrompt, select } from './prompt.ts';
+import { select } from './prompt.ts';
 import { Colors } from '../server/utilities/colors.ts';
-import { sleep } from '../shared/sleep.ts';
 import { attemptAsync, Result } from '../shared/check.ts';
 import { __root, relative, resolve } from '../server/utilities/env.ts';
 import Filter from 'npm:bad-words';
@@ -33,6 +32,8 @@ export const icons = {
     controller: '🎮',
 };
 
+const colorTitle = (str: string) => name(str, Colors.FgBlue);
+
 export const filter = (str: string): boolean => {
     if (str.length < 3) return false;
     const filter = new Filter();
@@ -46,7 +47,7 @@ export const filter = (str: string): boolean => {
 
 export const backToMain = async (message: string) => {
     console.log(message);
-    await sleep(2000);
+    await select('', ['[Ok]']);
     main();
 };
 
@@ -232,6 +233,9 @@ export const selectDir = async (
     return data;
 };
 
+const name = (str: string, color: Colors) =>
+    `${color}[${capitalize(fromCamelCase(str))}]${Colors.Reset}`;
+
 export const main = async () => {
     title('Welcome to the Task Manager!');
     const exit = () => {
@@ -249,10 +253,7 @@ export const main = async () => {
             description?: string;
         }): string => {
             return `  ${s.icon} ${
-                name(
-                    s.value.name,
-                    Colors.FgMagenta,
-                )
+                name(s.value.name, Colors.FgMagenta)
             } ${s.description}`;
         };
 
@@ -291,6 +292,7 @@ export const main = async () => {
         data: {
             icon: string;
             value: () => void;
+            description?: string;
         }[],
         icon: string,
     ) => {
@@ -309,7 +311,7 @@ export const main = async () => {
                                         fromCamelCase(d.value.name),
                                     )
                                 }`,
-                                value: () => {
+                                value: async () => {
                                     title(
                                         `${name} > ${
                                             capitalize(
@@ -322,7 +324,7 @@ export const main = async () => {
                                         return d.value();
                                     } catch (e) {
                                         console.error(e);
-                                        return backToMain('Error occurred');
+                                        return await select('', ['[Ok]']);
                                     }
                                 },
                             })),

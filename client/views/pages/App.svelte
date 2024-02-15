@@ -8,12 +8,16 @@ let target: HTMLDivElement;
 
 export let app: App;
 
-onMount(() => {
-    app.target = target;
-    app.launch(update2024);
-});
+const fns = {
+    launch: (app: App) => {
+        app.target = target;
+        app.launch(update2024);
+    }
+};
+
+$: fns.launch(app);
 </script>
 
-<div bind:this="{target}" class="position-relative">
-    <Timer {app} />
+<div bind:this={target} class="position-relative">
+    <Timer bind:app={app} />
 </div>
