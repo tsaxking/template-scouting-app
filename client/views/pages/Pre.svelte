@@ -4,7 +4,7 @@ import { teamsFromMatch } from '../../../shared/submodules/tatorscout-calculatio
 import type { EventData } from '../../models/app/app';
 import MatchSelector from '../components/MatchSelector.svelte'
 import MenuButtons from '../components/MenuButtons.svelte'
-import ScoutSelect from '../components/ScoutSelect.svelte';
+import ScoutSelect from '../components/ScoutName.svelte';
 import {App} from './../../models/app/app';
 export let matches: TBAMatch[] = [];
 export let scoutTeamOrder: number[] = [];
@@ -35,7 +35,7 @@ $: {
 </script>
 
 <div>
-    <MenuButtons {app}></MenuButtons>
+    <MenuButtons ></MenuButtons>
     <ScoutSelect></ScoutSelect>
     <MatchSelector></MatchSelector>
     <table class="table table-dark table-striped">
