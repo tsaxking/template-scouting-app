@@ -220,33 +220,33 @@ export class Trace {
      */
     static compare(
         trace1: TraceArray,
-        trace2: TraceArray
+        trace2: TraceArray,
     ):
         | {
-              status: 'incorrect-length';
-              l1: number;
-              l2: number;
-          }
+            status: 'incorrect-length';
+            l1: number;
+            l2: number;
+        }
         | {
-              status: 'incorrect-point';
-              i: number;
-              p1: P;
-              p2: P;
-          }
+            status: 'incorrect-point';
+            i: number;
+            p1: P;
+            p2: P;
+        }
         | {
-              status: 'incorrect-action';
-              i: number;
-              a1: Action | 0;
-              a2: Action | 0;
-          }
+            status: 'incorrect-action';
+            i: number;
+            a1: Action | 0;
+            a2: Action | 0;
+        }
         | {
-              status: 'identical';
-          } {
+            status: 'identical';
+        } {
         if (trace1.length !== trace2.length) {
             return {
                 status: 'incorrect-length',
                 l1: trace1.length,
-                l2: trace2.length
+                l2: trace2.length,
             };
         }
 
@@ -259,7 +259,7 @@ export class Trace {
                     status: 'incorrect-point',
                     i,
                     p1,
-                    p2
+                    p2,
                 };
             }
 
@@ -268,13 +268,13 @@ export class Trace {
                     status: 'incorrect-action',
                     i,
                     a1: p1[3],
-                    a2: p2[3]
+                    a2: p2[3],
                 };
             }
         }
 
         return {
-            status: 'identical'
+            status: 'identical',
         };
     }
 
@@ -395,7 +395,7 @@ export class Trace {
             return [
                 +str.slice(0, 2) / 100,
                 +str.slice(2, 4) / 100,
-                +str.slice(4, 10) / 1000
+                +str.slice(4, 10) / 1000,
             ];
         };
 
@@ -414,8 +414,7 @@ export class Trace {
                 const base = chars.length;
                 let num = 0;
                 for (let i = 0; i < str.length; i++) {
-                    num +=
-                        chars.indexOf(str[i]) *
+                    num += chars.indexOf(str[i]) *
                         Math.pow(base, str.length - i - 1);
                 }
                 str = num.toString();
@@ -423,13 +422,13 @@ export class Trace {
                 return new Array(10 - str.length).fill('0').join('') + str;
             },
             encode: (
-                trace: [string | number, string | number, string | number][]
+                trace: [string | number, string | number, string | number][],
             ): string[] => {
-                return trace.map(p => p.map(Trace.old.compress).join(' '));
+                return trace.map((p) => p.map(Trace.old.compress).join(' '));
             },
             decode: (trace: string[]) => {
                 return trace.map(Trace.old.decompress);
-            }
+            },
         };
     }
 }

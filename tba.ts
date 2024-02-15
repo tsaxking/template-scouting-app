@@ -1182,7 +1182,7 @@ export type TBATeamEventStatus = {
   };
 
 export const teamsFromMatch = (
-    match: TBAMatch
+    match: TBAMatch,
 ): [number, number, number, number, number, number] => {
     return match.alliances.red.team_keys
         .concat(match.alliances.blue.team_keys)
@@ -1204,3 +1204,4 @@ export const matchSort = (a: TBAMatch, b: TBAMatch) => {
     if (+a.match_number > +b.match_number) return 1;
     return 0;
 }
+export type CompLevel = 'pr' | 'qm' | 'qf' | 'sf' | 'f';
