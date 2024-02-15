@@ -27,7 +27,7 @@ import {
 } from '../../../shared/submodules/tatorscout-calculations/trace';
 import { generate2024App } from './2024-app';
 import { ServerRequest } from '../../utilities/requests';
-import { alert, confirm } from '../../utilities/notifications';
+import { alert, choose, confirm } from '../../utilities/notifications';
 import { Assignment } from '../../../shared/submodules/tatorscout-calculations/scout-groups';
 import {
     TBAEvent,
@@ -456,11 +456,22 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
         }
 
         if (App.cache()) {
-            confirm(
-                'You have a cached match. Would you like to restore it?'
+            choose(
+                'You have a cached match. Would you like to restore it or destroy it?',
+                'Restore cached',
+                'Delete cached',
             ).then((res) => {
-                if (res) return App.restore(this as App<any, any, any>);
-                else return App.clearCache();
+                switch (res) {
+                    case 'Delete cached':
+                        App.clearCache();
+                        break;
+                    case 'Restore cached':
+                        App.restore(this as App<any, any, any>);
+                        break;
+                    case null:
+                        App.clearCache();
+                        break;
+                }
             });
         }
     }
@@ -509,7 +520,9 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
             this.cancel.style.right = '10px';
             this.cancel.style.zIndex = '100';
             this.cancel.innerHTML = 'Cancel';
-            this.cancel.onclick = () => {
+            this.cancel.onclick = async () => {
+                const confirmed = await confirm('Are you sure you want to cancel?');
+                if (!confirmed) return;
                 this.destroy();
                 this.emit('restart');
             };
