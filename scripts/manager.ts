@@ -1,6 +1,5 @@
-import { repeatPrompt, select } from './prompt.ts';
+import { select } from './prompt.ts';
 import { Colors } from '../server/utilities/colors.ts';
-import { sleep } from '../shared/sleep.ts';
 import { attemptAsync, Result } from '../shared/check.ts';
 import { __root, relative, resolve } from '../server/utilities/env.ts';
 import Filter from 'npm:bad-words';
@@ -33,6 +32,8 @@ export const icons = {
     controller: '🎮',
 };
 
+const colorTitle = (str: string) => name(str, Colors.FgBlue);
+
 export const filter = (str: string): boolean => {
     if (str.length < 3) return false;
     const filter = new Filter();
@@ -46,7 +47,7 @@ export const filter = (str: string): boolean => {
 
 export const backToMain = async (message: string) => {
     console.log(message);
-    await sleep(2000);
+    await select('', ['[Ok]']);
     main();
 };
 
@@ -232,6 +233,9 @@ export const selectDir = async (
     return data;
 };
 
+const name = (str: string, color: Colors) =>
+    `${color}[${capitalize(fromCamelCase(str))}]${Colors.Reset}`;
+
 export const main = async () => {
     title('Welcome to the Task Manager!');
     const exit = () => {
@@ -239,65 +243,120 @@ export const main = async () => {
         Deno.exit(0);
     };
 
+    if (Deno.args.includes('-h') || Deno.args.includes('--help')) {
+        console.log('This is a task manager for the server');
+        console.log('It allows you to perform various tasks');
+
+        const map = (s: {
+            icon: string;
+            value: () => Promise<void>;
+            description?: string;
+        }): string => {
+            return `  ${s.icon} ${
+                name(s.value.name, Colors.FgMagenta)
+            } ${s.description}`;
+        };
+
+        const doMap = (
+            data: {
+                icon: string;
+                value: () => Promise<void>;
+                description?: string;
+            }[],
+        ) => data.map(map);
+
+        console.log(
+            [
+                // blue('Server Controller')
+                // ...serverController.map((s) => '\t' + s.description),
+                colorTitle('General'),
+                ...doMap(general),
+                colorTitle('Accounts'),
+                ...doMap(accounts),
+                colorTitle('Roles'),
+                ...doMap(roles),
+                colorTitle('Statuses'),
+                ...doMap(statuses),
+                colorTitle('Permissions'),
+                ...doMap(permissions),
+                colorTitle('Databases'),
+                ...doMap(databases),
+            ].join('\n'),
+        );
+
+        await select('', ['[Exit]']).then(exit);
+    }
+
     const makeObj = (
         name: string,
         data: {
             icon: string;
             value: () => void;
+            description?: string;
         }[],
         icon: string,
     ) => {
-        return {
-            name: `${icon} [${name}]`,
-            value: async () => {
-                title(name);
-                const res = await select(`Please select a task for ${name}`, [
-                    ...data.map((d) => ({
-                        name: `${d.icon} ${
-                            capitalize(
-                                fromCamelCase(d.value.name),
-                            )
-                        }`,
-                        value: () => {
-                            title(
-                                `${name} > ${
+        if (!data.length) return [];
+        return [
+            {
+                name: `${icon} [${name}]`,
+                value: async () => {
+                    title(name);
+                    const res = await select(
+                        `Please select a task for ${name}`,
+                        [
+                            ...data.map((d) => ({
+                                name: `${d.icon} ${
                                     capitalize(
                                         fromCamelCase(d.value.name),
                                     )
                                 }`,
-                            );
-                            return d.value();
-                        },
-                    })),
-                    {
-                        name: `${icons.back} [Back]`,
-                        value: main,
-                    },
-                    {
-                        name: `${icons.exit} Exit`,
-                        value: exit,
-                    },
-                ]);
+                                value: async () => {
+                                    title(
+                                        `${name} > ${
+                                            capitalize(
+                                                fromCamelCase(d.value.name),
+                                            )
+                                        }`,
+                                    );
 
-                if (res) {
-                    return res();
-                } else {
-                    backToMain('No tasks selected');
-                }
+                                    try {
+                                        return d.value();
+                                    } catch (e) {
+                                        console.error(e);
+                                        return await select('', ['[Ok]']);
+                                    }
+                                },
+                            })),
+                            {
+                                name: `${icons.back} [Back]`,
+                                value: main,
+                            },
+                            {
+                                name: `${icons.exit} Exit`,
+                                value: exit,
+                            },
+                        ],
+                    );
+
+                    if (res) {
+                        return res();
+                    } else {
+                        backToMain('No tasks selected');
+                    }
+                },
             },
-        };
+        ];
     };
 
     const fn = await select<() => unknown>('Please select a task', [
-        ...(serverController.length
-            ? [makeObj('Server Controller', serverController, icons.controller)]
-            : []),
-        makeObj('General', general, icons.entry),
-        makeObj('Accounts', accounts, icons.account),
-        makeObj('Roles', roles, icons.role),
-        makeObj('Statuses', statuses, icons.status),
-        makeObj('Permissions', permissions, icons.permission),
-        makeObj('Databases', databases, icons.database),
+        ...makeObj('Server Controller', serverController, icons.controller),
+        ...makeObj('General', general, icons.entry),
+        ...makeObj('Accounts', accounts, icons.account),
+        ...makeObj('Roles', roles, icons.role),
+        ...makeObj('Statuses', statuses, icons.status),
+        ...makeObj('Permissions', permissions, icons.permission),
+        ...makeObj('Databases', databases, icons.database),
         {
             name: `${icons.exit} Exit`,
             value: exit,

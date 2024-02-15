@@ -3,6 +3,7 @@ import { App } from '../../models/app/app';
 import Checkboxes from '../components/app/Checkboxes.svelte';
 import type { BootstrapColor } from '../../submodules/colors/color';
 import { capitalize, fromCamelCase } from '../../../shared/text';
+import { Trace } from '../../../shared/submodules/tatorscout-calculations/trace';
 
 export let app: App;
 export let active: string;
@@ -71,8 +72,16 @@ let data: {
     }
 };
 
-const open = active => {
+const open = (active: string) => {
     if (active !== 'Post') return;
+
+    const traceArray = app.pull();
+    const secondsNotMoving = Trace.secondsNotMoving(traceArray, false);
+    if (secondsNotMoving > 20) {
+        // robot likely died, was intermitent, or had problems driving
+        data.robotDied.value = true;
+    }
+
     const res = app.drawRecap(canvas);
     if (res.isErr()) console.warn(res.error);
     if (res.isOk()) {
@@ -87,8 +96,9 @@ const open = active => {
             }
         });
         data.autoMobility.value = app.parsed.mobility;
-        data = data;
     }
+    // reset the view
+    data = data;
 };
 
 let commentsSections: string[] = [];
@@ -100,6 +110,7 @@ $: {
 }
 
 let generalComment: string = '';
+let autoComment: string = '';
 </script>
 
 <div class="container">
@@ -140,6 +151,19 @@ let generalComment: string = '';
             </label>
         </div>
     </div>
+    <div class="row mb-3">
+        <div class="form-floating">
+            <textarea
+                class="form-control"
+                rows="5"
+                id="textarea-auto"
+                bind:value="{autoComment}"
+            ></textarea>
+            <label for="textarea-auto">
+                Please leave a comment here on how the robot performed in the autonomous period. (If it missed shots because notes collided in mid-air, etc.)
+            </label>
+        </div>
+    </div>
     <div class="row">
         <button
             class="btn btn-success btn-lg w-100"
@@ -154,7 +178,8 @@ let generalComment: string = '';
                         easilyDefended: data.easilyDefended.comment,
                         robotDied: data.robotDied.comment,
                         problemsDriving: data.problemsDriving.comment,
-                        general: generalComment
+                        general: generalComment,
+                        audo: autoComment
                     }
                 })}">Submit Match</button
         >

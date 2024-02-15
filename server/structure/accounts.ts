@@ -23,6 +23,7 @@ import { validate } from '../middleware/data-type.ts';
 import { Role as RoleObj } from '../../shared/db-types.ts';
 import { Permission } from '../../shared/permissions.ts';
 import { attemptAsync } from '../../shared/check.ts';
+import { RolePermission } from '../../shared/db-types.ts';
 
 /**
  * Properties that can be changed dynamically
@@ -251,7 +252,7 @@ export default class Account {
 
             if (
                 permission.every((p: string) =>
-                    permissions.find((_p) => _p === p)
+                    permissions.find((_p) => _p.permission === p)
                 )
             ) {
                 return next();
@@ -272,7 +273,7 @@ export default class Account {
      * @param {Next} next
      * @returns {*}
      */
-    static async isSignedIn(req: Req<null>, res: Res, next: Next) {
+    static async isSignedIn(req: Req<unknown>, res: Res, next: Next) {
         const account = await req.session.getAccount();
 
         if (!account) {
@@ -520,11 +521,27 @@ export default class Account {
             firstName,
             lastName,
             email,
-            verified: 1,
-            verification: '',
-            created: Date.now(),
+            verified: 0,
+            verification,
+            created,
             phoneNumber: '',
         });
+
+        const a = new Account({
+            id,
+            username,
+            key,
+            salt,
+            firstName,
+            lastName,
+            email,
+            verified: 0,
+            verification,
+            created,
+            phoneNumber: '',
+        });
+
+        a.sendVerification();
 
         return 'created';
     }
@@ -886,11 +903,16 @@ export default class Account {
      *
      * @returns {Permission[]}
      */
-    async getPermissions(): Promise<Permission[]> {
+    async getPermissions(): Promise<RolePermission[]> {
         const roles = await this.getRoles();
         return (
             await Promise.all(roles.map((role) => role.getPermissions()))
         ).flat();
+    }
+
+    async hasPermission(permission: Permission) {
+        const permissions = await this.getPermissions();
+        return permissions.some((p) => p.permission === permission);
     }
 
     /**

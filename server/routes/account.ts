@@ -4,13 +4,14 @@ import { Status } from '../utilities/status.ts';
 import Role from '../structure/roles.ts';
 import { messages, StatusId } from '../../shared/status-messages.ts';
 import { validate } from '../middleware/data-type.ts';
+import env from '../utilities/env.ts';
 
 export const router = new Route();
 
 // gets the account from the session
 router.post('/get-account', async (req, res) => {
-    // const account = await req.session.getAccount();
-    const account = await Account.fromUsername('tsaxking');
+    const account = await req.session.getAccount();
+    // const account = await Account.fromUsername('tsaxking');
 
     if (account) {
         const safe = await account.safe({
@@ -31,7 +32,9 @@ router.post('/get-all-roles', (req, res) => {
 
 router.get('/sign-in', (req, res, next) => {
     if (req.session.accountId) return next();
-    res.sendTemplate('entries/account/sign-in');
+    res.sendTemplate('entries/account/sign-in', {
+        RECAPTCHA_SITE_KEY: env.RECAPTCHA_SITE_KEY,
+    });
 });
 
 // router.get('/sign-up', (_req, res) => {
