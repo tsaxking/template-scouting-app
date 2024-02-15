@@ -249,6 +249,19 @@ export type EventData = {
 export class App<a extends Action = Action, z extends Zones = Zones, p extends TraceParse = TraceParse> {
     private static $eventData?: EventData;
 
+    public static matchData: {
+        compLevel: 'pr' | 'qm' | 'qf' | 'sf' | 'f';
+        number: number;
+        teamNumber: number;
+    } = {
+        compLevel: 'pr',
+        number: 0,
+        teamNumber: 0
+    };
+
+    public static scoutName = '';
+
+    public static group = -1;
 
     public static build(year: 2024, alliance: 'red' | 'blue' | null = null) {
         switch (year) {
@@ -475,16 +488,6 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
             });
         }
     }
-
-    matchData: {
-        compLevel: 'pr' | 'qm' | 'qf' | 'sf' | 'f';
-        number: number;
-        teamNumber: number;
-    } = {
-        compLevel: 'pr',
-        number: 0,
-        teamNumber: 0
-    };
 
     /**
      * Description placeholder
