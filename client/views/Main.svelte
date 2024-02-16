@@ -7,12 +7,9 @@ import Post from './pages/Post.svelte';
 import Pre from './pages/Pre.svelte';
 import { App } from '../models/app/app';
 import type { EventData } from '../models/app/app';
-import type { TBAMatch } from '../../shared/submodules/tatorscout-calculations/tba';
 import Upload from './pages/Upload.svelte';
 
 let event: EventData;
-let currentMatch: TBAMatch | undefined = undefined;
-let scoutingGroup = 0;
 
 App.getEventData().then(data => {
     if (data.isOk()) {
@@ -38,7 +35,7 @@ const domain = 'http://localhost:3000';
 <main>
     <NavTabs {tabs} {active} on:change="{e => (active = e.detail)}" />
 
-    <Page {active} {domain} title="Pre"><Pre {event} {currentMatch} {app}></Pre></Page
+    <Page {active} {domain} title="Pre"><Pre></Pre></Page
     >
     <Page {active} {domain} title="App"><AppView {app}></AppView></Page>
     <Page {active} {domain} title="Post"><Post {app} {active}></Post></Page>

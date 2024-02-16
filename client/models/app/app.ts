@@ -37,7 +37,7 @@ import {
 import { Icon } from '../canvas/material-icons';
 import { SVG } from '../canvas/svg';
 import { Match } from '../../../shared/submodules/tatorscout-calculations/trace'
-import { downloadText } from '../../utilities/downloads';
+import { downloadText, loadFileContents } from '../../utilities/downloads';
 
 /**
  * Description placeholder
@@ -238,6 +238,116 @@ export type EventData = {
     event: TBAEvent;
 };
 
+class MatchData {
+    public static get(): MatchData {
+        const d = window.localStorage.getItem('matchData');
+        if (!d) return new MatchData();
+        const data = JSON.parse(d);
+        return new MatchData(
+            data.matchNumber,
+            data.teamNumber,
+            data.alliance,
+            data.compLevel,
+        );
+    }
+
+    constructor(
+        public $matchNumber: number = 0,
+        public $teamNumber: number = 0,
+        public $alliance: 'red' | 'blue' | null = null,
+        public $compLevel: 'pr' | 'qm' | 'qf' | 'sf' | 'f' = 'pr',
+    ) {}
+    
+    public get matchNumber() {
+        return this.$matchNumber;
+    }
+
+    public set matchNumber(matchNumber: number) {
+        this.$matchNumber = matchNumber;
+        this.save();
+    }
+
+    public get teamNumber() {
+        return this.$teamNumber;
+    }
+
+    public set teamNumber(teamNumber: number) {
+        this.$teamNumber = teamNumber;
+        this.save();
+    }
+
+    public get alliance() {
+        return this.$alliance;
+    }
+
+    public set alliance(alliance: 'red' | 'blue' | null) {
+        this.$alliance = alliance;
+        this.save();
+    }
+
+    public get compLevel() {
+        return this.$compLevel;
+    }
+
+    public set compLevel(compLevel: 'pr' | 'qm' | 'qf' | 'sf' | 'f') {
+        this.$compLevel = compLevel;
+        this.save();
+    }
+    private save() {
+        window.localStorage.setItem('matchData', JSON.stringify({
+            matchNumber: this.$matchNumber,
+            teamNumber: this.$teamNumber,
+            alliance: this.$alliance,
+            compLevel: this.$compLevel
+        }));
+    }
+}
+
+class FieldOrientation {
+    public static get() {
+        const d = window.localStorage.getItem('fieldOrientation');
+        if (!d) return new FieldOrientation();
+        const data = JSON.parse(d);
+        return new FieldOrientation(data.flipX, data.flipY);
+    }
+
+    constructor(
+        private $flipX = false,
+        private $flipY = false,
+    ) {}
+
+    private save() {
+        window.localStorage.setItem('fieldOrientation', JSON.stringify({
+            flipX: this.$flipX,
+            flipY: this.$flipY,
+        }));
+    }
+
+    public get flipX() {
+        return this.$flipX;
+    }
+
+    public set flipX(flipX: boolean) {
+        this.$flipX = flipX;
+        this.save();
+    }
+
+    public get flipY() {
+        return this.$flipY;
+    }
+
+    public set flipY(flipY: boolean) {
+        this.$flipY = flipY;
+        this.save();
+    }
+}
+
+type Area = {
+    area: Polygon | Circle;
+    color: Color;
+    condition: (shape: Polygon) => boolean;
+};
+
 /**
  * The full scouting app, including the canvas and all the buttons
  * @date 1/9/2024 - 3:08:20 AM
@@ -249,20 +359,12 @@ export type EventData = {
 export class App<a extends Action = Action, z extends Zones = Zones, p extends TraceParse = TraceParse> {
     private static $eventData?: EventData;
 
-    public static matchData: {
-        compLevel: 'pr' | 'qm' | 'qf' | 'sf' | 'f';
-        number: number;
-        teamNumber: number;
-    } = {
-        compLevel: 'pr',
-        number: 0,
-        teamNumber: 0
-    };
-
+    public static matchData = MatchData.get();
     public static scoutName = '';
 
     public static group = -1;
 
+    public static current?: App<any, any, any>;
     public static build(year: 2024, alliance: 'red' | 'blue' | null = null) {
         switch (year) {
             case 2024:
@@ -323,6 +425,25 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
 
     static clearCache() {
         window.localStorage.removeItem('app');
+    }
+
+    static async fromJSON() {
+        return attemptAsync(async () => {
+            const files = await loadFileContents();
+            if (files.isErr()) throw files.error;
+            const data = files.value.map(d => {
+                try {
+                    const data = JSON.parse(d.text);
+                    if (!data.trace) throw new Error('Data is not correct');
+                    return data;
+                } catch (e) {
+                    console.error(e);
+                    return null;
+                }
+            }).filter(Boolean) as Match[];
+
+            App.upload(...data);
+        });
     }
 
     static async upload(...matches: Match[]) {
@@ -427,8 +548,8 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
             }
         >,
     ) {
+        App.current = this;
         this.canvas.$ctx.canvas.style.position = 'absolute';
-
 
         this.background = new Img(`/public/pictures/${this.year}field.png`, {
             x: 0,
@@ -547,28 +668,38 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
 
     private readonly cancel = document.createElement('button');
 
-    private readonly $fieldOrientation: {
-        x: boolean; // flip around y axis
-        y: boolean; // flip around x axis
-    } = {
-        x: false,
-        y: false,
-    };
+    private static readonly $fieldOrientation = FieldOrientation.get();
 
-    get flipX() {
-        return this.$fieldOrientation.x;
+    static get flipX() {
+        return App.$fieldOrientation.flipX;
     }
 
-    set flipX(flip: boolean) {
-        this.$fieldOrientation.x = flip;
+    static set flipX(flip: boolean) {
+        App.$fieldOrientation.flipX = flip;
+
+        // it's possible to flip in the middle of a match, so we need to update the tick's location data
+
+        if (App.current) {
+            for (const t of App.current.ticks) {
+                t.point = t.point ? [flip ? 1 - t.point[0] : t.point[0], t.point[1]] : null;
+            }
+        }
     }
 
-    get flipY() {
-        return this.$fieldOrientation.y;
+    static get flipY() {
+        return App.$fieldOrientation.flipY;
     }
 
-    set flipY(flip: boolean) {
-        this.$fieldOrientation.y = flip;
+    static set flipY(flip: boolean) {
+        App.$fieldOrientation.flipY = flip;
+
+        // it's possible to flip in the middle of a match, so we need to update the tick's location data
+
+        if (App.current) {
+            for (const t of App.current.ticks) {
+                t.point = t.point ? [t.point[0], flip ? 1 - t.point[1] : t.point[1]] : null;
+            }
+        }
     }
 
     /**
@@ -580,6 +711,24 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
     private setView() {
         const { target } = this;
         if (!target) return;
+
+        this.background.mirror.x = App.flipX;
+        this.background.mirror.y = App.flipY;
+
+
+        for (const zone of Object.values(this.areas)) {
+            (zone as Area).area.properties.mirror = {
+                x: App.flipX,
+                y: App.flipY,
+            };
+        }
+
+        if (this.border) {
+            this.border.properties.mirror = {
+                x: App.flipX,
+                y: App.flipY,
+            }
+        }
 
         if (target.clientWidth > target.clientHeight * 2) {
             const xOffset = (target.clientWidth - target.clientHeight * 2) / 2;
@@ -593,7 +742,12 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
             this.yOffset = 0;
 
             for (const o of this.gameObjects) {
-                const { element, x, y } = o;
+                const { element } = o;
+                let { x, y } = o;
+
+                x = App.flipY ? 1 - x : x; // flip around y axis
+                y = App.flipX ? 1 - y : y; // flip around x axis
+
                 element.style.left = `${x * this.canvas.width + xOffset}px`;
                 element.style.top = `${y * this.canvas.height}px`;
             }
@@ -609,7 +763,12 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
             this.yOffset = yOffset;
 
             for (const o of this.gameObjects) {
-                const { element, x, y } = o;
+                const { element } = o;
+                let { x, y } = o;
+
+                x = App.flipX ? 1 - x : x; // flip around y axis
+                y = App.flipY ? 1 - y : y; // flip around x axis
+
                 element.style.left = `${x * this.canvas.width}px`;
                 element.style.top = `${y * this.canvas.height + yOffset}px`;
             }
@@ -741,11 +900,7 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
     }[] = [];
 
     public readonly areas = {} as {
-        [key in z]: {
-            area: Polygon | Circle;
-            color: Color;
-            condition: (shape: Polygon) => boolean;
-        };
+        [key in z]: Area;
     };
 
     /**
@@ -1373,7 +1528,16 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
     pull(): TraceArray {
         return this.ticks
             .map((t, i) => {
-                const [x, y] = t.point ?? [-1, -1];
+                let p = t.point;
+                if (p) {
+                    p = [
+                        App.flipX ? 1 - p[0] : p[0],
+                        App.flipY ? 1 - p[1] : p[1],
+                    ];
+                } else {
+                    p = [-1,-1];
+                }
+                const [x, y] = p;
                 return [i, round(x), round(y), t.get()?.action.abbr ?? 0];
             })
             .filter((p, i, a) => {
@@ -1415,7 +1579,21 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
             img.options.x = 0;
             img.options.y = 0;
 
-            const d = this.pull();
+            img.mirror = {
+                x: App.flipX,
+                y: App.flipY,
+            };
+
+            // this corrects for field orientation flipping, but this is an issue because it's not the same that the user sees on the previous screen
+            const d: TraceArray = this.pull().map((p) => {
+                const [i, x, y, a] = p;
+                return [
+                    i,
+                    App.flipX ? 1 - x : x,
+                    App.flipY ? 1 - y : y,
+                    a,
+                ];
+            });
             const container = new Container();
 
             container.children = d.map((p, i, a) => {
@@ -1494,12 +1672,13 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
             comments: include.comments,
             checks: include.checks,
             date: Date.now(),
-            scout: '', // TODO: implement scout name
+            scout: App.scoutName,
             eventKey: App.$eventData?.eventKey || 'no-event',
-            matchNumber: 0, // TODO: implement match number
-            teamNumber: 0, // TODO: implement team number
-            group: 0, // TODO: implement scout group
-            compLevel: 'qm', // TODO: implement comp level
+            matchNumber: App.matchData.matchNumber,
+            teamNumber: App.matchData.teamNumber,
+            group: App.group as 0 | 1 | 2 | 3 | 4 | 5,
+            compLevel: App.matchData.compLevel
+            // don't need orientation, because it's corrected in this.pull()
         };
 
         downloadText(
@@ -1518,3 +1697,8 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
         location.reload();
     }
 }
+
+// for use in devtools
+Object.assign(window, {
+    App
+});

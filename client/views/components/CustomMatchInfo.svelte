@@ -1,9 +1,10 @@
 <script lang="ts">
     import { createEventDispatcher } from 'svelte';
+import { App } from '../../models/app/app';
 
     export let compLevel: 'pr' | 'qm' | 'qf' | 'sf' | 'f' = 'qm';
-    export let matchNum: number;
-    export let teamNum: number;
+    export let matchNum: string = String(App.matchData.matchNumber || '');
+    export let teamNum: number = App.matchData.teamNumber;
     export let teams: {
         number: number;
         name: string;
@@ -36,7 +37,8 @@
 <div class="form-floating mb-3">
     <select class="form-select" aria-label="Select Team" id="TeamNumberSelect" bind:value={teamNum}>
         {#each teams as team}
-            <option value={team.number}>{team.name}</option>
+            <option value={team.number}>{team.number} | {team.name}</option>
         {/each}
     </select>
+    <label for="TeamNumberSelect">Select team</label>
 </div>
