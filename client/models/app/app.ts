@@ -234,6 +234,11 @@ export class Tick<actions = Action> {
     public prev(): Tick | undefined {
         return this.app.ticks[this.index - 1];
     }
+
+    public reset(): void {
+        this.clear();
+        this.point = null;
+    }
 }
 
 export type EventData = {
@@ -1422,7 +1427,8 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
                 object.undo();
             }, 1000);
         };
-        const end = () => {
+        const end = (e?: MouseEvent | TouchEvent | Event) => {
+            e?.preventDefault();
             if (interval) clearTimeout(interval);
         };
 
@@ -1544,38 +1550,47 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
             push(x, y);
         };
 
+        // e.preventDefault() to prevent scrolling, zooming, reloding, and going back
+
         this.canvasEl.addEventListener('mousedown', (e) => {
+            e.preventDefault();
             const [[x, y]] = this.canvas.getXY(e);
             down(x, y);
         });
 
         this.canvasEl.addEventListener('mousemove', (e) => {
+            e.preventDefault();
             const [[x, y]] = this.canvas.getXY(e);
             move(x, y);
         });
 
         this.canvasEl.addEventListener('mouseup', (e) => {
+            e.preventDefault();
             const [[x, y]] = this.canvas.getXY(e);
             up(x, y);
         });
 
         this.canvasEl.addEventListener('touchstart', (e) => {
+            e.preventDefault();
             const [[x, y]] = this.canvas.getXY(e);
             down(x, y);
         });
 
         this.canvasEl.addEventListener('touchmove', (e) => {
+            e.preventDefault();
             const [[x, y]] = this.canvas.getXY(e);
             move(x, y);
         });
 
         this.canvasEl.addEventListener('touchend', (_e) => {
+            _e.preventDefault();
             this.isDrawing = false;
             // const [[x, y]] = this.canvas.getXY(e);
             // up(x, y);
         });
 
         this.canvasEl.addEventListener('touchcancel', (_e) => {
+            _e.preventDefault();
             this.isDrawing = false;
             // const [[x, y]] = this.canvas.getXY(e);
             // up(x, y);
@@ -1774,8 +1789,14 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
 
     // TODO: Destroy without reloading
     destroy() {
-        App.clearCache();
-        location.reload();
+        for (const t of this.ticks) t.reset();
+        this.built = false;
+        this.emit('stop');
+        this.currentTime = 0;
+        this.build();
+
+        // App.clearCache();
+        // location.reload();
     }
 }
 
