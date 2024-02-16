@@ -337,6 +337,30 @@ export class Trace {
             .filter(p => p !== null) as number[];
     }
 
+    static secondsNotMoving(trace: TraceArray, includeAuto: boolean): number {
+        let t: TraceArray = trace.slice(); // clone
+        // auto = 0-65
+        t = includeAuto ? t.filter(Trace.filterIndex(0, 600)) : t.filter(Trace.filterIndex(65, 600));
+
+        let notMoving = 0; // in quarter seconds
+
+        for (let i = 0; i < t.length - 1; i++) {
+            const [, x1, y1] = t[i];
+            const [, x2, y2] = t[i + 1];
+
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < 0.1) {
+                notMoving++;
+            }
+        }
+
+        return notMoving / 4;
+    }
+
     // static get velocity() {
     //     return {
     //         map: (trace: TraceArray) => {
