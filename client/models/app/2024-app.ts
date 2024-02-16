@@ -224,6 +224,35 @@ export const generate2024App = (
 
     Object.assign(window, { app });
 
+    app.on('action', (a) => {
+        let data = 'help';
+        const type = 'material-icons';
+        switch (a.action) {
+            case 'Red Amp':
+            case 'Blue Amp':
+                data = 'campaign';
+                break;
+            case 'Red Speaker':
+            case 'Blue Speaker':
+                data = 'speaker';
+                break;
+            case 'Red Source':
+            case 'Blue Source':
+                data = 'back_hand';
+                break;
+            case 'Red Trap':
+            case 'Blue Trap':
+                data = 'place_item';
+                break;
+            case 'Red Climb':
+            case 'Blue Climb':
+                data = 'dry_cleaning';
+                break;
+        }
+
+        App.actionAnimation(type, data, a.alliance, a.point);
+    });
+
     return app;
 };
 
