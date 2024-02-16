@@ -370,6 +370,22 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
 
     public static group = -1;
 
+    static async changeMatch(i: number) {
+        const currentMatch = App.matchData.matchNumber;
+        const nextMatch = currentMatch + i;
+        const res = await App.getEventData();
+        if (res.isOk()) {
+            const { matches, assignments } = res.value;
+            const match = matches.find((m) => m.match_number === nextMatch);
+            if (match) {
+                App.matchData.matchNumber = nextMatch;
+                App.matchData.teamNumber = assignments[matches.indexOf(match)];
+                App.matchData.alliance = match.alliances.red.team_keys.includes(`frc${App.matchData.teamNumber}`) ? 'red' : 'blue';
+                return match;
+            }
+        }
+    }
+
     public static current?: App<any, any, any>;
     public static build(year: 2024, alliance: 'red' | 'blue' | null = null) {
         switch (year) {

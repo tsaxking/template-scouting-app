@@ -10,18 +10,34 @@ import { createEventDispatcher } from "svelte";
         scoutIndex?: number;
     });
 
-    let matches: M[] = [];
+    export let matches: TBAMatch[] = [];
+
+    let customMatches: M[] = [];
     let currentMatch: M | undefined = undefined;
 
 
     const fns = {
+        setCustom: async (m: TBAMatch[]) => {
+            const res = await App.getEventData();
+            if (res.isErr()) return console.error(res.error);
+            const eventData = res.value;
+
+            customMatches = m.map((match, i) => {
+                const teams = match.alliances.red.team_keys.concat(match.alliances.blue.team_keys).map(t => parseInt(t.slice(3)));
+                return {
+                    ...match,
+                    teams,
+                    scoutIndex: teams.findIndex(t => t === eventData.assignments.matchAssignments[i][App.group])
+                };
+            }) as M[];
+        },
         select: async (matchIndex: number, teamIndex?: number) => {
             d('select', { matchIndex, teamIndex });
             const res = await App.getEventData();
             if (res.isErr()) return console.error(res.error);
             const eventData = res.value;
 
-            currentMatch = matches[matchIndex];
+            currentMatch = customMatches[matchIndex];
             let team: number | undefined = undefined;
 
             if (teamIndex === undefined) {
@@ -36,9 +52,11 @@ import { createEventDispatcher } from "svelte";
             App.matchData.teamNumber = team;
             App.matchData.alliance = currentMatch.alliances.red.team_keys.includes(`frc${App.matchData.teamNumber}`) ? 'red' : 'blue';
 
-            matches = matches; // force view update
+            customMatches = customMatches; // force view update
         }
     };
+
+    $: fns.setCustom(matches);
 </script>
 
 <table class="table table-dark table-striped table-hover">
@@ -55,13 +73,13 @@ import { createEventDispatcher } from "svelte";
         </tr>
     </thead>
     <tbody>
-        {#each matches as match, i}
+        {#each customMatches as match, i}
             <tr
                 class="
                     cursor-pointer
                     {
                         // if this is the current match, do bg-secondary on this row
-                        matches.findIndex(
+                        customMatches.findIndex(
                             m =>
                                 m.comp_level == currentMatch?.comp_level &&
                                 m.match_number == currentMatch?.match_number
