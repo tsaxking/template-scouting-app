@@ -3,11 +3,8 @@
     import { createEventDispatcher } from 'svelte';
     import { Modal } from '../../utilities/modals';
     import CustomMatchInfo from './CustomMatchInfo.svelte';
-import type { TBATeam } from '../../../shared/submodules/tatorscout-calculations/tba';
 import AssignedTeams from './AssignedTeams.svelte';
 import FieldOrientation from './FieldOrientation.svelte';
-
-    export let teams: TBATeam[] = [];
     let matchNum: number;
     let teamNum: number;
     let compLevel: string;
@@ -19,13 +16,19 @@ import FieldOrientation from './FieldOrientation.svelte';
 
 
     const fns = {
-        getAssignedTeams: async (groupNum: number) => {
+        getAssignedTeams: async (groupNum: number): Promise<void | number[]> => {
             const data = await App.getEventData()
             if(data.isOk()){
                 assignedTeams = data.value.assignments.groups[groupNum];
-            }  
+                return assignedTeams;
+            }
+            return;
         },
-        matchInfo: () => {
+        matchInfo: async () => {
+            const res = await App.getEventData();
+            if (res.isErr()) return console.error(res.error);
+            const eventData = res.value;
+
             const m = new Modal();
             m.setTitle('Enter Custom Match Info');
 
@@ -39,10 +42,10 @@ import FieldOrientation from './FieldOrientation.svelte';
             const body = new CustomMatchInfo({
                 target: m.el.querySelector('.modal-body'),
                 props: {
-                    teams: teams.map(t => ({number: t.team_number, name: t.nickname})),
+                    teams: eventData.teams.map(t => ({number: t.team_number, name: t.nickname})),
                     compLevel: compLevel as 'pr' | 'qm' | 'qf' | 'sf' | 'f',
                     teamNum: teamNum,
-                    matchNum: matchNum
+                    matchNum: String(matchNum)
                 }
             });
 
@@ -51,21 +54,31 @@ import FieldOrientation from './FieldOrientation.svelte';
             });
 
             body.$on('matchNum', (e) => {
-                data.matchNum = +e.detail;
+                data.matchNum = Number(e.detail);
             });
 
             body.$on('teamNum', (e) => {
-                data.teamNum = +e.detail;
+                data.teamNum = e.detail;
             });
 
             const save = document.createElement('button');
             save.classList.add('btn', 'btn-primary');
             save.textContent = 'Save';
             save.addEventListener('click', () => {
-                App.matchData.compLevel = data.compLevel;
-                App.matchData.number = data.matchNum;
-                App.matchData.teamNumber = data.teamNum;
                 m.hide();
+                App.matchData.compLevel = data.compLevel || App.matchData.compLevel;
+                App.matchData.matchNumber = data.matchNum || App.matchData.matchNumber;
+                App.matchData.teamNumber = data.teamNum || App.matchData.teamNumber;
+                // App.matchData.alliance = eventData.matches.
+
+                const match = eventData.matches.find(m => m.comp_level === data.compLevel && m.match_number === data.matchNum);
+                if (!match) {
+                    console.error('Could not find match, assigning alliance to null');
+                    return App.matchData.alliance = null;
+                }
+                const alliance = match.alliances.red.team_keys.includes(`frc${data.teamNum}`) ? 'red' : 'blue';
+                App.matchData.alliance = alliance;
+
             });
             m.addButton(save);
 
@@ -81,24 +94,45 @@ import FieldOrientation from './FieldOrientation.svelte';
                 }
             });
 
-            body.$on('group', (e) => {
+            body.$on('group', async (e) => {
                 fns.getAssignedTeams(e.detail);
                 d('group', e.detail);
+                App.group = e.detail;
+                const { matchNumber, compLevel } = App.matchData;
+                const res = await App.getEventData();
+
+                if (res.isErr()) return console.error(res.error);
+                const eventData = res.value;
+                const matchIndex = eventData.matches.findIndex(m => m.comp_level === compLevel && m.match_number === matchNumber);
+                if (matchIndex === -1) return;
+
+                // set matchdata in App
+                const match = eventData.matches[matchIndex];
+                App.matchData.matchNumber = match.match_number;
+                App.matchData.compLevel = match.comp_level as 'pr' | 'qm' | 'qf' | 'sf' | 'f';
+                App.matchData.teamNumber = eventData.assignments.groups[App.group][matchIndex];
+                App.matchData.alliance = match.alliances.red.team_keys.includes(`frc${App.matchData.teamNumber}`) ? 'red' : 'blue';
             });
+
+            m.show();
         },
         flipField: () => {
             const m = new Modal();
             m.setTitle('Flip Field Orientation');
             const body = new FieldOrientation({
+                props: {
+                    flipX: App.flipX,
+                    flipY: App.flipY
+                },
                 target: m.el.querySelector('.modal-body')
             });
 
             body.$on('flipX', (e) => {
-                d('flipX', e.detail);
+                App.flipX = e.detail;
             });
 
             body.$on('flipY', (e) => {
-                d('flipY', e.detail);
+                App.flipY = e.detail;
             });
 
             m.show();

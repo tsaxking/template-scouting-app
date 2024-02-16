@@ -12,7 +12,7 @@
             const data = await App.getEventData();
             if (data.isErr()) return console.error(data.error);
 
-            teams = data.value.assignments.groups[g];
+            teams = data.value.assignments.groups[g] || [];
         },
         switchGroup: (g: number) => {
             group = g;

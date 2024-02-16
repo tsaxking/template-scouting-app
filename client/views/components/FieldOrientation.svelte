@@ -10,12 +10,12 @@
 <div class="form-check">
     <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault" bind:checked={flipX}>
     <label class="form-check-label" for="flexCheckDefault">
-        Flip across X
+        Flip across Y axis (mirror x)
     </label>
 </div>
 <div class="form-check">
     <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault" bind:checked={flipY}>
     <label class="form-check-label" for="flexCheckDefault">
-        Flip across Y
+        Flip across X axis (mirror y)
     </label>
 </div>
