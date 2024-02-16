@@ -371,7 +371,16 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
     private static $eventData?: EventData;
 
     public static matchData = MatchData.get();
-    public static scoutName = '';
+    private static $scoutName = window.localStorage.getItem('scoutName') || '';
+
+    public static get scoutName(): string {
+        return App.$scoutName;
+    }
+
+    public static set scoutName(name: string) {
+        App.$scoutName = name;
+        window.localStorage.setItem('scoutName', name);
+    }
 
     public static group = -1;
 
