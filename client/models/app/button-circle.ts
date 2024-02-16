@@ -185,8 +185,13 @@ export class ButtonCircle<actions = Action> extends Drawable<ButtonCircle> {
 
         this.buttons.push(button);
 
-        button.on('click', () => {
+        button.on('click', (event) => {
             button.iterator.change();
+            this.app.emit('action', {
+                action: name,
+                point: this.app.currentLocation || [-1, -1],
+                alliance
+            });
         });
 
         button.iterator.listen((state, event) => {

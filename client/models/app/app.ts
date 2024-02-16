@@ -38,6 +38,7 @@ import { Icon } from '../canvas/material-icons';
 import { SVG } from '../canvas/svg';
 import { Match } from '../../../shared/submodules/tatorscout-calculations/trace'
 import { downloadText, loadFileContents } from '../../utilities/downloads';
+import { sleep } from '../../../shared/sleep';
 
 /**
  * Description placeholder
@@ -87,6 +88,11 @@ type AppEvents = {
     second: number;
     restart: void;
     destroy: void;
+    action: {
+        alliance: 'red' | 'blue' | null;
+        action: string;
+        point: Point2D;
+    };
 };
 
 /**
@@ -370,6 +376,60 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
             case 2024:
                 return generate2024App(alliance);
         }
+    }
+
+    public static actionAnimation(type: 'material-icons' | 'font-awesome' | 'svg', content: string, alliance: 'red' | 'blue' | null, point: Point2D) {
+        const icon = document.createElement('i');
+        switch (type) {
+            case 'material-icons':
+                icon.classList.add('material-icons');
+                icon.textContent = content;
+                break;
+            case 'font-awesome':
+                icon.classList.add('fas', `fa-${content}`);
+                break;
+            case 'svg':
+                icon.innerHTML = content;
+                break;
+        }
+
+        icon.classList.add('animate__animated', 'animate__bounceIn');
+        icon.style.position = 'absolute';
+        const { current } = App;
+        if (!current) return;
+
+        const { target, xOffset, yOffset } = current;
+        if (!target) return;
+
+        icon.style.left = `${(point[0] * current.width + xOffset) - 12}px`;
+        icon.style.top = `${(point[1] * current.height + yOffset) - 12}px`;
+        icon.style.zIndex = '1000';
+
+        icon.style.color = (() => {
+            switch (alliance) {
+                case 'red':
+                    return Color.fromBootstrap('red');
+                case 'blue':
+                    return Color.fromBootstrap('blue');
+                default:
+                    return Color.fromBootstrap('dark');
+            }
+        })().toString('rgba');
+
+        target.appendChild(icon);
+
+        const onEnd = async () => {
+            icon.removeEventListener('animationend', onEnd);
+
+            icon.classList.remove('animate__bounceIn', 'animate__animated');
+            await sleep(1000);
+            icon.classList.add('animate__animated', 'animate__bounceOut');
+            icon.addEventListener('animationend', () => {
+                icon.remove();
+            });
+        };
+
+        icon.addEventListener('animationend', onEnd);
     }
 
     static cache(): {
@@ -1331,6 +1391,11 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
 
         button.addEventListener('click', () => {
             object.change(this.currentLocation);
+            this.emit('action', {
+                action: object.name,
+                alliance,
+                point: this.currentLocation || [-1, -1]
+            });
         });
 
         // if the button is held down, change the state
