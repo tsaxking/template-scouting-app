@@ -15,7 +15,7 @@ if (!SERVER_DOMAIN) console.warn('SERVER_DOMAIN not properly set in .env file');
 export class ServerRequest {
     private static post<T>(url: string, body?: unknown): Promise<Result<T>> {
         return attemptAsync(async () => {
-            const str = JSON.stringify(body) || '';
+            const str = body ? JSON.stringify(body) : '';
             const id = uuid();
 
             if (url !== '/ping') {
