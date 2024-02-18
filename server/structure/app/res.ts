@@ -439,7 +439,7 @@ export class Res {
      * @param {string[]} content
      * @returns {EventEmitter<keyof StreamEventData>}
      */
-    stream(content: unknown[]): EventEmitter<keyof StreamEventData> {
+    stream(content: string[]): EventEmitter<keyof StreamEventData> {
         let timer: number;
 
         const em = new EventEmitter<keyof StreamEventData>();
@@ -453,11 +453,7 @@ export class Res {
                         controller.close();
                         return;
                     }
-                    controller.enqueue(
-                        new TextEncoder().encode(
-                            JSON.stringify(bigIntEncode(content[n])),
-                        ),
-                    );
+                    controller.enqueue(new TextEncoder().encode(content[n]));
                     i++;
                     timer = setTimeout(() => send(i));
                 };
