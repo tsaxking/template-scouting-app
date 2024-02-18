@@ -11,20 +11,23 @@ import { createEventDispatcher } from "svelte";
         scoutIndex?: number;
     });
 
-    let matches: M[] = [];
+    export let matches: TBAMatch[] = [];
+
+    let customMatches: M[] = [];
     let currentMatch: M | undefined = undefined;
 
     let matchAssignments: number[] = [];
 
 
     const fns = {
-        select: async (matchIndex: number, team?: number) => {
-            d('select', { matchIndex });
+        select: async (matchIndex: number, teamIndex?: number) => {
+            d('select', { matchIndex, teamIndex });
             const res = await App.getEventData();
             if (res.isErr()) return console.error(res.error);
             const eventData = res.value;
 
             currentMatch = matches[matchIndex];
+            let team: number | undefined = undefined;
 
             if (team === undefined) {
                 team = eventData.assignments.matchAssignments[App.group][matchIndex];
@@ -38,37 +41,8 @@ import { createEventDispatcher } from "svelte";
             App.selectMatch(currentMatch.match_number, currentMatch.comp_level as 'pr' | 'qm' | 'qf' | 'sf' | 'f');
 
             matches = matches; // force view update
-        },
-        getMatches: async (app: App) => {
-            const res = await App.getEventData();
-            if (res.isErr()) return console.error(res.error);
-            const eventData = res.value;
-
-            res.value.matches.sort(matchSort);
-
-            matches = eventData.matches.map(m => {
-                return {
-                    ...m,
-                    teams: [
-                        ...m.alliances.red.team_keys.map(t => parseInt(t.slice(3))),
-                        ...m.alliances.blue.team_keys.map(t => parseInt(t.slice(3)))
-                    ] as [number, number, number, number, number, number],
-                    scoutIndex: undefined
-                }
-            });
-
-            currentMatch = matches.find(m => m.match_number === App.matchData.matchNumber && m.comp_level === App.matchData.compLevel);
-
-            matchAssignments = eventData.assignments.matchAssignments[App.group];
         }
     };
-
-    export let app: App;
-
-    $: fns.getMatches(app);
-
-    App.on('change-group', () => fns.getMatches(app));
-    App.on('change-match', () => fns.getMatches(app));
 </script>
 
 <table class="table table-dark table-hover">
@@ -85,13 +59,13 @@ import { createEventDispatcher } from "svelte";
         </tr>
     </thead>
     <tbody>
-        {#each matches as match, i}
+        {#each customMatches as match, i}
             <tr
                 class="
                     cursor-pointer
                     {
                         // if this is the current match, do bg-secondary on this row
-                        matches.findIndex(
+                        customMatches.findIndex(
                             m =>
                                 m.comp_level == currentMatch?.comp_level &&
                                 m.match_number == currentMatch?.match_number
