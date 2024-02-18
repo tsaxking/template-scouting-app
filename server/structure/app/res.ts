@@ -356,7 +356,7 @@ export class Res {
      * @returns {ResponseStatus}
      */
     redirect(path: string): ResponseStatus {
-        path = path.startsWith('/') ? this.req.domain + path : path;
+        path = path.startsWith('/') ? this.req.url.origin + path : path;
 
         this.isFulfilled();
         this.resolve?.(Response.redirect(path));
@@ -438,7 +438,7 @@ export class Res {
      * @param {string[]} content
      * @returns {EventEmitter<keyof StreamEventData>}
      */
-    stream(content: string[]): EventEmitter<keyof StreamEventData> {
+    stream(content: unknown[]): EventEmitter<keyof StreamEventData> {
         let timer: number;
 
         const em = new EventEmitter<keyof StreamEventData>();
@@ -452,7 +452,11 @@ export class Res {
                         controller.close();
                         return;
                     }
-                    controller.enqueue(new TextEncoder().encode(content[n]));
+                    controller.enqueue(
+                        new TextEncoder().encode(
+                            JSON.stringify(bigIntEncode(content[n])),
+                        ),
+                    );
                     i++;
                     timer = setTimeout(() => send(i));
                 };

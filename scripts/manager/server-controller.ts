@@ -3,6 +3,8 @@ import { TBA } from '../../server/utilities/tba/tba.ts';
 import { TBAEvent } from '../../shared/submodules/tatorscout-calculations/tba.ts';
 import { select } from '../prompt.ts';
 import { backToMain } from '../manager.ts';
+import { ServerRequest } from '../../server/utilities/requests.ts';
+import env from '../../server/utilities/env.ts';
 
 
 const pullEvent = async () => {
@@ -36,13 +38,26 @@ const pullEvent = async () => {
     }
 };
 
-
+const viewServerConnection = async () => {
+    const ping = await ServerRequest.ping();
+    if (ping.isOk()) {
+        backToMain('Server is connected');
+    } else {
+        backToMain('Server is not connected' + (ping.error ? `: ${ping.error}` : ''));
+    }
+};
 
 
 
 export const serverController = [
     {
         icon: '📅',
-        value: pullEvent
+        value: pullEvent,
+        description: 'Pull an event from TBA, and make it the current event.'
+    },
+    {
+        icon: '🔗',
+        value: viewServerConnection,
+        description: `View connection with ${env.SERVER_DOMAIN}`
     }
 ];
