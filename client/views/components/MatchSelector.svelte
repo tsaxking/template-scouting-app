@@ -1,13 +1,24 @@
 <script lang='ts'>
+    import { App } from '../../models/app/app';
+    import { createEventDispatcher } from 'svelte';
+    import MatchTable from './MatchTable.svelte';
+import type { TBAMatch } from '../../../shared/submodules/tatorscout-calculations/tba';
+
+    const d = createEventDispatcher();
+
+    let matches: TBAMatch[] = [];
+
     const fns = {
         next: () => {
-            console.log('next');
+            App.changeMatch(1);
+            d('next');
         },
         prev: () => {
-            console.log('previous');
+            App.changeMatch(-1);
+            d('prev');
         },
         play: () => {
-            console.log('play');
+            d('play');
         }
     }
 </script>
@@ -28,3 +39,4 @@
         <i class="material-icons">chevron_right</i>
     </button>
 </div>
+<MatchTable bind:matches={matches}/>
