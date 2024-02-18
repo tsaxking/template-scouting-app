@@ -422,20 +422,28 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
         App.emit('change-group', group);
     }
 
-    static async changeMatch(i: number) {
-        const currentMatch = App.matchData.matchNumber;
-        const nextMatch = currentMatch + i;
-        const res = await App.getEventData();
-        if (res.isOk()) {
-            const { matches, assignments } = res.value;
-            const match = matches.find((m) => m.match_number === nextMatch);
-            if (match) {
-                App.matchData.matchNumber = nextMatch;
-                App.matchData.teamNumber = assignments[matches.indexOf(match)];
-                App.matchData.alliance = match.alliances.red.team_keys.includes(`frc${App.matchData.teamNumber}`) ? 'red' : 'blue';
-                return match;
+    // move the match by the index (i) (i.e. -1 for previous match, 1 for next match)
+    static async moveMatchIndex(i: number) {
+        return attemptAsync(async () => {
+            const currentMatch = App.matchData.matchNumber;
+            const nextMatch = currentMatch + i;
+            const res = await App.getEventData();
+            if (res.isOk()) {
+                const { matches, assignments } = res.value;
+                const match = matches.find((m) => m.match_number === nextMatch);
+                if (match) {
+                    App.selectMatch(nextMatch, match.comp_level as 'pr' | 'qm' | 'qf' | 'sf' | 'f')
+    
+                    App.matchData.teamNumber = assignments[matches.indexOf(match)];
+                    App.matchData.alliance = match.alliances.red.team_keys.includes(`frc${App.matchData.teamNumber}`) ? 'red' : 'blue';
+                    return match;
+                } else {
+                    throw new Error('Match not found');
+                }
+            } else {
+                throw res.error;
             }
-        }
+        });
     }
 
     public static current?: App<any, any, any>;
