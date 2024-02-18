@@ -1,5 +1,6 @@
 <script lang="ts">
-import type { TBAMatch } from "../../../shared/submodules/tatorscout-calculations/tba";
+import { type TBAMatch, matchSort } from "../../../shared/submodules/tatorscout-calculations/tba";
+import type { Assignment } from "../../../shared/submodules/tatorscout-calculations/scout-groups";
 import { App } from "../../models/app/app";
 import { createEventDispatcher } from "svelte";
 
@@ -13,35 +14,64 @@ import { createEventDispatcher } from "svelte";
     let matches: M[] = [];
     let currentMatch: M | undefined = undefined;
 
+    let matchAssignments: number[] = [];
+
 
     const fns = {
-        select: async (matchIndex: number, teamIndex?: number) => {
-            d('select', { matchIndex, teamIndex });
+        select: async (matchIndex: number, team?: number) => {
+            d('select', { matchIndex });
             const res = await App.getEventData();
             if (res.isErr()) return console.error(res.error);
             const eventData = res.value;
 
             currentMatch = matches[matchIndex];
-            let team: number | undefined = undefined;
 
-            if (teamIndex === undefined) {
-                team = eventData.assignments.matchAssignments[matchIndex][App.group];
+            if (team === undefined) {
+                team = eventData.assignments.matchAssignments[App.group][matchIndex];
             } else {
-                team = currentMatch.teams[teamIndex];
-                App.group = eventData.assignments.groups.findIndex(g => g.includes(App.matchData.teamNumber));
+                App.group = eventData.assignments.groups.findIndex(g => g.includes(team));
             }
 
-            App.matchData.matchNumber = currentMatch.match_number;
-            App.matchData.compLevel = currentMatch.comp_level as 'pr' | 'qm' | 'qf' | 'sf' | 'f';
             App.matchData.teamNumber = team;
             App.matchData.alliance = currentMatch.alliances.red.team_keys.includes(`frc${App.matchData.teamNumber}`) ? 'red' : 'blue';
 
+            App.selectMatch(currentMatch.match_number, currentMatch.comp_level as 'pr' | 'qm' | 'qf' | 'sf' | 'f');
+
             matches = matches; // force view update
+        },
+        getMatches: async (app: App) => {
+            const res = await App.getEventData();
+            if (res.isErr()) return console.error(res.error);
+            const eventData = res.value;
+
+            res.value.matches.sort(matchSort);
+
+            matches = eventData.matches.map(m => {
+                return {
+                    ...m,
+                    teams: [
+                        ...m.alliances.red.team_keys.map(t => parseInt(t.slice(3))),
+                        ...m.alliances.blue.team_keys.map(t => parseInt(t.slice(3)))
+                    ] as [number, number, number, number, number, number],
+                    scoutIndex: undefined
+                }
+            });
+
+            currentMatch = matches.find(m => m.match_number === App.matchData.matchNumber && m.comp_level === App.matchData.compLevel);
+
+            matchAssignments = eventData.assignments.matchAssignments[App.group];
         }
     };
+
+    export let app: App;
+
+    $: fns.getMatches(app);
+
+    App.on('change-group', () => fns.getMatches(app));
+    App.on('change-match', () => fns.getMatches(app));
 </script>
 
-<table class="table table-dark table-striped table-hover">
+<table class="table table-dark table-hover">
     <thead>
         <tr>
             <th> Match </th>
@@ -65,31 +95,45 @@ import { createEventDispatcher } from "svelte";
                             m =>
                                 m.comp_level == currentMatch?.comp_level &&
                                 m.match_number == currentMatch?.match_number
-                        ) === i ? 'bg-secondary' : ''
+                        ) === i ? 'table-primary' : ''
                     }
                 "
 
+            >
+                <td
                 on:click={() => {
                     currentMatch = match;
                     fns.select(i);
-                }}
-            >
-                <td>
+                }}>
                     {match.match_number}
                 </td>
-                <td>
+                <td
+                on:click={() => {
+                    currentMatch = match;
+                    fns.select(i);
+                }}>
                     {match.comp_level}
                 </td>
                 {#each match.teams as team, index}
                     <td class:fw-bold={match.scoutIndex === index} on:click={
-                        () => fns.select(i, index)
+                        () => fns.select(i, team)
                     }>
                         {#if index > 2}
                         <!-- Blue alliance -->
-                            <span class="text-primary">{team}</span>
+                            <span 
+                                class:selected-team={
+                                    matchAssignments[i] === team
+                                }
+                                class="text-primary"
+                            >{team}</span>
                         {:else}
                         <!-- Red alliance -->
-                            <span class="text-danger">{team}</span>
+                            <span 
+                                class:selected-team={
+                                    matchAssignments[i] === team
+                                }
+                                class="text-danger"
+                            >{team}</span>
                         {/if}
                     </td>
                 {/each}
@@ -97,3 +141,10 @@ import { createEventDispatcher } from "svelte";
         {/each}
     </tbody>
 </table>
+
+<style>
+    .selected-team {
+        color: #5a5555 !important;
+        font-weight: bold !important;
+    }
+</style>
