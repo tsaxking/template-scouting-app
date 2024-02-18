@@ -1128,58 +1128,58 @@ export type TBATeamSimple = {
 
 export type TBATeamEventStatus = {
     qual: {
-      num_teams: number,
-      ranking: {
-        matches_played: number,
-        qual_average: number,
-        sort_orders: number[],
-        record: {
-          losses: number,
-          wins: number,
-          ties: number
-        },
-        rank: number,
-        dq: number,
-        team_key: string
-      },
-      sort_order_info: [
-        {
-          precision: number,
-          name: string
-        }
-      ],
-      status: string
-    },
+        num_teams: number;
+        ranking: {
+            matches_played: number;
+            qual_average: number;
+            sort_orders: number[];
+            record: {
+                losses: number;
+                wins: number;
+                ties: number;
+            };
+            rank: number;
+            dq: number;
+            team_key: string;
+        };
+        sort_order_info: [
+            {
+                precision: number;
+                name: string;
+            }
+        ];
+        status: string;
+    };
     alliance: {
-      name: string,
-      number: number,
-      backup: {
-        out: string,
-        in: string
-      },
-      pick: number
-    },
+        name: string;
+        number: number;
+        backup: {
+            out: string;
+            in: string;
+        };
+        pick: number;
+    };
     playoff: {
-      level: 'qm' | 'qf' | 'sf' | 'f',
-      current_level_record: {
-        losses: number,
-        wins: number,
-        ties: number
-      },
-      record: {
-        losses: number,
-        wins: number,
-        ties: number
-      },
-      status: 'won' | 'lost' | 'playing' | 'eliminated',
-      playoff_average: number
-    },
-    alliance_status_str: string,
-    playoff_status_str: string,
-    overall_status_str: string,
-    next_match_key: string,
-    last_match_key: string
-  };
+        level: 'qm' | 'qf' | 'sf' | 'f';
+        current_level_record: {
+            losses: number;
+            wins: number;
+            ties: number;
+        };
+        record: {
+            losses: number;
+            wins: number;
+            ties: number;
+        };
+        status: 'won' | 'lost' | 'playing' | 'eliminated';
+        playoff_average: number;
+    };
+    alliance_status_str: string;
+    playoff_status_str: string;
+    overall_status_str: string;
+    next_match_key: string;
+    last_match_key: string;
+};
 
 export const teamsFromMatch = (
     match: TBAMatch,
@@ -1205,3 +1205,4 @@ export const matchSort = (a: TBAMatch, b: TBAMatch) => {
     return 0;
 }
 export type CompLevel = 'pr' | 'qm' | 'qf' | 'sf' | 'f';
+
