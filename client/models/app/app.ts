@@ -665,25 +665,25 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
             this.icons[action] = icon.clone();
         }
 
-        if (App.cache()) {
-            choose(
-                'You have a cached match. Would you like to restore it or destroy it?',
-                'Restore cached',
-                'Delete cached',
-            ).then((res) => {
-                switch (res) {
-                    case 'Delete cached':
-                        App.clearCache();
-                        break;
-                    case 'Restore cached':
-                        App.restore(this as App<any, any, any>);
-                        break;
-                    case null:
-                        App.clearCache();
-                        break;
-                }
-            });
-        }
+        // if (App.cache()) {
+        //     choose(
+        //         'You have a cached match. Would you like to restore it or destroy it?',
+        //         'Restore cached',
+        //         'Delete cached',
+        //     ).then((res) => {
+        //         switch (res) {
+        //             case 'Delete cached':
+        //                 App.clearCache();
+        //                 break;
+        //             case 'Restore cached':
+        //                 App.restore(this as App<any, any, any>);
+        //                 break;
+        //             case null:
+        //                 App.clearCache();
+        //                 break;
+        //         }
+        //     });
+        // }
     }
 
     /**
