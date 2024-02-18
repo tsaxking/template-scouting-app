@@ -1,13 +1,15 @@
 <script lang="ts">
 import MatchSelector from '../components/MatchSelector.svelte'
-import MatchTable from '../components/MatchTable.svelte';
 import MenuButtons from '../components/MenuButtons.svelte'
 import ScoutSelect from '../components/ScoutName.svelte';
+
+import { createEventDispatcher } from 'svelte';
+
+const d = createEventDispatcher();
 </script>
 
 <div>
     <MenuButtons />
     <ScoutSelect />
-    <MatchSelector />
-    <MatchTable />
+    <MatchSelector on:play={() => d('play')} />
 </div>
