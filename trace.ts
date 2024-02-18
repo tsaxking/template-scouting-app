@@ -368,12 +368,12 @@ export class Trace {
                         const [, x1, y1] = p1;
                         const [, x2, y2] = a[i + 1];
 
-                        const dx = x2 - x1;
-                        const dy = y2 - y1;
+                        const dx = (x2 - x1) * 54;
+                        const dy = (y2 - y1) * 27;
 
                         const distance = Math.sqrt(dx * dx + dy * dy);
 
-                        return distance / 0.25;
+                        return distance / 4;
                     })
                     .filter(p => p !== null) as number[];
             },
