@@ -6,15 +6,17 @@ import type { TBAMatch } from '../../../shared/submodules/tatorscout-calculation
 
     const d = createEventDispatcher();
 
+    export let app: App;
+
     let matches: TBAMatch[] = [];
 
     const fns = {
-        next: () => {
-            App.changeMatch(1);
+        next: async () => {
+            const r = await App.moveMatchIndex(1);
             d('next');
         },
-        prev: () => {
-            App.changeMatch(-1);
+        prev: async () => {
+            const r = await App.moveMatchIndex(-1);
             d('prev');
         },
         play: () => {
@@ -39,4 +41,4 @@ import type { TBAMatch } from '../../../shared/submodules/tatorscout-calculation
         <i class="material-icons">chevron_right</i>
     </button>
 </div>
-<MatchTable bind:matches={matches}/>
+<MatchTable {app}/>

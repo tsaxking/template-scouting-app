@@ -2,7 +2,8 @@
 import { type TBAMatch, matchSort } from "../../../shared/submodules/tatorscout-calculations/tba";
 import type { Assignment } from "../../../shared/submodules/tatorscout-calculations/scout-groups";
 import { App } from "../../models/app/app";
-import { createEventDispatcher } from "svelte";
+import { createEventDispatcher, onMount } from "svelte";
+import { matchInstance } from "../../../shared/match";
 
     const d = createEventDispatcher();
 
@@ -15,18 +16,33 @@ import { createEventDispatcher } from "svelte";
 
     let customMatches: M[] = [];
     let currentMatch: M | undefined = undefined;
+    let currentMatchIndex: number | undefined = undefined;
 
     let matchAssignments: number[] = [];
 
 
     const fns = {
+        setCustom: async (m: TBAMatch[]) => {
+            const res = await App.getEventData();
+            if (res.isErr()) return console.error(res.error);
+            const eventData = res.value;
+
+            customMatches = m.map((match, i) => {
+                const teams = match.alliances.red.team_keys.concat(match.alliances.blue.team_keys).map(t => parseInt(t.slice(3)));
+                return {
+                    ...match,
+                    teams,
+                    scoutIndex: teams.findIndex(t => t === eventData.assignments.matchAssignments[App.group][i])
+                };
+            }) as M[];
+        },
         select: async (matchIndex: number, teamIndex?: number) => {
             d('select', { matchIndex, teamIndex });
             const res = await App.getEventData();
             if (res.isErr()) return console.error(res.error);
             const eventData = res.value;
 
-            currentMatch = matches[matchIndex];
+            currentMatch = customMatches[matchIndex];
             let team: number | undefined = undefined;
 
             if (team === undefined) {
@@ -40,9 +56,50 @@ import { createEventDispatcher } from "svelte";
 
             App.selectMatch(currentMatch.match_number, currentMatch.comp_level as 'pr' | 'qm' | 'qf' | 'sf' | 'f');
 
+            currentMatchIndex = matchIndex;
             matches = matches; // force view update
+        },
+        getMatches: async (app: App) => {
+            const res = await App.getEventData();
+            if (res.isErr()) return console.error(res.error);
+            const eventData = res.value;
+
+            res.value.matches.sort(matchSort);
+
+            matches = eventData.matches.map(m => {
+                return {
+                    ...m,
+                    teams: [
+                        ...m.alliances.red.team_keys.map(t => parseInt(t.slice(3))),
+                        ...m.alliances.blue.team_keys.map(t => parseInt(t.slice(3)))
+                    ] as [number, number, number, number, number, number],
+                    scoutIndex: undefined
+                }
+            });
+
+            matchAssignments = eventData.assignments.matchAssignments[App.group];
+            fns.setCustom(matches);
+            currentMatchIndex = matches.findIndex(
+                m =>
+                    m.comp_level === App.matchData.compLevel &&
+                    m.match_number === App.matchData.matchNumber
+            );
+            currentMatch = customMatches[currentMatchIndex];
         }
     };
+
+    export let app: App;
+
+    $: {
+        fns.getMatches(app);
+    }
+
+    App.on('change-group', () => fns.getMatches(app));
+    App.on('change-match', () => fns.getMatches(app));
+
+    onMount(() => {
+        fns.getMatches(app);
+    });
 </script>
 
 <table class="table table-dark table-hover">
