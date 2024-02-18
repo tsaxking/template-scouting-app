@@ -66,10 +66,7 @@ import FieldOrientation from './FieldOrientation.svelte';
             save.textContent = 'Save';
             save.addEventListener('click', () => {
                 m.hide();
-                App.matchData.compLevel = data.compLevel || App.matchData.compLevel;
-                App.matchData.matchNumber = data.matchNum || App.matchData.matchNumber;
                 App.matchData.teamNumber = data.teamNum || App.matchData.teamNumber;
-                // App.matchData.alliance = eventData.matches.
 
                 const match = eventData.matches.find(m => m.comp_level === data.compLevel && m.match_number === data.matchNum);
                 if (!match) {
@@ -79,6 +76,7 @@ import FieldOrientation from './FieldOrientation.svelte';
                 const alliance = match.alliances.red.team_keys.includes(`frc${data.teamNum}`) ? 'red' : 'blue';
                 App.matchData.alliance = alliance;
 
+                App.selectMatch(data.matchNum, data.compLevel)
             });
             m.addButton(save);
 

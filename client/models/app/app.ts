@@ -354,6 +354,11 @@ type Area = {
     condition: (shape: Polygon) => boolean;
 };
 
+type GlobalEvents = {
+    'change-group': number;
+    'change-match': MatchData;
+}
+
 /**
  * The full scouting app, including the canvas and all the buttons
  * @date 1/9/2024 - 3:08:20 AM
@@ -363,12 +368,59 @@ type Area = {
  * @typedef {App}
  */
 export class App<a extends Action = Action, z extends Zones = Zones, p extends TraceParse = TraceParse> {
+    private static readonly emitter = new EventEmitter<keyof GlobalEvents>();
+
+    public static on<E extends keyof GlobalEvents>(event: E, listener: (data: GlobalEvents[E]) => void) {
+        App.emitter.on(event, listener);
+    }
+
+    public static off<E extends keyof GlobalEvents>(event: E, listener: (data: GlobalEvents[E]) => void) {
+        App.emitter.off(event, listener);
+    }
+
+    public static emit<E extends keyof GlobalEvents>(event: E, data: GlobalEvents[E]) {
+        App.emitter.emit(event, data);
+    }
+
+    public static once<E extends keyof GlobalEvents>(event: E, listener: (data: GlobalEvents[E]) => void) {
+        App.emitter.once(event, listener);
+    }
+
+    public static selectMatch(number: number, compLevel: 'pr' | 'qm' | 'qf' | 'sf' | 'f', alliance: 'red' | 'blue' | null = null) {
+        App.matchData.matchNumber = number;
+        App.matchData.compLevel = compLevel;
+        App.matchData.alliance = alliance;
+        this.emit('change-match', App.matchData);
+    }
+
+
+
     private static $eventData?: EventData;
 
     public static matchData = MatchData.get();
-    public static scoutName = '';
+    public static $scoutName = window.localStorage.getItem('scoutName') || '';
 
-    public static group = -1;
+    public static get scoutName() {
+        return App.$scoutName;
+    }
+
+    public static set scoutName(scoutName: string) {
+        App.$scoutName = scoutName;
+        window.localStorage.setItem('scoutName', scoutName);
+    }
+
+
+    public static $group = window.localStorage.getItem('group') ? parseInt(window.localStorage.getItem('group')!) : -1;
+
+    public static get group() {
+        return App.$group;
+    }
+
+    public static set group(group: number) {
+        App.$group = group;
+        window.localStorage.setItem('group', group.toString());
+        App.emit('change-group', group);
+    }
 
     public static current?: App<any, any, any>;
     public static build(year: 2024, alliance: 'red' | 'blue' | null = null) {
