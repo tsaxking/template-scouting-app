@@ -122,47 +122,47 @@ let autoComment: string = '';
             <div class="container">
                 {#each commentsSections as section, i}
                     <div class="row mb-3">
-                        <div class="form-floating">
+                        <!-- <div class="form-floating"> -->
+                            <label for="textarea-{i}">
+                                Please tell us why you checked "{capitalize(fromCamelCase(section))}" (you don't have to be very detailed, but it's helpful to understand the context of why you checked it)
+                            </label>
                             <textarea
                                 class="form-control"
                                 rows="3"
                                 id="textarea-{i}"
                                 bind:value="{data[section].comment}"
                             ></textarea>
-                            <label for="textarea-{i}">
-                                Please tell us why you checked "{capitalize(fromCamelCase(section))}" (you don't have to be very detailed, but it's helpful to understand the context of why you checked it)
-                            </label>
                         </div>
-                    </div>
+                    <!-- </div> -->
                 {/each}
             </div>
         </div>
     {/if}
     <div class="row mb-3">
-        <div class="form-floating">
+        <!-- <div class="form-floating"> -->
+            <label for="textarea-general">
+                Please leave a comment here on how the robot performed in the match. (These are very helpful for analyzing the robot's performance, please be detailed)
+            </label>
             <textarea
                 class="form-control"
                 rows="5"
                 id="textarea-general"
                 bind:value="{generalComment}"
             ></textarea>
-            <label for="textarea-general">
-                Please leave a comment here on how the robot performed in the match. (These are very helpful for analyzing the robot's performance, please be detailed)
-            </label>
-        </div>
+        <!-- </div> -->
     </div>
     <div class="row mb-3">
-        <div class="form-floating">
+        <!-- <div class="form-floating"> -->
+            <label for="textarea-auto">
+                Please leave a comment here on how the robot performed in the autonomous period. (If it missed shots because notes collided in mid-air, etc.)
+            </label>
             <textarea
                 class="form-control"
                 rows="5"
                 id="textarea-auto"
                 bind:value="{autoComment}"
             ></textarea>
-            <label for="textarea-auto">
-                Please leave a comment here on how the robot performed in the autonomous period. (If it missed shots because notes collided in mid-air, etc.)
-            </label>
-        </div>
+        <!-- </div> -->
     </div>
     <div class="row">
         <button

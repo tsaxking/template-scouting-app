@@ -88,7 +88,7 @@ router.post<{
 
         const r = await req.session.signIn(account);
 
-        if (r.isErr()) return res.sendStatus('unknown:error');
+        // if (r.isErr()) return res.sendStatus('unknown:error');
         res.sendStatus(
             'account:logged-in',
             { username },
@@ -446,8 +446,7 @@ router.post<{
         if (!account) return res.sendStatus('account:not-logged-in');
 
         if (account.id !== id) {
-            const perms = await account.getPermissions();
-            if (perms.includes('editRoles')) {
+            if (await account.hasPermission('editRoles')) {
                 const roles = await (await Account.fromId(id))?.getRoles();
                 if (roles) {
                     return res.json(roles);
@@ -477,8 +476,7 @@ router.post<{
         if (!account) return res.sendStatus('account:not-logged-in');
 
         if (account.id !== id) {
-            const perms = await account.getPermissions();
-            if (perms.includes('editRoles')) {
+            if (await account.hasPermission('editRoles')) {
                 const permissions = await (
                     await Account.fromId(id)
                 )?.getPermissions();
@@ -500,7 +498,7 @@ router.post('/all', async (req, res) => {
     const account = await req.session.getAccount();
     if (!account) return res.sendStatus('account:not-logged-in');
 
-    if ((await account.getPermissions()).includes('admin')) {
+    if (await account.hasPermission('admin')) {
         return res.json(
             await Promise.all(
                 (await Account.getAll()).map((a) =>
