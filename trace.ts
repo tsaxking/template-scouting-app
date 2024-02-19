@@ -360,47 +360,27 @@ export class Trace {
         return notMoving / 4;
     }
 
-    // static get velocity() {
-    //     return {
-    //         map: (trace: TraceArray) => {
-    //             return trace
-    //                 .map((p1, i, a) => {
-    //                     if (i === a.length - 1) return null;
+    static get velocity() {
+        return {
+            map: Trace.velocityMap,
+            histogram: (trace: TraceArray) => {
+                const m = Trace.velocity.map(trace);
+                const NUM_BUCKETS = 20;
+                const sorted = m.sort((a, b) => a - b);
+                const max = sorted[sorted.length - 1];
+                
+                const buckets: number[] = new Array(NUM_BUCKETS).fill(0);
+                const bucketSize = max / NUM_BUCKETS;
 
-    //                     const [, x1, y1] = p1;
-    //                     const [, x2, y2] = a[i + 1];
+                for (const v of m) {
+                    const bucket = Math.floor(v / bucketSize);
+                    buckets[bucket]++;
+                }
 
-    //                     const dx = x2 - x1;
-    //                     const dy = y2 - y1;
-
-    //                     const distance = Math.sqrt(dx * dx + dy * dy);
-
-    //     map.forEach(v => {
-    //         const bucket = Math.floor(((v - min) / range) * 10);
-    //         buckets[bucket]++;
-    //     });
-
-    //             const max = Math.max(...map);
-    //             const min = Math.min(...map);
-
-    //             const range = max - min;
-
-    //             const buckets = new Array(10).fill(0) as number[];
-
-    //             map.forEach((v) => {
-    //                 const bucket = Math.floor(((v - min) / range) * 10);
-    //                 buckets[bucket]++;
-    //             });
-
-    //             return buckets;
-    //         },
-    //         average: (trace: TraceArray) => {
-    //             const map = Trace.velocity.map(trace);
-
-    //             return map.reduce((a, b) => a + b, 0) / map.length;
-    //         },
-    //     };
-    // }
+                return buckets;
+            }
+        }
+    }
 
     /**
      * Description placeholder
