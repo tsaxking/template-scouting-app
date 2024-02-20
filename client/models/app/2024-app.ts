@@ -24,8 +24,9 @@ import { SVG } from '../canvas/svg';
  * @date 1/25/2024 - 4:59:26 PM
  */
 export const generate2024App = (
-    alliance: 'red' | 'blue' | null = null,
 ): App<Action2024> => {
+    const alliance = App.matchData.alliance ?? null;
+
     const icons: {
         [key in Action2024]: Icon | SVG;
     } = {

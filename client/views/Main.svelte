@@ -17,10 +17,10 @@ App.getEventData().then(data => {
     }
 });
 
-let app = generate2024App(null);
+let app = generate2024App();
 
 // reassign app at restart
-app.on('restart', () => app = generate2024App(null));
+app.on('restart', () => (app = generate2024App()));
 
 let tabs = ['Pre', 'App', 'Post', 'Upload'];
 let active = 'Pre';
@@ -35,9 +35,14 @@ const domain = 'http://localhost:3000';
 <main>
     <NavTabs {tabs} {active} on:change="{e => (active = e.detail)}" />
 
-    <Page {active} {domain} title="Pre"><Pre on:play={() => active = 'App'} {app}></Pre></Page
+    <Page {active} {domain} title="Pre"
+        ><Pre on:play="{() => (active = 'App')}" {app}></Pre></Page
     >
     <Page {active} {domain} title="App"><AppView {app}></AppView></Page>
-    <Page {active} {domain} title="Post"><Post {app} {active}></Post></Page>
+    <Page {active} {domain} title="Post"><Post {app} {active} on:submit={() => {
+        active = 'Pre';
+        App.moveMatchIndex(1);
+        app = generate2024App();
+    }}></Post></Page>
     <Page {active} {domain} title="Upload"><Upload /></Page>
 </main>
