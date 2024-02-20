@@ -394,4 +394,3 @@ export type Insert_tba_new = {
     updated: number;
     update: number;
 };
-

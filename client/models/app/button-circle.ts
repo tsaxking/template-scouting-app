@@ -190,7 +190,7 @@ export class ButtonCircle<actions = Action> extends Drawable<ButtonCircle> {
             this.app.emit('action', {
                 action: name,
                 point: this.app.currentLocation || [-1, -1],
-                alliance
+                alliance,
             });
         });
 

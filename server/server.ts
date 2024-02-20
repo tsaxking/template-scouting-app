@@ -30,7 +30,6 @@ export const app = new App(port, env.DOMAIN || `http://localhost:${port}`, {
     ioPort: +(env.SOCKET_PORT || port + 1),
 });
 
-
 if (Deno.args.includes('--ping')) {
     const pinger = startPinger();
     pinger.on('disconnect', () => {
@@ -59,7 +58,6 @@ app.post('/socket-init', (req, res) => {
     const cookie = req.headers.get('cookie');
     res.json(parseCookie(cookie));
 });
-
 
 app.static('/client', resolve(__root, './client'));
 app.static('/public', resolve(__root, './public'));
@@ -183,47 +181,32 @@ app.get('/*', (req, res) => {
     res.redirect('/app');
 });
 
-app.post<Match>('/submit', validate(validateObj as {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    [key in keyof Match]: any; // TODO: export IsValid type
-}), async (req, res) => {
-    const { 
-        eventKey, 
-        checks, 
-        comments, 
-        matchNumber, 
-        teamNumber,
-        compLevel,
-        scout,
-        date,
-        group,
-        trace
-    } = req.body;
-
-    // I don't want to pass in req.body because it can have extra unneeded properties
-    const result = await ServerRequest.submitMatch({
-        checks,
-        comments,
-        matchNumber,
-        teamNumber,
-        compLevel,
-        eventKey,
-        scout,
-        date,
-        group,
-        trace
-    });
-
-    if (result.isOk()) {
-        res.sendStatus('server-request:match-submitted', {
+app.post<Match>(
+    '/submit',
+    validate(
+        validateObj as {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            [key in keyof Match]: any; // TODO: export IsValid type
+        },
+    ),
+    async (req, res) => {
+        const {
+            eventKey,
+            checks,
+            comments,
             matchNumber,
             teamNumber,
             compLevel,
-            data: result.value
-        });
-    } else {
-        error
-        res.sendStatus('server-request:match-error', {
+            scout,
+            date,
+            group,
+            trace,
+        } = req.body;
+
+        // I don't want to pass in req.body because it can have extra unneeded properties
+        const result = await ServerRequest.submitMatch({
+            checks,
+            comments,
             matchNumber,
             teamNumber,
             compLevel,
@@ -242,16 +225,37 @@ app.post<Match>('/submit', validate(validateObj as {
                 data: result.value,
             });
         } else {
-            error('Match submission error:', result.error);
+            error;
             res.sendStatus('server-request:match-error', {
                 matchNumber,
                 teamNumber,
                 compLevel,
-                error: result.error,
+                eventKey,
+                scout,
+                date,
+                group,
+                trace,
             });
+
+            if (result.isOk()) {
+                res.sendStatus('server-request:match-submitted', {
+                    matchNumber,
+                    teamNumber,
+                    compLevel,
+                    data: result.value,
+                });
+            } else {
+                error('Match submission error:', result.error);
+                res.sendStatus('server-request:match-error', {
+                    matchNumber,
+                    teamNumber,
+                    compLevel,
+                    error: result.error,
+                });
+            }
         }
-    }
-});
+    },
+);
 
 app.post('/event-data', async (_req, res) => {
     let name: string = 'dummy-event-data.json';

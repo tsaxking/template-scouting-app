@@ -4,6 +4,9 @@ import Checkboxes from '../components/app/Checkboxes.svelte';
 import type { BootstrapColor } from '../../submodules/colors/color';
 import { capitalize, fromCamelCase } from '../../../shared/text';
 import { Trace } from '../../../shared/submodules/tatorscout-calculations/trace';
+import { createEventDispatcher } from 'svelte';
+
+const d = createEventDispatcher();
 
 export let app: App;
 export let active: string;
@@ -123,16 +126,20 @@ let autoComment: string = '';
                 {#each commentsSections as section, i}
                     <div class="row mb-3">
                         <!-- <div class="form-floating"> -->
-                            <label for="textarea-{i}">
-                                Please tell us why you checked "{capitalize(fromCamelCase(section))}" (you don't have to be very detailed, but it's helpful to understand the context of why you checked it)
-                            </label>
-                            <textarea
-                                class="form-control"
-                                rows="3"
-                                id="textarea-{i}"
-                                bind:value="{data[section].comment}"
-                            ></textarea>
-                        </div>
+                        <label for="textarea-{i}">
+                            Please tell us why you checked "{capitalize(
+                                fromCamelCase(section)
+                            )}" (you don't have to be very detailed, but it's
+                            helpful to understand the context of why you checked
+                            it)
+                        </label>
+                        <textarea
+                            class="form-control"
+                            rows="3"
+                            id="textarea-{i}"
+                            bind:value="{data[section].comment}"
+                        ></textarea>
+                    </div>
                     <!-- </div> -->
                 {/each}
             </div>
@@ -140,34 +147,38 @@ let autoComment: string = '';
     {/if}
     <div class="row mb-3">
         <!-- <div class="form-floating"> -->
-            <label for="textarea-general">
-                Please leave a comment here on how the robot performed in the match. (These are very helpful for analyzing the robot's performance, please be detailed)
-            </label>
-            <textarea
-                class="form-control"
-                rows="5"
-                id="textarea-general"
-                bind:value="{generalComment}"
-            ></textarea>
+        <label for="textarea-general">
+            Please leave a comment here on how the robot performed in the match.
+            (These are very helpful for analyzing the robot's performance,
+            please be detailed)
+        </label>
+        <textarea
+            class="form-control"
+            rows="5"
+            id="textarea-general"
+            bind:value="{generalComment}"
+        ></textarea>
         <!-- </div> -->
     </div>
     <div class="row mb-3">
         <!-- <div class="form-floating"> -->
-            <label for="textarea-auto">
-                Please leave a comment here on how the robot performed in the autonomous period. (If it missed shots because notes collided in mid-air, etc.)
-            </label>
-            <textarea
-                class="form-control"
-                rows="5"
-                id="textarea-auto"
-                bind:value="{autoComment}"
-            ></textarea>
+        <label for="textarea-auto">
+            Please leave a comment here on how the robot performed in the
+            autonomous period. (If it missed shots because notes collided in
+            mid-air, etc.)
+        </label>
+        <textarea
+            class="form-control"
+            rows="5"
+            id="textarea-auto"
+            bind:value="{autoComment}"
+        ></textarea>
         <!-- </div> -->
     </div>
     <div class="row">
         <button
             class="btn btn-success btn-lg w-100"
-            on:click="{() =>
+            on:click="{() => {
                 app.submit({
                     checks: Object.entries(data)
                         .map(([key, value]) => (value ? key : null))
@@ -181,7 +192,9 @@ let autoComment: string = '';
                         general: generalComment,
                         audo: autoComment
                     }
-                })}">Submit Match</button
+                });
+                d('submit');
+            }}">Submit Match</button
         >
     </div>
     <div class="row p-0 m-0">

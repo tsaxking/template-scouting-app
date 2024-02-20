@@ -197,7 +197,7 @@ export const messages: {
         color: 'success',
         code: 200,
         instructions: 'You will be redirected to the home page.',
-        redirect: '/app'
+        redirect: '/app',
     },
     'account:logged-out': {
         message: 'You have been logged out.',
@@ -543,7 +543,7 @@ export const messages: {
         message: 'You are being rate limited',
         color: 'warning',
         code: 418,
-        instructions: ''
+        instructions: '',
     },
     'server-request:match-error': {
         message:

@@ -18,6 +18,6 @@ const fns = {
 $: fns.launch(app);
 </script>
 
-<div bind:this={target} class="position-relative">
-    <Timer bind:app={app} />
+<div bind:this="{target}" class="position-relative">
+    <Timer bind:app />
 </div>
