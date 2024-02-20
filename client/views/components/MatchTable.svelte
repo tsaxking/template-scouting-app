@@ -1,9 +1,7 @@
 <script lang="ts">
 import { type TBAMatch, matchSort } from "../../../shared/submodules/tatorscout-calculations/tba";
-import type { Assignment } from "../../../shared/submodules/tatorscout-calculations/scout-groups";
 import { App } from "../../models/app/app";
 import { createEventDispatcher, onMount } from "svelte";
-import { matchInstance } from "../../../shared/match";
 
     const d = createEventDispatcher();
 
@@ -23,6 +21,7 @@ import { matchInstance } from "../../../shared/match";
 
     const fns = {
         setCustom: async (m: TBAMatch[]) => {
+            if (customMatches.length) return; // avoid infinite loop
             const res = await App.getEventData();
             if (res.isErr()) return console.error(res.error);
             const eventData = res.value;
@@ -41,6 +40,8 @@ import { matchInstance } from "../../../shared/match";
             const res = await App.getEventData();
             if (res.isErr()) return console.error(res.error);
             const eventData = res.value;
+
+            fns.setCustom(eventData.matches);
 
             currentMatch = customMatches[matchIndex];
             let team: number | undefined = undefined;

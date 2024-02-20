@@ -1,5 +1,5 @@
 import env from './env.ts';
-import { attemptAsync, Result } from '../../shared/attempt.ts';
+import { attemptAsync, Result } from '../../shared/check.ts';
 import { Match } from '../../shared/submodules/tatorscout-calculations/trace.ts';
 import { DB } from './databases.ts';
 import { uuid } from './uuid.ts';
