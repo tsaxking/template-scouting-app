@@ -29,9 +29,14 @@ const pullEvent = async () => {
 
         if (!event) return backToMain('No event selected');
 
-        await getEvent(event.key);
+        const res = await getEvent(event.key);
 
-        backToMain('Event pulled');
+        if (res.isOk()) {
+            return backToMain('Event pulled');
+        } else {
+            console.error(res.error);
+            backToMain('Error pulling event');
+        }
     } else {
         console.error(allEvents.error);
         backToMain('Error pulling event');
