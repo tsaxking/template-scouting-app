@@ -176,3 +176,12 @@ export const border = [
     // [0.21545157780195864, 0.9162132752992383],
     // [0.13329706202393907, 0.808487486398259]
 ];
+
+export const all = {
+    stages,
+    amps,
+    zones,
+    srcs,
+    autoZone,
+    border,
+};

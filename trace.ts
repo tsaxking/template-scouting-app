@@ -1,3 +1,7 @@
+import { all as all2024, zones } from './2024-areas.ts';
+import { isInside } from '../calculations/src/polygon.ts';
+import { Point2D } from '../calculations/src/linear-algebra/point.ts';
+
 /**
  * Description placeholder
  * @date 1/25/2024 - 4:58:49 PM
@@ -319,24 +323,6 @@ export class Trace {
         return (p: P) => from <= p[0] && p[0] <= to; 
     }
 
-    static velocityMap(trace: TraceArray) {
-        return trace
-            .map((p1, i, a) => {
-                if (i === a.length - 1) return null;
-
-                        const [, x1, y1] = p1;
-                        const [, x2, y2] = a[i + 1];
-
-                        const dx = x2 - x1;
-                        const dy = y2 - y1;
-
-                        const distance = Math.sqrt(dx * dx + dy * dy);
-
-                return distance / 0.25;
-            })
-            .filter(p => p !== null) as number[];
-    }
-
     static secondsNotMoving(trace: TraceArray, includeAuto: boolean): number {
         let t: TraceArray = trace.slice(); // clone
         // auto = 0-65
@@ -357,12 +343,28 @@ export class Trace {
             }
         }
 
-        return notMoving / 4;
+        return notMoving * 4;
     }
 
     static get velocity() {
         return {
-            map: Trace.velocityMap,
+            map: (trace: TraceArray, normalize = false) => {
+                return trace
+                    .map((p1, i, a) => {
+                        if (i === a.length - 1) return null;
+        
+                        const [, x1, y1] = p1;
+                        const [, x2, y2] = a[i + 1];
+
+                        const dx = (x2 - x1) * (normalize ? 1 : 54);
+                        const dy = (y2 - y1) * (normalize ? 1 : 27);
+
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+                        return distance * 4;
+                    })
+                    .filter(p => p !== null) as number[];
+            },
             histogram: (trace: TraceArray) => {
                 const m = Trace.velocity.map(trace);
                 const NUM_BUCKETS = 20;
@@ -433,6 +435,122 @@ export class Trace {
                 return trace.map(Trace.old.decompress);
             },
         };
+    }
+
+    static get score() {
+        return {
+            get yearBreakdown() {
+                return {
+                    2024: {
+                        auto: {
+                            spk: 5,
+                            amp: 2,
+                            mobility: 2
+                        },
+                        teleop: {
+                            spk: 2,
+                            amp: 1,
+                            clb: 3,
+                            park: 1,
+                            trp: 5
+                        }
+                    }
+                } as const;
+            },
+            parse2024: (trace: TraceArray) => {
+                const { auto, teleop } = Trace.score.yearBreakdown[2024];
+
+                const score = {
+                    auto: {
+                        spk: 0,
+                        amp: 0,
+                        mobility: 0,
+                        total: 0
+                    },
+                    teleop: {
+                        spk: 0,
+                        amp: 0,
+                        trp: 0,
+                        total: 0
+                    },
+                    endgame: {
+                        clb: 0,
+                        park: 0,
+                        total: 0
+                    },
+                    total: 0
+                };
+
+                const alliance = Trace.yearInfo[2024].getAlliance(trace);
+
+                const autoZone = all2024.autoZone[alliance];
+                
+                for (const p of trace) {
+                    if (p[0] <= 65) {
+                        if (p[3] === 'spk') score.auto.spk += auto.spk;
+                        if (p[3] === 'amp') score.auto.amp += auto.amp;
+                        if (!isInside([p[1], p[2]], autoZone)) score.auto.mobility = auto.mobility;
+                    } else {
+                        if (p[3] === 'spk') score.teleop.spk += teleop.spk;
+                        if (p[3] === 'amp') score.teleop.amp += teleop.amp;
+                        if (p[3] === 'clb') score.endgame.clb += teleop.clb;
+                        if (p[3] === 'trp') score.teleop.trp += teleop.trp;
+                    }
+                }
+
+                const parkZone = all2024.stages[alliance];
+
+                const noClimb = trace.every(p => p[3] !== 'clb');
+                if (noClimb && isInside([trace[trace.length - 1][1], trace[trace.length - 1][2]], parkZone)) score.endgame.park = teleop.park;
+
+                score.auto.total = score.auto.spk + score.auto.amp + score.auto.mobility;
+                score.teleop.total = score.teleop.spk + score.teleop.amp + score.teleop.trp;
+                score.endgame.total = score.endgame.clb + score.endgame.park;
+                score.total = score.auto.total + score.teleop.total + score.endgame.total;
+
+                return score;
+            }
+        }
+    }
+
+    static get yearInfo() {
+        return {
+            2024: {
+                getAlliance: (trace: TraceArray) => {
+                    const initPoint: Point2D = [trace[0][1], trace[0][2]];
+                    if (isInside(initPoint, all2024.zones.red)) {
+                        return 'red';
+                    } else {
+                        return 'blue';
+                    }
+                },
+                climbTimes: (trace: TraceArray) => {
+                    const alliance = Trace.yearInfo[2024].getAlliance(trace);
+                    const stage = all2024.stages[alliance];
+
+                    const times: number[] = [];
+
+                    let time = 0;
+                    for (const p of trace) {
+                        if (isInside([
+                            p[1],
+                            p[2]
+                        ], stage)) {
+                            time++;
+                        } else {
+                            time = 0;
+                        }
+
+                        if (['clb', 'trp'].includes(p[3] as Action2024)) {
+                            times.push(time);
+                            time = 0;
+                        }
+                    }
+
+                    return times;
+                }
+            }
+        } as const;
     }
 }
 
