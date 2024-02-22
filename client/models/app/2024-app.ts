@@ -18,6 +18,7 @@ import { App, Tick } from './app';
 import { Point2D } from '../../../shared/submodules/calculations/src/linear-algebra/point';
 import { Icon } from '../canvas/material-icons';
 import { SVG } from '../canvas/svg';
+import { icons as appIcons } from '../../../shared/submodules/tatorscout-calculations/icons';
 
 /**
  * Builds the app for the 2024 game
@@ -29,11 +30,16 @@ export const generate2024App = (
     const icons: {
         [key in Action2024]: Icon | SVG;
     } = {
-        spk: new Icon('speaker'),
-        amp: new Icon('campaign'),
-        src: new Icon('back_hand'),
-        clb: new Icon('dry_cleaning'),
-        trp: new Icon('place_item'),
+        // spk: new Icon('speaker'),
+        // amp: new Icon('campaign'),
+        // src: new Icon('back_hand'),
+        // clb: new Icon('dry_cleaning'),
+        // trp: new Icon('place_item'),
+        spk: new SVG(appIcons[2024].spk, [0, 0]),
+        amp: new SVG(appIcons[2024].amp, [0, 0]),
+        src: new SVG(appIcons[2024].src, [0, 0]),
+        clb: new SVG(appIcons[2024].clb, [0, 0]),
+        trp: new SVG(appIcons[2024].trp, [0, 0]),
     };
 
     const app = new App<Action2024, Zones2024, TraceParse2024>(
