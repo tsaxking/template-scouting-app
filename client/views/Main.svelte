@@ -11,6 +11,21 @@ import Upload from './pages/Upload.svelte';
 
 let event: EventData;
 
+const fullscreen = (data: 'open' | 'close' | 'toggle') => {
+    if (!main) return;
+    if (data === 'open') {
+        main.requestFullscreen();
+    } else if (data === 'close') {
+        document.exitFullscreen();
+    } else {
+        if (document.fullscreenElement) {
+            document.exitFullscreen();
+        } else {
+            main.requestFullscreen();
+        }
+    }
+};
+
 App.getEventData().then(data => {
     if (data.isOk()) {
         event = data.value;
@@ -34,20 +49,24 @@ let main: HTMLElement;
 window.onbeforeunload = function () {
     return 'Are you sure you want to leave? You will lose all your progress on this match!';
 };
+
+$: {
+    switch (active) {
+        case 'App':
+            fullscreen('open');
+            break;
+        default:
+            fullscreen('close');
+            break;
+    }
+}
 </script>
 
 <main bind:this={main}>
     <NavTabs {tabs} {active} on:change="{e => (active = e.detail)}" />
 
     <button class="btn btn-outline-primary position-fixed top-0 end-0"
-        on:click={() => {
-            // toggle fullscreen
-            if (document.fullscreenElement) {
-                document.exitFullscreen();
-            } else {
-                main.requestFullscreen();
-            }
-        }}
+        on:click={() => fullscreen('toggle')}
     >
         Fullscreen
     </button>
