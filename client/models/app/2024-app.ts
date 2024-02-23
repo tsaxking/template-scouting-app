@@ -38,7 +38,6 @@ export const generate2024App = (
 
     const app = new App<Action2024, Zones2024, TraceParse2024>(
         2024,
-        alliance,
         icons,
     );
 

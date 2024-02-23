@@ -252,7 +252,6 @@ class MatchData {
         return new MatchData(
             data.matchNumber,
             data.teamNumber,
-            data.alliance,
             data.compLevel,
         );
     }
@@ -260,8 +259,7 @@ class MatchData {
     constructor(
         public $matchNumber: number = 0,
         public $teamNumber: number = 0,
-        public $alliance: 'red' | 'blue' | null = null,
-        public $compLevel: 'pr' | 'qm' | 'qf' | 'sf' | 'f' = 'pr',
+        public $compLevel: 'pr' | 'qm' | 'qf' | 'sf' | 'f' = 'pr'
     ) {}
     
     public get matchNumber() {
@@ -282,13 +280,18 @@ class MatchData {
         this.save();
     }
 
-    public get alliance() {
-        return this.$alliance;
-    }
+    public async getAlliance(): Promise<'red' | 'blue' | null> {
+        const res = await App.getEventData();
+        if (res.isErr()) return null;
 
-    public set alliance(alliance: 'red' | 'blue' | null) {
-        this.$alliance = alliance;
-        this.save();
+        const { matches } = res.value;
+        const match = matches.find((m) => m.match_number === this.matchNumber && m.comp_level === this.compLevel);
+
+        if (!match) return null;
+
+        if (match.alliances.red.team_keys.includes(`frc${this.$teamNumber}`)) return 'red';
+        if (match.alliances.blue.team_keys.includes(`frc${this.$teamNumber}`)) return 'blue';
+        return null;
     }
 
     public get compLevel() {
@@ -303,7 +306,6 @@ class MatchData {
         window.localStorage.setItem('matchData', JSON.stringify({
             matchNumber: this.$matchNumber,
             teamNumber: this.$teamNumber,
-            alliance: this.$alliance,
             compLevel: this.$compLevel
         }));
     }
@@ -386,10 +388,9 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
         App.emitter.once(event, listener);
     }
 
-    public static selectMatch(number: number, compLevel: 'pr' | 'qm' | 'qf' | 'sf' | 'f', alliance: 'red' | 'blue' | null = null) {
+    public static selectMatch(number: number, compLevel: 'pr' | 'qm' | 'qf' | 'sf' | 'f') {
         App.matchData.matchNumber = number;
         App.matchData.compLevel = compLevel;
-        App.matchData.alliance = alliance;
         this.emit('change-match', App.matchData);
     }
 
@@ -435,7 +436,7 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
                     App.selectMatch(nextMatch, match.comp_level as 'pr' | 'qm' | 'qf' | 'sf' | 'f')
     
                     App.matchData.teamNumber = assignments[matches.indexOf(match)];
-                    App.matchData.alliance = match.alliances.red.team_keys.includes(`frc${App.matchData.teamNumber}`) ? 'red' : 'blue';
+                    // App.matchData.alliance = match.alliances.red.team_keys.includes(`frc${App.matchData.teamNumber}`) ? 'red' : 'blue';
                     return match;
                 } else {
                     throw new Error('Match not found');
@@ -677,7 +678,6 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
      */
     constructor(
         public readonly year: number,
-        public readonly currentAlliance: 'red' | 'blue' | null = null,
         public readonly icons: Partial<
             {
                 [key in Action]: Icon | SVG;
@@ -1509,7 +1509,7 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
      * @public
      * @returns {Function} Stops the app
      */
-    public build(): undefined | (() => void) {
+    public async build(): Promise<undefined | (() => void)> {
         if (this.built) {
             console.error('App already built');
             return;
@@ -1547,6 +1547,8 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
             );
         target.appendChild(this.canvasEl);
 
+        const currentAlliance = await App.matchData.getAlliance();
+
         for (const o of this.gameObjects) {
             const { element, alliance } = o;
             let appended = false;
@@ -1556,8 +1558,8 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
                 appended = true;
             };
             if (alliance === null) append();
-            if (alliance === this.currentAlliance) append();
-            if (this.currentAlliance === null) append();
+            if (alliance === currentAlliance) append();
+            if (currentAlliance === null) append();
         }
 
         this.setListeners();
@@ -1720,7 +1722,7 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
      * @param {HTMLCanvasElement} canvas
      * @returns {Result<Container>}
      */
-    drawRecap(canvas: HTMLCanvasElement): Result<Container> {
+    getRecap(canvas: HTMLCanvasElement): Result<Container> {
         canvas.width = canvas.parentElement?.clientWidth || 0;
         canvas.height = canvas.width / 2;
 
@@ -1740,6 +1742,11 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
                 y: App.flipY,
             };
 
+            
+            const container = new Container();
+
+            App.matchData.getAlliance().then((currentAlliance) => {
+                
             // this corrects for field orientation flipping, but this is an issue because it's not the same that the user sees on the previous screen
             const d: TraceArray = this.pull().map((p) => {
                 const [i, x, y, a] = p;
@@ -1750,13 +1757,12 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
                     a,
                 ];
             });
-            const container = new Container();
 
             container.children = d.map((p, i, a) => {
                 const [_i, x, y, action] = p;
 
                 const color = Color.fromName(
-                    this.currentAlliance ? this.currentAlliance : 'black',
+                    currentAlliance ? currentAlliance : 'black',
                 ).toString('rgba');
 
                 if (action) {
@@ -1801,6 +1807,8 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
             const from = 0;
             const to = d.length - 1;
             container.filter((_, i) => i >= from && i <= to);
+
+            });
 
             c.add(img, container);
 
