@@ -10,6 +10,7 @@ import { FileUpload } from './middleware/stream.ts';
 import { ReqBody } from './structure/app/req.ts';
 import { validate } from './middleware/data-type.ts';
 import { parseCookie } from '../shared/cookie.ts';
+import { io, Socket } from './structure/socket.ts';
 import {
     Match,
     validateObj,
@@ -27,6 +28,11 @@ export const app = new App(port, env.DOMAIN || `http://localhost:${port}`, {
     // onConnection: (socket) => {
     // log('New connection:', socket.id);
     // },
+    blockedIps: (() => {
+        const blocked = getJSONSync<string[]>('blocked-ips');
+        if (blocked.isOk()) return blocked.value;
+        return [];
+    })(),
     ioPort: +(env.SOCKET_PORT || port + 1),
 });
 
@@ -44,6 +50,14 @@ if (Deno.args.includes('--ping')) {
     });
 }
 
+app.post('/socket', io.middleware());
+
+io.on('connection', (s: Socket) => {
+    log('New connection:', s.id);
+    s.on('disconnect', () => {
+        log('Disconnected:', s.id);
+    });
+});
 app.use('/*', (req, res, next) => {
     log(`[${req.method}] ${req.url}`);
     next();
@@ -60,6 +74,10 @@ app.post('/socket-init', (req, res) => {
     res.json(parseCookie(cookie));
 });
 
+app.get('/*', (req, res, next) => {
+    log(`[${req.method}] ${req.pathname}`);
+    next();
+});
 
 app.static('/client', resolve(__root, './client'));
 app.static('/public', resolve(__root, './public'));
@@ -119,7 +137,7 @@ function stripHtml(body: any) {
 app.post('/*', (req, res, next) => {
     req.body = stripHtml(req.body as ReqBody);
 
-    log('[POST]', req.url);
+    log('[POST]', req.url.pathname);
     try {
         const b = JSON.parse(JSON.stringify(req.body)) as {
             $$files?: FileUpload[];
@@ -135,6 +153,21 @@ app.post('/*', (req, res, next) => {
     }
 
     next();
+});
+
+// TODO: There is an error with the email validation middleware
+// app.post('/*', emailValidation(['email', 'confirmEmail'], {
+//     onspam: (req, res, next) => {
+//         res.sendStatus('spam:detected');
+//     },
+//     // onerror: (req, res, next) => {
+//     //     // res.sendStatus('unknown:error');
+//     //     next();
+//     // }
+// }));
+
+app.get('/', (req, res) => {
+    res.redirect('/home');
 });
 
 app.get('/test/:page', (req, res, next) => {
@@ -269,14 +302,14 @@ app.final<{
     password?: string;
     confirmPassword?: string;
 }>((req, res) => {
-    req.session.save();
+    // req.session.save();
 
     serverLog('request', {
         date: Date.now(),
         duration: Date.now() - req.start,
         ip: req.session?.ip,
         method: req.method,
-        url: req.url,
+        url: req.url.pathname,
         status: res._status,
         userAgent: req.headers.get('user-agent') || '',
         body: req.method == 'post'

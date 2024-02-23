@@ -239,6 +239,8 @@ const isPasswordValid = (password: string): string[] => {
                         {/if}
                     </div>
 
+                    <hr />
+
                     <input
                         type="submit"
                         class="btn btn-primary"
