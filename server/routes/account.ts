@@ -86,7 +86,7 @@ router.post<{
             });
         }
 
-        const r = await req.session.signIn(account);
+        await req.session.signIn(account);
 
         // if (r.isErr()) return res.sendStatus('unknown:error');
         res.sendStatus(
@@ -145,8 +145,10 @@ router.post<{
     },
 );
 
-router.get('/sign-out', (req, res) => {
-    req.session.signOut();
+router.get('/sign-out', async (req, res) => {
+    // console.log('Signing out');
+    await req.session.signOut();
+    // console.log(req.session);
     res.redirect('/home');
 });
 
@@ -305,7 +307,7 @@ router.post<{
 
         const status = await account.addRole(role);
         if (status === 'role-added') {
-            req.io.emit('account:role-added', accountId, roleId);
+            req.io.emit('account:role-added', { accountId, roleId });
         }
         if (!messages[('role:' + status) as keyof typeof messages]) {
             return res.sendStatus(('account:' + status) as StatusId, {
@@ -345,7 +347,7 @@ router.post<{
 
         const status = await account.removeRole(role);
         if (status === 'role-removed') {
-            req.io.emit('account:role-removed', accountId, roleId);
+            req.io.emit('account:role-removed', { accountId, roleId });
         }
         if (!messages[('role:' + status) as keyof typeof messages]) {
             return res.sendStatus(('account:' + status) as StatusId, {
@@ -395,14 +397,26 @@ router.post('/get-settings', async (req, res) => {
     res.json(settings || []);
 });
 
-router.post('/request-password-reset', validate({}), async (req, res) => {
-    const a = await req.session.getAccount();
-    if (!a) return res.sendStatus('account:not-logged-in');
+router.post<{
+    username: string;
+}>(
+    '/request-password-reset',
+    validate({
+        username: 'string',
+    }),
+    async (req, res) => {
+        const { username } = req.body;
 
-    a.requestPasswordChange();
+        const a = (await Account.fromUsername(username)) ||
+            (await Account.fromEmail(username));
 
-    res.sendStatus('account:password-reset-request');
-});
+        if (!a) return res.sendStatus('account:not-found');
+
+        a.requestPasswordChange();
+
+        res.sendStatus('account:password-reset-request');
+    },
+);
 
 router.post<{
     password: string;
