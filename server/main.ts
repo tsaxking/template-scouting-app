@@ -15,7 +15,7 @@ const main = () => {
     const start = (): Deno.ChildProcess => {
         log('Starting server...');
         const child = new Deno.Command(Deno.execPath(), {
-            args: ['run', '--allow-all', './server/server.ts'],
+            args: ['run', '--allow-all', '--unstable-sloppy-imports', './server/server.ts'],
             stdout: 'inherit',
             stderr: 'inherit',
             stdin: 'inherit',
