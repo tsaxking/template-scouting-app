@@ -79,5 +79,8 @@ const formatTime = (time: number) => {
 <style>
 .timer {
     z-index: 999;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
 }
 </style>

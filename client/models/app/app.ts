@@ -1605,37 +1605,50 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
         };
 
         this.canvasEl.addEventListener('mousedown', (e) => {
+            e.preventDefault();
             const [[x, y]] = this.canvas.getXY(e);
             down(x, y);
         });
 
         this.canvasEl.addEventListener('mousemove', (e) => {
+            e.preventDefault();
+
             const [[x, y]] = this.canvas.getXY(e);
             move(x, y);
         });
 
         this.canvasEl.addEventListener('mouseup', (e) => {
+            e.preventDefault();
+
             const [[x, y]] = this.canvas.getXY(e);
             up(x, y);
         });
 
         this.canvasEl.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+
             const [[x, y]] = this.canvas.getXY(e);
             down(x, y);
         });
 
         this.canvasEl.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+
             const [[x, y]] = this.canvas.getXY(e);
             move(x, y);
         });
 
-        this.canvasEl.addEventListener('touchend', (_e) => {
+        this.canvasEl.addEventListener('touchend', (e) => {
+            e.preventDefault();
+
             this.isDrawing = false;
             // const [[x, y]] = this.canvas.getXY(e);
             // up(x, y);
         });
 
-        this.canvasEl.addEventListener('touchcancel', (_e) => {
+        this.canvasEl.addEventListener('touchcancel', (e) => {
+            e.preventDefault();
+
             this.isDrawing = false;
             // const [[x, y]] = this.canvas.getXY(e);
             // up(x, y);

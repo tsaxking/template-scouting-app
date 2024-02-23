@@ -6,5 +6,8 @@ new Main({
     target: document.body,
 });
 
+document.body.style.padding = '0px';
+document.body.style.margin = '0px';
+
 import { Settings } from '../models/settings';
 Object.assign(window, { Settings });
