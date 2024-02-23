@@ -26,14 +26,29 @@ let tabs = ['Pre', 'App', 'Post', 'Upload'];
 let active = 'Pre';
 const domain = 'http://localhost:3000';
 
+let main: HTMLElement;
+
 // if reload, warn
-// window.onbeforeunload = function () {
-//     return 'Are you sure you want to leave? You will lose all your progress on this match!';
-// };
+window.onbeforeunload = function () {
+    return 'Are you sure you want to leave? You will lose all your progress on this match!';
+};
 </script>
 
-<main>
+<main bind:this={main}>
     <NavTabs {tabs} {active} on:change="{e => (active = e.detail)}" />
+
+    <button class="btn btn-outline-primary position-fixed top-0 end-0"
+        on:click={() => {
+            // toggle fullscreen
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            } else {
+                main.requestFullscreen();
+            }
+        }}
+    >
+        Fullscreen
+    </button>
 
     <Page {active} {domain} title="Pre"><Pre on:play={() => active = 'App'} {app}></Pre></Page
     >
