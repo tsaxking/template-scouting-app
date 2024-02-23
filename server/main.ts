@@ -1,6 +1,9 @@
 import { stdin } from './utilities/stdin.ts';
 import { Builder } from './bundler.ts';
 import { Colors } from './utilities/colors.ts';
+import { ServerRequest } from './utilities/requests.ts';
+import { attempt } from '../shared/check.ts';
+import { runTask } from './utilities/run-task.ts';
 
 const log = (...args: any[]) =>
     console.log(Colors.FgBlue, '[MAIN]', Colors.Reset, ...args, Colors.Reset);
@@ -51,6 +54,23 @@ const main = () => {
 
         stdin.on('rb', () => {
             build();
+        });
+
+        stdin.on('ping', async () => {
+            const result = await ServerRequest.ping();
+            if (result.isOk()) console.log('Servers are connected!');
+            else console.log('Servers are disconnected!');
+        });
+
+        stdin.on('data', (data) => {
+            const [command, ...args] = data.split(' ');
+            switch (command) {
+                case 'event':
+                    attempt(() =>
+                        runTask('./scripts/event-data.ts', 'getEvent', ...args)
+                    );
+                    break;
+            }
         });
     }
 

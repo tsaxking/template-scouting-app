@@ -58,136 +58,456 @@ import { Select_db_get_version } from './tables.ts';
 import { Update_db_change_version } from './tables.ts';
 import { Insert_db_init } from './tables.ts';
 import { RolePermissions } from './tables.ts';
+import { ServerRequests } from './tables.ts';
+import { Insert_server_requests_new } from './tables.ts';
+import { Delete_server_requests_delete } from './tables.ts';
+import { Update_server_requests_update } from './tables.ts';
+import { Select_server_requests_get } from './tables.ts';
+import { Select_server_requests_all } from './tables.ts';
+import { Update_sessions_sign_in } from './tables.ts';
+import { Update_sessions_sign_out } from './tables.ts';
+import { Delete_db_delete_version } from './tables.ts';
+import { Insert_db_change_version } from './tables.ts';
 import { Insert_permissions_add_to_role } from './tables.ts';
 import { Delete_permissions_remove_from_role } from './tables.ts';
 import { Select_blacklist_all } from './tables.ts';
-import { Update_sessions_sign_in } from './tables.ts';
-import { Update_sessions_sign_out } from './tables.ts';
-import { Insert_db_change_version } from './tables.ts';
-import { Delete_db_delete_version } from './tables.ts';
+import { TBARequests } from './tables.ts';
+import { Update_db_versions______ } from './tables.ts';
+import { Select_tba_from_url } from './tables.ts';
+import { Insert_tba_new } from './tables.ts';
+
 
 export type Queries = {
-    'permissions/all': [[Select_permissions_all], Permissions];
-    'permissions/from-role': [[{ roleId: string }], Permissions];
-    'permissions/remove-from-role': [
-        [Delete_permissions_remove_from_role],
-        unknown,
-    ];
-    'permissions/add-to-role': [[Insert_permissions_add_to_role], unknown];
-    'roles/from-name': [[Select_roles_from_name], Roles];
-    'roles/delete': [[Delete_roles_delete], unknown];
-    'roles/update': [[Update_roles_update], unknown];
-    'roles/new': [[Insert_roles_new], unknown];
-    'roles/from-id': [[Select_roles_from_id], Roles];
-    'roles/all': [[Select_roles_all], Roles];
-    'roles/from-username': [[{ username: string }], Roles];
-    'sessions/delete': [[Delete_sessions_delete], unknown];
-    'sessions/delete-all': [[Delete_sessions_delete_all], unknown];
-    'sessions/update': [[Update_sessions_update], unknown];
-    'sessions/new': [[Insert_sessions_new], unknown];
-    'sessions/get': [[Select_sessions_get], Sessions];
-    'sessions/all': [[Select_sessions_all], Sessions];
-    'sessions/sign-in': [[Update_sessions_sign_in], unknown];
-    'sessions/sign-out': [[Update_sessions_sign_out], unknown];
-    'member/delete': [[Delete_member_delete], unknown];
-    'member/update-title': [[Update_member_update_title], unknown];
-    'member/update-status': [[Update_member_update_status], unknown];
-    'member/update-resume': [[Update_member_update_resume], unknown];
-    'member/remove-from-board': [[Update_member_remove_from_board], unknown];
-    'member/new': [[Insert_member_new], unknown];
-    'member/update-bio': [[Update_member_update_bio], unknown];
-    'member/add-to-board': [[Update_member_add_to_board], unknown];
-    'member/all': [[Select_member_all], Members];
-    'member/from-username': [[{ username: string }], Members];
-    'account/unverify': [[Update_account_unverify], unknown];
-    'account/set-verification': [[Update_account_set_verification], unknown];
-    'account/delete': [[Delete_account_delete], unknown];
-    'account/unverified': [[Select_account_unverified], Accounts];
-    'account/change-password': [[Update_account_change_password], unknown];
-    'account/save-settings': [[Insert_account_save_settings], unknown];
-    'account/from-username': [[Select_account_from_username], Accounts];
-    'account/update-picture': [[Update_account_update_picture], unknown];
-    'account/from-verification-key': [
-        [Select_account_from_verification_key],
-        Accounts,
-    ];
-    'account/verified': [[Select_account_verified], Accounts];
-    'account/verify': [[Update_account_verify], unknown];
-    'account/get-settings': [[Select_account_get_settings], AccountSettings];
-    'account/change-email': [[Update_account_change_email], unknown];
-    'account/remove-role': [[Delete_account_remove_role], unknown];
-    'account/add-role': [[Insert_account_add_role], unknown];
-    'account/from-email': [[Select_account_from_email], Accounts];
-    'account/new': [[Insert_account_new], unknown];
-    'account/request-password-change': [
-        [Update_account_request_password_change],
-        unknown,
-    ];
-    'account/from-password-change': [
-        [Select_account_from_password_change],
-        Accounts,
-    ];
-    'account/from-id': [[Select_account_from_id], Accounts];
-    'account/all': [[Select_account_all], Accounts];
-    'account/request-email-change': [
-        [Update_account_request_email_change],
-        unknown,
-    ];
-    'account/change-username': [[Update_account_change_username], unknown];
-    'account/roles': [[{ id: string }], Roles];
-    'db/get-version': [[Select_db_get_version], Version];
-    'db/change-version': [[Insert_db_change_version], unknown];
-    'db/delete-version': [[Delete_db_delete_version], unknown];
-    'db/init': [[Insert_db_init], unknown];
-    'blacklist/all': [[Select_blacklist_all], Blacklist];
-    'blacklist/new': [
+'permissions/all': [
         [
-            {
-                id: string;
-                ip: string;
-                created: number;
-                accountId: string | undefined;
-                reason: string;
-            },
+            Select_permissions_all
         ],
-        unknown,
+        Permissions
     ];
-    'blacklist/delete': [
+'permissions/from-role': [
         [
-            {
-                id: string;
-            },
+            {roleId:string}
         ],
-        unknown,
+        Permissions
     ];
-    'blacklist/from-account': [
+'permissions/remove-from-role': [
         [
-            {
-                accountId: string;
-            },
+            Delete_permissions_remove_from_role
         ],
-        Blacklist,
+        unknown
     ];
-    'blacklist/from-ip': [
+'permissions/add-to-role': [
         [
-            {
-                ip: string;
-            },
+            Insert_permissions_add_to_role
         ],
-        Blacklist,
+        unknown
     ];
-    'blacklist/delete-by-ip': [
+'roles/from-name': [
         [
-            {
-                ip: string;
-            },
+            Select_roles_from_name
         ],
+        Roles
     ];
-    'blacklist/delete-by-account': [
+'roles/delete': [
         [
-            {
-                accountId: string;
-            },
+            Delete_roles_delete
         ],
+        unknown
+    ];
+'roles/update': [
+        [
+            Update_roles_update
+        ],
+        unknown
+    ];
+'roles/new': [
+        [
+            Insert_roles_new
+        ],
+        unknown
+    ];
+'roles/from-id': [
+        [
+            Select_roles_from_id
+        ],
+        Roles
+    ];
+'roles/all': [
+        [
+            Select_roles_all
+        ],
+        Roles
+    ];
+'roles/from-username': [
+        [
+            {username:string}
+        ],
+        Roles
+    ];
+'sessions/delete': [
+        [
+            Delete_sessions_delete
+        ],
+        unknown
+    ];
+'sessions/delete-all': [
+        [
+            Delete_sessions_delete_all
+        ],
+        unknown
+    ];
+'sessions/update': [
+        [
+            Update_sessions_update
+        ],
+        unknown
+    ];
+'sessions/new': [
+        [
+            Insert_sessions_new
+        ],
+        unknown
+    ];
+'sessions/get': [
+        [
+            Select_sessions_get
+        ],
+        Sessions
+    ];
+'sessions/all': [
+        [
+            Select_sessions_all
+        ],
+        Sessions
+    ];
+'sessions/sign-in': [
+        [
+            Update_sessions_sign_in
+        ],
+        unknown
+    ];
+'sessions/sign-out': [
+        [
+            Update_sessions_sign_out
+        ],
+        unknown
+    ];
+'member/delete': [
+        [
+            Delete_member_delete
+        ],
+        unknown
+    ];
+'member/update-title': [
+        [
+            Update_member_update_title
+        ],
+        unknown
+    ];
+'member/update-status': [
+        [
+            Update_member_update_status
+        ],
+        unknown
+    ];
+'member/update-resume': [
+        [
+            Update_member_update_resume
+        ],
+        unknown
+    ];
+'member/remove-from-board': [
+        [
+            Update_member_remove_from_board
+        ],
+        unknown
+    ];
+'member/new': [
+        [
+            Insert_member_new
+        ],
+        unknown
+    ];
+'member/update-bio': [
+        [
+            Update_member_update_bio
+        ],
+        unknown
+    ];
+'member/add-to-board': [
+        [
+            Update_member_add_to_board
+        ],
+        unknown
+    ];
+'member/all': [
+        [
+            Select_member_all
+        ],
+        Members
+    ];
+'member/from-username': [
+        [
+            {username:string}
+        ],
+        Members
+    ];
+'account/unverify': [
+        [
+            Update_account_unverify
+        ],
+        unknown
+    ];
+'account/set-verification': [
+        [
+            Update_account_set_verification
+        ],
+        unknown
+    ];
+'account/delete': [
+        [
+            Delete_account_delete
+        ],
+        unknown
+    ];
+'account/unverified': [
+        [
+            Select_account_unverified
+        ],
+        Accounts
+    ];
+'account/change-password': [
+        [
+            Update_account_change_password
+        ],
+        unknown
+    ];
+'account/save-settings': [
+        [
+            Insert_account_save_settings
+        ],
+        unknown
+    ];
+'account/from-username': [
+        [
+            Select_account_from_username
+        ],
+        Accounts
+    ];
+'account/update-picture': [
+        [
+            Update_account_update_picture
+        ],
+        unknown
+    ];
+'account/from-verification-key': [
+        [
+            Select_account_from_verification_key
+        ],
+        Accounts
+    ];
+'account/verified': [
+        [
+            Select_account_verified
+        ],
+        Accounts
+    ];
+'account/verify': [
+        [
+            Update_account_verify
+        ],
+        unknown
+    ];
+'account/get-settings': [
+        [
+            Select_account_get_settings
+        ],
+        AccountSettings
+    ];
+'account/change-email': [
+        [
+            Update_account_change_email
+        ],
+        unknown
+    ];
+'account/remove-role': [
+        [
+            Delete_account_remove_role
+        ],
+        unknown
+    ];
+'account/add-role': [
+        [
+            Insert_account_add_role
+        ],
+        unknown
+    ];
+'account/from-email': [
+        [
+            Select_account_from_email
+        ],
+        Accounts
+    ];
+'account/new': [
+        [
+            Insert_account_new
+        ],
+        unknown
+    ];
+'account/request-password-change': [
+        [
+            Update_account_request_password_change
+        ],
+        unknown
+    ];
+'account/from-password-change': [
+        [
+            Select_account_from_password_change
+        ],
+        Accounts
+    ];
+'account/from-id': [
+        [
+            Select_account_from_id
+        ],
+        Accounts
+    ];
+'account/all': [
+        [
+            Select_account_all
+        ],
+        Accounts
+    ];
+'account/request-email-change': [
+        [
+            Update_account_request_email_change
+        ],
+        unknown
+    ];
+'account/change-username': [
+        [
+            Update_account_change_username
+        ],
+        unknown
+    ];
+'account/roles': [
+        [
+            {id:string}
+        ],
+        Roles
+    ];
+'db/get-version': [
+        [
+            Select_db_get_version
+        ],
+        Version
+    ];
+'db/change-version': [
+        [
+            Insert_db_change_version
+        ],
+        unknown
+    ];
+'db/delete-version': [
+        [
+            Delete_db_delete_version
+        ],
+        unknown
+    ];
+'db/init': [
+        [
+            Insert_db_init
+        ],
+        unknown
+    ];
+'blacklist/all': [
+        [
+            Select_blacklist_all
+        ],
+        Blacklist
+    ];
+'blacklist/new': [
+        [
+            {id:string;ip:string;created:number;accountId:string|undefined;reason:string;},
+        ],
+        unknown
+    ];
+'blacklist/delete': [
+        [
+            {id:string;}
+        ],
+        unknown
+    ];
+'blacklist/from-account': [
+        [
+            {accountId:string;},
+        ],
+        Blacklist
+    ];
+'blacklist/from-ip': [
+        [
+            {ip:string;},
+        ],
+        Blacklist
+    ];
+'blacklist/delete-by-ip': [
+        [
+            {ip:string;},
+        ],
+        
+    ];
+'blacklist/delete-by-account': [
+        [
+            {accountId:string;},
+        ],
+        
+    ];
+'server-requests/new': [
+        [
+            Insert_server_requests_new
+        ],
+        unknown
+    ];
+'server-requests/delete': [
+        [
+            Delete_server_requests_delete
+        ],
+        unknown
+    ];
+'server-requests/update': [
+        [
+            Update_server_requests_update
+        ],
+        unknown
+    ];
+'server-requests/get': [
+        [
+            Select_server_requests_get
+        ],
+        ServerRequests
+    ];
+'server-requests/all': [
+        [
+            Select_server_requests_all
+        ],
+        ServerRequests
+    ];
+'db/versions/1-3-1': [
+        [
+            Update_db_versions______
+        ],
+        unknown
+    ];
+'tba/from-url': [
+        [
+            Select_tba_from_url
+        ],
+        TBARequests
+    ];
+'tba/new': [
+        [
+            Insert_tba_new
+        ],
+        unknown
     ];
 };
