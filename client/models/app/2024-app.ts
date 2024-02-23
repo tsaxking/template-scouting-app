@@ -102,17 +102,30 @@ export const generate2024App = (
     const redButtonClasses = ['btn', 'btn-danger', 'btn-lg'];
 
     blueAmp.classList.add(...blueButtonClasses);
-    blueAmp.innerHTML = `<i class="material-icons">campaign</i>`;
+    // blueAmp.innerHTML = `<i class="material-icons">campaign</i>`;
+    blueAmp.innerHTML = appIcons[2024].amp;
+    blueAmp.style.fontSize = '24px';
     redAmp.classList.add(...redButtonClasses);
-    redAmp.innerHTML = `<i class="material-icons">campaign</i>`;
+    // redAmp.innerHTML = `<i class="material-icons">campaign</i>`;
+    redAmp.innerHTML = appIcons[2024].amp;
+    redAmp.style.fontSize = '24px';
     blueSpeaker.classList.add(...blueButtonClasses);
-    blueSpeaker.innerHTML = `<i class="material-icons">speaker</i>`;
+    // blueSpeaker.innerHTML = `<i class="material-icons">speaker</i>`;
+    blueSpeaker.innerHTML = appIcons[2024].spk;
+    blueSpeaker.style.fontSize = '24px';
     redSpeaker.classList.add(...redButtonClasses);
-    redSpeaker.innerHTML = `<i class="material-icons">speaker</i>`;
+    // redSpeaker.innerHTML = `<i class="material-icons">speaker</i>`;
+    redSpeaker.innerHTML = appIcons[2024].spk;
+    redSpeaker.style.fontSize = '24px';
     blueSource.classList.add(...blueButtonClasses);
-    blueSource.innerHTML = `<i class="material-icons">back_hand</i>`;
+    // blueSource.innerHTML = `<i class="material-icons">back_hand</i>`;
+    blueSource.innerHTML = appIcons[2024].src;
+    blueSource.style.fontSize = '24px';
     redSource.classList.add(...redButtonClasses);
-    redSource.innerHTML = `<i class="material-icons">back_hand</i>`;
+    // redSource.innerHTML = `<i class="material-icons">back_hand</i>`;
+    redSource.innerHTML = appIcons[2024].src;
+    redSource.style.fontSize = '24px';
+
 
     const I = Iterator<Action2024>;
 
@@ -232,27 +245,32 @@ export const generate2024App = (
 
     app.on('action', (a) => {
         let data = 'help';
-        const type = 'material-icons';
+        const type = 'svg';
         switch (a.action) {
             case 'Red Amp':
             case 'Blue Amp':
-                data = 'campaign';
+                // data = 'campaign';
+                data = appIcons[2024].amp
                 break;
             case 'Red Speaker':
             case 'Blue Speaker':
-                data = 'speaker';
+                // data = 'speaker';
+                data = appIcons[2024].spk;
                 break;
             case 'Red Source':
             case 'Blue Source':
-                data = 'back_hand';
+                // data = 'back_hand';
+                data = appIcons[2024].src;
                 break;
             case 'Red Trap':
             case 'Blue Trap':
-                data = 'place_item';
+                // data = 'place_item';
+                data = appIcons[2024].trp;
                 break;
             case 'Red Climb':
             case 'Blue Climb':
                 data = 'dry_cleaning';
+                data = appIcons[2024].clb;
                 break;
         }
 
