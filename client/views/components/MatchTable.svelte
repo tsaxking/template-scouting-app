@@ -53,8 +53,6 @@ import { createEventDispatcher, onMount } from "svelte";
             }
 
             App.matchData.teamNumber = team;
-            App.matchData.alliance = currentMatch.alliances.red.team_keys.includes(`frc${App.matchData.teamNumber}`) ? 'red' : 'blue';
-
             App.selectMatch(currentMatch.match_number, currentMatch.comp_level as 'pr' | 'qm' | 'qf' | 'sf' | 'f');
 
             currentMatchIndex = matchIndex;

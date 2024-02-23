@@ -4,6 +4,9 @@ import Checkboxes from '../components/app/Checkboxes.svelte';
 import type { BootstrapColor } from '../../submodules/colors/color';
 import { capitalize, fromCamelCase } from '../../../shared/text';
 import { Trace } from '../../../shared/submodules/tatorscout-calculations/trace';
+import { createEventDispatcher } from 'svelte';
+
+const d = createEventDispatcher();
 
 export let app: App;
 export let active: string;
@@ -75,6 +78,8 @@ let data: {
 const open = (active: string) => {
     if (active !== 'Post') return;
 
+    console.log('open');
+
     const traceArray = app.pull();
     const secondsNotMoving = Trace.secondsNotMoving(traceArray, false);
     if (secondsNotMoving > 20) {
@@ -82,7 +87,7 @@ const open = (active: string) => {
         data.robotDied.value = true;
     }
 
-    const res = app.drawRecap(canvas);
+    const res = app.getRecap(canvas);
     if (res.isErr()) console.warn(res.error);
     if (res.isOk()) {
         jQuery('#slider').slider({
@@ -168,7 +173,9 @@ let autoComment: string = '';
         <button
             class="btn btn-success btn-lg w-100"
             on:click="{() =>
-                app.submit({
+                {
+                    // d('submit');
+                    app.submit({
                     checks: Object.entries(data)
                         .map(([key, value]) => (value ? key : null))
                         .filter(Boolean),
@@ -181,7 +188,7 @@ let autoComment: string = '';
                         general: generalComment,
                         audo: autoComment
                     }
-                })}">Submit Match</button
+                })}}">Submit Match</button
         >
     </div>
     <div class="row p-0 m-0">

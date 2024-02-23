@@ -68,14 +68,6 @@ import FieldOrientation from './FieldOrientation.svelte';
                 m.hide();
                 App.matchData.teamNumber = data.teamNum || App.matchData.teamNumber;
 
-                const match = eventData.matches.find(m => m.comp_level === data.compLevel && m.match_number === data.matchNum);
-                if (!match) {
-                    console.error('Could not find match, assigning alliance to null');
-                    return App.matchData.alliance = null;
-                }
-                const alliance = match.alliances.red.team_keys.includes(`frc${data.teamNum}`) ? 'red' : 'blue';
-                App.matchData.alliance = alliance;
-
                 App.selectMatch(data.matchNum, data.compLevel)
             });
             m.addButton(save);
@@ -109,7 +101,6 @@ import FieldOrientation from './FieldOrientation.svelte';
                 App.matchData.matchNumber = match.match_number;
                 App.matchData.compLevel = match.comp_level as 'pr' | 'qm' | 'qf' | 'sf' | 'f';
                 App.matchData.teamNumber = eventData.assignments.groups[App.group][matchIndex];
-                App.matchData.alliance = match.alliances.red.team_keys.includes(`frc${App.matchData.teamNumber}`) ? 'red' : 'blue';
             });
 
             m.show();
