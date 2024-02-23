@@ -1221,6 +1221,7 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
         this.on('stop', stop);
 
         // adaptive loop to be as close to 250ms as possible
+        // MAIN EVENT LOOP
         const run = async (t: Tick | undefined, i: number) => {
             // console.log(t);
             const start = Date.now();
@@ -1259,7 +1260,8 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
             // there could be a major delay if the callback takes too long, so we need to account for that
             setTimeout(
                 () => run(this.currentTick?.next(), i++),
-                Math.max(0, App.tickDuration),
+                // I don't understand why I need to multiply this by 2, but evidently I need to???
+                Math.max(0, App.tickDuration) * 2,
             );
             App.save(this as App<any, any, any>);
         };
