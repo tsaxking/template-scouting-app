@@ -4,9 +4,7 @@ import Checkboxes from '../components/app/Checkboxes.svelte';
 import type { BootstrapColor } from '../../submodules/colors/color';
 import { capitalize, fromCamelCase } from '../../../shared/text';
 import { Trace } from '../../../shared/submodules/tatorscout-calculations/trace';
-import { createEventDispatcher } from 'svelte';
-
-const d = createEventDispatcher();
+import { confirm, notify } from '../../utilities/notifications';
 
 export let app: App;
 export let active: string;
@@ -107,7 +105,7 @@ const open = (active: string) => {
         });
         // if the number of shots is larger than the number of picks from the source + 1, then the robot picked off the ground
         // + 1 because the robot starts with a note
-        app.parsed.groundPicks = traceArray.filter(Trace.filterAction('spk')).length > (traceArray.filter(Trace.filterAction('src')).length + 1);
+        app.parsed.groundPicks = Trace.yearInfo[2024].mustGroundPick(traceArray);
 
         data.autoMobility.value = app.parsed.mobility;
         data.parked.value = app.parsed.parked;
@@ -127,6 +125,35 @@ $: {
 
 let generalComment: string = '';
 let autoComment: string = '';
+
+const submit = async () => {
+    if (!data.groundPicks.value && Trace.yearInfo[2024].mustGroundPick(app.pull())) {
+        const doSubmit = await confirm(
+            'You stated that the robot did not pick off the ground, but the have robot must pick off the ground because you said it shot more than it retrieved from the source. Are you sure you want to submit?'
+        );
+        if (!doSubmit) return notify({
+            title: 'App',
+            message: 'You did not submit the match',
+            color: 'info',
+            status: 'Submission Cancelled'
+        }, 'alert');
+    }
+
+    app.submit({
+        checks: Object.entries(data)
+            .map(([key, value]) => (value ? key : null))
+            .filter(Boolean),
+        comments: {
+            defensive: data.playedDefense.comment,
+            tippy: data.tippy.comment,
+            easilyDefended: data.easilyDefended.comment,
+            robotDied: data.robotDied.comment,
+            problemsDriving: data.problemsDriving.comment,
+            general: generalComment,
+            audo: autoComment
+        }
+    });
+};
 </script>
 
 <div class="container">
@@ -183,23 +210,7 @@ let autoComment: string = '';
     <div class="row">
         <button
             class="btn btn-success btn-lg w-100"
-            on:click="{() =>
-                {
-                    // d('submit');
-                    app.submit({
-                    checks: Object.entries(data)
-                        .map(([key, value]) => (value ? key : null))
-                        .filter(Boolean),
-                    comments: {
-                        defensive: data.playedDefense.comment,
-                        tippy: data.tippy.comment,
-                        easilyDefended: data.easilyDefended.comment,
-                        robotDied: data.robotDied.comment,
-                        problemsDriving: data.problemsDriving.comment,
-                        general: generalComment,
-                        audo: autoComment
-                    }
-                })}}">Submit Match</button
+            on:click="{submit}">Submit Match</button
         >
     </div>
     <div class="row p-0 m-0">
