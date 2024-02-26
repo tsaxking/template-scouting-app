@@ -224,33 +224,33 @@ export class Trace {
      */
     static compare(
         trace1: TraceArray,
-        trace2: TraceArray,
+        trace2: TraceArray
     ):
         | {
-            status: 'incorrect-length';
-            l1: number;
-            l2: number;
-        }
+              status: 'incorrect-length';
+              l1: number;
+              l2: number;
+          }
         | {
-            status: 'incorrect-point';
-            i: number;
-            p1: P;
-            p2: P;
-        }
+              status: 'incorrect-point';
+              i: number;
+              p1: P;
+              p2: P;
+          }
         | {
-            status: 'incorrect-action';
-            i: number;
-            a1: Action | 0;
-            a2: Action | 0;
-        }
+              status: 'incorrect-action';
+              i: number;
+              a1: Action | 0;
+              a2: Action | 0;
+          }
         | {
-            status: 'identical';
-        } {
+              status: 'identical';
+          } {
         if (trace1.length !== trace2.length) {
             return {
                 status: 'incorrect-length',
                 l1: trace1.length,
-                l2: trace2.length,
+                l2: trace2.length
             };
         }
 
@@ -263,7 +263,7 @@ export class Trace {
                     status: 'incorrect-point',
                     i,
                     p1,
-                    p2,
+                    p2
                 };
             }
 
@@ -272,13 +272,13 @@ export class Trace {
                     status: 'incorrect-action',
                     i,
                     a1: p1[3],
-                    a2: p2[3],
+                    a2: p2[3]
                 };
             }
         }
 
         return {
-            status: 'identical',
+            status: 'identical'
         };
     }
 
@@ -320,13 +320,15 @@ export class Trace {
     }
 
     static filterIndex(from: number, to: number) {
-        return (p: P) => from <= p[0] && p[0] <= to; 
+        return (p: P) => from <= p[0] && p[0] <= to;
     }
 
     static secondsNotMoving(trace: TraceArray, includeAuto: boolean): number {
         let t: TraceArray = trace.slice(); // clone
         // auto = 0-65
-        t = includeAuto ? t.filter(Trace.filterIndex(0, 600)) : t.filter(Trace.filterIndex(65, 600));
+        t = includeAuto
+            ? t.filter(Trace.filterIndex(0, 600))
+            : t.filter(Trace.filterIndex(65, 600));
 
         let notMoving = 0; // in quarter seconds
 
@@ -352,7 +354,7 @@ export class Trace {
                 return trace
                     .map((p1, i, a) => {
                         if (i === a.length - 1) return null;
-        
+
                         const [, x1, y1] = p1;
                         const [, x2, y2] = a[i + 1];
 
@@ -360,7 +362,7 @@ export class Trace {
                         const dy = (y2 - y1) * (normalize ? 1 : 27);
 
                         const distance = Math.sqrt(dx * dx + dy * dy);
-        
+
                         return distance * 4;
                     })
                     .filter(p => p !== null) as number[];
@@ -370,7 +372,7 @@ export class Trace {
                 const NUM_BUCKETS = 20;
                 const sorted = m.sort((a, b) => a - b);
                 const max = sorted[sorted.length - 1];
-                
+
                 const buckets: number[] = new Array(NUM_BUCKETS).fill(0);
                 const bucketSize = max / NUM_BUCKETS;
 
@@ -381,7 +383,7 @@ export class Trace {
 
                 return buckets;
             }
-        }
+        };
     }
 
     /**
@@ -400,7 +402,7 @@ export class Trace {
             return [
                 +str.slice(0, 2) / 100,
                 +str.slice(2, 4) / 100,
-                +str.slice(4, 10) / 1000,
+                +str.slice(4, 10) / 1000
             ];
         };
 
@@ -419,7 +421,8 @@ export class Trace {
                 const base = chars.length;
                 let num = 0;
                 for (let i = 0; i < str.length; i++) {
-                    num += chars.indexOf(str[i]) *
+                    num +=
+                        chars.indexOf(str[i]) *
                         Math.pow(base, str.length - i - 1);
                 }
                 str = num.toString();
@@ -427,13 +430,13 @@ export class Trace {
                 return new Array(10 - str.length).fill('0').join('') + str;
             },
             encode: (
-                trace: [string | number, string | number, string | number][],
+                trace: [string | number, string | number, string | number][]
             ): string[] => {
-                return trace.map((p) => p.map(Trace.old.compress).join(' '));
+                return trace.map(p => p.map(Trace.old.compress).join(' '));
             },
             decode: (trace: string[]) => {
                 return trace.map(Trace.old.decompress);
-            },
+            }
         };
     }
 
@@ -484,12 +487,13 @@ export class Trace {
                 const alliance = Trace.yearInfo[2024].getAlliance(trace);
 
                 const autoZone = all2024.autoZone[alliance];
-                
+
                 for (const p of trace) {
                     if (p[0] <= 65) {
                         if (p[3] === 'spk') score.auto.spk += auto.spk;
                         if (p[3] === 'amp') score.auto.amp += auto.amp;
-                        if (!isInside([p[1], p[2]], autoZone)) score.auto.mobility = auto.mobility;
+                        if (!isInside([p[1], p[2]], autoZone))
+                            score.auto.mobility = auto.mobility;
                     } else {
                         if (p[3] === 'spk') score.teleop.spk += teleop.spk;
                         if (p[3] === 'amp') score.teleop.amp += teleop.amp;
@@ -501,16 +505,29 @@ export class Trace {
                 const parkZone = all2024.stages[alliance];
 
                 const noClimb = trace.every(p => p[3] !== 'clb');
-                if (noClimb && isInside([trace[trace.length - 1][1], trace[trace.length - 1][2]], parkZone)) score.endgame.park = teleop.park;
+                if (
+                    noClimb &&
+                    isInside(
+                        [
+                            trace[trace.length - 1][1],
+                            trace[trace.length - 1][2]
+                        ],
+                        parkZone
+                    )
+                )
+                    score.endgame.park = teleop.park;
 
-                score.auto.total = score.auto.spk + score.auto.amp + score.auto.mobility;
-                score.teleop.total = score.teleop.spk + score.teleop.amp + score.teleop.trp;
+                score.auto.total =
+                    score.auto.spk + score.auto.amp + score.auto.mobility;
+                score.teleop.total =
+                    score.teleop.spk + score.teleop.amp + score.teleop.trp;
                 score.endgame.total = score.endgame.clb + score.endgame.park;
-                score.total = score.auto.total + score.teleop.total + score.endgame.total;
+                score.total =
+                    score.auto.total + score.teleop.total + score.endgame.total;
 
                 return score;
             }
-        }
+        };
     }
 
     static get yearInfo() {
@@ -532,10 +549,7 @@ export class Trace {
 
                     let time = 0;
                     for (const p of trace) {
-                        if (isInside([
-                            p[1],
-                            p[2]
-                        ], stage)) {
+                        if (isInside([p[1], p[2]], stage)) {
                             time++;
                         } else {
                             time = 0;
