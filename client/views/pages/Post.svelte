@@ -26,7 +26,8 @@ type Types =
     | 'tippy'
     | 'easilyDefended'
     | 'robotDied'
-    | 'problemsDriving';
+    | 'problemsDriving'
+    | 'groundPicks';
 
 let data: {
     [key in Types]: PostData;
@@ -72,13 +73,17 @@ let data: {
         color: 'danger',
         comments: true,
         comment: ''
+    },
+    groundPicks: {
+        value: false,
+        color: 'info',
+        comments: true,
+        comment: ''
     }
 };
 
 const open = (active: string) => {
     if (active !== 'Post') return;
-
-    console.log('open');
 
     const traceArray = app.pull();
     const secondsNotMoving = Trace.secondsNotMoving(traceArray, false);
@@ -100,7 +105,13 @@ const open = (active: string) => {
                 res.value.filter((_, i) => i >= start && i <= end);
             }
         });
+        // if the number of shots is larger than the number of picks from the source + 1, then the robot picked off the ground
+        // + 1 because the robot starts with a note
+        app.parsed.groundPicks = traceArray.filter(Trace.filterAction('spk')).length > (traceArray.filter(Trace.filterAction('src')).length + 1);
+
         data.autoMobility.value = app.parsed.mobility;
+        data.parked.value = app.parsed.parked;
+        data.groundPicks.value = app.parsed.groundPicks;
     }
     // reset the view
     data = data;
