@@ -5,6 +5,9 @@ import type { BootstrapColor } from '../../submodules/colors/color';
 import { capitalize, fromCamelCase } from '../../../shared/text';
 import { Trace } from '../../../shared/submodules/tatorscout-calculations/trace';
 import { confirm, notify } from '../../utilities/notifications';
+import { createEventDispatcher } from 'svelte';
+
+const d = createEventDispatcher();
 
 export let app: App;
 export let active: string;
@@ -153,6 +156,9 @@ const submit = async () => {
             audo: autoComment
         }
     });
+
+    await App.moveMatchIndex(1);
+    d('submit');
 };
 </script>
 

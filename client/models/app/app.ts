@@ -418,6 +418,7 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
     }
 
     public static set group(group: number) {
+        console.log({ group });
         App.$group = group;
         window.localStorage.setItem('group', group.toString());
         App.emit('change-group', group);
@@ -431,12 +432,12 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
             const res = await App.getEventData();
             if (res.isOk()) {
                 const { matches, assignments } = res.value;
-                const match = matches.find((m) => m.match_number === nextMatch);
+                const matchIndex = matches.findIndex((m) => m.match_number === nextMatch && m.comp_level === App.matchData.compLevel);
+                const match = matches[matchIndex];
                 if (match) {
-                    App.selectMatch(nextMatch, match.comp_level as 'pr' | 'qm' | 'qf' | 'sf' | 'f')
+                    App.selectMatch(nextMatch, match.comp_level as 'pr' | 'qm' | 'qf' | 'sf' | 'f');
     
-                    App.matchData.teamNumber = assignments[matches.indexOf(match)];
-                    // App.matchData.alliance = match.alliances.red.team_keys.includes(`frc${App.matchData.teamNumber}`) ? 'red' : 'blue';
+                    App.matchData.teamNumber = assignments.matchAssignments[App.group][matchIndex];
                     return match;
                 } else {
                     throw new Error('Match not found');
@@ -744,6 +745,10 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
         //         }
         //     });
         // }
+
+        document.querySelectorAll('.cover').forEach((c) => c.remove()); 
+
+        this.cover.classList.add('cover');
     }
 
     /**

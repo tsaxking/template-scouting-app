@@ -12,12 +12,14 @@ import type { TBAMatch } from '../../../shared/submodules/tatorscout-calculation
 
     const fns = {
         next: async () => {
-            const r = await App.moveMatchIndex(1);
+            await App.moveMatchIndex(1);
             d('next');
+            d('change');
         },
         prev: async () => {
-            const r = await App.moveMatchIndex(-1);
+            await App.moveMatchIndex(-1);
             d('prev');
+            d('change');
         },
         play: () => {
             d('play');
@@ -27,8 +29,8 @@ import type { TBAMatch } from '../../../shared/submodules/tatorscout-calculation
 
 
 
-<div class="btn-group w-100" role="group">
-    <button type="button" class="btn btn-danger" on:click = {fns.prev}>
+<div class="btn-group w-100 btn-group-lg" role="group">
+    <button type="button" class="btn btn-outline-danger" on:click = {fns.prev}>
         <i class="material-icons">chevron_left</i>
         Previous Match
     </button>
@@ -36,7 +38,7 @@ import type { TBAMatch } from '../../../shared/submodules/tatorscout-calculation
         Play Match
         <i class="material-icons">play_arrow</i>
     </button>
-    <button type="button" class="btn btn-primary" on:click = {fns.next}>
+    <button type="button" class="btn btn-outline-primary" on:click = {fns.next}>
         Next Match
         <i class="material-icons">chevron_right</i>
     </button>

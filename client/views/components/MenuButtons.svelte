@@ -34,8 +34,8 @@ import FieldOrientation from './FieldOrientation.svelte';
 
             const data = {
                 compLevel: compLevel as 'pr' | 'qm' | 'qf' | 'sf' | 'f',
-                matchNum: matchNum,
-                teamNum: teamNum
+                matchNum: App.matchData.matchNumber,
+                teamNum: App.matchData.teamNumber
             };
             
             // automatically appends to the body
@@ -44,8 +44,8 @@ import FieldOrientation from './FieldOrientation.svelte';
                 props: {
                     teams: eventData.teams.map(t => ({number: t.team_number, name: t.nickname})),
                     compLevel: compLevel as 'pr' | 'qm' | 'qf' | 'sf' | 'f',
-                    teamNum: teamNum,
-                    matchNum: String(matchNum)
+                    teamNum: App.matchData.teamNumber,
+                    matchNum: String(App.matchData.matchNumber)
                 }
             });
 
