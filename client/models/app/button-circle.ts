@@ -208,10 +208,12 @@ export class ButtonCircle<actions = Action> extends Drawable<ButtonCircle> {
         return this;
     }
 
-    draw(ctx: CanvasRenderingContext2D) {
+    async draw(ctx: CanvasRenderingContext2D) {
         const { currentLocation, isDrawing } = this.app;
         if (!currentLocation) return;
         const [x, y] = currentLocation;
+
+        const currentAlliance = await App.matchData.getAlliance();
 
         const buttonCircleRadius = isDrawing
             ? BUTTON_CIRCLE_RADIUS * MOVING_SCALE
@@ -225,8 +227,8 @@ export class ButtonCircle<actions = Action> extends Drawable<ButtonCircle> {
             const filter = button.condition(this.app);
             const { alliance } = button;
             if (alliance === null) return filter;
-            if (alliance === this.app.currentAlliance) return filter;
-            if (this.app.currentAlliance === null) return filter;
+            if (alliance === currentAlliance) return filter;
+            if (currentAlliance === null) return filter;
             return false;
         });
 

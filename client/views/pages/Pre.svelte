@@ -14,5 +14,5 @@ const d = createEventDispatcher();
 <div>
     <MenuButtons />
     <ScoutSelect />
-    <MatchSelector on:play={() => d('play')} {app} />
+    <MatchSelector on:play={() => d('play')} {app} on:change={() => d('change')} />
 </div>
