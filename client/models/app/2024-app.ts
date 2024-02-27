@@ -36,10 +36,7 @@ export const generate2024App = (
         trp: new Icon('place_item'),
     };
 
-    const app = new App<Action2024, Zones2024, TraceParse2024>(
-        2024,
-        icons,
-    );
+    const app = new App<Action2024, Zones2024, TraceParse2024>(2024, icons);
 
     const isIn = (d: Drawable) =>
         app.currentLocation ? d.isIn(app.currentLocation) : false;

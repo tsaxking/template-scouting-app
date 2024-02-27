@@ -36,7 +36,7 @@ import {
 } from '../../../shared/submodules/tatorscout-calculations/tba';
 import { Icon } from '../canvas/material-icons';
 import { SVG } from '../canvas/svg';
-import { Match } from '../../../shared/submodules/tatorscout-calculations/trace'
+import { Match } from '../../../shared/submodules/tatorscout-calculations/trace';
 import { downloadText, loadFileContents } from '../../utilities/downloads';
 import { sleep } from '../../../shared/sleep';
 
@@ -249,19 +249,15 @@ class MatchData {
         const d = window.localStorage.getItem('matchData');
         if (!d) return new MatchData();
         const data = JSON.parse(d);
-        return new MatchData(
-            data.matchNumber,
-            data.teamNumber,
-            data.compLevel,
-        );
+        return new MatchData(data.matchNumber, data.teamNumber, data.compLevel);
     }
 
     constructor(
         public $matchNumber: number = 0,
         public $teamNumber: number = 0,
-        public $compLevel: 'pr' | 'qm' | 'qf' | 'sf' | 'f' = 'pr'
+        public $compLevel: 'pr' | 'qm' | 'qf' | 'sf' | 'f' = 'pr',
     ) {}
-    
+
     public get matchNumber() {
         return this.$matchNumber;
     }
@@ -285,12 +281,20 @@ class MatchData {
         if (res.isErr()) return null;
 
         const { matches } = res.value;
-        const match = matches.find((m) => m.match_number === this.matchNumber && m.comp_level === this.compLevel);
+        const match = matches.find(
+            (m) =>
+                m.match_number === this.matchNumber &&
+                m.comp_level === this.compLevel,
+        );
 
         if (!match) return null;
 
-        if (match.alliances.red.team_keys.includes(`frc${this.$teamNumber}`)) return 'red';
-        if (match.alliances.blue.team_keys.includes(`frc${this.$teamNumber}`)) return 'blue';
+        if (match.alliances.red.team_keys.includes(`frc${this.$teamNumber}`)) {
+            return 'red';
+        }
+        if (match.alliances.blue.team_keys.includes(`frc${this.$teamNumber}`)) {
+            return 'blue';
+        }
         return null;
     }
 
@@ -303,11 +307,14 @@ class MatchData {
         this.save();
     }
     private save() {
-        window.localStorage.setItem('matchData', JSON.stringify({
-            matchNumber: this.$matchNumber,
-            teamNumber: this.$teamNumber,
-            compLevel: this.$compLevel
-        }));
+        window.localStorage.setItem(
+            'matchData',
+            JSON.stringify({
+                matchNumber: this.$matchNumber,
+                teamNumber: this.$teamNumber,
+                compLevel: this.$compLevel,
+            }),
+        );
     }
 }
 
@@ -325,10 +332,13 @@ class FieldOrientation {
     ) {}
 
     private save() {
-        window.localStorage.setItem('fieldOrientation', JSON.stringify({
-            flipX: this.$flipX,
-            flipY: this.$flipY,
-        }));
+        window.localStorage.setItem(
+            'fieldOrientation',
+            JSON.stringify({
+                flipX: this.$flipX,
+                flipY: this.$flipY,
+            }),
+        );
     }
 
     public get flipX() {
@@ -359,7 +369,7 @@ type Area = {
 type GlobalEvents = {
     'change-group': number;
     'change-match': MatchData;
-}
+};
 
 /**
  * The full scouting app, including the canvas and all the buttons
@@ -369,32 +379,49 @@ type GlobalEvents = {
  * @class App
  * @typedef {App}
  */
-export class App<a extends Action = Action, z extends Zones = Zones, p extends TraceParse = TraceParse> {
+export class App<
+    a extends Action = Action,
+    z extends Zones = Zones,
+    p extends TraceParse = TraceParse,
+> {
     private static readonly emitter = new EventEmitter<keyof GlobalEvents>();
 
-    public static on<E extends keyof GlobalEvents>(event: E, listener: (data: GlobalEvents[E]) => void) {
+    public static on<E extends keyof GlobalEvents>(
+        event: E,
+        listener: (data: GlobalEvents[E]) => void,
+    ) {
         App.emitter.on(event, listener);
     }
 
-    public static off<E extends keyof GlobalEvents>(event: E, listener: (data: GlobalEvents[E]) => void) {
+    public static off<E extends keyof GlobalEvents>(
+        event: E,
+        listener: (data: GlobalEvents[E]) => void,
+    ) {
         App.emitter.off(event, listener);
     }
 
-    public static emit<E extends keyof GlobalEvents>(event: E, data: GlobalEvents[E]) {
+    public static emit<E extends keyof GlobalEvents>(
+        event: E,
+        data: GlobalEvents[E],
+    ) {
         App.emitter.emit(event, data);
     }
 
-    public static once<E extends keyof GlobalEvents>(event: E, listener: (data: GlobalEvents[E]) => void) {
+    public static once<E extends keyof GlobalEvents>(
+        event: E,
+        listener: (data: GlobalEvents[E]) => void,
+    ) {
         App.emitter.once(event, listener);
     }
 
-    public static selectMatch(number: number, compLevel: 'pr' | 'qm' | 'qf' | 'sf' | 'f') {
+    public static selectMatch(
+        number: number,
+        compLevel: 'pr' | 'qm' | 'qf' | 'sf' | 'f',
+    ) {
         App.matchData.matchNumber = number;
         App.matchData.compLevel = compLevel;
         this.emit('change-match', App.matchData);
     }
-
-
 
     private static $eventData?: EventData;
 
@@ -410,8 +437,9 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
         window.localStorage.setItem('scoutName', scoutName);
     }
 
-
-    public static $group = window.localStorage.getItem('group') ? parseInt(window.localStorage.getItem('group')!) : -1;
+    public static $group = window.localStorage.getItem('group')
+        ? parseInt(window.localStorage.getItem('group')!)
+        : -1;
 
     public static get group() {
         return App.$group;
@@ -432,12 +460,20 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
             const res = await App.getEventData();
             if (res.isOk()) {
                 const { matches, assignments } = res.value;
-                const matchIndex = matches.findIndex((m) => m.match_number === nextMatch && m.comp_level === App.matchData.compLevel);
+                const matchIndex = matches.findIndex(
+                    (m) =>
+                        m.match_number === nextMatch &&
+                        m.comp_level === App.matchData.compLevel,
+                );
                 const match = matches[matchIndex];
                 if (match) {
-                    App.selectMatch(nextMatch, match.comp_level as 'pr' | 'qm' | 'qf' | 'sf' | 'f');
-    
-                    App.matchData.teamNumber = assignments.matchAssignments[App.group][matchIndex];
+                    App.selectMatch(
+                        nextMatch,
+                        match.comp_level as 'pr' | 'qm' | 'qf' | 'sf' | 'f',
+                    );
+
+                    App.matchData.teamNumber =
+                        assignments.matchAssignments[App.group][matchIndex];
                     return match;
                 } else {
                     throw new Error('Match not found');
@@ -456,7 +492,12 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
         }
     }
 
-    public static actionAnimation(type: 'material-icons' | 'font-awesome' | 'svg', content: string, alliance: 'red' | 'blue' | null, point: Point2D) {
+    public static actionAnimation(
+        type: 'material-icons' | 'font-awesome' | 'svg',
+        content: string,
+        alliance: 'red' | 'blue' | null,
+        point: Point2D,
+    ) {
         const icon = document.createElement('i');
         switch (type) {
             case 'material-icons':
@@ -479,8 +520,8 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
         const { target, xOffset, yOffset } = current;
         if (!target) return;
 
-        icon.style.left = `${(point[0] * current.width + xOffset) - 12}px`;
-        icon.style.top = `${(point[1] * current.height + yOffset) - 12}px`;
+        icon.style.left = `${point[0] * current.width + xOffset - 12}px`;
+        icon.style.top = `${point[1] * current.height + yOffset - 12}px`;
         icon.style.zIndex = '1000';
 
         icon.style.color = (() => {
@@ -569,16 +610,18 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
         return attemptAsync(async () => {
             const files = await loadFileContents();
             if (files.isErr()) throw files.error;
-            const data = files.value.map(d => {
-                try {
-                    const data = JSON.parse(d.text);
-                    if (!data.trace) throw new Error('Data is not correct');
-                    return data;
-                } catch (e) {
-                    console.error(e);
-                    return null;
-                }
-            }).filter(Boolean) as Match[];
+            const data = files.value
+                .map((d) => {
+                    try {
+                        const data = JSON.parse(d.text);
+                        if (!data.trace) throw new Error('Data is not correct');
+                        return data;
+                    } catch (e) {
+                        console.error(e);
+                        return null;
+                    }
+                })
+                .filter(Boolean) as Match[];
 
             App.upload(...data);
         });
@@ -594,7 +637,6 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
             );
         });
     }
-
 
     public static async getEventData(): Promise<Result<EventData>> {
         return attemptAsync(async () => {
@@ -746,7 +788,7 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
         //     });
         // }
 
-        document.querySelectorAll('.cover').forEach((c) => c.remove()); 
+        document.querySelectorAll('.cover').forEach((c) => c.remove());
 
         this.cover.classList.add('cover');
     }
@@ -780,7 +822,9 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
             this.cover.style.width = '100%';
             this.cover.style.height = '100%';
             this.cover.style.zIndex = '1000';
-            this.cover.style.backgroundColor = Color.fromBootstrap('dark').setAlpha(0.75).toString('rgba');
+            this.cover.style.backgroundColor = Color.fromBootstrap('dark')
+                .setAlpha(0.75)
+                .toString('rgba');
             this.cover.style.display = 'block';
             this.cover.innerHTML = `
                 <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 2em;">
@@ -796,7 +840,9 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
             this.cancel.style.zIndex = '100';
             this.cancel.innerHTML = 'Cancel';
             this.cancel.onclick = async () => {
-                const confirmed = await confirm('Are you sure you want to cancel?');
+                const confirmed = await confirm(
+                    'Are you sure you want to cancel?',
+                );
                 if (!confirmed) return;
                 this.destroy();
                 this.emit('restart');
@@ -822,7 +868,9 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
 
         if (App.current) {
             for (const t of App.current.ticks) {
-                t.point = t.point ? [flip ? 1 - t.point[0] : t.point[0], t.point[1]] : null;
+                t.point = t.point
+                    ? [flip ? 1 - t.point[0] : t.point[0], t.point[1]]
+                    : null;
             }
         }
     }
@@ -838,7 +886,9 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
 
         if (App.current) {
             for (const t of App.current.ticks) {
-                t.point = t.point ? [t.point[0], flip ? 1 - t.point[1] : t.point[1]] : null;
+                t.point = t.point
+                    ? [t.point[0], flip ? 1 - t.point[1] : t.point[1]]
+                    : null;
             }
         }
     }
@@ -856,7 +906,6 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
         this.background.mirror.x = App.flipX;
         this.background.mirror.y = App.flipY;
 
-
         for (const zone of Object.values(this.areas)) {
             (zone as Area).area.properties.mirror = {
                 x: App.flipX,
@@ -868,7 +917,7 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
             this.border.properties.mirror = {
                 x: App.flipX,
                 y: App.flipY,
-            }
+            };
         }
 
         if (target.clientWidth > target.clientHeight * 2) {
@@ -1477,7 +1526,7 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
             this.emit('action', {
                 action: object.name,
                 alliance,
-                point: this.currentLocation || [-1, -1]
+                point: this.currentLocation || [-1, -1],
             });
         });
 
@@ -1698,7 +1747,7 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
                         App.flipY ? 1 - p[1] : p[1],
                     ];
                 } else {
-                    p = [-1,-1];
+                    p = [-1, -1];
                 }
                 const [x, y] = p;
                 return [i, round(x), round(y), t.get()?.action.abbr ?? 0];
@@ -1747,72 +1796,67 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
                 y: App.flipY,
             };
 
-            
             const container = new Container();
 
             App.matchData.getAlliance().then((currentAlliance) => {
-                
-            // this corrects for field orientation flipping, but this is an issue because it's not the same that the user sees on the previous screen
-            const d: TraceArray = this.pull().map((p) => {
-                const [i, x, y, a] = p;
-                return [
-                    i,
-                    App.flipX ? 1 - x : x,
-                    App.flipY ? 1 - y : y,
-                    a,
-                ];
-            });
+                // this corrects for field orientation flipping, but this is an issue because it's not the same that the user sees on the previous screen
+                const d: TraceArray = this.pull().map((p) => {
+                    const [i, x, y, a] = p;
+                    return [i, App.flipX ? 1 - x : x, App.flipY ? 1 - y : y, a];
+                });
 
-            container.children = d.map((p, i, a) => {
-                const [_i, x, y, action] = p;
+                container.children = d.map((p, i, a) => {
+                    const [_i, x, y, action] = p;
 
-                const color = Color.fromName(
-                    currentAlliance ? currentAlliance : 'black',
-                ).toString('rgba');
+                    const color = Color.fromName(
+                        currentAlliance ? currentAlliance : 'black',
+                    ).toString('rgba');
 
-                if (action) {
-                    const size = 0.03;
-                    const cir = new Circle([x, y], size);
-                    cir.$properties.fill = {
-                        color: color,
-                    };
-                    const a = this.icons[action]?.clone();
-                    if (a instanceof SVG) {
-                        a.center = [x, y];
-                        if (!a.$properties.text) a.$properties.text = {};
-                        a.$properties.text!.height = size;
-                        a.$properties.text!.width = size;
-                        a.$properties.text!.color = Color.fromBootstrap('light')
-                            .toString('rgba');
+                    if (action) {
+                        const size = 0.03;
+                        const cir = new Circle([x, y], size);
+                        cir.$properties.fill = {
+                            color: color,
+                        };
+                        const a = this.icons[action]?.clone();
+                        if (a instanceof SVG) {
+                            a.center = [x, y];
+                            if (!a.$properties.text) a.$properties.text = {};
+                            a.$properties.text!.height = size;
+                            a.$properties.text!.width = size;
+                            a.$properties.text!.color = Color.fromBootstrap(
+                                'light',
+                            ).toString('rgba');
+                        }
+                        if (a instanceof Icon) {
+                            a.x = x;
+                            a.y = y;
+                            a.size = size;
+                            a.color = Color.fromBootstrap('light').toString(
+                                'rgba',
+                            );
+                        }
+                        const cont = new Container(cir, a || null);
+                        return cont;
                     }
-                    if (a instanceof Icon) {
-                        a.x = x;
-                        a.y = y;
-                        a.size = size;
-                        a.color = Color.fromBootstrap('light').toString('rgba');
+                    if (a[i - 1]) {
+                        const p = new Path([
+                            [a[i - 1][1], a[i - 1][2]],
+                            [x, y],
+                        ]);
+                        p.$properties.line = {
+                            color: color,
+                            width: 1,
+                        };
+                        return p;
+                    } else {
+                        return null;
                     }
-                    const cont = new Container(cir, a || null);
-                    return cont;
-                }
-                if (a[i - 1]) {
-                    const p = new Path([
-                        [a[i - 1][1], a[i - 1][2]],
-                        [x, y],
-                    ]);
-                    p.$properties.line = {
-                        color: color,
-                        width: 1,
-                    };
-                    return p;
-                } else {
-                    return null;
-                }
-            });
+                });
 
-            const from = 0;
-            const to = d.length - 1;
-            container.filter((_, i) => i >= from && i <= to);
-
+                const from = 0;
+                const to = d.length - 1;
+                container.filter((_, i) => i >= from && i <= to);
             });
 
             c.add(img, container);
@@ -1845,7 +1889,7 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
             matchNumber: App.matchData.matchNumber,
             teamNumber: App.matchData.teamNumber,
             group: App.group as 0 | 1 | 2 | 3 | 4 | 5,
-            compLevel: App.matchData.compLevel
+            compLevel: App.matchData.compLevel,
             // don't need orientation, because it's corrected in this.pull()
         };
 
@@ -1858,7 +1902,6 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
         return App.upload(d);
     }
 
-
     // TODO: Destroy without reloading
     destroy() {
         App.clearCache();
@@ -1868,5 +1911,5 @@ export class App<a extends Action = Action, z extends Zones = Zones, p extends T
 
 // for use in devtools
 Object.assign(window, {
-    App
+    App,
 });

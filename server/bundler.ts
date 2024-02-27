@@ -54,14 +54,6 @@ const readDir = (dirPath: string): string[] => {
     });
 };
 
-/**
- * All entry points to the front end app
- * @date 10/12/2023 - 3:26:56 PM
- *
- * @type {{}}
- */
-let entries: string[] = readDir('./client/entries');
-
 export class Builder {
     private watchers = new Map<string, Deno.FsWatcher>();
 
@@ -75,7 +67,6 @@ export class Builder {
                 case 'create':
                 case 'modify':
                 case 'remove':
-                    entries = readDir('./client/entries');
                     this.build();
                     break;
             }
@@ -88,29 +79,31 @@ export class Builder {
         }
     };
 
-    public build = () => 
-        attemptAsync(async () => esbuild.build({
-            entryPoints: entries,
-            bundle: true,
-            minify: env.MINIFY === 'y',
-            outdir: './dist',
-            mainFields: ['svelte', 'browser', 'module', 'main'],
-            conditions: ['svelte', 'browser'],
-            plugins: [
-                (sveltePlugin as any)({
-                    preprocess: [typescript()],
-                }),
-            ],
-            logLevel: 'info',
-            loader: {
-                '.png': 'dataurl',
-                '.woff': 'dataurl',
-                '.woff2': 'dataurl',
-                '.eot': 'dataurl',
-                '.ttf': 'dataurl',
-                '.svg': 'dataurl',
-            },
-        }));
+    public build = () =>
+        attemptAsync(async () =>
+            esbuild.build({
+                entryPoints: readDir('./client/entries'),
+                bundle: true,
+                minify: env.MINIFY === 'y',
+                outdir: './dist',
+                mainFields: ['svelte', 'browser', 'module', 'main'],
+                conditions: ['svelte', 'browser'],
+                plugins: [
+                    (sveltePlugin as any)({
+                        preprocess: [typescript()],
+                    }),
+                ],
+                logLevel: 'info',
+                loader: {
+                    '.png': 'dataurl',
+                    '.woff': 'dataurl',
+                    '.woff2': 'dataurl',
+                    '.eot': 'dataurl',
+                    '.ttf': 'dataurl',
+                    '.svg': 'dataurl',
+                },
+            })
+        );
 
     public run = async () => {
         await this.build();

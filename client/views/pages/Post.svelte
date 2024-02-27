@@ -108,7 +108,8 @@ const open = (active: string) => {
         });
         // if the number of shots is larger than the number of picks from the source + 1, then the robot picked off the ground
         // + 1 because the robot starts with a note
-        app.parsed.groundPicks = Trace.yearInfo[2024].mustGroundPick(traceArray);
+        app.parsed.groundPicks =
+            Trace.yearInfo[2024].mustGroundPick(traceArray);
 
         data.autoMobility.value = app.parsed.mobility;
         data.parked.value = app.parsed.parked;
@@ -130,16 +131,23 @@ let generalComment: string = '';
 let autoComment: string = '';
 
 const submit = async () => {
-    if (!data.groundPicks.value && Trace.yearInfo[2024].mustGroundPick(app.pull())) {
+    if (
+        !data.groundPicks.value &&
+        Trace.yearInfo[2024].mustGroundPick(app.pull())
+    ) {
         const doSubmit = await confirm(
             'You stated that the robot did not pick off the ground, but the have robot must pick off the ground because you said it shot more than it retrieved from the source. Are you sure you want to submit?'
         );
-        if (!doSubmit) return notify({
-            title: 'App',
-            message: 'You did not submit the match',
-            color: 'info',
-            status: 'Submission Cancelled'
-        }, 'alert');
+        if (!doSubmit)
+            return notify(
+                {
+                    title: 'App',
+                    message: 'You did not submit the match',
+                    color: 'info',
+                    status: 'Submission Cancelled'
+                },
+                'alert'
+            );
     }
 
     app.submit({
@@ -172,16 +180,20 @@ const submit = async () => {
                 {#each commentsSections as section, i}
                     <div class="row mb-3">
                         <!-- <div class="form-floating"> -->
-                            <label for="textarea-{i}">
-                                Please tell us why you checked "{capitalize(fromCamelCase(section))}" (you don't have to be very detailed, but it's helpful to understand the context of why you checked it)
-                            </label>
-                            <textarea
-                                class="form-control"
-                                rows="3"
-                                id="textarea-{i}"
-                                bind:value="{data[section].comment}"
-                            ></textarea>
-                        </div>
+                        <label for="textarea-{i}">
+                            Please tell us why you checked "{capitalize(
+                                fromCamelCase(section)
+                            )}" (you don't have to be very detailed, but it's
+                            helpful to understand the context of why you checked
+                            it)
+                        </label>
+                        <textarea
+                            class="form-control"
+                            rows="3"
+                            id="textarea-{i}"
+                            bind:value="{data[section].comment}"
+                        ></textarea>
+                    </div>
                     <!-- </div> -->
                 {/each}
             </div>
@@ -189,34 +201,37 @@ const submit = async () => {
     {/if}
     <div class="row mb-3">
         <!-- <div class="form-floating"> -->
-            <label for="textarea-general">
-                Please leave a comment here on how the robot performed in the match. (These are very helpful for analyzing the robot's performance, please be detailed)
-            </label>
-            <textarea
-                class="form-control"
-                rows="5"
-                id="textarea-general"
-                bind:value="{generalComment}"
-            ></textarea>
+        <label for="textarea-general">
+            Please leave a comment here on how the robot performed in the match.
+            (These are very helpful for analyzing the robot's performance,
+            please be detailed)
+        </label>
+        <textarea
+            class="form-control"
+            rows="5"
+            id="textarea-general"
+            bind:value="{generalComment}"
+        ></textarea>
         <!-- </div> -->
     </div>
     <div class="row mb-3">
         <!-- <div class="form-floating"> -->
-            <label for="textarea-auto">
-                Please leave a comment here on how the robot performed in the autonomous period. (If it missed shots because notes collided in mid-air, etc.)
-            </label>
-            <textarea
-                class="form-control"
-                rows="5"
-                id="textarea-auto"
-                bind:value="{autoComment}"
-            ></textarea>
+        <label for="textarea-auto">
+            Please leave a comment here on how the robot performed in the
+            autonomous period. (If it missed shots because notes collided in
+            mid-air, etc.)
+        </label>
+        <textarea
+            class="form-control"
+            rows="5"
+            id="textarea-auto"
+            bind:value="{autoComment}"
+        ></textarea>
         <!-- </div> -->
     </div>
     <div class="row">
-        <button
-            class="btn btn-success btn-lg w-100"
-            on:click="{submit}">Submit Match</button
+        <button class="btn btn-success btn-lg w-100" on:click="{submit}"
+            >Submit Match</button
         >
     </div>
     <div class="row p-0 m-0">

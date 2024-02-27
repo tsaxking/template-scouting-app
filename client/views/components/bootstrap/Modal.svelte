@@ -1,22 +1,13 @@
 <script lang="ts">
-    import { createEventDispatcher, onMount } from 'svelte';
-    const dispatch = createEventDispatcher();
-    export let title: string;
-    export let message: string = '';
-    export let id: string = 'modal-' + Math.random().toString(36);
-    
-    onMount(() => {
-        jQuery(`#${id}`).on('hidden.bs.modal', () => {
-            dispatch('hide');
-        });
-    
-        jQuery(`#${id}`).on('shown.bs.modal', () => {
-            dispatch('show');
-        });
-    
-        document.querySelectorAll(`#${id} button.close-modal`).forEach(m => {
-            jQuery(m).modal('hide');
-        });
+import { createEventDispatcher, onMount } from 'svelte';
+const dispatch = createEventDispatcher();
+export let title: string;
+export let message: string = '';
+export let id: string = 'modal-' + Math.random().toString(36);
+
+onMount(() => {
+    jQuery(`#${id}`).on('hidden.bs.modal', () => {
+        dispatch('hide');
     });
 
     jQuery(`#${id}`).on('shown.bs.modal', () => {
@@ -26,6 +17,15 @@
     document.querySelectorAll(`#${id} button.close-modal`).forEach(m => {
         jQuery(m).modal('hide');
     });
+});
+
+jQuery(`#${id}`).on('shown.bs.modal', () => {
+    dispatch('show');
+});
+
+document.querySelectorAll(`#${id} button.close-modal`).forEach(m => {
+    jQuery(m).modal('hide');
+});
 </script>
 
 <div class="modal fade" tabindex="-1" aria-modal="true" role="dialog" {id}>
