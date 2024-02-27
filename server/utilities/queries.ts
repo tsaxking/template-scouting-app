@@ -58,13 +58,23 @@ import { Select_db_get_version } from './tables.ts';
 import { Update_db_change_version } from './tables.ts';
 import { Insert_db_init } from './tables.ts';
 import { RolePermissions } from './tables.ts';
+import { ServerRequests } from './tables.ts';
+import { Insert_server_requests_new } from './tables.ts';
+import { Delete_server_requests_delete } from './tables.ts';
+import { Update_server_requests_update } from './tables.ts';
+import { Select_server_requests_get } from './tables.ts';
+import { Select_server_requests_all } from './tables.ts';
+import { Update_sessions_sign_in } from './tables.ts';
+import { Update_sessions_sign_out } from './tables.ts';
+import { Delete_db_delete_version } from './tables.ts';
+import { Insert_db_change_version } from './tables.ts';
 import { Insert_permissions_add_to_role } from './tables.ts';
 import { Delete_permissions_remove_from_role } from './tables.ts';
 import { Select_blacklist_all } from './tables.ts';
-import { Update_sessions_sign_in } from './tables.ts';
-import { Update_sessions_sign_out } from './tables.ts';
-import { Insert_db_change_version } from './tables.ts';
-import { Delete_db_delete_version } from './tables.ts';
+import { TBARequests } from './tables.ts';
+import { Update_db_versions______ } from './tables.ts';
+import { Select_tba_from_url } from './tables.ts';
+import { Insert_tba_new } from './tables.ts';
 
 export type Queries = {
     'permissions/all': [[Select_permissions_all], Permissions];
@@ -152,42 +162,17 @@ export type Queries = {
         ],
         unknown,
     ];
-    'blacklist/delete': [
-        [
-            {
-                id: string;
-            },
-        ],
-        unknown,
-    ];
-    'blacklist/from-account': [
-        [
-            {
-                accountId: string;
-            },
-        ],
-        Blacklist,
-    ];
-    'blacklist/from-ip': [
-        [
-            {
-                ip: string;
-            },
-        ],
-        Blacklist,
-    ];
-    'blacklist/delete-by-ip': [
-        [
-            {
-                ip: string;
-            },
-        ],
-    ];
-    'blacklist/delete-by-account': [
-        [
-            {
-                accountId: string;
-            },
-        ],
-    ];
+    'blacklist/delete': [[{ id: string }], unknown];
+    'blacklist/from-account': [[{ accountId: string }], Blacklist];
+    'blacklist/from-ip': [[{ ip: string }], Blacklist];
+    'blacklist/delete-by-ip': [[{ ip: string }]];
+    'blacklist/delete-by-account': [[{ accountId: string }]];
+    'server-requests/new': [[Insert_server_requests_new], unknown];
+    'server-requests/delete': [[Delete_server_requests_delete], unknown];
+    'server-requests/update': [[Update_server_requests_update], unknown];
+    'server-requests/get': [[Select_server_requests_get], ServerRequests];
+    'server-requests/all': [[Select_server_requests_all], ServerRequests];
+    'db/versions/1-3-1': [[Update_db_versions______], unknown];
+    'tba/from-url': [[Select_tba_from_url], TBARequests];
+    'tba/new': [[Insert_tba_new], unknown];
 };
