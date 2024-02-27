@@ -42,19 +42,6 @@ export class Img extends Drawable<Img> {
             const ctx = canvas.getContext('2d');
             if (!ctx) return;
 
-            if (this.properties?.mirror) {
-                const { x, y } = this.properties.mirror;
-                if (x) {
-                    ctx.translate(canvas.width, 0);
-                    ctx.scale(-1, 1);
-                }
-
-                if (y) {
-                    ctx.translate(0, canvas.height);
-                    ctx.scale(1, -1);
-                }
-            }
-
             ctx.drawImage(this.img, 0, 0);
             // to data url
             const i = document.createElement('img');
@@ -152,6 +139,19 @@ export class Img extends Drawable<Img> {
     draw(ctx: CanvasRenderingContext2D) {
         const { x, y, width, height } = this.options;
         if (!this.data) return;
+
+        {
+            const { x, y } = this.mirror;
+            if (x) {
+                ctx.translate(ctx.canvas.width, 0);
+            }
+
+            if (y) {
+                ctx.translate(0, ctx.canvas.height);
+            }
+
+            ctx.scale(x ? -1 : 1, y ? -1 : 1);
+        }
 
         ctx.drawImage(
             this.data,

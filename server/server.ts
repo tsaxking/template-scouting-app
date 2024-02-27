@@ -1,20 +1,23 @@
 import env, { __root, resolve } from './utilities/env.ts';
-import { log } from './utilities/terminal-logging.ts';
+import { error, log } from './utilities/terminal-logging.ts';
 import { App, ResponseStatus } from './structure/app/app.ts';
-import { getJSON, log as serverLog } from './utilities/files.ts';
-import { homeBuilder } from './utilities/page-builder.ts';
-import Account from './structure/accounts.ts';
+import { log as serverLog } from './utilities/files.ts';
 import { router as admin } from './routes/admin.ts';
 import { router as account } from './routes/account.ts';
 import { router as api } from './routes/api.ts';
-import { router as role } from './routes/roles.ts';
-import Role from './structure/roles.ts';
 import { FileUpload } from './middleware/stream.ts';
 import { ReqBody } from './structure/app/req.ts';
+import { validate } from './middleware/data-type.ts';
 import { parseCookie } from '../shared/cookie.ts';
-import { stdin } from './utilities/stdin.ts';
 import { io, Socket } from './structure/socket.ts';
+import {
+    Match,
+    validateObj,
+} from '../shared/submodules/tatorscout-calculations/trace.ts';
+import { ServerRequest } from './utilities/requests.ts';
 import { getJSONSync } from './utilities/files.ts';
+import { startPinger } from './utilities/ping.ts';
+import Account from './structure/accounts.ts';
 
 const port = +(env.PORT || 3000);
 
@@ -33,10 +36,16 @@ export const app = new App(port, env.DOMAIN || `http://localhost:${port}`, {
     ioPort: +(env.SOCKET_PORT || port + 1),
 });
 
-if (env.ENVIRONMENT === 'dev') {
-    stdin.on('rb', () => {
-        console.log('Reloading clients...');
-        app.io.emit('reload');
+if (Deno.args.includes('--ping')) {
+    const pinger = startPinger();
+    pinger.on('disconnect', () => {
+        console.log('Servers are disconnected!');
+    });
+    pinger.on('connect', () => {
+        console.log('Servers are connected!');
+    });
+    pinger.on('ping', () => {
+        console.log('Pinged!');
     });
 }
 
@@ -45,6 +54,10 @@ io.on('connection', (s: Socket) => {
     s.on('disconnect', () => {
         log('Disconnected:', s.id);
     });
+});
+app.use('/*', (req, res, next) => {
+    log(`[${req.method}] ${req.url}`);
+    next();
 });
 
 app.post('/env', (req, res) => {
@@ -66,7 +79,7 @@ app.get('/*', (req, res, next) => {
 app.static('/client', resolve(__root, './client'));
 app.static('/public', resolve(__root, './public'));
 app.static('/dist', resolve(__root, './dist'));
-app.static('/uploads', resolve(__root, './storage/uploads'));
+app.static('/uploads', resolve(__root, './uploads'));
 
 app.post('/socket-url', (req, res) => {
     res.json({
@@ -78,11 +91,8 @@ app.get('/favicon.ico', (req, res) => {
     res.sendFile(resolve(__root, './public/pictures/logo-square.png'));
 });
 
-app.get('/robots.txt', (req, res) => {
-    res.sendFile(resolve(__root, './public/pictures/robots.jpg'));
-});
-
-function stripHtml(body: ReqBody) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function stripHtml(body: any) {
     if (!body) return body;
     let files: unknown;
 
@@ -134,9 +144,9 @@ app.post('/*', (req, res, next) => {
         delete b?.password;
         delete b?.confirmPassword;
         delete b?.$$files;
-        log(b);
+        console.log(b);
     } catch {
-        log(req.body);
+        console.log(req.body);
     }
 
     next();
@@ -157,17 +167,6 @@ app.get('/', (req, res) => {
     res.redirect('/home');
 });
 
-app.get('/*', async (req, res, next) => {
-    const homePages = await getJSON<string[]>('pages/home');
-    if (homePages.isOk()) {
-        if (homePages.value.includes(req.url.href.slice(1))) {
-            const r = await homeBuilder(req.url.pathname);
-            if (r.isOk()) res.send(r.value);
-        }
-    }
-    next();
-});
-
 app.get('/test/:page', (req, res, next) => {
     if (env.ENVIRONMENT !== 'dev') return next();
     const s = res.sendTemplate('entries/test/' + req.params.page);
@@ -178,28 +177,27 @@ app.get('/test/:page', (req, res, next) => {
 
 app.route('/api', api);
 app.route('/account', account);
-app.route('/roles', role);
 
-app.use('/*', Account.autoSignIn(env.AUTO_SIGN_IN));
+// app.use('/*', Account.autoSignIn(env.AUTO_SIGN_IN));
 
-app.get('/*', (req, res, next) => {
-    if (!req.session.accountId) {
-        if (
-            ![
-                '/account/sign-in',
-                '/account/sign-up',
-                '/account/forgot-password',
-            ].includes(req.url.pathname)
-        ) {
-            // only save the previous url if it's not a sign-in, sign-up, or forgot-password page
-            // this is so that the user can be redirected back to the page they initially were trying to access
-            req.session.prevUrl = req.url.href;
-        }
-        return res.redirect('/account/sign-in');
-    }
+// app.get('/*', (req, res, next) => {
+//     if (!req.session.accountId) {
+//         if (
+//             ![
+//                 '/account/sign-in',
+//                 '/account/sign-up',
+//                 '/account/forgot-password',
+//             ].includes(req.url)
+//         ) {
+//             // only save the previous url if it's not a sign-in, sign-up, or forgot-password page
+//             // this is so that the user can be redirected back to the page they initially were trying to access
+//             req.session.prevUrl = req.url;
+//         }
+//         return res.redirect('/account/sign-in');
+//     }
 
-    next();
-});
+//     next();
+// });
 
 app.get('/dashboard/admin', Account.allowPermissions('admin'), (_req, res) => {
     res.sendTemplate('entries/dashboard/admin');
@@ -207,12 +205,99 @@ app.get('/dashboard/admin', Account.allowPermissions('admin'), (_req, res) => {
 
 app.route('/admin', admin);
 
-app.get('/dashboard/:dashboard', (req, res) => {
-    res.sendTemplate('entries/dashboard/' + req.params.dashboard);
+app.get('/app', (req, res) => {
+    res.sendTemplate('entries/app');
 });
 
-app.get('/user/*', Account.isSignedIn, (req, res) => {
-    res.sendTemplate('entries/user');
+app.get('/*', (req, res) => {
+    res.redirect('/app');
+});
+
+app.post<Match>(
+    '/submit',
+    validate(
+        validateObj as {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            [key in keyof Match]: any; // TODO: export IsValid type
+        },
+    ),
+    async (req, res) => {
+        const {
+            eventKey,
+            checks,
+            comments,
+            matchNumber,
+            teamNumber,
+            compLevel,
+            scout,
+            date,
+            group,
+            trace,
+        } = req.body;
+
+        // I don't want to pass in req.body because it can have extra unneeded properties
+        const result = await ServerRequest.submitMatch({
+            checks,
+            comments,
+            matchNumber,
+            teamNumber,
+            compLevel,
+            eventKey,
+            scout,
+            date,
+            group,
+            trace,
+        });
+
+        if (result.isOk()) {
+            res.sendStatus('server-request:match-submitted', {
+                matchNumber,
+                teamNumber,
+                compLevel,
+                data: result.value,
+            });
+        } else {
+            error;
+            res.sendStatus('server-request:match-error', {
+                matchNumber,
+                teamNumber,
+                compLevel,
+                eventKey,
+                scout,
+                date,
+                group,
+                trace,
+            });
+
+            if (result.isOk()) {
+                res.sendStatus('server-request:match-submitted', {
+                    matchNumber,
+                    teamNumber,
+                    compLevel,
+                    data: result.value,
+                });
+            } else {
+                error('Match submission error:', result.error);
+                res.sendStatus('server-request:match-error', {
+                    matchNumber,
+                    teamNumber,
+                    compLevel,
+                    error: result.error,
+                });
+            }
+        }
+    },
+);
+
+app.post('/event-data', async (_req, res) => {
+    let name: string = 'dummy-event-data.json';
+    if (env.ENVIRONMENT === 'prod') name = 'event-data.json';
+    const data = getJSONSync(name);
+    if (data.isOk()) {
+        res.json(data.value);
+    } else {
+        res.status(500).json(data.error);
+    }
 });
 
 app.final<{
