@@ -171,6 +171,7 @@ const forgotPassword = async () => {
                         }}"
                     /> -->
                 </form>
-            </div>
+            </form>
         </div>
     </div>
+</div>

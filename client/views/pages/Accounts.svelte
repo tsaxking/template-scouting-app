@@ -27,28 +27,44 @@ const fns = {
     setAccounts: async (newAccounts: Account[]) => {
         console.log(newAccounts);
 
-        accountObjs = await Promise.all(
-            newAccounts.map(async a => {
-                const [roles, permissions] = await Promise.all([
-                    a.getRoles().then(r => (r.isOk() ? r.value : [])),
-                    a.getPermissions().then(p => (p.isOk() ? p.value : []))
-                ]);
+        accountObjs = (
+            await Promise.all(
+                newAccounts.map(async a => {
+                    const [roles, permissions] = await Promise.all([
+                        a.getRoles(true).then(r => {
+                            if (r.isOk()) {
+                                return r.value;
+                            } else {
+                                // console.error('Failed to get roles: ', r.error);
+                                return [];
+                            }
+                        }),
+                        a.getPermissions(true).then(p => {
+                            if (p.isOk()) {
+                                return p.value;
+                            } else {
+                                // console.error('Failed to get permissions: ', p.error);
+                                return [];
+                            }
+                        })
+                    ]);
 
-                return {
-                    id: a.id,
-                    username: a.username,
-                    firstName: a.firstName,
-                    lastName: a.lastName,
-                    email: a.email,
-                    verified: a.verified,
-                    created: a.created,
-                    phoneNumber: a.phoneNumber,
-                    picture: a.picture,
-                    roles,
-                    permissions
-                };
-            })
-        );
+                    return {
+                        id: a.id,
+                        username: a.username,
+                        firstName: a.firstName,
+                        lastName: a.lastName,
+                        email: a.email,
+                        verified: a.verified,
+                        created: a.created,
+                        phoneNumber: a.phoneNumber,
+                        picture: a.picture,
+                        roles,
+                        permissions: permissions.map(p => p.permission) as P[]
+                    };
+                })
+            )
+        ).filter(a => a.username !== 'guest');
     }
 };
 
@@ -57,7 +73,13 @@ const set = async () => {
 
     if (res.isOk()) {
         accounts = res.value;
+    } else {
+        console.error('Failed to get accounts: ', res.error);
     }
+
+    document
+        .querySelectorAll('.tooltip.bs-tooltip-auto')
+        .forEach(e => e.remove());
 
     jQuery(div.querySelectorAll('[data-toggle="tooltip"]')).tooltip();
     // jQuery(div).dataTable();
@@ -68,6 +90,7 @@ let div: HTMLDivElement;
 onMount(set);
 
 $: fns.setAccounts(accounts);
+$: console.log(accountObjs);
 
 Account.on('new', set);
 Account.on('update', set);
@@ -96,7 +119,7 @@ Account.on('delete', set);
                         {account.username}
                         {#if account.verified}
                             <span
-                                class="badge bg-success ms-1"
+                                class="text-success cursor-help"
                                 data-toggle="tooltip"
                                 title="Verified"
                                 data-placement="top"
@@ -105,7 +128,7 @@ Account.on('delete', set);
                             </span>
                         {:else}
                             <span
-                                class="badge bg-warning ms-1"
+                                class="text-warning cursor-help"
                                 data-toggle="tooltip"
                                 title="Not Verified"
                                 data-placement="top"
@@ -122,6 +145,7 @@ Account.on('delete', set);
                                 account="{accounts.find(
                                     a => a.id === account.id
                                 )}"
+                                deletable="{true}"
                             />
                         {/each}
                     </td>

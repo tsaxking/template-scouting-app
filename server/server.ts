@@ -5,7 +5,6 @@ import { log as serverLog } from './utilities/files.ts';
 import { router as admin } from './routes/admin.ts';
 import { router as account } from './routes/account.ts';
 import { router as api } from './routes/api.ts';
-import Role from './structure/roles.ts';
 import { FileUpload } from './middleware/stream.ts';
 import { ReqBody } from './structure/app/req.ts';
 import { validate } from './middleware/data-type.ts';
@@ -18,6 +17,7 @@ import {
 import { ServerRequest } from './utilities/requests.ts';
 import { getJSONSync } from './utilities/files.ts';
 import { startPinger } from './utilities/ping.ts';
+import Account from './structure/accounts.ts';
 
 const port = +(env.PORT || 3000);
 
@@ -36,7 +36,6 @@ export const app = new App(port, env.DOMAIN || `http://localhost:${port}`, {
     ioPort: +(env.SOCKET_PORT || port + 1),
 });
 
-
 if (Deno.args.includes('--ping')) {
     const pinger = startPinger();
     pinger.on('disconnect', () => {
@@ -49,8 +48,6 @@ if (Deno.args.includes('--ping')) {
         console.log('Pinged!');
     });
 }
-
-app.post('/socket', io.middleware());
 
 io.on('connection', (s: Socket) => {
     log('New connection:', s.id);
@@ -202,8 +199,8 @@ app.route('/account', account);
 //     next();
 // });
 
-app.get('/dashboard/admin', Role.allowRoles('admin'), (_req, res) => {
-    res.sendTemplate('entries/admin');
+app.get('/dashboard/admin', Account.allowPermissions('admin'), (_req, res) => {
+    res.sendTemplate('entries/dashboard/admin');
 });
 
 app.route('/admin', admin);
@@ -216,47 +213,32 @@ app.get('/*', (req, res) => {
     res.redirect('/app');
 });
 
-app.post<Match>('/submit', validate(validateObj as {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    [key in keyof Match]: any; // TODO: export IsValid type
-}), async (req, res) => {
-    const { 
-        eventKey, 
-        checks, 
-        comments, 
-        matchNumber, 
-        teamNumber,
-        compLevel,
-        scout,
-        date,
-        group,
-        trace
-    } = req.body;
-
-    // I don't want to pass in req.body because it can have extra unneeded properties
-    const result = await ServerRequest.submitMatch({
-        checks,
-        comments,
-        matchNumber,
-        teamNumber,
-        compLevel,
-        eventKey,
-        scout,
-        date,
-        group,
-        trace
-    });
-
-    if (result.isOk()) {
-        res.sendStatus('server-request:match-submitted', {
+app.post<Match>(
+    '/submit',
+    validate(
+        validateObj as {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            [key in keyof Match]: any; // TODO: export IsValid type
+        },
+    ),
+    async (req, res) => {
+        const {
+            eventKey,
+            checks,
+            comments,
             matchNumber,
             teamNumber,
             compLevel,
-            data: result.value
-        });
-    } else {
-        error
-        res.sendStatus('server-request:match-error', {
+            scout,
+            date,
+            group,
+            trace,
+        } = req.body;
+
+        // I don't want to pass in req.body because it can have extra unneeded properties
+        const result = await ServerRequest.submitMatch({
+            checks,
+            comments,
             matchNumber,
             teamNumber,
             compLevel,
@@ -275,16 +257,37 @@ app.post<Match>('/submit', validate(validateObj as {
                 data: result.value,
             });
         } else {
-            error('Match submission error:', result.error);
+            error;
             res.sendStatus('server-request:match-error', {
                 matchNumber,
                 teamNumber,
                 compLevel,
-                error: result.error,
+                eventKey,
+                scout,
+                date,
+                group,
+                trace,
             });
+
+            if (result.isOk()) {
+                res.sendStatus('server-request:match-submitted', {
+                    matchNumber,
+                    teamNumber,
+                    compLevel,
+                    data: result.value,
+                });
+            } else {
+                error('Match submission error:', result.error);
+                res.sendStatus('server-request:match-error', {
+                    matchNumber,
+                    teamNumber,
+                    compLevel,
+                    error: result.error,
+                });
+            }
         }
-    }
-});
+    },
+);
 
 app.post('/event-data', async (_req, res) => {
     let name: string = 'dummy-event-data.json';
