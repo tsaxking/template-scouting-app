@@ -1,6 +1,7 @@
 import { stdin } from './utilities/stdin.ts';
 import { Builder } from './bundler.ts';
 import { Colors } from './utilities/colors.ts';
+import { deleteDeps, pullDeps } from '../scripts/pull-deps.ts';
 import { ServerRequest } from './utilities/requests.ts';
 import { attempt } from '../shared/check.ts';
 import { runTask } from './utilities/run-task.ts';
@@ -8,9 +9,11 @@ import { runTask } from './utilities/run-task.ts';
 const log = (...args: any[]) =>
     console.log(Colors.FgBlue, '[MAIN]', Colors.Reset, ...args, Colors.Reset);
 
-const main = () => {
+const main = async () => {
     const { args } = Deno;
     const builder = new Builder();
+    const res = await pullDeps();
+    if (res.isErr()) throw res.error;
 
     const start = (): Deno.ChildProcess => {
         log('Starting server...');
@@ -111,7 +114,15 @@ const main = () => {
         child.kill();
         builder.close();
         for (const watcher of watchers) watcher.close();
-        Deno.exit();
+        deleteDeps()
+            .then(() => {
+                console.log('Goodbye! 👋');
+                Deno.exit(0);
+            })
+            .catch((error) => {
+                console.error(error);
+                Deno.exit(1);
+            });
     });
 };
 
