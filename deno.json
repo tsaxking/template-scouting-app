@@ -1,7 +1,7 @@
 {
     "tasks": {
-        "start": "deno task build && deno run --allow-all ./server/main.ts --no-console --console-to-csv",
-        "dev": "deno task init && deno run --allow-all ./server/main.ts --watch --stdin",
+        "start": "deno task build && deno run --v8-flags=--max-old-space-size=8000 --unstable-sloppy-imports --allow-all ./server/main.ts --no-console --console-to-csv",
+        "dev": "deno task init && deno run --v8-flags=--max-old-space-size=8000 --unstable-sloppy-imports --allow-all ./server/main.ts --watch --stdin",
         "build": "deno task init --default && deno run --allow-all ./server/bundler.ts",
         "init": "deno run --allow-all --allow-run ./scripts/init.ts",
         "update": "deno run --allow-all --allow-run ./storage/db/scripts/init.ts --update",
@@ -12,11 +12,12 @@
         "discord": "deno run --allow-all ./server/utilities/discord/discord.ts",
         "test": "deno test --allow-all --no-check ./scripts/test.ts",
         "view-paths": "deno run --allow-all ./scripts/view-paths.ts",
-        "tree": "deno run --allow-all ./scripts/dir-tree.ts",
-        "manager": "deno run --allow-all ./scripts/manager.ts",
+        "tree": "deno run --allow-all --unstable-sloppy-imports ./scripts/dir-tree.ts",
+        "manager": "deno run --allow-all --unstable-sloppy-imports ./scripts/manager.ts",
         "parse-sql": "deno run --allow-all ./scripts/parse-sql.ts",
         "check-db": "deno run --allow-all ./scripts/check-db-connection.ts",
-        "view-table": "deno run --allow-all ./scripts/view-table.ts"
+        "view-table": "deno run --allow-all ./scripts/view-table.ts",
+        "event": "deno run --allow-all --unstable-ffi ./scripts/event-data.ts"
     },
     "compilerOptions": {
         "noImplicitAny": false,
