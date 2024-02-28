@@ -34,6 +34,7 @@ export type Zones2024 =
 export type TraceParse2024 = {
     mobility: boolean;
     parked: boolean;
+    groundPicks: boolean;
 };
 
 /**
@@ -562,6 +563,12 @@ export class Trace {
                     }
 
                     return times;
+                },
+                mustGroundPick: (trace: TraceArray) => {
+                    return (
+                        trace.filter(Trace.filterAction('spk')).length >
+                        trace.filter(Trace.filterAction('src')).length + 1
+                    );
                 }
             }
         } as const;
