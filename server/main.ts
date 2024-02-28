@@ -18,8 +18,10 @@ const main = () => {
             args: [
                 'run',
                 '--allow-all',
+                '--v8-flags=--max-old-space-size=8000',
                 '--unstable-sloppy-imports',
                 './server/server.ts',
+                ...args,
             ],
             stdout: 'inherit',
             stderr: 'inherit',
