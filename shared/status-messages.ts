@@ -197,6 +197,7 @@ export const messages: {
         color: 'success',
         code: 200,
         instructions: 'You will be redirected to the home page.',
+        redirect: '/app',
     },
     'account:logged-out': {
         message: 'You have been logged out.',
@@ -350,12 +351,6 @@ export const messages: {
         code: 413,
         instructions: 'please upload fewer files',
     },
-    'files:unknown-error': {
-        message: 'Unknown file uploading error',
-        color: 'danger',
-        code: 500,
-        instructions: '',
-    },
     'files:uploaded': {
         message: 'File uploaded',
         color: 'success',
@@ -465,12 +460,6 @@ export const messages: {
         instructions:
             'This page was not found. Please check your link and try again.',
     },
-    'permissions:added': {
-        message: 'Added permission to role',
-        color: 'success',
-        code: 200,
-        instructions: '',
-    },
     'permissions:error': {
         message: 'Permissions error',
         color: 'danger',
@@ -493,12 +482,6 @@ export const messages: {
         message: 'Permission not found',
         color: 'danger',
         code: 404,
-        instructions: '',
-    },
-    'permissions:removed': {
-        message: 'Removed permissions from role',
-        color: 'success',
-        code: 200,
         instructions: '',
     },
     'permissions:unauthorized': {
@@ -610,6 +593,19 @@ export const messages: {
         code: 418,
         instructions: '',
     },
+    'server-request:match-error': {
+        message:
+            'Your match submission failed, it has been saved onto the event server, but it did not submit to the tatorscout.org server. You may have lost internet access',
+        color: 'warning',
+        code: 404,
+        instructions: '',
+    },
+    'server-request:match-submitted': {
+        message: 'Your match has been submitted to the tatorscout.org server!',
+        color: 'success',
+        code: 200,
+        instructions: '',
+    },
     'skills:added': {
         message: 'Skill added',
         color: 'success',
@@ -712,7 +708,6 @@ export type StatusId =
     | 'files:no-files'
     | 'files:too-large'
     | 'files:too-many-files'
-    | 'files:unknown-error'
     | 'files:uploaded'
     | 'member:accepted'
     | 'member:add-skill'
@@ -731,12 +726,10 @@ export type StatusId =
     | 'member:update-resume'
     | 'member:update-title'
     | 'page:not-found'
-    | 'permissions:added'
     | 'permissions:error'
     | 'permissions:forbidden'
     | 'permissions:invalid'
     | 'permissions:not-found'
-    | 'permissions:removed'
     | 'permissions:unauthorized'
     | 'profanity:detected'
     | 'role:not-found'
@@ -751,6 +744,8 @@ export type StatusId =
     | 'roles:removed'
     | 'roles:removed-permission'
     | 'roles:updated'
+    | 'server-request:match-error'
+    | 'server-request:match-submitted'
     | 'server:invalid-data'
     | 'server:not-implemented'
     | 'server:unknown-server-error'
@@ -814,7 +809,6 @@ export type FilesStatusId =
     | 'no-files'
     | 'too-large'
     | 'too-many-files'
-    | 'unknown-error'
     | 'uploaded';
 
 export type MemberStatusId =
@@ -868,7 +862,7 @@ export type ServerStatusId =
     | 'not-implemented'
     | 'unknown-server-error';
 
-export type SessionStatusId = 'rate-limited';
+export type ServerrequestStatusId = 'match-submitted' | 'match-error';
 
 export type SkillsStatusId =
     | 'added'
@@ -882,3 +876,5 @@ export type SpamStatusId = 'detected';
 export type TestStatusId = 'fail' | 'success';
 
 export type UnknownStatusId = 'error';
+
+export type SessionStatusId = 'rate-limited';
