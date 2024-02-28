@@ -37,7 +37,10 @@
     
         <Page {active} {domain} title="Pre"><Pre on:play={() => active = 'App'} {app}></Pre></Page>
         <Page {active} {domain} title="App"><AppView {app}></AppView></Page>
-        <Page {active} {domain} title="Post"><Post {app} {active}></Post></Page>
+        <Page {active} {domain} title="Post"><Post {app} {active} on:submit={async () => {
+            active = 'Pre';
+            app = generate2024App(await App.matchData.getAlliance());
+        }}></Post></Page>
         <Page {active} {domain} title="Upload"><Upload /></Page>
     </main>
     

@@ -1,6 +1,7 @@
 <script lang="ts">
 import type { BootstrapColor } from '../../../submodules/colors/color';
 import Checkbox from './Checkbox.svelte';
+import {createEventDispatcher} from 'svelte';
 
 export let data: {
     [key: string]: {
@@ -9,10 +10,9 @@ export let data: {
     };
 } = {};
 
-const change = (e: CustomEvent) => {
-    data[e.detail.name] = e.detail.value;
-    data = data;
-};
+const d = createEventDispatcher();
+
+
 </script>
 
 <div
@@ -24,7 +24,12 @@ const change = (e: CustomEvent) => {
         <Checkbox
             bind:value="{data[key].value}"
             bind:name="{key}"
-            on:change="{change}"
+            on:change="{(e) => {
+                d('change', {
+                    key, 
+                    value: e.detail
+                });
+            }}"
             bind:color="{data[key].color}"
         ></Checkbox>
     {/each}

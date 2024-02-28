@@ -3,10 +3,5 @@ import '../deps/https:__ajax.googleapis.com_ajax_libs_jquery_3.1.1_jquery.min.js
 import '../deps/https:__ajax.googleapis.com_ajax_libs_jqueryui_1.12.1_jquery-ui.min.js';
 import '../deps/https:__code.jquery.com_ui_1.13.2_themes_base_jquery-ui.css';
 import '../deps/https:__ajax.aspnetcdn.com_ajax_jquery.dataTables_1.9.4_css_jquery.dataTables.css';
-import '../deps/https:__fonts.googleapis.com_icon_family_Material_Icons';
-import '../deps/https:__cdn.jsdelivr.net_npm_bootstrap-icons_font_bootstrap-icons.css';
-import '../deps/https:__cdn.jsdelivr.net_npm_bootstrap@5.3.3_dist_css_bootstrap.min.css';
-import '../deps/https:__cdnjs.cloudflare.com_ajax_libs_font-awesome_5.15.3_css_all.min.css';
 import '../deps/https:__ajax.aspnetcdn.com_ajax_jquery.dataTables_1.9.4_jquery.dataTables.min.js';
 import '../deps/https:__cdn.jsdelivr.net_npm_@popperjs_core@2.11.8_dist_umd_popper.min.js';
-import '../deps/https:__cdn.jsdelivr.net_npm_bootstrap@5.3.3_dist_js_bootstrap.min.js';

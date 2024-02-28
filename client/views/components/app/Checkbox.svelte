@@ -3,7 +3,7 @@ import { Random } from '../../../../shared/math';
 import { createEventDispatcher } from 'svelte';
 import { capitalize, fromCamelCase } from '../../../../shared/text';
 import type { BootstrapColor } from '../../../submodules/colors/color';
-export let value: boolean;
+export let value: boolean = false;
 export let name: string;
 export let color: BootstrapColor;
 
@@ -14,7 +14,7 @@ let id = Random.uuid({
 const dispatch = createEventDispatcher();
 
 const onChange = () => {
-    dispatch('change', { detail: value });
+    dispatch('change', value);
 };
 </script>
 
@@ -24,6 +24,7 @@ const onChange = () => {
     autocomplete="off"
     {id}
     bind:checked="{value}"
+    on:change="{onChange}"
 />
 <label class="btn btn-outline-{color}" for="{id}">
     {capitalize(fromCamelCase(name))}
