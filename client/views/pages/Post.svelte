@@ -6,6 +6,7 @@ import { capitalize, fromCamelCase } from '../../../shared/text';
 import { Trace } from '../../../shared/submodules/tatorscout-calculations/trace';
 import { confirm, notify } from '../../utilities/notifications';
 import { createEventDispatcher } from 'svelte';
+import { Canvas } from '../../models/canvas/canvas';
 
 const d = createEventDispatcher();
 
@@ -83,17 +84,27 @@ let data: {
     }
 };
 
+let c: Canvas;
+let stop = () => {};
+
 const open = (active: string) => {
     if (active !== 'Post') return;
+    stop();
 
     const traceArray = app.pull();
-    const secondsNotMoving = Trace.secondsNotMoving(traceArray, false);
+    const secondsNotMoving = Trace.secondsNotMoving(traceArray.filter((p, i, a) => {
+        const lastClimb = a.findLastIndex(p => p[3] === 'clb');
+        return i > lastClimb;
+    }), false);
     if (secondsNotMoving > 20) {
         // robot likely died, was intermitent, or had problems driving
         data.robotDied.value = true;
     }
 
-    const res = app.getRecap(canvas);
+    if (!c) {c = new Canvas(canvas.getContext('2d'));}
+    stop = c.animate();
+
+    const res = app.getRecap(c);
     if (res.isErr()) console.warn(res.error);
     if (res.isOk()) {
         jQuery('#slider').slider({
@@ -120,12 +131,11 @@ const open = (active: string) => {
 };
 
 let commentsSections: string[] = [];
-$: {
-    open(active);
-    commentsSections = Object.entries(data)
+$: open(active);
+
+$: commentsSections = Object.entries(data)
         .filter(([_, data]) => data.comments && data.value)
         .map(([key]) => key);
-}
 
 let generalComment: string = '';
 let autoComment: string = '';
@@ -172,7 +182,12 @@ const submit = async () => {
 
 <div class="container">
     <div class="row d-flex justify-content-center w-100 p-0">
-        <Checkboxes bind:data />
+        <Checkboxes bind:data on:change={(e) => {
+            console.log('Change', e.detail);
+            const { key, value } = e.detail;
+            data[key].value = value;
+            data = data;
+        }}/>
     </div>
     {#if commentsSections.length > 0}
         <div class="row">

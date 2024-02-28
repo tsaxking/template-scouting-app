@@ -1600,6 +1600,7 @@ export class App<
                     new Tick<a>(i * App.tickDuration, i, this as App<any, any>),
             );
         target.appendChild(this.canvasEl);
+        target.append(this.cover);
 
         const currentAlliance = await App.matchData.getAlliance();
 
@@ -1776,15 +1777,14 @@ export class App<
      * @param {HTMLCanvasElement} canvas
      * @returns {Result<Container>}
      */
-    getRecap(canvas: HTMLCanvasElement): Result<Container> {
-        canvas.width = canvas.parentElement?.clientWidth || 0;
-        canvas.height = canvas.width / 2;
+    getRecap(canvas: Canvas): Result<Container> {
+        canvas.clearDrawables();
+        // canvas.adaptable = true;
+        canvas.ratio = 2;
+        canvas.width = canvas.$ctx.canvas.parentElement?.clientWidth || 0;
+        canvas.height = (canvas.$ctx.canvas.parentElement?.clientWidth || 0) / 2;
 
         return attempt(() => {
-            const ctx = canvas.getContext('2d');
-            if (!ctx) throw new Error('No context');
-            const c = new Canvas(ctx);
-
             const img = new Img(`/public/pictures/${this.year}field.png`);
             img.options.height = 1;
             img.options.width = 1;
@@ -1859,9 +1859,8 @@ export class App<
                 container.filter((_, i) => i >= from && i <= to);
             });
 
-            c.add(img, container);
+            canvas.add(img, container);
 
-            c.animate();
             return container;
         });
     }
