@@ -28,17 +28,50 @@
         }
     });
 
+    const fullscreen = () => {
+        if (isFullscreen()) {
+            exitFullscreen();
+        } else {
+            document.documentElement.requestFullscreen();
+            fs = true;
+        }
+    };
+    const exitFullscreen = () => {
+        if (document['exitFullscreen']) {
+            document['exitFullscreen']();
+        } else if (document['webkitExitFullscreen']) {
+            document['webkitExitFullscreen']();
+        } else if (document['mozCancelFullScreen']) {
+            document['mozCancelFullScreen']();
+        } else if (document['msExitFullscreen']) {
+            document['msExitFullscreen']();
+        }
+        fs = false;
+    };
+
+    $: {
+        if (active === 'App') {
+            fullscreen();
+        } else {
+            exitFullscreen();
+        }
+    }
+
+    const isFullscreen = () => {
+        return document['fullscreenElement'] || document['webkitFullscreenElement'] || document['mozFullScreenElement'] || document['msFullscreenElement'];
+    };
+
+    let fs: boolean = false;
+
     generate();
-    
-    
     let tabs = ['Pre', 'App', 'Post', 'Upload'];
     let active = 'Pre';
     const domain = 'http://localhost:3000';
     
     // if reload, warn
-    // window.onbeforeunload = function () {
-    //     return 'Are you sure you want to leave? You will lose all your progress on this match!';
-    // };
+    window.onbeforeunload = function () {
+        return 'Are you sure you want to leave? You will lose all your progress on this match!';
+    };
     </script>
     
     <main>
@@ -51,5 +84,9 @@
             app = generate2024App(await App.matchData.getAlliance());
         }}></Post></Page>
         <Page {active} {domain} title="Upload"><Upload /></Page>
+
+        <button class="btn btn-outline-primary position-fixed top-0 end-0 me-3" style="z-index: 10000; margin-top: 2px;" on:click="{fullscreen}">
+            {fs ? 'Exit Fullscreen' : 'Fullscreen'}
+        </button>
     </main>
     
