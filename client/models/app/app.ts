@@ -901,6 +901,7 @@ export class App<
         this.background.mirror.x = App.flipX;
         this.background.mirror.y = App.flipY;
 
+
         for (const zone of Object.values(this.areas)) {
             (zone as Area).area.properties.mirror = {
                 x: App.flipX,
@@ -912,7 +913,7 @@ export class App<
             this.border.properties.mirror = {
                 x: App.flipX,
                 y: App.flipY,
-            };
+            }
         }
 
         if (target.clientWidth > target.clientHeight * 2) {
