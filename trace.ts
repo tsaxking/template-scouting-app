@@ -17,7 +17,7 @@ export type Action2024 = 'spk' | 'amp' | 'src' | 'trp' | 'clb';
  * @export
  * @typedef {Action2023}
  */
-export type Action2023 = 'cone' | 'cube' | 'balance' | 'pick';
+export type Action2023 = 'cne' | 'cbe' | 'bal' | 'pck';
 
 export type Zones2024 =
     | 'blue-auto'
@@ -30,6 +30,22 @@ export type Zones2024 =
     | 'red-amp'
     | 'red-src'
     | 'red-zone';
+
+export const actions = {
+    2024: {
+        spk: 'speaker',
+        amp: 'amp',
+        src: 'source',
+        trp: 'trap',
+        clb: 'climb',
+    },
+    2023: {
+        cne: 'cone',
+        cbe: 'cube',
+        bal: 'balance',
+        pck: 'pick'
+    }
+};
 
 export type TraceParse2024 = {
     mobility: boolean;
@@ -428,7 +444,7 @@ export class Trace {
                 }
                 str = num.toString();
 
-                return new Array(10 - str.length).fill('0').join('') + str;
+                return new Array(110 - str.length).fill('0').join('') + str;
             },
             encode: (
                 trace: [string | number, string | number, string | number][]
