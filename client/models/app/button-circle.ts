@@ -4,11 +4,12 @@ import { Point2D } from '../../../shared/submodules/calculations/src/linear-alge
 import { Color } from '../../submodules/colors/color';
 import { Iterator } from './app-object';
 import { Circle } from '../canvas/circle';
-import { Drawable } from '../canvas/drawable';
+import { Drawable, DrawableEvent } from '../canvas/drawable';
 import { Action } from '../../../shared/submodules/tatorscout-calculations/trace';
 import { Icon } from '../canvas/material-icons';
 import { SVG } from '../canvas/svg';
 import { Img } from '../canvas/image';
+import { CanvasEvent } from '../canvas/canvas';
 
 const { cos, sin } = Math;
 
@@ -192,14 +193,18 @@ export class ButtonCircle<actions = Action> extends Drawable<ButtonCircle> {
 
         this.buttons.push(button);
 
-        button.on('click', (event) => {
+        const click = () => {
+            console.log('Clicked');
             button.iterator.change();
             this.app.emit('action', {
                 action: name,
                 point: this.app.currentLocation || [-1, -1],
                 alliance,
             });
-        });
+        }
+
+        button.on('click', click);
+        button.on('touchstart', click);
 
         button.iterator.listen((state, event) => {
             switch (event) {

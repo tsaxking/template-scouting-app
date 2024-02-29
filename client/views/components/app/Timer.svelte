@@ -1,6 +1,6 @@
 <script lang="ts">
 import { App } from '../../../models/app/app';
-import type { Section } from '../../../models/app/app';
+import type { Section, Tick } from '../../../models/app/app';
 import type { BootstrapColor } from '../../../submodules/colors/color';
 export let app: App;
 
@@ -17,17 +17,31 @@ const sections: {
 
 let time = 0;
 
+let prev: App;
+
+const section = (s: Section) => {
+    currentSection = s;
+};
+const tick = (t: Tick) => {
+    time = t.second
+};
+const end = () => {
+    currentSection = 'end';
+};
+
 $: {
     if (app) {
-        app.on('section', s => {
-            currentSection = s;
-        });
-        app.on('tick', t => {
-            time = t.second;
-        });
-        app.on('end', () => {
-            currentSection = 'end';
-        });
+        if (prev) {
+            prev.off('section', section);
+            prev.off('tick', tick);
+            prev.off('end', end);
+        }
+
+        app.on('section', section);
+        app.on('tick', tick);
+        app.on('end', end);
+
+        prev = app;
     }
 }
 
