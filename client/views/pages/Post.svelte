@@ -180,7 +180,7 @@ const submit = async () => {
             );
     }
 
-    app.submit({
+    await app.submit({
         checks: Object.entries(data)
             .map(([key, value]) => (value.value ? key : null))
             .filter(Boolean),
@@ -204,6 +204,11 @@ const submit = async () => {
 
     await App.moveMatchIndex(1);
     d('submit');
+
+    for (const key in data) {
+        data[key].value = false;
+        data[key].comment = '';
+    }
 };
 
 $: console.log({commentsSections});
