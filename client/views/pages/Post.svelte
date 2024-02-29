@@ -182,13 +182,13 @@ const submit = async () => {
 
     app.submit({
         checks: Object.entries(data)
-            .map(([key, value]) => (value ? key : null))
+            .map(([key, value]) => (value.value ? key : null))
             .filter(Boolean),
         comments: {
             ...(() => {
                 let comments = {};
                 for (const [key, value] of Object.entries(data)) {
-                    if (value.comments && value.value) {
+                    if (value.value && value.comments) {
                         comments = {
                             ...data,
                             [key]: value.comment
