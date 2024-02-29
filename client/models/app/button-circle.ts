@@ -8,6 +8,7 @@ import { Drawable } from '../canvas/drawable';
 import { Action } from '../../../shared/submodules/tatorscout-calculations/trace';
 import { Icon } from '../canvas/material-icons';
 import { SVG } from '../canvas/svg';
+import { Img } from '../canvas/image';
 
 const { cos, sin } = Math;
 
@@ -18,9 +19,9 @@ const BUTTON_CIRCLE_RADIUS = BUTTON_CIRCLE_DIAMETER / 2;
 const MOVING_SCALE = 0.5; // size of the button when the robot is in motion
 const FADE_SCALE = 0.5; // opacity of the button when the robot is not in motion
 const BUTTON_OFFSET = 90; // deg from 0
-const BUTTON_DIAMETER = 0.05;
+const BUTTON_DIAMETER = 0.09;
 const BUTTON_RADIUS = BUTTON_DIAMETER / 2;
-const ICON_SIZE = 0.9;
+const ICON_SIZE = 0.035;
 
 /**
  * Button on the button circle
@@ -68,7 +69,7 @@ class Button<actions = Action> extends Drawable<Button> {
         public readonly condition: (app: App) => boolean,
         public readonly index: number,
         color: Color,
-        public readonly icon: SVG | Icon,
+        public readonly icon: SVG | Icon | Img,
         public readonly alliance: 'red' | 'blue' | null = null,
     ) {
         super();
@@ -81,11 +82,17 @@ class Button<actions = Action> extends Drawable<Button> {
             defaultState,
         );
         this.circle = new Circle([0, 0], BUTTON_DIAMETER / 2);
-        this.circle.$properties.fill = {
+        this.circle.properties.fill = {
             color: this.color.toString('rgba'),
         };
+        this.circle.properties.line!.color = 'transparent';
 
-        this.icon.color = Color.fromBootstrap('light').toString('rgba');
+        if (this.icon instanceof Img) {
+            this.icon.width = .04;
+            this.icon.height = .05;
+        } else {
+            this.icon.color = Color.fromBootstrap('light').toString('rgba');
+        }
     }
 
     draw(ctx: CanvasRenderingContext2D) {
@@ -162,7 +169,7 @@ export class ButtonCircle<actions = Action> extends Drawable<ButtonCircle> {
         condition: (app: App) => boolean = () => true,
         color: Color,
         alliance: 'red' | 'blue' | null,
-        icon?: Icon | SVG,
+        icon?: Icon | SVG | Img,
     ) {
         if (this.buttons.length > 8) {
             throw new Error('Cannot add more than 8 buttons');
@@ -238,8 +245,17 @@ export class ButtonCircle<actions = Action> extends Drawable<ButtonCircle> {
             const b = visible[i];
             b.circle.x = x + cos(angle) * buttonCircleRadius;
             b.circle.y = y + sin(angle) * buttonCircleRadius * 2;
-            b.icon.x = b.circle.x;
-            b.icon.y = b.circle.y;
+
+            if (b.icon instanceof Img) {
+                b.icon.x = b.circle.x - b.icon.width / 2;
+                b.icon.y = b.circle.y - b.icon.height / 2;
+
+                b.icon.width = isDrawing ? ICON_SIZE * MOVING_SCALE : ICON_SIZE;
+                b.icon.height = (isDrawing ? ICON_SIZE * MOVING_SCALE : ICON_SIZE) * 2;
+            } else {
+                b.icon.x = b.circle.x;
+                b.icon.y = b.circle.y;
+            }
 
             b.circle.radius = buttonRadius;
 

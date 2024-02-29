@@ -24,7 +24,7 @@ export class Img extends Drawable<Img> {
      * @readonly
      * @type {HTMLImageElement}
      */
-    public readonly img: HTMLImageElement = new Image();
+    private img: HTMLImageElement = document.createElement('img');
     private data: HTMLImageElement | null = null;
 
     constructor(
@@ -42,7 +42,11 @@ export class Img extends Drawable<Img> {
             const ctx = canvas.getContext('2d');
             if (!ctx) return;
 
-            ctx.drawImage(this.img, 0, 0);
+            ctx.drawImage(
+                this.img, 
+                0, 
+                0
+            );
             // to data url
             const i = document.createElement('img');
             i.src = canvas.toDataURL();
@@ -181,8 +185,12 @@ export class Img extends Drawable<Img> {
     }
 
     clone(): Img {
-        const i = new Img(this.src, this.options);
-        copy(this, i);
+        const i = new Img(this.src, JSON.parse(JSON.stringify(this.options)));
+        i.x = this.x;
+        i.y = this.y;
+        i.width = this.width;
+        i.height = this.height;
+
         return i;
     }
 }

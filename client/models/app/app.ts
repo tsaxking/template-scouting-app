@@ -289,7 +289,7 @@ class MatchData {
 
         if (!match) return null;
 
-        console.log(match, this.teamNumber);
+        // console.log(match, this.teamNumber);
 
         if (match.alliances.red.team_keys.includes(`frc${this.$teamNumber}`)) {
             return 'red';
@@ -499,36 +499,25 @@ export class App<
     }
 
     public static actionAnimation(
-        type: 'material-icons' | 'font-awesome' | 'svg',
-        content: string,
+        icon: HTMLElement,
         alliance: 'red' | 'blue' | null,
-        point: Point2D,
     ) {
-        const icon = document.createElement('i');
-        switch (type) {
-            case 'material-icons':
-                icon.classList.add('material-icons');
-                icon.textContent = content;
-                break;
-            case 'font-awesome':
-                icon.classList.add('fas', `fa-${content}`);
-                break;
-            case 'svg':
-                icon.innerHTML = content;
-                break;
-        }
-
+        icon = icon.cloneNode() as HTMLElement;
         icon.classList.add('animate__animated', 'animate__bounceIn');
         icon.style.position = 'absolute';
         const { current } = App;
         if (!current) return;
 
+        const point = current.currentLocation;
+        if (!point) return;
+
         const { target, xOffset, yOffset } = current;
         if (!target) return;
 
-        icon.style.left = `${point[0] * current.width + xOffset - 12}px`;
-        icon.style.top = `${point[1] * current.height + yOffset - 12}px`;
+        icon.style.left = `calc(${(point[0] * current.width + xOffset)}px - 30px)`;
+        icon.style.top = `calc(${(point[1] * current.height + yOffset)}px - 30px)`;
         icon.style.zIndex = '1000';
+        // icon.style.transform = 'translate(-50%, -50%)';
 
         icon.style.color = (() => {
             switch (alliance) {
@@ -729,7 +718,7 @@ export class App<
         public readonly year: number,
         public readonly icons: Partial<
             {
-                [key in Action]: Icon | SVG;
+                [key in Action]: Icon | SVG | Img;
             }
         >,
     ) {
@@ -912,6 +901,7 @@ export class App<
         this.background.mirror.x = App.flipX;
         this.background.mirror.y = App.flipY;
 
+
         for (const zone of Object.values(this.areas)) {
             (zone as Area).area.properties.mirror = {
                 x: App.flipX,
@@ -923,7 +913,7 @@ export class App<
             this.border.properties.mirror = {
                 x: App.flipX,
                 y: App.flipY,
-            };
+            }
         }
 
         if (target.clientWidth > target.clientHeight * 2) {
@@ -1321,7 +1311,7 @@ export class App<
             setTimeout(
                 () => run(this.currentTick?.next(), i++),
                 // I don't understand why I need to multiply this by 2, but evidently I need to???
-                Math.max(0, App.tickDuration) * 2,
+                Math.max(0, App.tickDuration) // * 2,
             );
             App.save(this as App<any, any, any>);
         };
@@ -1814,9 +1804,9 @@ export class App<
                 container.children = d.map((p, i, a) => {
                     const [_i, x, y, action] = p;
 
-                    const color = Color.fromName(
-                        currentAlliance ? currentAlliance : 'black',
-                    ).toString('rgba');
+                    const color = Color.fromBootstrap(
+                        currentAlliance === 'red' ? 'danger' : currentAlliance === 'blue' ? 'primary' : 'dark'
+                    ).toString('rgb');
 
                     if (action) {
                         const size = 0.03;
@@ -1842,6 +1832,13 @@ export class App<
                                 'rgba',
                             );
                         }
+                        if (a instanceof Img) {
+                            a.x = x - size / 2;
+                            a.y = y - size / 2;
+                            a.height = size;
+                            a.width = size;
+                        }
+                        console.log({ action: a });
                         const cont = new Container(cir, a || null);
                         return cont;
                     }
