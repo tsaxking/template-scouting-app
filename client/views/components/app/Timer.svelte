@@ -24,7 +24,6 @@ $: {
         });
         app.on('tick', t => {
             time = t.second;
-            console.log(time);
         });
         app.on('end', () => {
             currentSection = 'end';
