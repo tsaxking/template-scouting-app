@@ -303,6 +303,10 @@ export class Drawable<T = any> {
         return this.$properties;
     }
 
+    set properties(properties: Partial<ShapeProperties<T>>) {
+        Object.assign(this.$properties, properties);
+    }
+
     get fill() {
         return this.$properties.fill || {};
     }

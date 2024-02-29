@@ -10,10 +10,14 @@ export let app: App;
 
 const fns = {
     launch: (app: App) => {
+        if (!app) return;
+        if (!target) return;
         app.target = target;
         app.launch(update2024);
     }
 };
+
+onMount(() => fns.launch(app));
 
 $: fns.launch(app);
 </script>

@@ -18,23 +18,49 @@ import { App, Tick } from './app';
 import { Point2D } from '../../../shared/submodules/calculations/src/linear-algebra/point';
 import { Icon } from '../canvas/material-icons';
 import { SVG } from '../canvas/svg';
+import { Img } from '../canvas/image';
 
 /**
  * Builds the app for the 2024 game
  * @date 1/25/2024 - 4:59:26 PM
  */
 export const generate2024App = (
-    alliance: 'red' | 'blue' | null = null,
+    alliance: 'red' | 'blue' | null = null
 ): App<Action2024> => {
     const icons: {
-        [key in Action2024]: Icon | SVG;
+        [key in Action2024]: Icon | SVG | Img;
     } = {
-        spk: new Icon('speaker'),
-        amp: new Icon('campaign'),
-        src: new Icon('back_hand'),
-        clb: new Icon('dry_cleaning'),
-        trp: new Icon('place_item'),
+        // spk: new Icon('speaker'),
+        // amp: new Icon('campaign'),
+        // src: new Icon('back_hand'),
+        // clb: new Icon('dry_cleaning'),
+        // trp: new Icon('place_item'),
+        spk: new Img('/public/pictures/icons/spk.png'),
+        amp: new Img('/public/pictures/icons/amp.png'),
+        src: new Img('/public/pictures/icons/src.png'),
+        clb: new Img('/public/pictures/icons/clb.png'),
+        trp: new Img('/public/pictures/icons/trp.png'),
     };
+
+    const images: {
+        [key in Action2024]: HTMLImageElement;
+    } = {
+        spk: new Image(60, 60),
+        amp: new Image(60, 60),
+        src: new Image(60, 60),
+        clb: new Image(60, 60),
+        trp: new Image(60, 60),
+    }
+
+    for (const key in images) {
+        images[key].src = `/public/pictures/icons/${key}.png`;
+        images[key].classList.add('no-select');
+        images[key].ondragstart = (e) => e.preventDefault();
+        images[key].onselectstart = (e) => e.preventDefault();
+        images[key].oncontextmenu = (e) => e.preventDefault();
+        images[key].onmousedown = (e) => e.preventDefault();
+        images[key].ondrag = (e) => e.preventDefault();
+    }
 
     const app = new App<Action2024, Zones2024, TraceParse2024>(2024, icons);
 
@@ -92,17 +118,29 @@ export const generate2024App = (
     const redButtonClasses = ['btn', 'btn-danger', 'btn-lg'];
 
     blueAmp.classList.add(...blueButtonClasses);
-    blueAmp.innerHTML = `<i class="material-icons">campaign</i>`;
+    // blueAmp.innerHTML = `<i class="material-icons">campaign</i>`;
+    blueAmp.append(images.amp.cloneNode());
+    blueAmp.classList.add('p-1');
     redAmp.classList.add(...redButtonClasses);
-    redAmp.innerHTML = `<i class="material-icons">campaign</i>`;
+    // redAmp.innerHTML = `<i class="material-icons">campaign</i>`;
+    redAmp.append(images.amp.cloneNode());
+    redAmp.classList.add('p-1');
     blueSpeaker.classList.add(...blueButtonClasses);
-    blueSpeaker.innerHTML = `<i class="material-icons">speaker</i>`;
+    // blueSpeaker.innerHTML = `<i class="material-icons">speaker</i>`;
+    blueSpeaker.append(images.spk.cloneNode());
+    blueSpeaker.classList.add('p-1');
     redSpeaker.classList.add(...redButtonClasses);
-    redSpeaker.innerHTML = `<i class="material-icons">speaker</i>`;
+    // redSpeaker.innerHTML = `<i class="material-icons">speaker</i>`;
+    redSpeaker.append(images.spk.cloneNode());
+    redSpeaker.classList.add('p-1');
     blueSource.classList.add(...blueButtonClasses);
-    blueSource.innerHTML = `<i class="material-icons">back_hand</i>`;
+    // blueSource.innerHTML = `<i class="material-icons">back_hand</i>`;
+    blueSource.append(images.src.cloneNode());
+    blueSource.classList.add('p-1');
     redSource.classList.add(...redButtonClasses);
-    redSource.innerHTML = `<i class="material-icons">back_hand</i>`;
+    // redSource.innerHTML = `<i class="material-icons">back_hand</i>`;
+    redSource.append(images.src.cloneNode());
+    redSource.classList.add('p-1');
 
     const I = Iterator<Action2024>;
 
@@ -221,32 +259,33 @@ export const generate2024App = (
     Object.assign(window, { app });
 
     app.on('action', (a) => {
-        let data = 'help';
-        const type = 'material-icons';
+        let data: HTMLElement;
         switch (a.action) {
-            case 'Red Amp':
-            case 'Blue Amp':
-                data = 'campaign';
-                break;
-            case 'Red Speaker':
-            case 'Blue Speaker':
-                data = 'speaker';
-                break;
-            case 'Red Source':
-            case 'Blue Source':
-                data = 'back_hand';
-                break;
+            // case 'Red Amp':
+            // case 'Blue Amp':
+            //     data = images.amp;
+            //     break;
+            // case 'Red Speaker':
+            // case 'Blue Speaker':
+            //     data = images.spk;
+            //     break;
+            // case 'Red Source':
+            // case 'Blue Source':
+            //     data = images.src;
+            //     break;
             case 'Red Trap':
             case 'Blue Trap':
-                data = 'place_item';
+                data = images.trp;
                 break;
             case 'Red Climb':
             case 'Blue Climb':
-                data = 'dry_cleaning';
+                data = images.clb;
                 break;
+            default:
+                throw new Error('Unknown action');
         }
 
-        App.actionAnimation(type, data, a.alliance, a.point);
+        App.actionAnimation(data, a.alliance);
     });
 
     return app;
