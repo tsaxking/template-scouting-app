@@ -17,19 +17,19 @@
         }
     });
     
-    let app: App = generate2024App(null);
+    let app: App;
 
     const generate = () => App.matchData.getAlliance().then(a => {
         console.log(a);
         if (a) {
             app = generate2024App(a);
+            // reassign app at restart
+            app.on('restart', generate);
         }
     });
 
     generate();
     
-    // reassign app at restart
-    app.on('restart', generate);
     
     let tabs = ['Pre', 'App', 'Post', 'Upload'];
     let active = 'Pre';
