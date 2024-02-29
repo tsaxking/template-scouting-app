@@ -502,7 +502,7 @@ export class App<
         icon: HTMLElement,
         alliance: 'red' | 'blue' | null,
     ) {
-
+        icon = icon.cloneNode() as HTMLElement;
         icon.classList.add('animate__animated', 'animate__bounceIn');
         icon.style.position = 'absolute';
         const { current } = App;
@@ -514,9 +514,10 @@ export class App<
         const { target, xOffset, yOffset } = current;
         if (!target) return;
 
-        icon.style.left = `${point[0] * current.width + xOffset - 12}px`;
-        icon.style.top = `${point[1] * current.height + yOffset - 12}px`;
+        icon.style.left = `calc(${(point[0] * current.width + xOffset)}px - 30px)`;
+        icon.style.top = `calc(${(point[1] * current.height + yOffset)}px - 30px)`;
         icon.style.zIndex = '1000';
+        // icon.style.transform = 'translate(-50%, -50%)';
 
         icon.style.color = (() => {
             switch (alliance) {
@@ -1830,14 +1831,13 @@ export class App<
                                 'rgba',
                             );
                         }
-                        // if (a instanceof Img) {
-                        //     a.x = x - size / 2;
-                        //     a.y = y - size / 2;
-                        //     a.height = size;
-                        //     a.width = size;
-
-                        //     console.log(a);
-                        // }
+                        if (a instanceof Img) {
+                            a.x = x - size / 2;
+                            a.y = y - size / 2;
+                            a.height = size;
+                            a.width = size;
+                        }
+                        console.log({ action: a });
                         const cont = new Container(cir, a || null);
                         return cont;
                     }
