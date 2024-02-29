@@ -7,6 +7,7 @@ import { Trace } from '../../../shared/submodules/tatorscout-calculations/trace'
 import { confirm, notify } from '../../utilities/notifications';
 import { createEventDispatcher } from 'svelte';
 import { Canvas } from '../../models/canvas/canvas';
+import Summary from '../components/Summary.svelte';
 
 const d = createEventDispatcher();
 
@@ -261,10 +262,13 @@ const submit = async () => {
         ></textarea>
         <!-- </div> -->
     </div>
-    <div class="row">
+    <div class="row mb-3">
         <button class="btn btn-success btn-lg w-100" on:click="{submit}"
             >Submit Match</button
         >
+    </div>
+    <div class="row mb-3">
+        <Summary {app} />
     </div>
     <div class="row p-0 m-0">
         <canvas bind:this="{canvas}"></canvas>
