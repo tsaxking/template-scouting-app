@@ -121,7 +121,6 @@ const open = async (active: string) => {
     if (res.isErr()) console.warn(res.error);
     if (res.isOk()) {
         const container = res.value;
-        console.log(container, container.children.length);
         jQuery('#slider').slider({
             range: true,
             min: 0,
