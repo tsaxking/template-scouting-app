@@ -29,6 +29,7 @@ const fns = {
 
         const m = new Modal();
         m.setTitle('Enter Custom Match Info');
+        m.size = 'lg';
 
         const data = {
             compLevel: compLevel as 'pr' | 'qm' | 'qf' | 'sf' | 'f',
@@ -139,9 +140,9 @@ const fns = {
 };
 </script>
 
-<div class="btn-group w-100" role="group">
+<div class="btn-group w-100 p-0" role="group">
     <button type="button" class="btn btn-primary" on:click="{fns.matchInfo}">
-        Enter Custom Match Info
+        View and Change Match Info
     </button>
     <!-- <button type="button" class="btn btn-warning">
         Tutorial

@@ -12,7 +12,7 @@ const fns = {
 $: fns.save(name);
 </script>
 
-<div class="form-floating">
+<div class="form-floating p-0">
     <input
         type="text"
         class="form-control"

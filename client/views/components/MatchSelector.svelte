@@ -27,7 +27,7 @@ const fns = {
 };
 </script>
 
-<div class="btn-group w-100 btn-group-lg" role="group">
+<div class="btn-group w-100 btn-group-lg p-0" role="group">
     <button type="button" class="btn btn-outline-danger" on:click="{fns.prev}">
         <i class="material-icons">chevron_left</i>
         Previous Match

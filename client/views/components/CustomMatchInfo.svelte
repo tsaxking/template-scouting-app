@@ -1,6 +1,7 @@
 <script lang="ts">
 import { createEventDispatcher } from 'svelte';
 import { App } from '../../models/app/app';
+import SelectedInfo from './SelectedInfo.svelte';
 
 export let compLevel: 'pr' | 'qm' | 'qf' | 'sf' | 'f' = 'qm';
 export let matchNum: string = String(App.matchData.matchNumber || '');
@@ -16,6 +17,8 @@ $: d('compLevel', compLevel);
 $: d('matchNum', matchNum);
 $: d('teamNum', teamNum);
 </script>
+
+<SelectedInfo />
 
 <div class="form-floating mb-3">
     <select

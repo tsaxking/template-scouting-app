@@ -289,6 +289,8 @@ class MatchData {
 
         if (!match) return null;
 
+        console.log(match, this.teamNumber);
+
         if (match.alliances.red.team_keys.includes(`frc${this.$teamNumber}`)) {
             return 'red';
         }
@@ -369,6 +371,7 @@ type Area = {
 type GlobalEvents = {
     'change-group': number;
     'change-match': MatchData;
+    'change-name': string;
 };
 
 /**
@@ -435,6 +438,7 @@ export class App<
     public static set scoutName(scoutName: string) {
         App.$scoutName = scoutName;
         window.localStorage.setItem('scoutName', scoutName);
+        App.emit('change-name', scoutName);
     }
 
     public static $group = window.localStorage.getItem('group')
@@ -460,11 +464,13 @@ export class App<
             const res = await App.getEventData();
             if (res.isOk()) {
                 const { matches, assignments } = res.value;
+                console.log({ matches });
                 const matchIndex = matches.findIndex(
                     (m) =>
                         m.match_number === nextMatch &&
                         m.comp_level === App.matchData.compLevel,
                 );
+                console.log({ matchIndex });
                 const match = matches[matchIndex];
                 if (match) {
                     App.selectMatch(
