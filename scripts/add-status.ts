@@ -3,7 +3,7 @@ import {
     messages,
     StatusCode,
     StatusColor,
-    StatusId,
+    StatusId
 } from '../shared/status-messages.ts';
 import { Colors } from '../server/utilities/colors.ts';
 import { capitalize, fromSnakeCase, toCamelCase } from '../shared/text.ts';
@@ -19,7 +19,7 @@ export const addSocket = (name: string) => {
 
     let events = end
         .split('|')
-        .map((i) => i.trim().replace(';', '').replace(/\n/g, ''));
+        .map(i => i.trim().replace(';', '').replace(/\n/g, ''));
     events.push(`'${name}'`);
 
     events.sort((a, b) => {
@@ -59,12 +59,12 @@ export const addStatus = (data: {
         color: data.color as StatusColor,
         code: data.code as StatusCode,
         instructions: data.instructions,
-        redirect: data.redirect,
+        redirect: data.redirect
     };
 
     if (messages[value]) {
         throw new Error(
-            `Status ${Colors.FgGreen}${value}${Colors.Reset} already exists`,
+            `Status ${Colors.FgGreen}${value}${Colors.Reset} already exists`
         );
     }
 
@@ -88,10 +88,10 @@ export const addStatus = (data: {
     color: '${messages[key].color}',
     code: ${messages[key].code},
     instructions: '${messages[key].instructions}',${
-                messages[key].redirect
-                    ? `\n    redirect: '${messages[key].redirect}'`
-                    : ''
-            }
+        messages[key].redirect
+            ? `\n    redirect: '${messages[key].redirect}'`
+            : ''
+    }
 }`;
         })
         .join(',\n');
@@ -104,7 +104,7 @@ export const addStatus = (data: {
         },
         {} as {
             [key: string]: string[];
-        },
+        }
     );
 
     const file = Deno.readFileSync('./shared/status-messages.ts');
@@ -116,7 +116,7 @@ export const addStatus = (data: {
     let ids = end
         .split(';')[0]
         .split('|')
-        .map((i) => i.trim().replace(';', '').replace(/\n/g, ''));
+        .map(i => i.trim().replace(';', '').replace(/\n/g, ''));
 
     ids.push(`'${value}'`);
 
@@ -149,26 +149,20 @@ ${str}
 
 export type StatusId = ${ids.join('\n\t| ')}\n;
 
-${
-        Object.keys(groups)
-            .map((key) => {
-                return `export type ${
-                    capitalize(
-                        toCamelCase(fromSnakeCase(key, '-')),
-                    )
-                }StatusId = ${
-                    groups[key]
-                        .map((i: string) => `'${i}'`)
-                        .join('\n\t| ')
-                };`;
-            })
-            .join('\n\n\n')
-    }
+${Object.keys(groups)
+    .map(key => {
+        return `export type ${capitalize(
+            toCamelCase(fromSnakeCase(key, '-'))
+        )}StatusId = ${groups[key]
+            .map((i: string) => `'${i}'`)
+            .join('\n\t| ')};`;
+    })
+    .join('\n\n\n')}
 `;
 
     Deno.writeFileSync(
         './shared/status-messages.ts',
-        new TextEncoder().encode(newFile),
+        new TextEncoder().encode(newFile)
     );
 
     if (data.code.toString().startsWith('2')) {
@@ -185,7 +179,7 @@ export const addStatusPrompt = () => {
         return str
             .toLowerCase()
             .split('')
-            .filter((i) => allowedCharacters.includes(i))
+            .filter(i => allowedCharacters.includes(i))
             .join('');
     };
     const filter = (str: string): boolean => {
@@ -199,15 +193,11 @@ export const addStatusPrompt = () => {
     const group = repeatPrompt('Status group', undefined, filter);
     const name = repeatPrompt('Status name', undefined, filter);
     const message = repeatPrompt('Status message', undefined, filter);
-    const color = repeatPrompt(
-        'Status color',
-        undefined,
-        (i) => ['success', 'danger', 'warning', 'info'].includes(i),
+    const color = repeatPrompt('Status color', undefined, i =>
+        ['success', 'danger', 'warning', 'info'].includes(i)
     );
-    const code = repeatPrompt(
-        'Status code',
-        undefined,
-        (i) => validCodes.includes(+i as StatusCode),
+    const code = repeatPrompt('Status code', undefined, i =>
+        validCodes.includes(+i as StatusCode)
     );
     const instructions = prompt('Status instructions:') || '';
     const redirect = prompt('Redirect') || undefined;
@@ -219,19 +209,19 @@ export const addStatusPrompt = () => {
         color,
         code: +code as StatusCode,
         instructions: parse(instructions),
-        redirect,
+        redirect
     });
 };
 
 if (import.meta.main) {
     console.warn(
-        `⚠️ ${Colors.FgYellow}Running this script will be deprecated soon, please use "deno task manager" and select [Status] -> Create Status instead.${Colors.Reset} ⚠️`,
+        `⚠️ ${Colors.FgYellow}Running this script will be deprecated soon, please use "deno task manager" and select [Status] -> Create Status instead.${Colors.Reset} ⚠️`
     );
     addStatusPrompt();
 }
 if (Deno.args.includes('socket')) {
     console.warn(
-        `⚠️ ${Colors.FgYellow}Running this script will be deprecated soon, please use "deno task manager" and select [Status] -> Create Socket Event instead.${Colors.Reset} ⚠️`,
+        `⚠️ ${Colors.FgYellow}Running this script will be deprecated soon, please use "deno task manager" and select [Status] -> Create Socket Event instead.${Colors.Reset} ⚠️`
     );
 
     const name = repeatPrompt('Socket event name');

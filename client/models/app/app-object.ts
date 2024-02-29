@@ -45,7 +45,7 @@ export class ActionState<T = unknown, actions = string> {
     constructor(
         public readonly action: AppObject<T>,
         public state: T,
-        public readonly point?: Point2D,
+        public readonly point?: Point2D
     ) {}
 
     /**
@@ -118,7 +118,7 @@ export class AppObject<T = unknown, actions = string> {
      */
     private readonly $listeners: ((
         state: ActionState<T>,
-        event: 'new' | 'undo',
+        event: 'new' | 'undo'
     ) => void)[] = [];
 
     public readonly abbr: actions | string;
@@ -134,7 +134,7 @@ export class AppObject<T = unknown, actions = string> {
     constructor(
         public readonly name: string,
         public readonly description: string,
-        abbr?: actions,
+        abbr?: actions
     ) {
         this.abbr = abbr ? abbr : name.substring(0, 3).toLowerCase();
     }
@@ -150,7 +150,7 @@ export class AppObject<T = unknown, actions = string> {
     public toChange(cb: (state: T) => T) {
         if (this.$toChange) {
             throw new Error(
-                `toChange callback already set for action ${this.name}`,
+                `toChange callback already set for action ${this.name}`
             );
         }
         this.$toChange = cb;
@@ -171,14 +171,14 @@ export class AppObject<T = unknown, actions = string> {
                 new ActionState<T>(
                     this as AppObject<T, string>,
                     this.state,
-                    point,
-                ),
+                    point
+                )
             );
 
             for (const listener of this.$listeners) {
                 listener(
                     this.stateHistory[this.stateHistory.length - 1],
-                    'new',
+                    'new'
                 );
             }
         } else {
@@ -203,12 +203,12 @@ export class AppObject<T = unknown, actions = string> {
             for (const listener of this.$listeners) {
                 listener(
                     this.stateHistory[this.stateHistory.length - 1],
-                    'undo',
+                    'undo'
                 );
             }
         } else {
             console.warn(
-                `Cannot undo action ${this.name} because there is only one state`,
+                `Cannot undo action ${this.name} because there is only one state`
             );
         }
 
@@ -264,10 +264,10 @@ export class Toggle extends AppObject<boolean> {
         name: string,
         description: string,
         abbr?: string,
-        defaultState: boolean = false,
+        defaultState: boolean = false
     ) {
         super(name, description, abbr);
-        this.toChange((state) => !state);
+        this.toChange(state => !state);
 
         if (defaultState) {
             // creates a new state history with the default state
@@ -310,10 +310,10 @@ export class Iterator<actions = string> extends AppObject<number> {
         name: string,
         description: string,
         abbr?: actions,
-        defaultState = 0,
+        defaultState = 0
     ) {
         super(name, description, abbr as string);
-        this.toChange((state) => state + 1);
+        this.toChange(state => state + 1);
 
         if (defaultState !== undefined) {
             // creates a new state history with the default state
@@ -347,10 +347,10 @@ export class StateMachine<T> extends AppObject<T> {
         name: string,
         description: string,
         abbr?: string,
-        public readonly states = [] as T[],
+        public readonly states = [] as T[]
     ) {
         super(name, description, abbr);
-        this.toChange((state) => {
+        this.toChange(state => {
             // move through states in a circular fashion
             const index = this.states.indexOf(state);
             return this.states[(index + 1) % this.states.length];
@@ -391,10 +391,10 @@ export class PingPong<T> extends AppObject<T> {
         name: string,
         description: string,
         abbr?: string,
-        public readonly states = [] as T[],
+        public readonly states = [] as T[]
     ) {
         super(name, description, abbr);
-        this.toChange((state) => {
+        this.toChange(state => {
             // move through states, then reverse direction
             const index = this.states.indexOf(state);
             const nextIndex = index + this.$direction;

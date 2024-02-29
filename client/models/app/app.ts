@@ -23,7 +23,7 @@ import { TraceArray } from '../../../shared/submodules/tatorscout-calculations/t
 import {
     Action,
     TraceParse,
-    Zones,
+    Zones
 } from '../../../shared/submodules/tatorscout-calculations/trace';
 import { generate2024App } from './2024-app';
 import { ServerRequest } from '../../utilities/requests';
@@ -32,7 +32,7 @@ import { Assignment } from '../../../shared/submodules/tatorscout-calculations/s
 import {
     TBAEvent,
     TBAMatch,
-    TBATeam,
+    TBATeam
 } from '../../../shared/submodules/tatorscout-calculations/tba';
 import { Icon } from '../canvas/material-icons';
 import { SVG } from '../canvas/svg';
@@ -134,7 +134,7 @@ export class Tick<actions = Action> {
     constructor(
         public readonly time: number,
         public readonly index: number,
-        public readonly app: App,
+        public readonly app: App
     ) {}
 
     /**
@@ -255,7 +255,7 @@ class MatchData {
     constructor(
         public $matchNumber: number = 0,
         public $teamNumber: number = 0,
-        public $compLevel: 'pr' | 'qm' | 'qf' | 'sf' | 'f' = 'pr',
+        public $compLevel: 'pr' | 'qm' | 'qf' | 'sf' | 'f' = 'pr'
     ) {}
 
     public get matchNumber() {
@@ -282,9 +282,9 @@ class MatchData {
 
         const { matches } = res.value;
         const match = matches.find(
-            (m) =>
+            m =>
                 m.match_number === this.matchNumber &&
-                m.comp_level === this.compLevel,
+                m.comp_level === this.compLevel
         );
 
         if (!match) return null;
@@ -314,8 +314,8 @@ class MatchData {
             JSON.stringify({
                 matchNumber: this.$matchNumber,
                 teamNumber: this.$teamNumber,
-                compLevel: this.$compLevel,
-            }),
+                compLevel: this.$compLevel
+            })
         );
     }
 }
@@ -330,7 +330,7 @@ class FieldOrientation {
 
     constructor(
         private $flipX = false,
-        private $flipY = false,
+        private $flipY = false
     ) {}
 
     private save() {
@@ -338,8 +338,8 @@ class FieldOrientation {
             'fieldOrientation',
             JSON.stringify({
                 flipX: this.$flipX,
-                flipY: this.$flipY,
-            }),
+                flipY: this.$flipY
+            })
         );
     }
 
@@ -385,41 +385,41 @@ type GlobalEvents = {
 export class App<
     a extends Action = Action,
     z extends Zones = Zones,
-    p extends TraceParse = TraceParse,
+    p extends TraceParse = TraceParse
 > {
     private static readonly emitter = new EventEmitter<keyof GlobalEvents>();
 
     public static on<E extends keyof GlobalEvents>(
         event: E,
-        listener: (data: GlobalEvents[E]) => void,
+        listener: (data: GlobalEvents[E]) => void
     ) {
         App.emitter.on(event, listener);
     }
 
     public static off<E extends keyof GlobalEvents>(
         event: E,
-        listener: (data: GlobalEvents[E]) => void,
+        listener: (data: GlobalEvents[E]) => void
     ) {
         App.emitter.off(event, listener);
     }
 
     public static emit<E extends keyof GlobalEvents>(
         event: E,
-        data: GlobalEvents[E],
+        data: GlobalEvents[E]
     ) {
         App.emitter.emit(event, data);
     }
 
     public static once<E extends keyof GlobalEvents>(
         event: E,
-        listener: (data: GlobalEvents[E]) => void,
+        listener: (data: GlobalEvents[E]) => void
     ) {
         App.emitter.once(event, listener);
     }
 
     public static selectMatch(
         number: number,
-        compLevel: 'pr' | 'qm' | 'qf' | 'sf' | 'f',
+        compLevel: 'pr' | 'qm' | 'qf' | 'sf' | 'f'
     ) {
         App.matchData.matchNumber = number;
         App.matchData.compLevel = compLevel;
@@ -466,16 +466,16 @@ export class App<
                 const { matches, assignments } = res.value;
                 console.log({ matches });
                 const matchIndex = matches.findIndex(
-                    (m) =>
+                    m =>
                         m.match_number === nextMatch &&
-                        m.comp_level === App.matchData.compLevel,
+                        m.comp_level === App.matchData.compLevel
                 );
                 console.log({ matchIndex });
                 const match = matches[matchIndex];
                 if (match) {
                     App.selectMatch(
                         nextMatch,
-                        match.comp_level as 'pr' | 'qm' | 'qf' | 'sf' | 'f',
+                        match.comp_level as 'pr' | 'qm' | 'qf' | 'sf' | 'f'
                     );
 
                     App.matchData.teamNumber =
@@ -500,7 +500,7 @@ export class App<
 
     public static actionAnimation(
         icon: HTMLElement,
-        alliance: 'red' | 'blue' | null,
+        alliance: 'red' | 'blue' | null
     ) {
         icon = icon.cloneNode() as HTMLElement;
         icon.classList.add('animate__animated', 'animate__bounceIn');
@@ -514,8 +514,8 @@ export class App<
         const { target, xOffset, yOffset } = current;
         if (!target) return;
 
-        icon.style.left = `calc(${(point[0] * current.width + xOffset)}px - 30px)`;
-        icon.style.top = `calc(${(point[1] * current.height + yOffset)}px - 30px)`;
+        icon.style.left = `calc(${point[0] * current.width + xOffset}px - 30px)`;
+        icon.style.top = `calc(${point[1] * current.height + yOffset}px - 30px)`;
         icon.style.zIndex = '1000';
         // icon.style.transform = 'translate(-50%, -50%)';
 
@@ -566,7 +566,7 @@ export class App<
         // simulate ticks
         for (let i = 0; i < app.ticks.length; i++) {
             const tick = app.ticks[i];
-            const p = trace.find((p) => p[0] === i);
+            const p = trace.find(p => p[0] === i);
             if (!p) continue;
 
             try {
@@ -580,9 +580,8 @@ export class App<
             }
         }
 
-        app.currentLocation = location !== undefined
-            ? location
-            : app.currentLocation;
+        app.currentLocation =
+            location !== undefined ? location : app.currentLocation;
         app.currentTick = tick !== undefined ? app.ticks[tick] : currentTick;
     }
 
@@ -592,8 +591,8 @@ export class App<
             JSON.stringify({
                 trace: app.pull(),
                 tick: app.currentTick?.index,
-                location: app.currentLocation,
-            }),
+                location: app.currentLocation
+            })
         );
     }
 
@@ -606,7 +605,7 @@ export class App<
             const files = await loadFileContents();
             if (files.isErr()) throw files.error;
             const data = files.value
-                .map((d) => {
+                .map(d => {
                     try {
                         const data = JSON.parse(d.text);
                         if (!data.trace) throw new Error('Data is not correct');
@@ -625,10 +624,10 @@ export class App<
     static async upload(...matches: Match[]) {
         return attemptAsync(async () => {
             return Promise.all(
-                matches.map(async (m) => {
+                matches.map(async m => {
                     const d = await ServerRequest.post('/submit', m);
                     return d.isOk();
-                }),
+                })
             );
         });
     }
@@ -667,7 +666,7 @@ export class App<
         auto: [0, 15],
         teleop: [16, 135],
         endgame: [136, 150],
-        end: [151, 160], // goes a hair over if the user is a little late
+        end: [151, 160] // goes a hair over if the user is a little late
     };
 
     /**
@@ -716,11 +715,9 @@ export class App<
      */
     constructor(
         public readonly year: number,
-        public readonly icons: Partial<
-            {
-                [key in Action]: Icon | SVG | Img;
-            }
-        >,
+        public readonly icons: Partial<{
+            [key in Action]: Icon | SVG | Img;
+        }>
     ) {
         App.current = this;
         this.canvas.$ctx.canvas.style.position = 'absolute';
@@ -729,12 +726,12 @@ export class App<
             x: 0,
             y: 0,
             width: 1,
-            height: 1,
+            height: 1
         });
 
         this.path.$properties.line = {
             color: Color.fromName('black').toString('rgba'),
-            width: 1,
+            width: 1
         };
 
         this.canvas.add(this.background, this.path);
@@ -783,7 +780,7 @@ export class App<
         //     });
         // }
 
-        document.querySelectorAll('.cover').forEach((c) => c.remove());
+        document.querySelectorAll('.cover').forEach(c => c.remove());
 
         this.cover.classList.add('cover');
     }
@@ -836,7 +833,7 @@ export class App<
             this.cancel.innerHTML = 'Cancel';
             this.cancel.onclick = async () => {
                 const confirmed = await confirm(
-                    'Are you sure you want to cancel?',
+                    'Are you sure you want to cancel?'
                 );
                 if (!confirmed) return;
                 this.destroy();
@@ -901,19 +898,18 @@ export class App<
         this.background.mirror.x = App.flipX;
         this.background.mirror.y = App.flipY;
 
-
         for (const zone of Object.values(this.areas)) {
             (zone as Area).area.properties.mirror = {
                 x: App.flipX,
-                y: App.flipY,
+                y: App.flipY
             };
         }
 
         if (this.border) {
             this.border.properties.mirror = {
                 x: App.flipX,
-                y: App.flipY,
-            }
+                y: App.flipY
+            };
         }
 
         if (target.clientWidth > target.clientHeight * 2) {
@@ -1131,7 +1127,7 @@ export class App<
         b.$properties.doDraw = () =>
             this.currentLocation ? b.isIn(this.currentLocation) : false;
         b.$properties.fill = {
-            color: color.toString('rgba'),
+            color: color.toString('rgba')
         };
 
         this.canvas.add(b);
@@ -1151,7 +1147,7 @@ export class App<
         zone: z,
         points: Point2D[],
         color: Color,
-        condition: (shape: Polygon) => boolean,
+        condition: (shape: Polygon) => boolean
     ) {
         const p = new Polygon(points);
 
@@ -1163,11 +1159,11 @@ export class App<
             return draw;
         };
         p.properties.fill = {
-            color: color.toString('rgba'),
+            color: color.toString('rgba')
         };
         p.properties.line = {
             color: 'transparent'
-        }
+        };
 
         // p.fade(5);
 
@@ -1177,7 +1173,7 @@ export class App<
         this.areas[zone] = {
             area: p,
             color: color,
-            condition: condition,
+            condition: condition
         };
 
         return p;
@@ -1209,9 +1205,9 @@ export class App<
                 'mouseup',
                 'touchstart',
                 'touchend',
-                'touchcancel',
-            ],
-        },
+                'touchcancel'
+            ]
+        }
     );
     /**
      * Whether the app has been built or not
@@ -1429,7 +1425,7 @@ export class App<
      */
     public on<K extends keyof AppEvents>(
         event: K,
-        cb: (data: AppEvents[K]) => void,
+        cb: (data: AppEvents[K]) => void
     ) {
         this.$emitter.on(event, cb);
     }
@@ -1446,7 +1442,7 @@ export class App<
      */
     public off<K extends keyof AppEvents>(
         event: K,
-        cb?: (data: AppEvents[K]) => void,
+        cb?: (data: AppEvents[K]) => void
     ) {
         this.$emitter.off(event, cb);
     }
@@ -1495,7 +1491,7 @@ export class App<
         object: AppObject<T, a>,
         button: HTMLElement,
         convert?: (state: T) => string,
-        alliance: 'red' | 'blue' | null = null,
+        alliance: 'red' | 'blue' | null = null
     ) {
         const [x, y] = point;
         this.gameObjects.push({ x, y, object, element: button, alliance });
@@ -1525,7 +1521,7 @@ export class App<
             this.emit('action', {
                 action: object.name,
                 alliance,
-                point: this.currentLocation || [-1, -1],
+                point: this.currentLocation || [-1, -1]
             });
         });
 
@@ -1541,7 +1537,7 @@ export class App<
             if (interval) clearTimeout(interval);
         };
 
-        button.addEventListener('contextmenu', (e) => {
+        button.addEventListener('contextmenu', e => {
             e.preventDefault();
         });
 
@@ -1596,7 +1592,7 @@ export class App<
             .fill(null)
             .map(
                 (_, i) =>
-                    new Tick<a>(i * App.tickDuration, i, this as App<any, any>),
+                    new Tick<a>(i * App.tickDuration, i, this as App<any, any>)
             );
         target.appendChild(this.canvasEl);
         target.append(this.cover);
@@ -1662,41 +1658,41 @@ export class App<
             push(x, y);
         };
 
-        this.canvasEl.addEventListener('mousedown', (e) => {
+        this.canvasEl.addEventListener('mousedown', e => {
             // e.preventDefault();
             const [[x, y]] = this.canvas.getXY(e);
             down(x, y);
         });
 
-        this.canvasEl.addEventListener('mousemove', (e) => {
+        this.canvasEl.addEventListener('mousemove', e => {
             // e.preventDefault();
 
             const [[x, y]] = this.canvas.getXY(e);
             move(x, y);
         });
 
-        this.canvasEl.addEventListener('mouseup', (e) => {
+        this.canvasEl.addEventListener('mouseup', e => {
             // e.preventDefault();
 
             const [[x, y]] = this.canvas.getXY(e);
             up(x, y);
         });
 
-        this.canvasEl.addEventListener('touchstart', (e) => {
+        this.canvasEl.addEventListener('touchstart', e => {
             // e.preventDefault();
 
             const [[x, y]] = this.canvas.getXY(e);
             down(x, y);
         });
 
-        this.canvasEl.addEventListener('touchmove', (e) => {
+        this.canvasEl.addEventListener('touchmove', e => {
             e.preventDefault();
 
             const [[x, y]] = this.canvas.getXY(e);
             move(x, y);
         });
 
-        this.canvasEl.addEventListener('touchend', (e) => {
+        this.canvasEl.addEventListener('touchend', e => {
             // e.preventDefault();
 
             this.isDrawing = false;
@@ -1704,7 +1700,7 @@ export class App<
             // up(x, y);
         });
 
-        this.canvasEl.addEventListener('touchcancel', (e) => {
+        this.canvasEl.addEventListener('touchcancel', e => {
             e.preventDefault();
 
             this.isDrawing = false;
@@ -1723,7 +1719,7 @@ export class App<
     public clickPoints() {
         const em = new EventEmitter<'point'>();
 
-        this.canvasEl.addEventListener('click', (e) => {
+        this.canvasEl.addEventListener('click', e => {
             const [p] = this.canvas.getXY(e);
             em.emit('point', p);
         });
@@ -1744,7 +1740,7 @@ export class App<
                 if (p) {
                     p = [
                         App.flipX ? 1 - p[0] : p[0],
-                        App.flipY ? 1 - p[1] : p[1],
+                        App.flipY ? 1 - p[1] : p[1]
                     ];
                 } else {
                     p = [-1, -1];
@@ -1764,7 +1760,7 @@ export class App<
     }
 
     changeSection(section: Section) {
-        const tick = this.ticks.find((t) => t.section === section);
+        const tick = this.ticks.find(t => t.section === section);
         if (!tick) return console.error('No tick found');
         this.currentTick = tick;
     }
@@ -1776,14 +1772,15 @@ export class App<
      * @param {HTMLCanvasElement} canvas
      * @returns {Result<Container>}
      */
-    getRecap(canvas: Canvas): Result<Container> {
+    getRecap(canvas: Canvas): Promise<Result<Container>> {
         canvas.clearDrawables();
         // canvas.adaptable = true;
         canvas.ratio = 2;
         canvas.width = canvas.$ctx.canvas.parentElement?.clientWidth || 0;
-        canvas.height = (canvas.$ctx.canvas.parentElement?.clientWidth || 0) / 2;
+        canvas.height =
+            (canvas.$ctx.canvas.parentElement?.clientWidth || 0) / 2;
 
-        return attempt(() => {
+        return attemptAsync(async () => {
             const img = new Img(`/public/pictures/${this.year}field.png`);
             img.options.height = 1;
             img.options.width = 1;
@@ -1792,78 +1789,82 @@ export class App<
 
             img.mirror = {
                 x: App.flipX,
-                y: App.flipY,
+                y: App.flipY
             };
 
             const container = new Container();
 
-            App.matchData.getAlliance().then((currentAlliance) => {
-                // this corrects for field orientation flipping, but this is an issue because it's not the same that the user sees on the previous screen
-                const d: TraceArray = this.pull().map((p) => {
-                    const [i, x, y, a] = p;
-                    return [i, App.flipX ? 1 - x : x, App.flipY ? 1 - y : y, a];
-                });
+            const currentAlliance = await App.matchData.getAlliance();
 
-                container.children = d.map((p, i, a) => {
-                    const [_i, x, y, action] = p;
-
-                    const color = Color.fromBootstrap(
-                        currentAlliance === 'red' ? 'danger' : currentAlliance === 'blue' ? 'primary' : 'dark'
-                    ).toString('rgb');
-
-                    if (action) {
-                        const size = 0.03;
-                        const cir = new Circle([x, y], size);
-                        cir.$properties.fill = {
-                            color: color,
-                        };
-                        const a = this.icons[action]?.clone();
-                        if (a instanceof SVG) {
-                            a.center = [x, y];
-                            if (!a.$properties.text) a.$properties.text = {};
-                            a.$properties.text!.height = size;
-                            a.$properties.text!.width = size;
-                            a.$properties.text!.color = Color.fromBootstrap(
-                                'light',
-                            ).toString('rgba');
-                        }
-                        if (a instanceof Icon) {
-                            a.x = x;
-                            a.y = y;
-                            a.size = size;
-                            a.color = Color.fromBootstrap('light').toString(
-                                'rgba',
-                            );
-                        }
-                        if (a instanceof Img) {
-                            a.x = x - size / 2;
-                            a.y = y - size / 2;
-                            a.height = size;
-                            a.width = size;
-                        }
-                        console.log({ action: a });
-                        const cont = new Container(cir, a || null);
-                        return cont;
-                    }
-                    if (a[i - 1]) {
-                        const p = new Path([
-                            [a[i - 1][1], a[i - 1][2]],
-                            [x, y],
-                        ]);
-                        p.$properties.line = {
-                            color: color,
-                            width: 1,
-                        };
-                        return p;
-                    } else {
-                        return null;
-                    }
-                });
-
-                const from = 0;
-                const to = d.length - 1;
-                container.filter((_, i) => i >= from && i <= to);
+            // this corrects for field orientation flipping, but this is an issue because it's not the same that the user sees on the previous screen
+            const d: TraceArray = this.pull().map(p => {
+                const [i, x, y, a] = p;
+                return [i, App.flipX ? 1 - x : x, App.flipY ? 1 - y : y, a];
             });
+
+            container.children = d.map((p, i, a) => {
+                const [_i, x, y, action] = p;
+
+                const color = Color.fromBootstrap(
+                    currentAlliance === 'red'
+                        ? 'danger'
+                        : currentAlliance === 'blue'
+                          ? 'primary'
+                          : 'dark'
+                ).toString('rgb');
+
+                if (action) {
+                    const size = 0.03;
+                    const cir = new Circle([x, y], size);
+                    cir.$properties.fill = {
+                        color: color
+                    };
+                    const a = this.icons[action]?.clone();
+                    if (a instanceof SVG) {
+                        a.center = [x, y];
+                        if (!a.$properties.text) a.$properties.text = {};
+                        a.$properties.text!.height = size;
+                        a.$properties.text!.width = size;
+                        a.$properties.text!.color =
+                            Color.fromBootstrap('light').toString('rgba');
+                    }
+                    if (a instanceof Icon) {
+                        a.x = x;
+                        a.y = y;
+                        a.size = size;
+                        a.color = Color.fromBootstrap('light').toString('rgba');
+                    }
+                    if (a instanceof Img) {
+                        a.x = x - size / 2;
+                        a.y = y - size;
+                        a.height = size * 2;
+                        a.width = size;
+                    }
+
+                    // pair the icon with the circle
+                    const cont = new Container(cir, a || null);
+                    return cont;
+                }
+                if (a[i - 1]) {
+                    // do a path so that it's not just a bunch of circles
+                    const p = new Path([
+                        [a[i - 1][1], a[i - 1][2]],
+                        [x, y]
+                    ]);
+                    p.$properties.line = {
+                        color: color,
+                        width: 1
+                    };
+                    return p;
+                } else {
+                    return null;
+                }
+            });
+
+            // default filter
+            // const from = 0;
+            // const to = d.length - 1;
+            // container.filter((_, i) => i >= from && i <= to);
 
             canvas.add(img, container);
 
@@ -1872,7 +1873,7 @@ export class App<
     }
 
     get latestAction(): Tick<a> | undefined {
-        return this.ticks.find((t) => !!t.get());
+        return this.ticks.find(t => !!t.get());
     }
 
     async submit(include: {
@@ -1894,13 +1895,13 @@ export class App<
             matchNumber: App.matchData.matchNumber,
             teamNumber: App.matchData.teamNumber,
             group: App.group as 0 | 1 | 2 | 3 | 4 | 5,
-            compLevel: App.matchData.compLevel,
+            compLevel: App.matchData.compLevel
             // don't need orientation, because it's corrected in this.pull()
         };
 
         downloadText(
             JSON.stringify(d),
-            `${d.eventKey}-${d.matchNumber}-${d.compLevel}.json`,
+            `${d.eventKey}-${d.matchNumber}-${d.compLevel}.json`
         );
 
         // set data to server
@@ -1916,5 +1917,5 @@ export class App<
 
 // for use in devtools
 Object.assign(window, {
-    App,
+    App
 });

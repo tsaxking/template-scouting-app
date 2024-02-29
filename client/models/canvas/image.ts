@@ -29,7 +29,7 @@ export class Img extends Drawable<Img> {
 
     constructor(
         public readonly src: string,
-        public readonly options: Partial<CanvasImgOptions> = {},
+        public readonly options: Partial<CanvasImgOptions> = {}
     ) {
         super();
 
@@ -42,11 +42,7 @@ export class Img extends Drawable<Img> {
             const ctx = canvas.getContext('2d');
             if (!ctx) return;
 
-            ctx.drawImage(
-                this.img, 
-                0, 
-                0
-            );
+            ctx.drawImage(this.img, 0, 0);
             // to data url
             const i = document.createElement('img');
             i.src = canvas.toDataURL();
@@ -162,7 +158,7 @@ export class Img extends Drawable<Img> {
             (x || 0) * ctx.canvas.width,
             (y || 0) * ctx.canvas.height,
             (width || 0) * ctx.canvas.width,
-            (height || 0) * ctx.canvas.height,
+            (height || 0) * ctx.canvas.height
         );
     }
 

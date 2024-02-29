@@ -23,7 +23,7 @@ const section = (s: Section) => {
     currentSection = s;
 };
 const tick = (t: Tick) => {
-    time = t.second
+    time = t.second;
 };
 const end = () => {
     currentSection = 'end';

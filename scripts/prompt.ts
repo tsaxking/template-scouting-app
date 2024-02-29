@@ -7,7 +7,7 @@ export const repeatPrompt = (
     message: string,
     original?: string,
     validate?: (data: string) => boolean,
-    allowBlank = false,
+    allowBlank = false
 ): string => {
     if (!original) original = message;
     const i = prompt(message + ':');
@@ -22,7 +22,7 @@ export const repeatPrompt = (
             'Please enter value (' + original + ')',
             original,
             validate,
-            allowBlank,
+            allowBlank
         );
     }
     if (validate && !validate(i)) {
@@ -30,7 +30,7 @@ export const repeatPrompt = (
             'Invalid value (' + original + ')',
             original,
             validate,
-            allowBlank,
+            allowBlank
         );
     }
     return i;
@@ -48,24 +48,24 @@ export const select = async <T = unknown>(
         exit?: boolean;
         return?: boolean;
     } = {
-        exit: false,
-    },
+        exit: false
+    }
 ): Promise<T> => {
     if (options.return) {
         data.push({
             name: 'Return',
-            value: '$$return$$' as unknown as T,
+            value: '$$return$$' as unknown as T
         });
     }
     if (options.exit) {
         data.push({
             name: 'Exit',
-            value: '$$exit$$' as unknown as T,
+            value: '$$exit$$' as unknown as T
         });
     }
     const res = await cliffy.Select.prompt({
         message: message,
-        options: data,
+        options: data
     });
 
     if (res === '$$exit$$') {
@@ -90,14 +90,14 @@ export const search = async <T>(
     message: string,
     options: (
         | {
-            name: string;
-            value: T;
-        }
+              name: string;
+              value: T;
+          }
         | T
-    )[],
+    )[]
 ): Promise<Result<string>> => {
     const s = new FuzzySearch(options, ['name', ''], {
-        caseSensitive: false,
+        caseSensitive: false
     });
 
     const run = async (): Promise<Result<string>> => {
@@ -109,13 +109,13 @@ export const search = async <T>(
             const res = await select<string>('Select a value', [
                 {
                     name: '[Back to search]',
-                    value: '$$back$$',
+                    value: '$$back$$'
                 },
                 {
                     name: '[Exit search]',
-                    value: '$$exit$$',
+                    value: '$$exit$$'
                 },
-                ...values.map((v) => v.name || v.toString()),
+                ...values.map(v => v.name || v.toString())
             ]);
 
             if (res === '$$back$$') {

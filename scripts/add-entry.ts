@@ -4,7 +4,7 @@ import {
     dirname,
     relative,
     resolve,
-    unify,
+    unify
 } from '../server/utilities/env.ts';
 import { attempt } from '../shared/check.ts';
 
@@ -32,22 +32,20 @@ export const addEntry = (name: string, importFile?: string) => {
 
     const importsRelative = relative(
         dir,
-        resolve(__root, 'client', 'utilities', 'imports'),
+        resolve(__root, 'client', 'utilities', 'imports')
     );
 
     const imports = `import '${unify(importsRelative)}';
 ${
-        importFile
-            ? `import App from '${
-                unify(
-                    relative(dir, resolve(__root, importFile)),
-                )
-            }';
+    importFile
+        ? `import App from '${unify(
+              relative(dir, resolve(__root, importFile))
+          )}';
 
 const myApp = new App({ target: document.body });
 `
-            : ''
-    }
+        : ''
+}
 `;
 
     Deno.writeFileSync(filepath, new TextEncoder().encode(imports));
@@ -55,7 +53,7 @@ const myApp = new App({ target: document.body });
 
 if (import.meta.main) {
     console.warn(
-        `⚠️ ${Colors.FgYellow}Running this script will be deprecated soon, please use "deno task manager" and select [General] -> Create Entry instead.${Colors.Reset} ⚠️`,
+        `⚠️ ${Colors.FgYellow}Running this script will be deprecated soon, please use "deno task manager" and select [General] -> Create Entry instead.${Colors.Reset} ⚠️`
     );
     runEntryPrompt();
 }

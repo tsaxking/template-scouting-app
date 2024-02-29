@@ -13,10 +13,10 @@ const pullEvent = async () => {
 
     const year = await select(
         'Select a year',
-        years.map((y) => ({
+        years.map(y => ({
             name: y.toString(),
-            value: y,
-        })),
+            value: y
+        }))
     );
 
     if (!year) return backToMain('No year selected');
@@ -28,10 +28,10 @@ const pullEvent = async () => {
         if (!events) return backToMain('No events found');
         const event = await select(
             'Select an event',
-            events.map((e) => ({
+            events.map(e => ({
                 name: e.name,
-                value: e,
-            })),
+                value: e
+            }))
         );
 
         if (!event) return backToMain('No event selected');
@@ -56,7 +56,7 @@ const viewServerConnection = async () => {
         backToMain('Server is connected');
     } else {
         backToMain(
-            'Server is not connected' + (ping.error ? `: ${ping.error}` : ''),
+            'Server is not connected' + (ping.error ? `: ${ping.error}` : '')
         );
     }
 };
@@ -65,11 +65,11 @@ export const serverController = [
     {
         icon: '📅',
         value: pullEvent,
-        description: 'Pull an event from TBA, and make it the current event.',
+        description: 'Pull an event from TBA, and make it the current event.'
     },
     {
         icon: '🔗',
         value: viewServerConnection,
-        description: `View connection with ${env.SERVER_DOMAIN}`,
-    },
+        description: `View connection with ${env.SERVER_DOMAIN}`
+    }
 ];

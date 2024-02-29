@@ -13,7 +13,7 @@ export const runTests = async () => {
             'asyncFn',
             'a',
             'b',
-            'c',
+            'c'
         );
         log('Async test result:', asyncTest);
         if (asyncTest.isErr()) throw asyncTest.error;
@@ -26,7 +26,7 @@ export const runTests = async () => {
             'syncFn',
             'a',
             'b',
-            'c',
+            'c'
         );
         log('Sync test result:', syncTest);
         if (syncTest.isErr()) throw syncTest.error;
@@ -70,17 +70,17 @@ export const runTests = async () => {
                 passFunction: () => true,
                 failFunction: () => false,
 
-                missing: 'string',
+                missing: 'string'
             },
             {
                 log: true,
                 onInvalid: (key, value) => {
                     invalid.push([key, value]);
                 },
-                onMissing: (key) => {
+                onMissing: key => {
                     missing.push(key);
-                },
-            },
+                }
+            }
         )(
             {
                 body: {
@@ -95,9 +95,9 @@ export const runTests = async () => {
                     passCustomArray: 'a',
                     failCustomArray: 'd',
                     passFunction: true,
-                    failFunction: false,
+                    failFunction: false
                 },
-                url: new URL('http://localhost:1234'),
+                url: new URL('http://localhost:1234')
             } as Req,
             {
                 sendStatus: () => {
@@ -108,12 +108,12 @@ export const runTests = async () => {
                             'failNumber',
                             'failPrimitiveArray',
                             'failCustomArray',
-                            'failFunction',
+                            'failFunction'
                         ].includes(key);
                     });
 
                     const passedMissings = missing.every(
-                        (key) => key === 'missing',
+                        key => key === 'missing'
                     );
 
                     if (passedInvalids && passedMissings) {
@@ -125,9 +125,9 @@ export const runTests = async () => {
 
                         assertEquals(true, false);
                     }
-                },
+                }
             } as unknown as Res,
-            fail,
+            fail
         );
     });
 };

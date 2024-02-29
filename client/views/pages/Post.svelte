@@ -87,34 +87,41 @@ let data: {
 let c: Canvas;
 let stop = () => {};
 
-const open = (active: string) => {
+const open = async (active: string) => {
     if (active !== 'Post') return;
     stop();
 
     const traceArray = app.pull();
-    const secondsNotMoving = Trace.secondsNotMoving(traceArray.filter((p, i, a) => {
-        const lastClimb = a.findLastIndex(p => p[3] === 'clb');
-        return i > lastClimb;
-    }), false);
+    const secondsNotMoving = Trace.secondsNotMoving(
+        traceArray.filter((p, i, a) => {
+            const lastClimb = a.findLastIndex(p => p[3] === 'clb');
+            return i > lastClimb;
+        }),
+        false
+    );
     if (secondsNotMoving > 20) {
         // robot likely died, was intermitent, or had problems driving
         data.robotDied.value = true;
     }
 
-    if (!c) {c = new Canvas(canvas.getContext('2d'));}
+    if (!c) {
+        c = new Canvas(canvas.getContext('2d'));
+    }
     stop = c.animate();
 
-    const res = app.getRecap(c);
+    const res = await app.getRecap(c);
     if (res.isErr()) console.warn(res.error);
     if (res.isOk()) {
+        const container = res.value;
+        console.log(container, container.children.length);
         jQuery('#slider').slider({
             range: true,
             min: 0,
-            max: res.value.children.length - 1,
-            values: [0, res.value.children.length - 1],
+            max: container.children.length - 1,
+            values: [0, container.children.length - 1],
             slide: (_, ui) => {
                 const [start, end] = ui.values;
-                res.value.filter((_, i) => i >= start && i <= end);
+                container.filter((_, i) => i >= start && i <= end);
             }
         });
         // if the number of shots is larger than the number of picks from the source + 1, then the robot picked off the ground
@@ -134,8 +141,8 @@ let commentsSections: string[] = [];
 $: open(active);
 
 $: commentsSections = Object.entries(data)
-        .filter(([_, data]) => data.comments && data.value)
-        .map(([key]) => key);
+    .filter(([_, data]) => data.comments && data.value)
+    .map(([key]) => key);
 
 let generalComment: string = '';
 let autoComment: string = '';
@@ -180,14 +187,17 @@ const submit = async () => {
 };
 </script>
 
-<div class="container">
+<div class="container mb-3">
     <div class="row d-flex justify-content-center w-100 p-0">
-        <Checkboxes bind:data on:change={(e) => {
-            console.log('Change', e.detail);
-            const { key, value } = e.detail;
-            data[key].value = value;
-            data = data;
-        }}/>
+        <Checkboxes
+            bind:data
+            on:change="{e => {
+                console.log('Change', e.detail);
+                const { key, value } = e.detail;
+                data[key].value = value;
+                data = data;
+            }}"
+        />
     </div>
     {#if commentsSections.length > 0}
         <div class="row">

@@ -1,6 +1,6 @@
 console.warn(
     '[shared/attempt.ts]',
-    'This file will be changed to /shared/ in the future. Please update your imports.',
+    'This file will be changed to /shared/ in the future. Please update your imports.'
 );
 
 /**
@@ -100,7 +100,7 @@ export type Result<T, E = Error> = Ok<T> | Err<E>;
  */
 export const attempt = <T = unknown, E = Error>(
     fn: () => T,
-    parseError?: (error: Error) => E,
+    parseError?: (error: Error) => E
 ): Result<T, E> => {
     try {
         return new Ok(fn());
@@ -108,7 +108,7 @@ export const attempt = <T = unknown, E = Error>(
         if (parseError) {
             const err = attempt(
                 () => parseError(e),
-                (e) => 'Error parsing error: ' + e,
+                e => 'Error parsing error: ' + e
             );
             if (err.isOk()) {
                 // console.warn(err.value);
@@ -129,7 +129,7 @@ export const attempt = <T = unknown, E = Error>(
  */
 export const attemptAsync = async <T = unknown, E = Error>(
     fn: () => Promise<T>,
-    parseError?: (error: Error) => E,
+    parseError?: (error: Error) => E
 ): Promise<Result<T, E>> => {
     try {
         return new Ok(await fn());
@@ -137,7 +137,7 @@ export const attemptAsync = async <T = unknown, E = Error>(
         if (parseError) {
             const err = attempt(
                 () => parseError(e),
-                (e) => 'Error parsing error: ' + e,
+                e => 'Error parsing error: ' + e
             );
             if (err.isOk()) {
                 // console.warn(err.value);

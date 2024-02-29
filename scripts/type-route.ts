@@ -7,25 +7,25 @@ const parse = (ts: string) => {
     const generic = /(router|app)\.(get|post|use|final)<{([\s\S]+?)}>/g;
     const middleware = /(router|app)\.(get|post|use|final)\(([\s\S]+?)\)/g;
 
-    const generics = Array.from(ts.matchAll(generic)).map((m) => {
+    const generics = Array.from(ts.matchAll(generic)).map(m => {
         const [_, _router, _method, generic] = m as string[];
 
         return {
-            generic,
+            generic
         };
     });
 
-    const middlewares = Array.from(ts.matchAll(middleware)).map((m) => {
+    const middlewares = Array.from(ts.matchAll(middleware)).map(m => {
         const [_, _router, _method, middleware] = m as string[];
 
         return {
-            middleware,
+            middleware
         };
     });
 
     return {
         generics,
-        middlewares,
+        middlewares
     };
 };
 
@@ -112,5 +112,5 @@ router.post<{
 
     res.sendStatus('account:' + status as StatusId, { username });
 });
-`),
+`)
 );
