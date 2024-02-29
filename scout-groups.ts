@@ -24,7 +24,14 @@ export const destructureMatch = (
  */
 export type Assignment = {
     groups: number[][];
-    matchAssignments: [number[],number[],number[],number[],number[],number[]];
+    matchAssignments: [
+        number[],
+        number[],
+        number[],
+        number[],
+        number[],
+        number[]
+    ];
     interferences: number;
 };
 
@@ -103,7 +110,14 @@ export const generateScoutGroups = (
 
     return {
         groups: scoutGroups.map(g => g.map(t => t.team_number)),
-        matchAssignments: scoutLists.map(s => s.map(t => t.team_number)) as [number[],number[],number[],number[],number[],number[]],
+        matchAssignments: scoutLists.map(s => s.map(t => t.team_number)) as [
+            number[],
+            number[],
+            number[],
+            number[],
+            number[],
+            number[]
+        ],
         interferences
     };
 };
