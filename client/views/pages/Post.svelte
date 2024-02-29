@@ -29,7 +29,8 @@ type Types =
     | 'easilyDefended'
     | 'robotDied'
     | 'problemsDriving'
-    | 'groundPicks';
+    | 'groundPicks'
+    | 'autoCenterPick';
 
 let data: {
     [key in Types]: PostData;
@@ -40,10 +41,10 @@ let data: {
         comments: false,
         comment: ''
     },
-    parked: {
+    autoCenterPick: {
         value: false,
         color: 'success',
-        comments: false,
+        comments: true,
         comment: ''
     },
     playedDefense: {
@@ -81,7 +82,13 @@ let data: {
         color: 'info',
         comments: true,
         comment: ''
-    }
+    },
+    parked: {
+        value: false,
+        color: 'success',
+        comments: false,
+        comment: ''
+    },
 };
 
 let c: Canvas;
