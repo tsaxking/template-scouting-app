@@ -260,33 +260,30 @@ export const generate2024App = (
 
     app.on('action', (a) => {
         let data: HTMLElement;
-        const type = 'img';
         switch (a.action) {
-            case 'Red Amp':
-            case 'Blue Amp':
-                data = images.amp.cloneNode() as HTMLImageElement;
-                break;
-            case 'Red Speaker':
-            case 'Blue Speaker':
-                data = images.spk.cloneNode() as HTMLImageElement;
-                break;
-            case 'Red Source':
-            case 'Blue Source':
-                data = images.src.cloneNode() as HTMLImageElement;
-                break;
+            // case 'Red Amp':
+            // case 'Blue Amp':
+            //     data = images.amp;
+            //     break;
+            // case 'Red Speaker':
+            // case 'Blue Speaker':
+            //     data = images.spk;
+            //     break;
+            // case 'Red Source':
+            // case 'Blue Source':
+            //     data = images.src;
+            //     break;
             case 'Red Trap':
             case 'Blue Trap':
-                data = images.trp.cloneNode() as HTMLImageElement;
+                data = images.trp;
                 break;
             case 'Red Climb':
             case 'Blue Climb':
-                data = images.clb.cloneNode() as HTMLImageElement;
+                data = images.clb;
                 break;
             default:
                 throw new Error('Unknown action');
         }
-
-        console.log(data);
 
         App.actionAnimation(data, a.alliance);
     });
