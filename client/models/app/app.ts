@@ -289,7 +289,7 @@ class MatchData {
 
         if (!match) return null;
 
-        console.log(match, this.teamNumber);
+        // console.log(match, this.teamNumber);
 
         if (match.alliances.red.team_keys.includes(`frc${this.$teamNumber}`)) {
             return 'red';
@@ -499,29 +499,17 @@ export class App<
     }
 
     public static actionAnimation(
-        type: 'material-icons' | 'font-awesome' | 'svg',
-        content: string,
+        icon: HTMLElement,
         alliance: 'red' | 'blue' | null,
-        point: Point2D,
     ) {
-        const icon = document.createElement('i');
-        switch (type) {
-            case 'material-icons':
-                icon.classList.add('material-icons');
-                icon.textContent = content;
-                break;
-            case 'font-awesome':
-                icon.classList.add('fas', `fa-${content}`);
-                break;
-            case 'svg':
-                icon.innerHTML = content;
-                break;
-        }
 
         icon.classList.add('animate__animated', 'animate__bounceIn');
         icon.style.position = 'absolute';
         const { current } = App;
         if (!current) return;
+
+        const point = current.currentLocation;
+        if (!point) return;
 
         const { target, xOffset, yOffset } = current;
         if (!target) return;
@@ -729,7 +717,7 @@ export class App<
         public readonly year: number,
         public readonly icons: Partial<
             {
-                [key in Action]: Icon | SVG;
+                [key in Action]: Icon | SVG | Img;
             }
         >,
     ) {
