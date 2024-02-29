@@ -179,13 +179,20 @@ const submit = async () => {
             .map(([key, value]) => (value ? key : null))
             .filter(Boolean),
         comments: {
-            defensive: data.playedDefense.comment,
-            tippy: data.tippy.comment,
-            easilyDefended: data.easilyDefended.comment,
-            robotDied: data.robotDied.comment,
-            problemsDriving: data.problemsDriving.comment,
+            ...(() => {
+                let comments = {};
+                for (const [key, value] of Object.entries(data)) {
+                    if (value.comments && value.value) {
+                        comments = {
+                            ...data,
+                            [key]: value.comment
+                        };
+                    }
+                }
+                return comments;
+            }),
             general: generalComment,
-            audo: autoComment
+            auto: autoComment
         }
     });
 
