@@ -45,11 +45,11 @@ export const generate2024App = (
     const images: {
         [key in Action2024]: HTMLImageElement;
     } = {
-        spk: new Image(48, 48),
-        amp: new Image(48, 48),
-        src: new Image(48, 48),
-        clb: new Image(48, 48),
-        trp: new Image(48, 48),
+        spk: new Image(60, 60),
+        amp: new Image(60, 60),
+        src: new Image(60, 60),
+        clb: new Image(60, 60),
+        trp: new Image(60, 60),
     }
 
     for (const key in images) {
@@ -120,21 +120,27 @@ export const generate2024App = (
     blueAmp.classList.add(...blueButtonClasses);
     // blueAmp.innerHTML = `<i class="material-icons">campaign</i>`;
     blueAmp.append(images.amp.cloneNode());
+    blueAmp.classList.add('p-1');
     redAmp.classList.add(...redButtonClasses);
     // redAmp.innerHTML = `<i class="material-icons">campaign</i>`;
     redAmp.append(images.amp.cloneNode());
+    redAmp.classList.add('p-1');
     blueSpeaker.classList.add(...blueButtonClasses);
     // blueSpeaker.innerHTML = `<i class="material-icons">speaker</i>`;
     blueSpeaker.append(images.spk.cloneNode());
+    blueSpeaker.classList.add('p-1');
     redSpeaker.classList.add(...redButtonClasses);
     // redSpeaker.innerHTML = `<i class="material-icons">speaker</i>`;
     redSpeaker.append(images.spk.cloneNode());
+    redSpeaker.classList.add('p-1');
     blueSource.classList.add(...blueButtonClasses);
     // blueSource.innerHTML = `<i class="material-icons">back_hand</i>`;
     blueSource.append(images.src.cloneNode());
+    blueSource.classList.add('p-1');
     redSource.classList.add(...redButtonClasses);
     // redSource.innerHTML = `<i class="material-icons">back_hand</i>`;
     redSource.append(images.src.cloneNode());
+    redSource.classList.add('p-1');
 
     const I = Iterator<Action2024>;
 
