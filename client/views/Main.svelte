@@ -24,9 +24,15 @@
         if (a) {
             app = generate2024App(a);
             // reassign app at restart
-            app.on('restart', generate);
+        } else {
+            app = generate2024App(null);
         }
+            app.on('restart', generate);
     });
+
+    App.on('change-group', generate);
+    App.on('change-match', generate);
+    // App.on('change-alliance', generate);
 
     const fullscreen = () => {
         try {

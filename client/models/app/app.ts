@@ -536,7 +536,7 @@ export class App<
             icon.removeEventListener('animationend', onEnd);
 
             icon.classList.remove('animate__bounceIn', 'animate__animated');
-            await sleep(1000);
+            await sleep(500);
             icon.classList.add('animate__animated', 'animate__bounceOut');
             icon.addEventListener('animationend', () => {
                 icon.remove();
@@ -1155,16 +1155,19 @@ export class App<
     ) {
         const p = new Polygon(points);
 
-        p.$properties.doDraw = () => {
+        p.properties.doDraw = () => {
             if (Settings.get('showAreas') === false) return false;
 
             const draw = condition(p);
 
             return draw;
         };
-        p.$properties.fill = {
+        p.properties.fill = {
             color: color.toString('rgba'),
         };
+        p.properties.line = {
+            color: 'transparent'
+        }
 
         // p.fade(5);
 
@@ -1660,27 +1663,27 @@ export class App<
         };
 
         this.canvasEl.addEventListener('mousedown', (e) => {
-            e.preventDefault();
+            // e.preventDefault();
             const [[x, y]] = this.canvas.getXY(e);
             down(x, y);
         });
 
         this.canvasEl.addEventListener('mousemove', (e) => {
-            e.preventDefault();
+            // e.preventDefault();
 
             const [[x, y]] = this.canvas.getXY(e);
             move(x, y);
         });
 
         this.canvasEl.addEventListener('mouseup', (e) => {
-            e.preventDefault();
+            // e.preventDefault();
 
             const [[x, y]] = this.canvas.getXY(e);
             up(x, y);
         });
 
         this.canvasEl.addEventListener('touchstart', (e) => {
-            e.preventDefault();
+            // e.preventDefault();
 
             const [[x, y]] = this.canvas.getXY(e);
             down(x, y);
@@ -1694,7 +1697,7 @@ export class App<
         });
 
         this.canvasEl.addEventListener('touchend', (e) => {
-            e.preventDefault();
+            // e.preventDefault();
 
             this.isDrawing = false;
             // const [[x, y]] = this.canvas.getXY(e);
