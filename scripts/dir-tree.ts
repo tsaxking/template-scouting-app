@@ -2,7 +2,7 @@ import dirTree from 'npm:directory-tree';
 
 const tree = dirTree('./', {
     extensions: /\.(ts|html|js|svelte|json)/,
-    exclude: /(node_modules|dist|public\/templates\/entries|.git)/,
+    exclude: /(node_modules|dist|public\/templates\/entries|.git)/
 });
 
 // console.log(tree);

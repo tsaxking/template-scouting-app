@@ -3,7 +3,7 @@ import '../utilities/imports';
 import Main from '../views/Main.svelte';
 
 new Main({
-    target: document.body,
+    target: document.body
 });
 
 document.body.style.padding = '0px';

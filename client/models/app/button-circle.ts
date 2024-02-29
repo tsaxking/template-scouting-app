@@ -71,7 +71,7 @@ class Button<actions = Action> extends Drawable<Button> {
         public readonly index: number,
         color: Color,
         public readonly icon: SVG | Icon | Img,
-        public readonly alliance: 'red' | 'blue' | null = null,
+        public readonly alliance: 'red' | 'blue' | null = null
     ) {
         super();
         this.color = color.clone();
@@ -80,17 +80,17 @@ class Button<actions = Action> extends Drawable<Button> {
             name,
             description,
             abbr,
-            defaultState,
+            defaultState
         );
         this.circle = new Circle([0, 0], BUTTON_DIAMETER / 2);
         this.circle.properties.fill = {
-            color: this.color.toString('rgba'),
+            color: this.color.toString('rgba')
         };
         this.circle.properties.line!.color = 'transparent';
 
         if (this.icon instanceof Img) {
-            this.icon.width = .04;
-            this.icon.height = .05;
+            this.icon.width = 0.04;
+            this.icon.height = 0.05;
         } else {
             this.icon.color = Color.fromBootstrap('light').toString('rgba');
         }
@@ -135,10 +135,10 @@ export class ButtonCircle<actions = Action> extends Drawable<ButtonCircle> {
     constructor(public readonly app: App) {
         super();
 
-        this.on('click', (event) => {
+        this.on('click', event => {
             const [[x, y]] = event.points;
 
-            const visible = this.buttons.filter((button) =>
+            const visible = this.buttons.filter(button =>
                 button.condition(this.app)
             );
 
@@ -170,7 +170,7 @@ export class ButtonCircle<actions = Action> extends Drawable<ButtonCircle> {
         condition: (app: App) => boolean = () => true,
         color: Color,
         alliance: 'red' | 'blue' | null,
-        icon?: Icon | SVG | Img,
+        icon?: Icon | SVG | Img
     ) {
         if (this.buttons.length > 8) {
             throw new Error('Cannot add more than 8 buttons');
@@ -186,7 +186,7 @@ export class ButtonCircle<actions = Action> extends Drawable<ButtonCircle> {
             index,
             color,
             icon?.clone() ?? new Icon('help'),
-            alliance,
+            alliance
         );
 
         this.app.appObjects.push(button.iterator);
@@ -199,9 +199,9 @@ export class ButtonCircle<actions = Action> extends Drawable<ButtonCircle> {
             this.app.emit('action', {
                 action: name,
                 point: this.app.currentLocation || [-1, -1],
-                alliance,
+                alliance
             });
-        }
+        };
 
         button.on('click', click);
         button.on('touchstart', click);
@@ -235,7 +235,7 @@ export class ButtonCircle<actions = Action> extends Drawable<ButtonCircle> {
             : BUTTON_RADIUS;
         const fade = isDrawing ? FADE_SCALE : 1;
 
-        const visible = this.buttons.filter((button) => {
+        const visible = this.buttons.filter(button => {
             const filter = button.condition(this.app);
             const { alliance } = button;
             if (alliance === null) return filter;
@@ -256,7 +256,8 @@ export class ButtonCircle<actions = Action> extends Drawable<ButtonCircle> {
                 b.icon.y = b.circle.y - b.icon.height / 2;
 
                 b.icon.width = isDrawing ? ICON_SIZE * MOVING_SCALE : ICON_SIZE;
-                b.icon.height = (isDrawing ? ICON_SIZE * MOVING_SCALE : ICON_SIZE) * 2;
+                b.icon.height =
+                    (isDrawing ? ICON_SIZE * MOVING_SCALE : ICON_SIZE) * 2;
             } else {
                 b.icon.x = b.circle.x;
                 b.icon.y = b.circle.y;
@@ -276,7 +277,7 @@ export class ButtonCircle<actions = Action> extends Drawable<ButtonCircle> {
             }
 
             b.circle.$properties.fill = {
-                color: b.color.setAlpha(fade).toString('rgba'),
+                color: b.color.setAlpha(fade).toString('rgba')
             };
             ctx.save();
             b.draw(ctx);
@@ -285,9 +286,9 @@ export class ButtonCircle<actions = Action> extends Drawable<ButtonCircle> {
     }
 
     isIn(point: Point2D) {
-        const visible = this.buttons.filter((button) =>
+        const visible = this.buttons.filter(button =>
             button.condition(this.app)
         );
-        return visible.some((button) => button.circle.isIn(point));
+        return visible.some(button => button.circle.isIn(point));
     }
 }

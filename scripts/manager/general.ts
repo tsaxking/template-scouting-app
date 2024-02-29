@@ -22,8 +22,8 @@ const createEntry = async () => {
     const entryName = repeatPrompt(
         'Enter the file name (relative to client/entries)',
         undefined,
-        (data) => !!data.length,
-        false,
+        data => !!data.length,
+        false
     );
 
     try {
@@ -31,7 +31,7 @@ const createEntry = async () => {
         const file = resolve(__root, 'client', 'entries', entryName + '.ts');
         if (Deno.statSync(file)) {
             const isGood = await confirm(
-                `File ${entryName}.ts already exists, do you want to overwrite it?`,
+                `File ${entryName}.ts already exists, do you want to overwrite it?`
             );
             if (!isGood) {
                 return backToMain('Entry not created');
@@ -44,7 +44,7 @@ const createEntry = async () => {
     const importFile = await selectFile(
         resolve(__root, '/client/views'),
         'Select a file to import',
-        (file) => file.endsWith('.svelte'),
+        file => file.endsWith('.svelte')
     );
 
     console.log(importFile);
@@ -55,7 +55,7 @@ const createEntry = async () => {
     } else {
         addEntry(entryName);
         backToMain(
-            'No svelte file selected, created entry and going back to main menu',
+            'No svelte file selected, created entry and going back to main menu'
         );
     }
 };
@@ -63,28 +63,29 @@ const createEntry = async () => {
 const blacklist = async () => {
     const accountOrIp = await select<'Account' | 'IP'>(
         'Do you want to blacklist an account or an IP?',
-        ['Account', 'IP', 'Remove'],
+        ['Account', 'IP', 'Remove']
     );
 
     if (accountOrIp === 'Account') {
         const accounts = await Account.getAll();
         const a = await select(
             'Select an account to blacklist',
-            accounts.map((a) => ({
-                name: a.username +
+            accounts.map(a => ({
+                name:
+                    a.username +
                     ' - ' +
                     a.email +
                     ' - ' +
                     a.firstName +
                     ' ' +
                     a.lastName,
-                value: a,
-            })),
+                value: a
+            }))
         );
 
         if (a) {
             const doBlacklist = await confirm(
-                `Are you sure you want to blacklist ${a.username}?`,
+                `Are you sure you want to blacklist ${a.username}?`
             );
 
             if (doBlacklist) {
@@ -93,7 +94,7 @@ const blacklist = async () => {
                     reason: 'Manually blacklisted',
                     accountId: a.id,
                     ip: '',
-                    created: Date.now(),
+                    created: Date.now()
                 });
                 return backToMain('Account blacklisted');
             } else {
@@ -105,7 +106,7 @@ const blacklist = async () => {
     } else if (accountOrIp === 'IP') {
         const fromNew = await select<'new' | 'session'>(
             'Is this a new IP or is currently attached to a session?',
-            ['new', 'session'],
+            ['new', 'session']
         );
 
         if (fromNew === 'new') {
@@ -113,7 +114,7 @@ const blacklist = async () => {
             if (!ip) return backToMain('No IP entered');
             if (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(ip)) {
                 const doBlacklist = await confirm(
-                    `Are you sure you want to blacklist ${ip}?`,
+                    `Are you sure you want to blacklist ${ip}?`
                 );
 
                 if (doBlacklist) {
@@ -122,7 +123,7 @@ const blacklist = async () => {
                         reason: 'Manually blacklisted',
                         accountId: '',
                         ip,
-                        created: Date.now(),
+                        created: Date.now()
                     });
                     return backToMain('IP blacklisted');
                 } else {
@@ -139,18 +140,18 @@ const blacklist = async () => {
                 'Select a session to blacklist',
                 sessions.value
                     .filter((s, i, a) => {
-                        const index = a.findIndex((x) => x.ip === s.ip);
+                        const index = a.findIndex(x => x.ip === s.ip);
                         return index === i;
                     })
-                    .map((s) => ({
+                    .map(s => ({
                         name: s.ip + ' - ' + dateTime(new Date(s.created)),
-                        value: s,
-                    })),
+                        value: s
+                    }))
             );
 
             if (s) {
                 const doBlacklist = await confirm(
-                    `Are you sure you want to blacklist ${s.ip}?`,
+                    `Are you sure you want to blacklist ${s.ip}?`
                 );
 
                 if (doBlacklist) {
@@ -159,7 +160,7 @@ const blacklist = async () => {
                         reason: 'Manually blacklisted',
                         accountId: '',
                         ip: s.ip || '',
-                        created: Date.now(),
+                        created: Date.now()
                     });
                     return backToMain('IP blacklisted');
                 } else {
@@ -173,22 +174,22 @@ const blacklist = async () => {
 
         const b = await select(
             'Select a blacklist to remove',
-            blacklists.value.map((b) => ({
+            blacklists.value.map(b => ({
                 name: b.ip + ' - ' + b.accountId,
-                value: b,
-            })),
+                value: b
+            }))
         );
 
         if (b) {
             const doRemove = await confirm(
                 `Are you sure you want to remove ${
                     b.ip ? b.ip : b.accountId
-                } from the blacklist?`,
+                } from the blacklist?`
             );
 
             if (doRemove) {
                 DB.run('blacklist/delete', {
-                    id: b.id,
+                    id: b.id
                 });
                 const { ip, accountId } = b;
                 if (accountId) {
@@ -216,14 +217,14 @@ const getDependencies = async () => {
 export const general = [
     {
         icon: '📄',
-        value: createEntry,
+        value: createEntry
     },
     {
         icon: '🚫',
-        value: blacklist,
+        value: blacklist
     },
     {
         icon: '📦',
-        value: getDependencies,
-    },
+        value: getDependencies
+    }
 ];

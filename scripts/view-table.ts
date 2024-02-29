@@ -22,7 +22,7 @@ const deCamelCase = (str: string) => {
     // return str;
     return str.replace(
         /[A-Z]*[a-z]+((\d)|([A-Z0-9][a-z0-9]+))*([A-Z])?/g,
-        (word) => {
+        word => {
             // console.log(toSnakeCase(fromCamelCase(word)));
             let w = toSnakeCase(fromCamelCase(word));
             if (w.startsWith('_')) {
@@ -31,7 +31,7 @@ const deCamelCase = (str: string) => {
                 // w = w.charAt(0).toUpperCase() + w.slice(1);
             }
             return w;
-        },
+        }
     );
 };
 

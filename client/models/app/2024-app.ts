@@ -7,12 +7,12 @@ import {
     border,
     srcs,
     stages,
-    zones,
+    zones
 } from '../../../shared/submodules/tatorscout-calculations/2024-areas';
 import {
     Action2024,
     TraceParse2024,
-    Zones2024,
+    Zones2024
 } from '../../../shared/submodules/tatorscout-calculations/trace';
 import { App, Tick } from './app';
 import { Point2D } from '../../../shared/submodules/calculations/src/linear-algebra/point';
@@ -39,7 +39,7 @@ export const generate2024App = (
         amp: new Img('/public/pictures/icons/amp.png'),
         src: new Img('/public/pictures/icons/src.png'),
         clb: new Img('/public/pictures/icons/clb.png'),
-        trp: new Img('/public/pictures/icons/trp.png'),
+        trp: new Img('/public/pictures/icons/trp.png')
     };
 
     const images: {
@@ -49,17 +49,17 @@ export const generate2024App = (
         amp: new Image(60, 60),
         src: new Image(60, 60),
         clb: new Image(60, 60),
-        trp: new Image(60, 60),
-    }
+        trp: new Image(60, 60)
+    };
 
     for (const key in images) {
         images[key].src = `/public/pictures/icons/${key}.png`;
         images[key].classList.add('no-select');
-        images[key].ondragstart = (e) => e.preventDefault();
-        images[key].onselectstart = (e) => e.preventDefault();
-        images[key].oncontextmenu = (e) => e.preventDefault();
-        images[key].onmousedown = (e) => e.preventDefault();
-        images[key].ondrag = (e) => e.preventDefault();
+        images[key].ondragstart = e => e.preventDefault();
+        images[key].onselectstart = e => e.preventDefault();
+        images[key].oncontextmenu = e => e.preventDefault();
+        images[key].onmousedown = e => e.preventDefault();
+        images[key].ondrag = e => e.preventDefault();
     }
 
     const app = new App<Action2024, Zones2024, TraceParse2024>(2024, icons);
@@ -82,7 +82,7 @@ export const generate2024App = (
         redFade: Color.fromBootstrap('red').setAlpha(0.1),
         blueFade: Color.fromBootstrap('blue').setAlpha(0.1),
         black: Color.fromBootstrap('dark'),
-        blackFade: Color.fromBootstrap('dark').setAlpha(0.5),
+        blackFade: Color.fromBootstrap('dark').setAlpha(0.5)
     };
 
     app.addArea('blue-stage', stages.blue, colors.blueFade, isIn);
@@ -148,32 +148,32 @@ export const generate2024App = (
         [0.16976556184316896, 0.021018593371059015],
         new I('Blue Amp', 'Placing any note into the blue amp', 'amp', 0),
         blueAmp,
-        (i) => i.toString(),
-        'blue',
+        i => i.toString(),
+        'blue'
     );
 
     app.addAppObject(
         [0.8274050121261115, 0.018593371059013743],
         new I('Red Amp', 'Placing any note into the red amp', 'amp'),
         redAmp,
-        (i) => i.toString(),
-        'red',
+        i => i.toString(),
+        'red'
     );
 
     app.addAppObject(
         [0.06345998383185125, 0.33063864187550523],
         new I('Blue Speaker', 'Shot a note into the blue speaker', 'spk'),
         blueSpeaker,
-        (i) => i.toString(),
-        'blue',
+        i => i.toString(),
+        'blue'
     );
 
     app.addAppObject(
         [0.9365400161681487, 0.32740501212611156],
         new I('Red Speaker', 'Shot a note into the red speaker', 'spk'),
         redSpeaker,
-        (i) => i.toString(),
-        'red',
+        i => i.toString(),
+        'red'
     );
 
     app.addAppObject(
@@ -181,11 +181,11 @@ export const generate2024App = (
         new I(
             'Blue Source',
             'Robot retrieves a note from the blue source',
-            'src',
+            'src'
         ),
         blueSource,
-        (i) => i.toString(),
-        'blue',
+        i => i.toString(),
+        'blue'
     );
 
     app.addAppObject(
@@ -193,23 +193,25 @@ export const generate2024App = (
         new I(
             'Red Source',
             'Robot retrieves a note from the red source',
-            'src',
+            'src'
         ),
         redSource,
-        (i) => i.toString(),
-        'red',
+        i => i.toString(),
+        'red'
     );
 
-    const drawButton = (z: Zones2024) => (app: App): boolean => {
-        const { currentLocation } = app;
-        if (!currentLocation) return false;
-        const zone = app.areas[z];
-        if (!zone) {
-            console.warn('Zone not found');
-            return false;
-        }
-        return zone.area.isIn(currentLocation);
-    };
+    const drawButton =
+        (z: Zones2024) =>
+        (app: App): boolean => {
+            const { currentLocation } = app;
+            if (!currentLocation) return false;
+            const zone = app.areas[z];
+            if (!zone) {
+                console.warn('Zone not found');
+                return false;
+            }
+            return zone.area.isIn(currentLocation);
+        };
 
     app.buttonCircle
         .addButton(
@@ -220,7 +222,7 @@ export const generate2024App = (
             drawButton('blue-stage'),
             colors.blue,
             'blue',
-            icons.trp,
+            icons.trp
         )
         .addButton(
             'Blue Climb',
@@ -230,7 +232,7 @@ export const generate2024App = (
             drawButton('blue-stage'),
             colors.blue,
             'blue',
-            icons.clb,
+            icons.clb
         )
         .addButton(
             'Red Trap',
@@ -240,7 +242,7 @@ export const generate2024App = (
             drawButton('red-stage'),
             colors.red,
             'red',
-            icons.trp,
+            icons.trp
         )
         .addButton(
             'Red Climb',
@@ -250,7 +252,7 @@ export const generate2024App = (
             drawButton('red-stage'),
             colors.red,
             'red',
-            icons.clb,
+            icons.clb
         );
 
     const em = app.clickPoints();
@@ -258,7 +260,7 @@ export const generate2024App = (
 
     Object.assign(window, { app });
 
-    app.on('action', (a) => {
+    app.on('action', a => {
         let data: HTMLElement;
         switch (a.action) {
             // case 'Red Amp':
@@ -282,7 +284,7 @@ export const generate2024App = (
                 data = images.clb;
                 break;
             default:
-                throw new Error('Unknown action');
+                return;
         }
 
         App.actionAnimation(data, a.alliance);
