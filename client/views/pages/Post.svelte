@@ -100,6 +100,7 @@ const open = async (active: string) => {
     stop();
 
     const traceArray = app.pull();
+    console.log(traceArray);
     const secondsNotMoving = Trace.secondsNotMoving(
         traceArray.filter((p, i, a) => {
             const lastClimb = a.findLastIndex(p => p[3] === 'clb');
@@ -117,10 +118,13 @@ const open = async (active: string) => {
     }
     stop = c.animate();
 
+    console.log('Animating...');
+
     const res = await app.getRecap(c);
     if (res.isErr()) console.warn(res.error);
     if (res.isOk()) {
         const container = res.value;
+        console.log({ container });
         jQuery('#slider').slider({
             range: true,
             min: 0,
@@ -131,15 +135,17 @@ const open = async (active: string) => {
                 container.filter((_, i) => i >= start && i <= end);
             }
         });
+    }
+    
         // if the number of shots is larger than the number of picks from the source + 1, then the robot picked off the ground
         // + 1 because the robot starts with a note
-        app.parsed.groundPicks =
-            Trace.yearInfo[2024].mustGroundPick(traceArray);
+    app.parsed.groundPicks =
+        Trace.yearInfo[2024].mustGroundPick(traceArray);
 
-        data.autoMobility.value = app.parsed.mobility;
-        data.parked.value = app.parsed.parked;
-        data.groundPicks.value = app.parsed.groundPicks;
-    }
+    data.autoMobility.value = app.parsed.mobility;
+    data.parked.value = app.parsed.parked;
+    data.groundPicks.value = app.parsed.groundPicks;
+
     // reset the view
     data = data;
 };
@@ -199,6 +205,8 @@ const submit = async () => {
     await App.moveMatchIndex(1);
     d('submit');
 };
+
+$: console.log({commentsSections});
 </script>
 
 <div class="container mb-3">
