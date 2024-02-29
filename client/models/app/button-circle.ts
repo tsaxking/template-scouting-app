@@ -21,7 +21,7 @@ const FADE_SCALE = 0.5; // opacity of the button when the robot is not in motion
 const BUTTON_OFFSET = 90; // deg from 0
 const BUTTON_DIAMETER = 0.09;
 const BUTTON_RADIUS = BUTTON_DIAMETER / 2;
-const ICON_SIZE = 0.045;
+const ICON_SIZE = 0.035;
 
 /**
  * Button on the button circle
@@ -251,7 +251,7 @@ export class ButtonCircle<actions = Action> extends Drawable<ButtonCircle> {
                 b.icon.y = b.circle.y - b.icon.height / 2;
 
                 b.icon.width = isDrawing ? ICON_SIZE * MOVING_SCALE : ICON_SIZE;
-                b.icon.height = isDrawing ? ICON_SIZE * MOVING_SCALE : ICON_SIZE;
+                b.icon.height = (isDrawing ? ICON_SIZE * MOVING_SCALE : ICON_SIZE) * 2;
             } else {
                 b.icon.x = b.circle.x;
                 b.icon.y = b.circle.y;
