@@ -29,24 +29,32 @@
     });
 
     const fullscreen = () => {
-        if (isFullscreen()) {
-            exitFullscreen();
-        } else {
-            document.documentElement.requestFullscreen();
-            fs = true;
+        try {
+            if (isFullscreen()) {
+                exitFullscreen();
+            } else {
+                document.documentElement.requestFullscreen();
+                fs = true;
+            }
+        } catch (error) {
+            console.warn(error);
         }
     };
     const exitFullscreen = () => {
-        if (document['exitFullscreen']) {
-            document['exitFullscreen']();
-        } else if (document['webkitExitFullscreen']) {
-            document['webkitExitFullscreen']();
-        } else if (document['mozCancelFullScreen']) {
-            document['mozCancelFullScreen']();
-        } else if (document['msExitFullscreen']) {
-            document['msExitFullscreen']();
+        try {
+            if (document['exitFullscreen']) {
+                document['exitFullscreen']();
+            } else if (document['webkitExitFullscreen']) {
+                document['webkitExitFullscreen']();
+            } else if (document['mozCancelFullScreen']) {
+                document['mozCancelFullScreen']();
+            } else if (document['msExitFullscreen']) {
+                document['msExitFullscreen']();
+            }
+            fs = false;
+        } catch (error) {
+            console.warn(error);
         }
-        fs = false;
     };
 
     $: {
