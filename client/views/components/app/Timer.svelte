@@ -17,15 +17,20 @@ const sections: {
 
 let time = 0;
 
-app.on('section', s => {
-    currentSection = s;
-});
-app.on('tick', t => {
-    time = t.second;
-});
-app.on('end', () => {
-    currentSection = 'end';
-});
+$: {
+    if (app) {
+        app.on('section', s => {
+            currentSection = s;
+        });
+        app.on('tick', t => {
+            time = t.second;
+            console.log(time);
+        });
+        app.on('end', () => {
+            currentSection = 'end';
+        });
+    }
+}
 
 const setSection = (section: string) => {
     currentSection = section as Section;
