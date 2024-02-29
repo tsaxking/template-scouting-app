@@ -21,8 +21,7 @@ import { onMount } from "svelte";
                 const [i, x, y, a] = point;
 
                 if (a) {
-                    const year = actions[app.year];
-                    pulled[year[a]] = pulled[year[a]] ? pulled[year[a]] + 1 : 1;
+                    pulled[actions[a]] = pulled[actions[a]] ? pulled[actions[a]] + 1 : 1;
                 }
             }
 
