@@ -32,7 +32,7 @@ const fns = {
         m.size = 'lg';
 
         const data = {
-            compLevel: compLevel as 'pr' | 'qm' | 'qf' | 'sf' | 'f',
+            compLevel: App.matchData.compLevel,
             matchNum: App.matchData.matchNumber,
             teamNum: App.matchData.teamNumber
         };
@@ -45,7 +45,7 @@ const fns = {
                     number: t.team_number,
                     name: t.nickname
                 })),
-                compLevel: compLevel as 'pr' | 'qm' | 'qf' | 'sf' | 'f',
+                compLevel: App.matchData.compLevel,
                 teamNum: App.matchData.teamNumber,
                 matchNum: String(App.matchData.matchNumber)
             }
