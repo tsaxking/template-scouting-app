@@ -1885,6 +1885,15 @@ export class App<
         // remove from cache when submitted. It's not needed anymore
         App.clearCache();
 
+        for (const key of Object.keys(include.comments)) {
+            if (App.matchData.compLevel === 'pr') {
+                const c = include.comments[key];
+                if (c) {
+                    include.comments[key] = 'PRACTICE: ' + c;
+                }
+            }
+        }
+
         const d: Match = {
             trace: this.pull(),
             comments: include.comments,
