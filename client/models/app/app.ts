@@ -1309,7 +1309,7 @@ export class App<
             setTimeout(
                 () => run(this.currentTick?.next(), i++),
                 // I don't understand why I need to multiply this by 2, but evidently I need to???
-                Math.max(0, App.tickDuration) * 2,
+                Math.max(0, App.tickDuration) // * 2,
             );
             App.save(this as App<any, any, any>);
         };
@@ -1802,9 +1802,9 @@ export class App<
                 container.children = d.map((p, i, a) => {
                     const [_i, x, y, action] = p;
 
-                    const color = Color.fromName(
-                        currentAlliance ? currentAlliance : 'black',
-                    ).toString('rgba');
+                    const color = Color.fromBootstrap(
+                        currentAlliance === 'red' ? 'danger' : currentAlliance === 'blue' ? 'primary' : 'dark'
+                    ).toString('rgb');
 
                     if (action) {
                         const size = 0.03;
@@ -1830,6 +1830,14 @@ export class App<
                                 'rgba',
                             );
                         }
+                        // if (a instanceof Img) {
+                        //     a.x = x - size / 2;
+                        //     a.y = y - size / 2;
+                        //     a.height = size;
+                        //     a.width = size;
+
+                        //     console.log(a);
+                        // }
                         const cont = new Container(cir, a || null);
                         return cont;
                     }
