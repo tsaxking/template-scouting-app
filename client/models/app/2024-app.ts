@@ -154,7 +154,7 @@ export const generate2024App = (
 
     app.addAppObject(
         [0.8274050121261115, 0.018593371059013743],
-        new I('Red Amp', 'Placing any note into the red amp', 'amp'),
+        new I('Red Amp', 'Placing any note into the red amp', 'amp', 0),
         redAmp,
         i => i.toString(),
         'red'
@@ -162,7 +162,7 @@ export const generate2024App = (
 
     app.addAppObject(
         [0.06345998383185125, 0.33063864187550523],
-        new I('Blue Speaker', 'Shot a note into the blue speaker', 'spk'),
+        new I('Blue Speaker', 'Shot a note into the blue speaker', 'spk', 0),
         blueSpeaker,
         i => i.toString(),
         'blue'
@@ -170,7 +170,7 @@ export const generate2024App = (
 
     app.addAppObject(
         [0.9365400161681487, 0.32740501212611156],
-        new I('Red Speaker', 'Shot a note into the red speaker', 'spk'),
+        new I('Red Speaker', 'Shot a note into the red speaker', 'spk', 0),
         redSpeaker,
         i => i.toString(),
         'red'
@@ -181,7 +181,8 @@ export const generate2024App = (
         new I(
             'Blue Source',
             'Robot retrieves a note from the blue source',
-            'src'
+            'src',
+            0
         ),
         blueSource,
         i => i.toString(),
@@ -193,7 +194,8 @@ export const generate2024App = (
         new I(
             'Red Source',
             'Robot retrieves a note from the red source',
-            'src'
+            'src',
+            0
         ),
         redSource,
         i => i.toString(),
