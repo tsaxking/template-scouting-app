@@ -554,7 +554,7 @@ export class Trace {
 
                 const noClimb = trace.every(p => p[3] !== 'clb');
                 if (
-                    noClimb &&
+                    noClimb && trace.length &&
                     isInside(
                         [
                             trace[trace.length - 1][1],
@@ -582,8 +582,8 @@ export class Trace {
         return {
             2024: {
                 getAlliance: (trace: TraceArray) => {
-                    if (!trace) return 'red'; // default to red
-                    const initPoint: Point2D = trace[0] ? [trace[0][1], trace[0][2]] : [0, 0];
+                    if (!trace || !trace.length) return 'red'; // default to red
+                    const initPoint: Point2D = [trace[0][1], trace[0][2]];
                     if (isInside(initPoint, all2024.zones.red)) {
                         return 'red';
                     } else {
