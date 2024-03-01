@@ -59,7 +59,7 @@ onMount(select);
             <div class="col">
                 <p class="card-text">Event: {event}</p>
                 <p class="card-text">Scout: {scout}</p>
-                <p class="card-text">Group: {group}</p>
+                <p class="card-text">Group: {group + 1}</p>
                 <p class="card-text">Alliance: {alliance}</p>
             </div>
         </div>
