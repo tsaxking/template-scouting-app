@@ -17,6 +17,9 @@ import { onMount } from "svelte";
 
             const data = app.pull();
 
+            // reset
+            pulled = {};
+
             for (const point of data) {
                 const [i, x, y, a] = point;
 
