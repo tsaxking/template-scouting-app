@@ -311,27 +311,20 @@ export class Trace {
             expanded.push(point);
 
             const filler: TraceArray = [];
-            
+
             try {
                 filler.push(
-                ...Array.from({
+                    ...(Array.from({
                         length: nextPoint[0] - point[0] - 1
                     }).map((_, i) => {
-                        return [
-                            point[0] + i + 1,
-                            point[1],
-                            point[2],
-                            0
-                        ];
-                    }) as TraceArray
-                )
+                        return [point[0] + i + 1, point[1], point[2], 0];
+                    }) as TraceArray)
+                );
             } catch {
                 // do nothing as the length is 0
             }
 
-            expanded.push(
-                ...filler
-            );
+            expanded.push(...filler);
         }
 
         return expanded;
@@ -589,6 +582,7 @@ export class Trace {
         return {
             2024: {
                 getAlliance: (trace: TraceArray) => {
+                    if (!trace) return 'red'; // default to red
                     const initPoint: Point2D = [trace[0][1], trace[0][2]];
                     if (isInside(initPoint, all2024.zones.red)) {
                         return 'red';
