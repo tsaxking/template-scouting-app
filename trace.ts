@@ -583,7 +583,7 @@ export class Trace {
             2024: {
                 getAlliance: (trace: TraceArray) => {
                     if (!trace) return 'red'; // default to red
-                    const initPoint: Point2D = [trace[0][1], trace[0][2]];
+                    const initPoint: Point2D = trace[0] ? [trace[0][1], trace[0][2]] : [0, 0];
                     if (isInside(initPoint, all2024.zones.red)) {
                         return 'red';
                     } else {
