@@ -27,7 +27,6 @@ const validate = (d: string): boolean => {
 
 const upload = async () => {
     const result = await loadFileContents();
-    console.log(result);
     if (result.isOk()) {
         App.upload(
             ...result.value

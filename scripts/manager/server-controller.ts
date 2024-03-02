@@ -5,6 +5,7 @@ import { select } from '../prompt.ts';
 import { backToMain } from '../manager.ts';
 import { ServerRequest } from '../../server/utilities/requests.ts';
 import env from '../../server/utilities/env.ts';
+import { DB } from '../../server/utilities/databases.ts';
 
 const pullEvent = async () => {
     const years = Array.from({ length: new Date().getFullYear() - 2006 })
@@ -61,6 +62,16 @@ const viewServerConnection = async () => {
     }
 };
 
+const submitFailedMatches = async () => {
+    const data = await DB.all('server-requests/all');
+    if (data.isErr()) return backToMain('Error getting failed matches');
+    const failed = data.value.filter((r) => !r.response);
+
+    for (const f of failed) {
+        ServerRequest.submitMatch(JSON.parse(f.body));
+    }
+}
+
 export const serverController = [
     {
         icon: '📅',
@@ -71,5 +82,10 @@ export const serverController = [
         icon: '🔗',
         value: viewServerConnection,
         description: `View connection with ${env.SERVER_DOMAIN}`
+    },
+    {
+        icon: '🔁',
+        value: submitFailedMatches,
+        description: 'Submit failed matches'
     }
 ];
