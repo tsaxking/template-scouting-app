@@ -434,7 +434,7 @@ export class Trace {
             average: (trace: TraceArray) => {
                 const m = Trace.velocity.map(trace);
                 return m
-                    .filter(v => v < 20) // remove outliers. Robots generally cannot go above 20fps
+                    // .filter(v => v < 20) // remove outliers. Robots generally cannot go above 20fps
                     .reduce((a, b) => a + b, 0) / m.length;
             }
         };
