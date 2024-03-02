@@ -6,6 +6,7 @@ import { backToMain } from '../manager.ts';
 import { ServerRequest } from '../../server/utilities/requests.ts';
 import env from '../../server/utilities/env.ts';
 import { DB } from '../../server/utilities/databases.ts';
+import { sleep } from '../../shared/sleep.ts';
 
 const pullEvent = async () => {
     const years = Array.from({ length: new Date().getFullYear() - 2006 })
@@ -65,10 +66,13 @@ const viewServerConnection = async () => {
 const submitFailedMatches = async () => {
     const data = await DB.all('server-requests/all');
     if (data.isErr()) return backToMain('Error getting failed matches');
-    const failed = data.value.filter((r) => !r.response);
+    const failed = data.value
+        .filter((r) => !r.response)
+        .filter((r, i, a) => a.findIndex((r2) => r2.body === r.body) === i);
 
     for (const f of failed) {
         ServerRequest.submitMatch(JSON.parse(f.body));
+        await sleep(250);
     }
 }
 
