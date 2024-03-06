@@ -1,4 +1,4 @@
-import { Point2D } from '../calculations/src/linear-algebra/point.ts';
+import { Point2D } from '../calculations/src/linear-algebra/point';
 
 type AreaMap = {
     red: Point2D[];
