@@ -1,6 +1,8 @@
 import { Point } from './point';
 import { Vector } from './vector';
 
+// TODO: Add magnitude
+
 /**
  * A curve defined by a series of points
  * @date 1/10/2024 - 2:41:33 PM
@@ -52,5 +54,11 @@ export class Spline {
         }
 
         return points[0];
+    }
+
+    generatePoints(count: number): Point[] {
+        return new Array(count).fill(null).map((_, i) => {
+            return this.ft(i / count);
+        });
     }
 }
