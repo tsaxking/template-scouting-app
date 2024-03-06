@@ -1,6 +1,6 @@
-import { all as all2024, zones } from './2024-areas.ts';
-import { isInside } from '../calculations/src/polygon.ts';
-import { Point2D } from '../calculations/src/linear-algebra/point.ts';
+import { all as all2024, zones } from './2024-areas';
+import { isInside } from '../calculations/src/polygon';
+import { Point2D } from '../calculations/src/linear-algebra/point';
 
 /**
  * Description placeholder
@@ -433,9 +433,11 @@ export class Trace {
             },
             average: (trace: TraceArray) => {
                 const m = Trace.velocity.map(trace);
-                return m
-                    // .filter(v => v < 20) // remove outliers. Robots generally cannot go above 20fps
-                    .reduce((a, b) => a + b, 0) / m.length;
+                return (
+                    m
+                        // .filter(v => v < 20) // remove outliers. Robots generally cannot go above 20fps
+                        .reduce((a, b) => a + b, 0) / m.length
+                );
             }
         };
     }
@@ -560,7 +562,8 @@ export class Trace {
 
                 const noClimb = trace.every(p => p[3] !== 'clb');
                 if (
-                    noClimb && trace.length &&
+                    noClimb &&
+                    trace.length &&
                     isInside(
                         [
                             trace[trace.length - 1][1],
@@ -645,8 +648,9 @@ export type Match = {
 };
 
 export const validateObj = {
-    checks: v => Array.isArray(v) && v.every(v => typeof v === 'string'),
-    comments: v =>
+    checks: (v: string[]) =>
+        Array.isArray(v) && v.every(v => typeof v === 'string'),
+    comments: (v: { [key: string]: string }) =>
         typeof v === 'object' &&
         Object.values(v).every(v => typeof v === 'string'),
     matchNumber: 'number',

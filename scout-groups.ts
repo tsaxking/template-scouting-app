@@ -1,5 +1,5 @@
-import { TBAMatch } from './tba.ts';
-import { TBATeam } from './tba.ts';
+import { TBAMatch } from './tba';
+import { TBATeam } from './tba';
 
 /**
  * Returns an array of team numbers from a match
@@ -60,7 +60,7 @@ export const generateScoutGroups = (
         .fill(0)
         .map(() => new Array<TBATeam>());
 
-    const tempTeams: TBATeam[] = JSON.parse(JSON.stringify(teams));
+    const tempTeams: TBATeam[] = JSON.parse(JSON.stringify(teams)) as TBATeam[];
 
     for (const match of matches) {
         const mTeams = destructureMatch(match);
