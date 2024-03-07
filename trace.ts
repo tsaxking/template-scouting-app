@@ -1,6 +1,6 @@
-import { all as all2024, zones } from './2024-areas.ts';
-import { isInside } from '../calculations/src/polygon.ts';
-import { Point2D } from '../calculations/src/linear-algebra/point.ts';
+import { all as all2024, zones } from './2024-areas';
+import { isInside } from '../calculations/src/polygon';
+import { Point2D } from '../calculations/src/linear-algebra/point';
 
 /**
  * Description placeholder
@@ -37,7 +37,7 @@ export const actions = {
         amp: 'amp',
         src: 'source',
         trp: 'trap',
-        clb: 'climb',
+        clb: 'climb'
     },
     2023: {
         cne: 'cone',
@@ -607,10 +607,11 @@ export type Match = {
 };
 
 export const validateObj = {
-    checks: v => Array.isArray(v) && v.every(v => typeof v === 'string'),
-    comments: v =>
+    checks: (v: unknown) =>
+        Array.isArray(v) && v.every(v => typeof v === 'string'),
+    comments: (v: unknown) =>
         typeof v === 'object' &&
-        Object.values(v).every(v => typeof v === 'string'),
+        Object.values(v as object).every(v => typeof v === 'string'),
     matchNumber: 'number',
     teamNumber: 'number',
     compLevel: ['pr', 'qm', 'qf', 'sf', 'f'],
