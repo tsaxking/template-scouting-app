@@ -51,7 +51,7 @@ export const pullDeps = async () => {
                 })
                 .then(async buffer => {
                     const name = parse(dep);
-                    const path = `client/deps/${name}`;
+                    const path = `public/deps/${name}`;
 
                     console.log('Saving', path);
 

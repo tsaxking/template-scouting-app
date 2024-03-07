@@ -1,5 +1,5 @@
 import env, { __root } from './utilities/env';
-import { log } from './utilities/terminal-logging';
+import { error, log } from './utilities/terminal-logging';
 import { App, ResponseStatus } from './structure/app/app';
 import { getJSON, log as serverLog } from './utilities/files';
 import { homeBuilder } from './utilities/page-builder';
@@ -15,6 +15,13 @@ import { stdin } from './utilities/stdin';
 import { getJSONSync } from './utilities/files';
 import path from 'path';
 import { DB } from './utilities/databases';
+import { startPinger } from './utilities/ping';
+import {
+    Match,
+    validateObj
+} from '../shared/submodules/tatorscout-calculations/trace';
+import { validate } from './middleware/data-type';
+import { ServerRequest } from './utilities/requests';
 
 if (process.argv.includes('--stats')) {
     const measure = () => {
@@ -31,10 +38,16 @@ const port = +(env.PORT || 3000);
 
 export const app = new App(port, env.DOMAIN || `http://localhost:${port}`);
 
-if (env.ENVIRONMENT === 'dev') {
-    stdin.on('rb', () => {
-        console.log('Reloading clients...');
-        app.io.emit('reload');
+if (process.argv.includes('--ping')) {
+    const pinger = startPinger();
+    pinger.on('disconnect', () => {
+        console.log('Servers are disconnected!');
+    });
+    pinger.on('connect', () => {
+        console.log('Servers are connected!');
+    });
+    pinger.on('ping', () => {
+        console.log('Pinged!');
     });
 }
 
@@ -126,9 +139,9 @@ app.post('/*', (req, res, next) => {
         delete b?.password;
         delete b?.confirmPassword;
         delete b?.$$files;
-        log(b);
+        console.log(b);
     } catch {
-        log(req.body);
+        console.log(req.body);
     }
 
     next();
@@ -170,28 +183,27 @@ app.get('/test/:page', (req, res, next) => {
 
 app.route('/api', api);
 app.route('/account', account);
-app.route('/roles', role);
 
-app.use('/*', Account.autoSignIn(env.AUTO_SIGN_IN));
+// app.use('/*', Account.autoSignIn(env.AUTO_SIGN_IN));
 
-app.get('/*', (req, res, next) => {
-    if (!req.session.accountId) {
-        if (
-            ![
-                '/account/sign-in',
-                '/account/sign-up',
-                '/account/forgot-password'
-            ].includes(req.url)
-        ) {
-            // only save the previous url if it's not a sign-in, sign-up, or forgot-password page
-            // this is so that the user can be redirected back to the page they initially were trying to access
-            req.session.prevUrl = req.url;
-        }
-        return res.redirect('/account/sign-in');
-    }
+// app.get('/*', (req, res, next) => {
+//     if (!req.session.accountId) {
+//         if (
+//             ![
+//                 '/account/sign-in',
+//                 '/account/sign-up',
+//                 '/account/forgot-password'
+//             ].includes(req.url)
+//         ) {
+//             // only save the previous url if it's not a sign-in, sign-up, or forgot-password page
+//             // this is so that the user can be redirected back to the page they initially were trying to access
+//             req.session.prevUrl = req.url;
+//         }
+//         return res.redirect('/account/sign-in');
+//     }
 
-    next();
-});
+//     next();
+// });
 
 app.get('/dashboard/admin', Account.allowPermissions('admin'), (_req, res) => {
     res.sendTemplate('entries/dashboard/admin');
@@ -199,12 +211,98 @@ app.get('/dashboard/admin', Account.allowPermissions('admin'), (_req, res) => {
 
 app.route('/admin', admin);
 
-app.get('/dashboard/:dashboard', (req, res) => {
-    res.sendTemplate('entries/dashboard/' + req.params.dashboard);
+app.get('/app', (req, res) => {
+    res.sendTemplate('entries/app');
 });
 
-app.get('/user/*', Account.isSignedIn, (req, res) => {
-    res.sendTemplate('entries/user');
+app.get('/*', (req, res) => {
+    res.redirect('/app');
+});
+
+app.post<Match>(
+    '/submit',
+    validate(
+        validateObj as {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            [key in keyof Match]: any; // TODO: export IsValid type
+        }
+    ),
+    async (req, res) => {
+        const {
+            eventKey,
+            checks,
+            comments,
+            matchNumber,
+            teamNumber,
+            compLevel,
+            scout,
+            date,
+            group,
+            trace
+        } = req.body;
+
+        // I don't want to pass in req.body because it can have extra unneeded properties
+        const result = await ServerRequest.submitMatch({
+            checks,
+            comments,
+            matchNumber,
+            teamNumber,
+            compLevel,
+            eventKey,
+            scout,
+            date,
+            group,
+            trace
+        });
+
+        if (result.isOk()) {
+            res.sendStatus('server-request:match-submitted', {
+                matchNumber,
+                teamNumber,
+                compLevel,
+                data: result.value
+            });
+        } else {
+            res.sendStatus('server-request:match-error', {
+                matchNumber,
+                teamNumber,
+                compLevel,
+                eventKey,
+                scout,
+                date,
+                group,
+                trace
+            });
+
+            if (result.isOk()) {
+                res.sendStatus('server-request:match-submitted', {
+                    matchNumber,
+                    teamNumber,
+                    compLevel,
+                    data: result.value
+                });
+            } else {
+                error('Match submission error:', result.error);
+                res.sendStatus('server-request:match-error', {
+                    matchNumber,
+                    teamNumber,
+                    compLevel,
+                    error: result.error
+                });
+            }
+        }
+    }
+);
+
+app.post('/event-data', async (_req, res) => {
+    let name: string = 'dummy-event-data.json';
+    if (env.ENVIRONMENT === 'prod') name = 'event-data.json';
+    const data = getJSONSync(name);
+    if (data.isOk()) {
+        res.json(data.value);
+    } else {
+        res.status(500).json(data.error);
+    }
 });
 
 app.get('/*', (req, res) => {

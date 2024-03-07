@@ -165,6 +165,14 @@ const createEnv = async () => {
         undefined,
         true
     );
+    setKey(
+        'SERVER_DOMAIN',
+        'Server Domain: (default: localhost:6000)',
+        'http://localhost:6000',
+        i => i.length > 0,
+        true
+    );
+    setKey('SERVER_KEY', 'Server Key: (no default)', '', undefined, true);
 
     // DATABASE
     await setKey(
@@ -243,6 +251,7 @@ const createEnv = async () => {
         .map(key => `${key} = '${values[key]}'`)
         .join('\n');
     // Deno.writeTextFileSync(resolve(__root, './.env'), e);
+    fs.writeFileSync(resolve(__root, './.env'), e);
 
     return values;
 };

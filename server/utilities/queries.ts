@@ -190,4 +190,64 @@ export type Queries = {
             }
         ]
     ];
+    'server-requests/all': [
+        [],
+        {
+            id: string;
+            url: string;
+            body: string;
+            response: string | undefined;
+            date: number;
+        }
+    ];
+    'server-requests/new': [
+        [
+            {
+                id: string;
+                url: string;
+                body: string;
+                date: number;
+            }
+        ],
+        {
+            id: string;
+            url: string;
+            body: string;
+            date: number;
+            response: string | undefined;
+        }
+    ];
+    'server-requests/update': [
+        [
+            {
+                id: string;
+                response: string;
+            }
+        ],
+        unknown
+    ];
+    'tba/from-url': [
+        [
+            {
+                url: string;
+            }
+        ],
+        {
+            url: string;
+            response: string | undefined;
+            updated: number;
+            update: 0 | 1;
+        }
+    ];
+    'tba/new': [
+        [
+            {
+                url: string;
+                response: string;
+                updated: number;
+                update: 0 | 1;
+            }
+        ],
+        unknown
+    ];
 };
