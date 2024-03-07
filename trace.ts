@@ -32,19 +32,15 @@ export type Zones2024 =
     | 'red-zone';
 
 export const actions = {
-    2024: {
-        spk: 'speaker',
-        amp: 'amp',
-        src: 'source',
-        trp: 'trap',
-        clb: 'climb'
-    },
-    2023: {
-        cne: 'cone',
-        cbe: 'cube',
-        bal: 'balance',
-        pck: 'pick'
-    }
+    spk: 'speaker',
+    amp: 'amp',
+    src: 'source',
+    trp: 'trap',
+    clb: 'climb',
+    cne: 'cone',
+    cbe: 'cube',
+    bal: 'balance',
+    pck: 'pick'
 };
 
 export type TraceParse2024 = {
@@ -299,6 +295,41 @@ export class Trace {
         };
     }
 
+    static getSection(point: P): 'auto' | 'teleop' | 'endgame' {
+        const [i] = point;
+        if (i < 65) return 'auto';
+        if (i < (150 - 30) * 4) return 'teleop';
+        return 'endgame';
+    }
+
+    static expand(trace: TraceArray) {
+        // fill in missing points
+        const expanded: TraceArray = [];
+        for (let i = 0; i < trace.length - 1; i++) {
+            const point = trace[i];
+            const nextPoint = trace[i + 1];
+            expanded.push(point);
+
+            const filler: TraceArray = [];
+
+            try {
+                filler.push(
+                    ...(Array.from({
+                        length: nextPoint[0] - point[0] - 1
+                    }).map((_, i) => {
+                        return [point[0] + i + 1, point[1], point[2], 0];
+                    }) as TraceArray)
+                );
+            } catch {
+                // do nothing as the length is 0
+            }
+
+            expanded.push(...filler);
+        }
+
+        return expanded;
+    }
+
     /**
      * Description placeholder
      * @date 1/25/2024 - 4:58:48 PM
@@ -399,6 +430,14 @@ export class Trace {
                 }
 
                 return buckets;
+            },
+            average: (trace: TraceArray) => {
+                const m = Trace.velocity.map(trace);
+                return (
+                    m
+                        // .filter(v => v < 20) // remove outliers. Robots generally cannot go above 20fps
+                        .reduce((a, b) => a + b, 0) / m.length
+                );
             }
         };
     }
@@ -524,6 +563,7 @@ export class Trace {
                 const noClimb = trace.every(p => p[3] !== 'clb');
                 if (
                     noClimb &&
+                    trace.length &&
                     isInside(
                         [
                             trace[trace.length - 1][1],
@@ -551,6 +591,7 @@ export class Trace {
         return {
             2024: {
                 getAlliance: (trace: TraceArray) => {
+                    if (!trace || !trace.length) return 'red'; // default to red
                     const initPoint: Point2D = [trace[0][1], trace[0][2]];
                     if (isInside(initPoint, all2024.zones.red)) {
                         return 'red';
