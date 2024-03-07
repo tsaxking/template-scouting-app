@@ -59,7 +59,7 @@ export const generateScoutGroups = (
         .fill(0)
         .map(() => new Array<TBATeam>());
 
-    const tempTeams: TBATeam[] = JSON.parse(JSON.stringify(teams));
+    const tempTeams: TBATeam[] = JSON.parse(JSON.stringify(teams)) as TBATeam[];
 
     for (const match of matches) {
         const mTeams = destructureMatch(match);
