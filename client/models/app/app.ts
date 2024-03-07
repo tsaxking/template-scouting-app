@@ -623,12 +623,19 @@ export class App<
 
     static async upload(...matches: Match[]) {
         return attemptAsync(async () => {
-            return Promise.all(
+            const results = await Promise.all(
                 matches.map(async m => {
                     const d = await ServerRequest.post('/submit', m);
                     return d.isOk();
                 })
             );
+
+            const failed = matches.filter((_, i) => results[i]);
+
+            const saved = JSON.parse(window.localStorage.getItem('savedMatches') || '[]') as Match[];
+            window.localStorage.setItem('savedMatches', JSON.stringify([...saved, ...failed]));
+
+            return results;
         });
     }
 
@@ -1928,3 +1935,11 @@ export class App<
 Object.assign(window, {
     App
 });
+
+(async () => {
+    const failed = JSON.parse(window.localStorage.getItem('savedMatches') || '[]') as Match[];
+    const results = await App.upload(...failed);
+    if (results.isOk()) {
+        window.localStorage.saveItem('savedMatches', JSON.stringify(failed.filter((m, i) => !results.value[i])));
+    }
+})();
