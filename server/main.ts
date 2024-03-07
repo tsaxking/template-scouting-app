@@ -6,6 +6,9 @@ import { deleteDeps, pullDeps } from '../scripts/pull-deps';
 import { ChildProcess, spawn } from 'child_process';
 import { stdin } from './utilities/stdin';
 import path from 'path';
+import { attempt } from '../shared/check';
+import { runFile } from './utilities/run-task';
+import { ServerRequest } from './utilities/requests';
 
 // TODO: Multithreading
 // class Server {
@@ -99,6 +102,23 @@ const main = async () => {
         });
         stdin.on('rb', async () => {
             await builder.build();
+        });
+
+        stdin.on('ping', async () => {
+            const result = await ServerRequest.ping();
+            if (result.isOk()) console.log('Servers are connected!');
+            else console.log('Servers are disconnected!');
+        });
+
+        stdin.on('data', data => {
+            const [command, ...args] = data.split(' ');
+            switch (command) {
+                case 'event':
+                    attempt(() =>
+                        runFile('./scripts/event-data.ts', 'getEvent', ...args)
+                    );
+                    break;
+            }
         });
     }
 
