@@ -114,7 +114,18 @@ const open = async (active: string) => {
     }
 
     if (!c) {
-        c = new Canvas(canvas.getContext('2d'));
+        c = new Canvas(canvas.getContext('2d'), {
+            events: [
+                'click',
+                'mousedown',
+                'mousemove',
+                'mouseup',
+                'touchstart',
+                'touchmove',
+                'touchend',
+                'touchcancel',
+            ]
+        });
     }
     stop = c.animate();
 
