@@ -22,21 +22,16 @@ type PostData = {
     comment: string;
 };
 
-type Types =
-    | 'autoMobility'
-    | 'parked'
-    | 'playedDefense'
-    | 'tippy'
-    | 'easilyDefended'
-    | 'robotDied'
-    | 'problemsDriving'
-    | 'groundPicks'
-    | 'autoCenterPick';
-
 let data: {
-    [key in Types]: PostData;
+    [key: string]: PostData;
 } = {
     autoMobility: {
+        value: false,
+        color: 'success',
+        comments: false,
+        comment: ''
+    },
+    parked: {
         value: false,
         color: 'success',
         comments: false,
@@ -84,12 +79,12 @@ let data: {
         comments: true,
         comment: ''
     },
-    parked: {
+    penalized: {
         value: false,
-        color: 'success',
-        comments: false,
+        color: 'danger',
+        comments: true,
         comment: ''
-    },
+    }
 };
 
 let c: Canvas;
@@ -98,6 +93,11 @@ let stop = () => {};
 const open = async (active: string) => {
     if (active !== 'Post') return;
     stop();
+
+    for (const key in data) {
+        data[key].value = false;
+        data[key].comment = '';
+    }
 
     const traceArray = app.pull();
     console.log(traceArray);
