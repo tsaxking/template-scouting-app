@@ -6,7 +6,113 @@
  * @typedef {YearTBAMatch}
  */
 export type YearTBAMatch = {
-    2024: TBAMatch;
+    2024: {
+        actual_time: number;
+        alliances: {
+            blue: {
+                dq_team_keys: undefined[];
+                score: number;
+                surrogate_team_keys: undefined[];
+                team_keys: string[];
+            };
+            red: {
+                dq_team_keys: undefined[];
+                score: number;
+                surrogate_team_keys: undefined[];
+                team_keys: string[];
+            };
+        };
+        comp_level: string;
+        event_key: string;
+        key: string;
+        match_number: number;
+        post_result_time: number;
+        predicted_time: number;
+        score_breakdown: {
+            blue: {
+                adjustPoints: number;
+                autoOwnershipPoints: number;
+                autoPoints: number;
+                autoQuestRankingPoint: boolean;
+                autoRobot1: string;
+                autoRobot2: string;
+                autoRobot3: string;
+                autoRunPoints: number;
+                autoScaleOwnershipSec: number;
+                autoSwitchAtZero: boolean;
+                autoSwitchOwnershipSec: number;
+                endgamePoints: number;
+                endgameRobot1: string;
+                endgameRobot2: string;
+                endgameRobot3: string;
+                faceTheBossRankingPoint: boolean;
+                foulCount: number;
+                foulPoints: number;
+                rp: number;
+                tba_gameData: string;
+                techFoulCount: number;
+                teleopOwnershipPoints: number;
+                teleopPoints: number;
+                teleopScaleBoostSec: number;
+                teleopScaleForceSec: number;
+                teleopScaleOwnershipSec: number;
+                teleopSwitchBoostSec: number;
+                teleopSwitchForceSec: number;
+                teleopSwitchOwnershipSec: number;
+                totalPoints: number;
+                vaultBoostPlayed: number;
+                vaultBoostTotal: number;
+                vaultForcePlayed: number;
+                vaultForceTotal: number;
+                vaultLevitatePlayed: number;
+                vaultLevitateTotal: number;
+                vaultPoints: number;
+            };
+            red: {
+                adjustPoints: number;
+                autoOwnershipPoints: number;
+                autoPoints: number;
+                autoQuestRankingPoint: boolean;
+                autoRobot1: string;
+                autoRobot2: string;
+                autoRobot3: string;
+                autoRunPoints: number;
+                autoScaleOwnershipSec: number;
+                autoSwitchAtZero: boolean;
+                autoSwitchOwnershipSec: number;
+                endgamePoints: number;
+                endgameRobot1: string;
+                endgameRobot2: string;
+                endgameRobot3: string;
+                faceTheBossRankingPoint: boolean;
+                foulCount: number;
+                foulPoints: number;
+                rp: number;
+                tba_gameData: string;
+                techFoulCount: number;
+                teleopOwnershipPoints: number;
+                teleopPoints: number;
+                teleopScaleBoostSec: number;
+                teleopScaleForceSec: number;
+                teleopScaleOwnershipSec: number;
+                teleopSwitchBoostSec: number;
+                teleopSwitchForceSec: number;
+                teleopSwitchOwnershipSec: number;
+                totalPoints: number;
+                vaultBoostPlayed: number;
+                vaultBoostTotal: number;
+                vaultForcePlayed: number;
+                vaultForceTotal: number;
+                vaultLevitatePlayed: number;
+                vaultLevitateTotal: number;
+                vaultPoints: number;
+            };
+        };
+        set_number: number;
+        time: number;
+        videos: { key: string; type: string }[];
+        winning_alliance: string;
+    };
     2023: {
         actual_time: number;
         alliances: {
