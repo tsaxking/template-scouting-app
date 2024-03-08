@@ -1,10 +1,11 @@
 import { Color } from '../../submodules/colors/color';
-import { Iterator } from './app-object';
+import { Iterator, Toggle } from './app-object';
 import { Drawable } from '../canvas/drawable';
 import {
     amps,
     autoZone,
     border,
+    notePositions,
     srcs,
     stages,
     zones
@@ -39,7 +40,8 @@ export const generate2024App = (
         amp: new Img('/public/pictures/icons/amp.png'),
         src: new Img('/public/pictures/icons/src.png'),
         clb: new Img('/public/pictures/icons/clb.png'),
-        trp: new Img('/public/pictures/icons/trp.png')
+        trp: new Img('/public/pictures/icons/trp.png'),
+        nte: new Img('/public/pictures/icons/note.png'),
     };
 
     const images: {
@@ -49,7 +51,8 @@ export const generate2024App = (
         amp: new Image(60, 60),
         src: new Image(60, 60),
         clb: new Image(60, 60),
-        trp: new Image(60, 60)
+        trp: new Image(60, 60),
+        nte: new Image(60, 60),
     };
 
     for (const key in images) {
@@ -99,48 +102,61 @@ export const generate2024App = (
 
     app.setBorder(border as Point2D[], colors.blackFade);
 
+
     // app.border = new Border(border as [number, number][]);
 
     // app.border.$properties.doDraw = isIn;
     // app.border.$properties.fill = {
     //     color: Color.fromName('black').setAlpha(0.5).toString('rgba'),
     // }
-
-    // gameObject buttons
-    const blueAmp = document.createElement('button');
-    const redAmp = document.createElement('button');
-    const blueSpeaker = document.createElement('button');
-    const redSpeaker = document.createElement('button');
-    const blueSource = document.createElement('button');
-    const redSource = document.createElement('button');
-
     const blueButtonClasses = ['btn', 'btn-primary', 'btn-lg'];
     const redButtonClasses = ['btn', 'btn-danger', 'btn-lg'];
 
-    blueAmp.classList.add(...blueButtonClasses);
-    // blueAmp.innerHTML = `<i class="material-icons">campaign</i>`;
-    blueAmp.append(images.amp.cloneNode());
-    blueAmp.classList.add('p-1');
-    redAmp.classList.add(...redButtonClasses);
-    // redAmp.innerHTML = `<i class="material-icons">campaign</i>`;
-    redAmp.append(images.amp.cloneNode());
-    redAmp.classList.add('p-1');
-    blueSpeaker.classList.add(...blueButtonClasses);
-    // blueSpeaker.innerHTML = `<i class="material-icons">speaker</i>`;
-    blueSpeaker.append(images.spk.cloneNode());
-    blueSpeaker.classList.add('p-1');
-    redSpeaker.classList.add(...redButtonClasses);
-    // redSpeaker.innerHTML = `<i class="material-icons">speaker</i>`;
-    redSpeaker.append(images.spk.cloneNode());
-    redSpeaker.classList.add('p-1');
-    blueSource.classList.add(...blueButtonClasses);
-    // blueSource.innerHTML = `<i class="material-icons">back_hand</i>`;
-    blueSource.append(images.src.cloneNode());
-    blueSource.classList.add('p-1');
-    redSource.classList.add(...redButtonClasses);
-    // redSource.innerHTML = `<i class="material-icons">back_hand</i>`;
-    redSource.append(images.src.cloneNode());
-    redSource.classList.add('p-1');
+    // gameObject buttons
+    const blueAmp = App.button(blueButtonClasses, images.amp.cloneNode());
+    const redAmp = App.button(redButtonClasses, images.amp.cloneNode());
+    const blueSpeaker = App.button(blueButtonClasses, images.spk.cloneNode());
+    const redSpeaker = App.button(redButtonClasses, images.spk.cloneNode());
+    const blueSource = App.button(blueButtonClasses, images.src.cloneNode());
+    const redSource = App.button(redButtonClasses, images.src.cloneNode());
+
+    const btns = notePositions.map((pos, i) => {
+        const btn = App.button(
+            ['btn', 'btn-outline-dark', 'btn-sm'],
+            images.nte.cloneNode()
+        );
+
+        const t = new Toggle(
+            'Auto Note ' + (i + 1),
+            'Picked up this note in auto',
+            'nte',
+            false
+        )
+
+        app.addAppObject(
+            pos,
+            t,
+            btn,
+            _ => '',
+            i < 5 ? undefined : i < 8 ? 'red' : 'blue',
+            t => t.index < 65
+        );
+
+        t.on('change', (o) => {
+            console.log('change', o);
+            if (o.state) {
+                btn.classList.remove('btn-outline-dark');
+                btn.classList.add('btn-dark');
+            } else {
+                btn.classList.remove('btn-dark');
+                btn.classList.add('btn-outline-dark');
+                // remove all states matching this AppObject
+                for (const s of o.stateHistory) {
+                    s.tick?.clear();
+                }
+            }
+        });
+    });
 
     const I = Iterator<Action2024>;
 
