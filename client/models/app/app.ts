@@ -39,6 +39,7 @@ import { SVG } from '../canvas/svg';
 import { Match } from '../../../shared/submodules/tatorscout-calculations/trace';
 import { downloadText, loadFileContents } from '../../utilities/downloads';
 import { sleep } from '../../../shared/sleep';
+import { DrawableEvent } from '../canvas/drawable';
 
 /**
  * Description placeholder
@@ -1848,6 +1849,50 @@ export class App<
                         a.height = size * 2;
                         a.width = size;
                     }
+
+                    let moving = false;
+                    const start = () => moving = true;
+                    const end = () => moving = false;
+
+                    cir.on('mousedown', start);
+                    cir.on('touchstart', start);
+                    cir.on('mouseup', end);
+                    cir.on('touchend', end);
+                    cir.on('touchcancel', end);
+                    a?.on('mousedown', start);
+                    a?.on('touchstart', start);
+                    a?.on('mouseup', end);
+                    a?.on('touchend', end);
+                    a?.on('touchcancel', end);
+
+                    const move = (e: DrawableEvent) => {
+                        if (moving) {
+                            console.log('Moving');
+                            const [p] = e.points;
+                            if (p) {
+                                const [x, y] = p;
+                                cir.x = x;
+                                cir.y = y;
+
+                                if (a instanceof SVG) {
+                                    a.center = [x, y];
+                                }
+                                if (a instanceof Icon) {
+                                    a.x = x;
+                                    a.y = y;
+                                }
+                                if (a instanceof Img) {
+                                    a.x = x - size / 2;
+                                    a.y = y - size;
+                                }
+                            }
+                        }
+                    }
+
+                    cir.on('mousemove', move);
+                    cir.on('touchmove', move);
+                    a?.on('mousemove', move);
+                    a?.on('touchmove', move);
 
                     // pair the icon with the circle
                     const cont = new Container(cir, a || null);
