@@ -648,11 +648,11 @@ export type Match = {
 };
 
 export const validateObj = {
-    checks: (v: string[]) =>
+    checks: (v: unknown) =>
         Array.isArray(v) && v.every(v => typeof v === 'string'),
-    comments: (v: { [key: string]: string }) =>
+    comments: (v: unknown) =>
         typeof v === 'object' &&
-        Object.values(v).every(v => typeof v === 'string'),
+        Object.values(v as object).every(v => typeof v === 'string'),
     matchNumber: 'number',
     teamNumber: 'number',
     compLevel: ['pr', 'qm', 'qf', 'sf', 'f'],
