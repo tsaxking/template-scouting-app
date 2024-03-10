@@ -7,6 +7,7 @@ import { ServerRequest } from '../../server/utilities/requests';
 import env from '../../server/utilities/env';
 import { DB } from '../../server/utilities/databases';
 import { sleep } from '../../shared/sleep';
+import { Match } from '../../shared/submodules/tatorscout-calculations/trace';
 
 const pullEvent = async () => {
     const years = Array.from({ length: new Date().getFullYear() - 2006 })
@@ -71,7 +72,7 @@ const submitFailedMatches = async () => {
         .filter((r, i, a) => a.findIndex(r2 => r2.body === r.body) === i);
 
     for (const f of failed) {
-        ServerRequest.submitMatch(JSON.parse(f.body));
+        ServerRequest.submitMatch(JSON.parse(f.body) as Match);
         await sleep(250);
     }
 };

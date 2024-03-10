@@ -246,6 +246,13 @@ const createEnv = async () => {
         i => +i > 0,
         true
     );
+    await setKey(
+        'SECURITY_PIN',
+        'Security Pin: (no default)',
+        '',
+        undefined,
+        true
+    );
 
     const e = Object.keys(values)
         .map(key => `${key} = '${values[key]}'`)
@@ -268,11 +275,3 @@ if (process.argv.includes('--db')) {
         else console.error(res.error);
     })();
 }
-
-// if (Deno.args.includes('--db')) {
-//     // this will run the database setup.
-//     // You cannot import DB because github actions will not have access to the database.
-//     const res = await runTask('/server/utilities/databases.ts');
-//     if (res.isOk()) console.log(res.value);
-//     else console.error(res.error);
-// }

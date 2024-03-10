@@ -147,17 +147,6 @@ app.post('/*', (req, res, next) => {
     next();
 });
 
-// TODO: There is an error with the email validation middleware
-// app.post('/*', emailValidation(['email', 'confirmEmail'], {
-//     onspam: (req, res, next) => {
-//         res.sendStatus('spam:detected');
-//     },
-//     // onerror: (req, res, next) => {
-//     //     // res.sendStatus('unknown:error');
-//     //     next();
-//     // }
-// }));
-
 app.get('/', (req, res) => {
     res.redirect('/home');
 });
@@ -184,26 +173,31 @@ app.get('/test/:page', (req, res, next) => {
 app.route('/api', api);
 app.route('/account', account);
 
-// app.use('/*', Account.autoSignIn(env.AUTO_SIGN_IN));
+app.use('/sign-in', (req, res, next) => {
+    res.sendTemplate('entries/sign-in');
+});
 
-// app.get('/*', (req, res, next) => {
-//     if (!req.session.accountId) {
-//         if (
-//             ![
-//                 '/account/sign-in',
-//                 '/account/sign-up',
-//                 '/account/forgot-password'
-//             ].includes(req.url)
-//         ) {
-//             // only save the previous url if it's not a sign-in, sign-up, or forgot-password page
-//             // this is so that the user can be redirected back to the page they initially were trying to access
-//             req.session.prevUrl = req.url;
-//         }
-//         return res.redirect('/account/sign-in');
-//     }
+app.post<{
+    pin: string;
+}>('/pin', validate({
+    pin: 'string'
+}), (req, res) => {
+    if (req.body.pin === env.SECURITY_PIN) {
+        req.session.accountId = 'trusted';
+        req.session.save();
+        res.redirect('/app');
+    } else {
+        res.sendStatus('pin:incorrect');
+    }
+});
 
-//     next();
-// });
+app.use('/*', (req, res, next) => {
+    if (env.SECURITY_PIN && !req.session.accountId) {
+        res.redirect('/sign-in');
+    } else {
+        next();
+    }
+});
 
 app.get('/dashboard/admin', Account.allowPermissions('admin'), (_req, res) => {
     res.sendTemplate('entries/dashboard/admin');
