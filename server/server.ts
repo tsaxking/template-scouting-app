@@ -295,7 +295,7 @@ app.post<Match>(
 );
 
 app.post('/event-data', async (_req, res) => {
-    let name: string = 'dummy-event-data.json';
+    let name = 'dummy-event-data.json';
     if (env.ENVIRONMENT === 'prod') name = 'event-data.json';
     const data = getJSONSync(name);
     if (data.isOk()) {
