@@ -1325,9 +1325,17 @@ export class App<
             App.save(this as App<any, any, any>);
         };
 
-        const start = () => {
+        const start = (e: MouseEvent | TouchEvent) => {
+            const [x, y] = this.canvas.getXY(e);
             cover.style.display = 'none';
             run(this.currentTick || this.ticks[0], 0);
+            const newEvent = new Event('mousedown');
+            Object.defineProperties(newEvent, {
+                clientX: { value: x },
+                clientY: { value: y },
+                touches: { value: [{ clientX: x, clientY: y }] }
+            });
+            this.canvasEl.dispatchEvent(newEvent);
             cover.removeEventListener('mousedown', start);
             cover.removeEventListener('touchstart', start);
         };

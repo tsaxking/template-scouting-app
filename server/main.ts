@@ -120,6 +120,23 @@ const main = async () => {
                     break;
             }
         });
+
+        stdin.on('ping', async () => {
+            const result = await ServerRequest.ping();
+            if (result.isOk()) console.log('Servers are connected!');
+            else console.log('Servers are disconnected!');
+        });
+
+        stdin.on('data', data => {
+            const [command, ...args] = data.split(' ');
+            switch (command) {
+                case 'event':
+                    attempt(() =>
+                        runFile('./scripts/event-data.ts', 'getEvent', ...args)
+                    );
+                    break;
+            }
+        });
     }
 
     builder.em.on('build', () => {
