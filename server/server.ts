@@ -1,7 +1,7 @@
 import env, { __root } from './utilities/env';
 import { error, log } from './utilities/terminal-logging';
 import { App, ResponseStatus } from './structure/app/app';
-import { getJSON, log as serverLog } from './utilities/files';
+import { getJSON, getJSONSync, log as serverLog } from './utilities/files';
 import { homeBuilder } from './utilities/page-builder';
 import Account from './structure/accounts';
 import { router as admin } from './routes/admin';
