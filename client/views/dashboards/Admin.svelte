@@ -2,14 +2,16 @@
 import Main from '../components/main/Main.svelte';
 import Page from '../components/main/Page.svelte';
 import { getOpenPage } from '../../utilities/page';
+import type { PageGroup } from '../../utilities/general-types';
 
-const groups = [
+const groups: PageGroup[] = [
     {
         name: 'Home',
         pages: [
             {
                 name: 'dashboard',
-                icon: 'home'
+                icon: 'home',
+                iconType: 'material'
             },
             {
                 name: 'account',
@@ -22,13 +24,9 @@ const groups = [
 let active: string = getOpenPage();
 const domain = '';
 
-const openPage = ({ detail }) => {
-    active = detail;
-};
+const navItems: string[] = [];
 
-const navItems = ['dashboard', 'accounts', 'roles'];
-
-const accountLinks = [
+const accountLinks: string[] = [
     // 'account',
     // 'contact',
     // null
@@ -38,8 +36,8 @@ const accountLinks = [
 <Main
     title="Team Tators"
     {groups}
-    on:openPage="{openPage}"
-    {active}
+    bind:active
+    on:openPage="{e => (active = e.detail)}"
     {navItems}
     {accountLinks}
 >
