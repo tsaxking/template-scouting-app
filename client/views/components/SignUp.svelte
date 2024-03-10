@@ -15,10 +15,9 @@ export let lastName: string = '';
 let i: HTMLInputElement,
     recaptcha = false;
 const submit = () => {
-    // if (i.value || !recaptcha) {
-    //     return;
-    // }
-    if (i.value) return;
+    if (i.value || !recaptcha) {
+        return;
+    }
     if (!valid) {
         console.log('Is not valid');
     }
