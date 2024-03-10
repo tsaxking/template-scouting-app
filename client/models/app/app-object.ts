@@ -89,7 +89,7 @@ export class AppObject<T = unknown, actions = string> {
      * @public
      * @type {T}
      */
-    public state: T;
+    public state?: T;
     /**
      * History of states of the object
      * @date 1/9/2024 - 3:04:36 AM
@@ -107,7 +107,7 @@ export class AppObject<T = unknown, actions = string> {
      * @private
      * @type {?((state: T) => T)}
      */
-    private $toChange?: (state: T) => T;
+    private $toChange?: (state: T | undefined) => T;
     /**
      * Listeners that are called when the state of the object changes
      * @date 1/9/2024 - 3:04:36 AM
@@ -147,7 +147,7 @@ export class AppObject<T = unknown, actions = string> {
      * @param {(state: T) => T} cb
      * @returns {T) => void}
      */
-    public toChange(cb: (state: T) => T) {
+    public toChange(cb: (state: T | undefined) => T) {
         if (this.$toChange) {
             throw new Error(
                 `toChange callback already set for action ${this.name}`
@@ -313,7 +313,13 @@ export class Iterator<actions = string> extends AppObject<number> {
         defaultState = 0
     ) {
         super(name, description, abbr as string);
-        this.toChange(state => state + 1);
+        this.toChange(state => {
+            if (typeof state === 'undefined') {
+                return 0;
+            } else {
+                return state + 1;
+            }
+        });
 
         if (defaultState !== undefined) {
             // creates a new state history with the default state
@@ -351,6 +357,9 @@ export class StateMachine<T> extends AppObject<T> {
     ) {
         super(name, description, abbr);
         this.toChange(state => {
+            if (!state) {
+                return this.states[0];
+            }
             // move through states in a circular fashion
             const index = this.states.indexOf(state);
             return this.states[(index + 1) % this.states.length];
@@ -395,6 +404,9 @@ export class PingPong<T> extends AppObject<T> {
     ) {
         super(name, description, abbr);
         this.toChange(state => {
+            if (!state) {
+                return this.states[0];
+            }
             // move through states, then reverse direction
             const index = this.states.indexOf(state);
             const nextIndex = index + this.$direction;

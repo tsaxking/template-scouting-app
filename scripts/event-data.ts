@@ -1,13 +1,13 @@
-import { saveJSON } from '../server/utilities/files.ts';
-import { ServerRequest } from '../server/utilities/requests.ts';
-import { attemptAsync } from '../shared/check.ts';
+import { saveJSON } from '../server/utilities/files';
+import { ServerRequest } from '../server/utilities/requests';
+import { attemptAsync } from '../shared/check';
 
 export const getEvent = async (eventKey: string) => {
     return attemptAsync(async () => {
         const eventKeyRegex = /^[0-9]{4}[a-z0-9]{4}$/i;
         if (!eventKeyRegex.test(eventKey)) {
             console.error('Invalid event key');
-            Deno.exit(1);
+            process.exit(1);
         }
 
         const result = await ServerRequest.getEventData(eventKey);
@@ -23,4 +23,4 @@ export const getEvent = async (eventKey: string) => {
     });
 };
 
-if (import.meta.main) getEvent(Deno.args[0]);
+if (require.main === module) getEvent(process.argv[2]);

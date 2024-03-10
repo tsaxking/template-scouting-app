@@ -104,9 +104,10 @@ export const attempt = <T = unknown, E = Error>(
     try {
         return new Ok(fn());
     } catch (e) {
+        console.error('[check.ts]', e);
         if (parseError) {
             const err = attempt(
-                () => parseError(e),
+                () => parseError(e as Error),
                 e => 'Error parsing error: ' + e
             );
             if (err.isOk()) {
@@ -114,10 +115,10 @@ export const attempt = <T = unknown, E = Error>(
                 return new Err(err.value);
             }
             // console.warn(err.error, e);
-            return new Err(e);
+            return new Err(e) as Result<T, E>;
         }
         // console.warn(e);
-        return new Err(e);
+        return new Err(e) as Result<T, E>;
     }
 };
 /**
@@ -135,7 +136,7 @@ export const attemptAsync = async <T = unknown, E = Error>(
     } catch (e) {
         if (parseError) {
             const err = attempt(
-                () => parseError(e),
+                () => parseError(e as Error),
                 e => 'Error parsing error: ' + e
             );
             if (err.isOk()) {
@@ -143,10 +144,10 @@ export const attemptAsync = async <T = unknown, E = Error>(
                 return new Err(err.value);
             }
             // console.warn(err.error, e);
-            return new Err(e);
+            return new Err(e) as Result<T, E>;
         }
         // console.warn(e);
-        return new Err(e);
+        return new Err(e) as Result<T, E>;
     }
 };
 

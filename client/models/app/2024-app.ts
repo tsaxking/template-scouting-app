@@ -53,13 +53,18 @@ export const generate2024App = (
     };
 
     for (const key in images) {
-        images[key].src = `/public/pictures/icons/${key}.png`;
-        images[key].classList.add('no-select');
-        images[key].ondragstart = e => e.preventDefault();
-        images[key].onselectstart = e => e.preventDefault();
-        images[key].oncontextmenu = e => e.preventDefault();
-        images[key].onmousedown = e => e.preventDefault();
-        images[key].ondrag = e => e.preventDefault();
+        images[key as keyof typeof images].src =
+            `/public/pictures/icons/${key}.png`;
+        images[key as keyof typeof images].classList.add('no-select');
+        images[key as keyof typeof images].ondragstart = e =>
+            e.preventDefault();
+        images[key as keyof typeof images].onselectstart = e =>
+            e.preventDefault();
+        images[key as keyof typeof images].oncontextmenu = e =>
+            e.preventDefault();
+        images[key as keyof typeof images].onmousedown = e =>
+            e.preventDefault();
+        images[key as keyof typeof images].ondrag = e => e.preventDefault();
     }
 
     const app = new App<Action2024, Zones2024, TraceParse2024>(2024, icons);

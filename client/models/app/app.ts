@@ -17,7 +17,7 @@ import { Polygon } from '../canvas/polygon';
 import { Circle } from '../canvas/circle';
 import { Color } from '../../submodules/colors/color';
 import { Settings } from '../settings';
-import { attempt, attemptAsync, Result } from '../../../shared/attempt';
+import { attempt, attemptAsync, Result } from '../../../shared/check';
 import { Container } from '../canvas/container';
 import { TraceArray } from '../../../shared/submodules/tatorscout-calculations/trace';
 import {
@@ -248,7 +248,11 @@ class MatchData {
     public static get(): MatchData {
         const d = window.localStorage.getItem('matchData');
         if (!d) return new MatchData();
-        const data = JSON.parse(d);
+        const data = JSON.parse(d) as {
+            matchNumber: number;
+            teamNumber: number;
+            compLevel: 'pr' | 'qm' | 'qf' | 'sf' | 'f';
+        };
         return new MatchData(data.matchNumber, data.teamNumber, data.compLevel);
     }
 
@@ -324,7 +328,10 @@ class FieldOrientation {
     public static get() {
         const d = window.localStorage.getItem('fieldOrientation');
         if (!d) return new FieldOrientation();
-        const data = JSON.parse(d);
+        const data = JSON.parse(d) as {
+            flipX: boolean;
+            flipY: boolean;
+        };
         return new FieldOrientation(data.flipX, data.flipY);
     }
 
@@ -573,7 +580,10 @@ export class App<
                 app.currentTick = tick;
                 tick.point = [p[1], p[2]];
                 app.currentLocation = tick.point;
-                const obj = app.appObjects[p[3]] as AppObject<unknown, Action>;
+                const obj = app.appObjects[p[3] as number] as AppObject<
+                    unknown,
+                    Action
+                >;
                 obj.change(app.currentLocation);
             } catch (e) {
                 console.error(e);
@@ -607,7 +617,7 @@ export class App<
             const data = files.value
                 .map(d => {
                     try {
-                        const data = JSON.parse(d.text);
+                        const data = JSON.parse(d.text) as Match;
                         if (!data.trace) throw new Error('Data is not correct');
                         return data;
                     } catch (e) {
@@ -757,7 +767,7 @@ export class App<
         this.canvas.data = this;
 
         for (const [action, icon] of Object.entries(this.icons)) {
-            this.icons[action] = icon.clone();
+            this.icons[action as keyof typeof this.icons] = icon.clone();
         }
 
         // if (App.cache()) {
@@ -1238,7 +1248,7 @@ export class App<
      * @readonly
      * @type {Tick[]}
      */
-    public ticks: Tick<a>[];
+    public ticks: Tick<a>[] = [];
 
     /**
      * Description placeholder
@@ -1404,7 +1414,9 @@ export class App<
     get state(): {
         [key: string]: unknown;
     } {
-        const output = {};
+        const output: {
+            [key: string]: unknown;
+        } = {};
         for (const action of this.gameObjects) {
             output[action.object.name] = action.object.state;
         }

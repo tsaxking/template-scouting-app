@@ -1,13 +1,14 @@
-import env from './env.ts';
-import { attemptAsync, Result } from '../../shared/check.ts';
-import { Match } from '../../shared/submodules/tatorscout-calculations/trace.ts';
-import { DB } from './databases.ts';
-import { uuid } from './uuid.ts';
-import { Assignment } from '../../shared/submodules/tatorscout-calculations/scout-groups.ts';
+import env from './env';
+import { attemptAsync, Result } from '../../shared/check';
+import { Match } from '../../shared/submodules/tatorscout-calculations/trace';
+import { DB } from './databases';
+import { uuid } from './uuid';
+import { Assignment } from '../../shared/submodules/tatorscout-calculations/scout-groups';
 import {
     TBAMatch,
-    TBATeam,
-} from '../../shared/submodules/tatorscout-calculations/tba.ts';
+    TBATeam
+} from '../../shared/submodules/tatorscout-calculations/tba';
+import { request } from './request';
 
 const { SERVER_DOMAIN, SERVER_KEY } = env;
 if (!SERVER_DOMAIN) console.warn('SERVER_DOMAIN not properly set in .env file');
@@ -23,40 +24,46 @@ export class ServerRequest {
                     id,
                     url,
                     body: str,
-                    date: Date.now().toString(),
+                    date: Date.now()
                 });
             }
 
-            const data = await fetch(
+            const data = await request(
                 SERVER_DOMAIN + '/api/event-server' + url,
                 {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'x-auth-key': SERVER_KEY as string,
+                        'x-auth-key': SERVER_KEY as string
                     },
-                    body: str,
-                },
+                    data: str
+                }
             );
 
-            if (data.status.toString().startsWith('4')) {
-                throw new Error('Invalid request');
+            if (data.isErr()) throw data.error;
+
+            if (data.isOk()) {
+                if (data.value.status.toString().startsWith('4')) {
+                    throw new Error('Invalid request');
+                }
+
+                if (data.value.status.toString().startsWith('5')) {
+                    throw new Error('Server error');
+                }
+
+                const json = await data.value.json();
+
+                if (url !== '/ping') {
+                    DB.run('server-requests/update', {
+                        id,
+                        response: JSON.stringify(json)
+                    });
+                }
+
+                return json as T;
+            } else {
+                throw new Error('No data');
             }
-
-            if (data.status.toString().startsWith('5')) {
-                throw new Error('Server error');
-            }
-
-            const json = await data.json();
-
-            if (url !== '/ping') {
-                DB.run('server-requests/update', {
-                    id,
-                    response: JSON.stringify(json),
-                });
-            }
-
-            return json as T;
         });
     }
 
@@ -64,12 +71,12 @@ export class ServerRequest {
         return attemptAsync(async () => {
             const result = await ServerRequest.post<
                 | {
-                    success: false;
-                    error: string;
-                }
+                      success: false;
+                      error: string;
+                  }
                 | {
-                    success: true;
-                }
+                      success: true;
+                  }
             >('/submit-match', match);
 
             if (result.isOk()) {
@@ -91,7 +98,7 @@ export class ServerRequest {
             teams: TBATeam[];
             eventKey: string;
         }>('/scout-groups', {
-            eventKey,
+            eventKey
         });
     }
 
@@ -103,7 +110,7 @@ export class ServerRequest {
     public static async signIn(username: string, password: string) {
         return ServerRequest.post<boolean>('/sign-in', {
             username,
-            password,
+            password
         });
     }
 
@@ -114,7 +121,7 @@ export class ServerRequest {
                     rej(new Error('Request timed out'));
                 }, 1000 * 10);
 
-                ServerRequest.post('/ping').then((r) => {
+                ServerRequest.post('/ping').then(r => {
                     if (r.isOk()) res();
                     else rej(r.error);
                 });
