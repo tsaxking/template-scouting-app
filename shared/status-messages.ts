@@ -196,8 +196,7 @@ export const messages: {
         message: 'You have been logged in.',
         color: 'success',
         code: 200,
-        instructions: 'You will be redirected to the home page.',
-        redirect: '/app'
+        instructions: 'You will be redirected to the home page.'
     },
     'account:logged-out': {
         message: 'You have been logged out.',
@@ -351,6 +350,12 @@ export const messages: {
         code: 413,
         instructions: 'please upload fewer files'
     },
+    'files:unknown-error': {
+        message: 'Unknown file uploading error',
+        color: 'danger',
+        code: 500,
+        instructions: ''
+    },
     'files:uploaded': {
         message: 'File uploaded',
         color: 'success',
@@ -460,6 +465,12 @@ export const messages: {
         instructions:
             'This page was not found. Please check your link and try again.'
     },
+    'permissions:added': {
+        message: 'Added permission to role',
+        color: 'success',
+        code: 200,
+        instructions: ''
+    },
     'permissions:error': {
         message: 'Permissions error',
         color: 'danger',
@@ -482,6 +493,12 @@ export const messages: {
         message: 'Permission not found',
         color: 'danger',
         code: 404,
+        instructions: ''
+    },
+    'permissions:removed': {
+        message: 'Removed permissions from role',
+        color: 'success',
+        code: 200,
         instructions: ''
     },
     'permissions:unauthorized': {
@@ -709,6 +726,7 @@ export type StatusId =
     | 'files:too-large'
     | 'files:too-many-files'
     | 'files:uploaded'
+    | 'files:unknown-error'
     | 'member:accepted'
     | 'member:add-skill'
     | 'member:already-member'
@@ -731,6 +749,8 @@ export type StatusId =
     | 'permissions:invalid'
     | 'permissions:not-found'
     | 'permissions:unauthorized'
+    | 'permissions:added'
+    | 'permissions:removed'
     | 'profanity:detected'
     | 'role:not-found'
     | 'roles:added'
@@ -847,6 +867,7 @@ export type RoleStatusId = 'not-found';
 export type RolesStatusId =
     | 'added'
     | 'added-permission'
+    | 'already-exists'
     | 'cannot-edit-admin'
     | 'deleted'
     | 'invalid-role'
@@ -854,8 +875,7 @@ export type RolesStatusId =
     | 'not-found'
     | 'removed'
     | 'removed-permission'
-    | 'updated'
-    | 'already-exists';
+    | 'updated';
 
 export type ServerStatusId =
     | 'invalid-data'

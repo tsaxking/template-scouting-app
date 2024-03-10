@@ -1,16 +1,27 @@
-import * as cliffy from 'https://deno.land/x/cliffy@v1.0.0-rc.3/prompt/select.ts';
-import FuzzySearch from 'npm:fuzzy-search';
-import { Colors } from '../server/utilities/colors.ts';
-import { attemptAsync, Result } from '../shared/check.ts';
+import FuzzySearch from 'fuzzy-search';
+import { Colors } from '../server/utilities/colors';
+import { attemptAsync, Result } from '../shared/check';
+import prompts from 'prompts';
+// import {choose} from '@putout/cli-choose';
 
-export const repeatPrompt = (
+export const prompt = async (message: string): Promise<string> => {
+    const res = await prompts({
+        type: 'text',
+        name: 'value',
+        message: message
+    });
+
+    return res.value;
+};
+
+export const repeatPrompt = async (
     message: string,
     original?: string,
     validate?: (data: string) => boolean,
     allowBlank = false
-): string => {
+): Promise<string> => {
     if (!original) original = message;
-    const i = prompt(message + ':');
+    const i = await prompt(message + ':');
 
     if (i === null) {
         throw new Error('exit');
@@ -41,6 +52,62 @@ type Option<T = unknown> = {
     value: T;
 };
 
+const _select = async <T = unknown>(
+    message: string,
+    options: Option<T>[]
+): Promise<T> => {
+    const res = await new Promise<T>(res => {
+        const run = (selected: number) => {
+            console.clear();
+            console.log(Colors.FgBlue, '?', Colors.Reset, message, '\n');
+            for (let i = 0; i < options.length; i++) {
+                const o = options[i];
+                console.log(
+                    Colors.FgGreen,
+                    i === selected ? '>' : ' ',
+                    Colors.Reset,
+                    o.name
+                );
+            }
+
+            stdin.on('data', handleKey);
+        };
+
+        let selected = 0;
+
+        const stdin = process.stdin;
+
+        stdin.setRawMode(true);
+        stdin.resume();
+        stdin.setEncoding('utf8');
+
+        const handleKey = (key: string) => {
+            if (key === '\u0003') {
+                process.exit();
+            } else if (key === '\r') {
+                stdin.setRawMode(false);
+                stdin.pause();
+                console.log('\n');
+                res(options[selected].value);
+            } else if (key === '\u001b[A') {
+                selected = selected === 0 ? options.length - 1 : selected - 1;
+                run(selected);
+            } else if (key === '\u001b[B') {
+                selected = selected === options.length - 1 ? 0 : selected + 1;
+                run(selected);
+            } else {
+                return;
+            }
+
+            stdin.off('data', handleKey);
+        };
+
+        run(selected);
+    });
+
+    return res;
+};
+
 export const select = async <T = unknown>(
     message: string,
     data: (Option<T> | string)[],
@@ -63,14 +130,17 @@ export const select = async <T = unknown>(
             value: '$$exit$$' as unknown as T
         });
     }
-    const res = await cliffy.Select.prompt({
-        message: message,
-        options: data
-    });
+
+    const res = await _select(
+        message,
+        data.map(d =>
+            typeof d === 'string' ? ({ name: d, value: d } as Option<T>) : d
+        )
+    );
 
     if (res === '$$exit$$') {
         if (options.exit) {
-            Deno.exit(0);
+            process.exit(0);
         }
         throw new Error('exit');
     }
@@ -86,7 +156,7 @@ export const confirm = async (message = 'Confirm'): Promise<boolean> => {
     return (await select(message, ['Yes', 'No'])) === 'Yes';
 };
 
-export const search = async <T>(
+export const search = async <T extends string | Option>(
     message: string,
     options: (
         | {
@@ -102,9 +172,11 @@ export const search = async <T>(
 
     const run = async (): Promise<Result<string>> => {
         return attemptAsync(async () => {
-            const data = prompt(`${Colors.FgCyan}? ${Colors.Reset} ${message}`);
+            const data = await prompt(
+                `${Colors.FgCyan}? ${Colors.Reset} ${message}`
+            );
 
-            const values = s.search(data);
+            const values = s.search(data || '');
 
             const res = await select<string>('Select a value', [
                 {
@@ -115,7 +187,9 @@ export const search = async <T>(
                     name: '[Exit search]',
                     value: '$$exit$$'
                 },
-                ...values.map(v => v.name || v.toString())
+                ...values.map(v =>
+                    typeof v === 'string' ? v : v.name || v.toString()
+                )
             ]);
 
             if (res === '$$back$$') {

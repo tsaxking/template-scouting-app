@@ -2,8 +2,6 @@
 import { createEventDispatcher } from 'svelte';
 import { capitalize, fromSnakeCase } from '../../../../shared/text';
 
-export let isOpen = false;
-
 type PageGroup = {
     name: string;
     pages: PageObj[];
@@ -21,11 +19,7 @@ const dispatch = createEventDispatcher();
 export let active: string;
 </script>
 
-<div
-    class="{(isOpen ? 'show ' : '') +
-        'offcanvas offcanvas-start bg-dark text-white sidebar-nav shadow'}"
-    id="sidebar-nav"
->
+<div class="offcanvas offcanvas-start" id="sidebar-nav">
     <div class="offcanvas-body p-0">
         <nav class="navbar-dark">
             <ul class="navbar-nav">

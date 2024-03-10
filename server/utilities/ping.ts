@@ -1,6 +1,6 @@
-import { EventEmitter } from '../../shared/event-emitter.ts';
-import { ServerRequest } from './requests.ts';
-import { Result } from '../../shared/attempt.ts';
+import { EventEmitter } from '../../shared/event-emitter';
+import { ServerRequest } from './requests';
+import { Result } from '../../shared/check';
 
 /**
  * All events emitted by the pinger

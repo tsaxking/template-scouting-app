@@ -24,15 +24,7 @@ const fns = {
         new Settings({
             target: body,
             props: {
-                settings: [
-                    {
-                        name: 'Theme',
-                        type: 'select',
-                        options: ['Light', 'Dark'],
-                        bindTo: 'theme',
-                        value: 'Dark'
-                    }
-                ]
+                settings: []
             }
         });
 
@@ -49,13 +41,11 @@ const fns = {
 >
     <div class="d-inline-flex p-0" style="height: 42px;">
         <button
-            class="btn btn-dark navbar-toggler border-0"
+            class="btn btn-dark border-0"
             type="button"
             data-bs-toggle="offcanvas"
             data-bs-target="#sidebar-nav"
             aria-controls="sidebar-nav"
-            aria-expanded="false"
-            aria-label="Toggle Side Bar"
         >
             <i class="bi bi-layout-sidebar"></i>
         </button>
@@ -81,7 +71,6 @@ const fns = {
                 {/each}
             </ul>
             <div class="form-inline my-2 my-lg-0">
-                <ThemeSwitch />
                 <slot name="form" />
             </div>
         </div>

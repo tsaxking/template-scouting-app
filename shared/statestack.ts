@@ -1,4 +1,4 @@
-import { EventEmitter } from './event-emitter.ts';
+import { EventEmitter } from './event-emitter';
 
 /**
  * Options for the state stack
