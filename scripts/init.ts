@@ -165,14 +165,14 @@ const createEnv = async () => {
         undefined,
         true
     );
-    setKey(
+    await setKey(
         'SERVER_DOMAIN',
         'Server Domain: (default: localhost:6000)',
         'http://localhost:6000',
         i => i.length > 0,
         true
     );
-    setKey('SERVER_KEY', 'Server Key: (no default)', '', undefined, true);
+    await setKey('SERVER_KEY', 'Server Key: (no default)', '', undefined, true);
 
     // DATABASE
     await setKey(
