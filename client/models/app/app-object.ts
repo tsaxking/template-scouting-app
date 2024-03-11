@@ -75,7 +75,7 @@ export class ActionState<T = unknown, actions = string> {
 
 type Events<O> = {
     change: O;
-}
+};
 
 /**
  * Object that can be changed
@@ -89,11 +89,17 @@ type Events<O> = {
 export class AppObject<T = unknown, actions = string> {
     public readonly em = new EventEmitter<keyof Events<this>>();
 
-    public on<K extends keyof Events<this>>(event: K, listener: (arg: Events<this>[K]) => void) {
+    public on<K extends keyof Events<this>>(
+        event: K,
+        listener: (arg: Events<this>[K]) => void
+    ) {
         this.em.on(event, listener);
     }
 
-    public off<K extends keyof Events<this>>(event: K, listener: (arg: Events<this>[K]) => void) {
+    public off<K extends keyof Events<this>>(
+        event: K,
+        listener: (arg: Events<this>[K]) => void
+    ) {
         this.em.off(event, listener);
     }
 

@@ -42,9 +42,13 @@ const fns = {
 
         let events: TBAEvent[] = [];
         if (env.ALLOW_PRESCOUTING) {
-            const data = await ServerRequest.post<TBAEvent[]>('/get-events', { year: new Date().getFullYear() });
+            const data = await ServerRequest.post<TBAEvent[]>('/get-events', {
+                year: new Date().getFullYear()
+            });
             if (data.isOk()) {
-                events = data.value.filter(e => e.end_date < new Date().toISOString());
+                events = data.value.filter(
+                    e => e.end_date < new Date().toISOString()
+                );
             }
         }
 

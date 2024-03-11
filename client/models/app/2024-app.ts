@@ -41,7 +41,7 @@ export const generate2024App = (
         src: new Img('/public/pictures/icons/src.png'),
         clb: new Img('/public/pictures/icons/clb.png'),
         trp: new Img('/public/pictures/icons/trp.png'),
-        nte: new Img('/public/pictures/icons/note.png'),
+        nte: new Img('/public/pictures/icons/note.png')
     };
 
     const images: {
@@ -52,7 +52,7 @@ export const generate2024App = (
         src: new Image(60, 60),
         clb: new Image(60, 60),
         trp: new Image(60, 60),
-        nte: new Image(60, 60),
+        nte: new Image(60, 60)
     };
 
     for (const key in images) {
@@ -107,7 +107,6 @@ export const generate2024App = (
 
     app.setBorder(border as Point2D[], colors.blackFade);
 
-
     // app.border = new Border(border as [number, number][]);
 
     // app.border.$properties.doDraw = isIn;
@@ -136,7 +135,7 @@ export const generate2024App = (
             'Picked up this note in auto',
             'nte',
             false
-        )
+        );
 
         app.addAppObject(
             pos,
@@ -147,7 +146,7 @@ export const generate2024App = (
             t => t.index < 65
         );
 
-        t.on('change', (o) => {
+        t.on('change', o => {
             console.log('change', o);
             if (o.state) {
                 btn.classList.remove('btn-outline-dark');

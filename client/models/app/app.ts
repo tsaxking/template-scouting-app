@@ -449,7 +449,8 @@ export class App<
 
     public static matchData = MatchData.get();
     public static $scoutName = window.localStorage.getItem('scoutName') || '';
-    public static $preScouting = window.localStorage.getItem('preScouting') === 'true';
+    public static $preScouting =
+        window.localStorage.getItem('preScouting') === 'true';
 
     public static get preScouting() {
         return App.$preScouting;
@@ -670,7 +671,7 @@ export class App<
             if (!key && !!App.$eventData) return App.$eventData;
             // console.log('Requesting event data');
             const res = await ServerRequest.post<EventData>('/event-data', {
-                key: key || '',
+                key: key || ''
             });
             if (res.isOk()) {
                 const prev = App.$eventData;
@@ -1562,7 +1563,14 @@ export class App<
         viewCondition?: (tick: Tick) => boolean
     ) {
         const [x, y] = point;
-        this.gameObjects.push({ x, y, object, element: button, alliance, viewCondition });
+        this.gameObjects.push({
+            x,
+            y,
+            object,
+            element: button,
+            alliance,
+            viewCondition
+        });
         if (!button.innerHTML) button.innerText = object.name;
         const defaultHTML = button.innerHTML;
         button.style.position = 'absolute';
@@ -1579,9 +1587,7 @@ export class App<
                     break;
             }
 
-            const content = convert ? convert(
-                state as any
-            ) : state;
+            const content = convert ? convert(state as any) : state;
 
             button.innerHTML = `${defaultHTML}${content ? `: ${content}` : ''}`;
         });
