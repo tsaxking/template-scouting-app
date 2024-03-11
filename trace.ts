@@ -516,7 +516,7 @@ export class Trace {
                     }
                 } as const;
             },
-            parse2024: (trace: TraceArray) => {
+            parse2024: (trace: TraceArray, alliance: 'red' | 'blue') => {
                 const { auto, teleop } = Trace.score.yearBreakdown[2024];
 
                 const score = {
@@ -539,8 +539,6 @@ export class Trace {
                     },
                     total: 0
                 };
-
-                const alliance = Trace.yearInfo[2024].getAlliance(trace);
 
                 const autoZone = all2024.autoZone[alliance];
 
