@@ -666,8 +666,13 @@ export class App<
 
             const failed = matches.filter((_, i) => results[i]);
 
-            const saved = JSON.parse(window.localStorage.getItem('savedMatches') || '[]') as Match[];
-            window.localStorage.setItem('savedMatches', JSON.stringify([...saved, ...failed]));
+            const saved = JSON.parse(
+                window.localStorage.getItem('savedMatches') || '[]'
+            ) as Match[];
+            window.localStorage.setItem(
+                'savedMatches',
+                JSON.stringify([...saved, ...failed])
+            );
 
             return results;
         });
@@ -2015,9 +2020,14 @@ Object.assign(window, {
 });
 
 socket.on('connect', async () => {
-    const failed = JSON.parse(window.localStorage.getItem('savedMatches') || '[]') as Match[];
+    const failed = JSON.parse(
+        window.localStorage.getItem('savedMatches') || '[]'
+    ) as Match[];
     const results = await App.upload(...failed);
     if (results.isOk()) {
-        window.localStorage.saveItem('savedMatches', JSON.stringify(failed.filter((m, i) => !results.value[i])));
+        window.localStorage.saveItem(
+            'savedMatches',
+            JSON.stringify(failed.filter((m, i) => !results.value[i]))
+        );
     }
 });
