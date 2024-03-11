@@ -3,6 +3,7 @@
  * @description The point of this class is to provide a way to change the state of an object and keep track of the history of those changes. This is useful for undo/redo functionality, and for keeping track of the state of the robot over time.
  */
 
+import { EventEmitter } from '../../../shared/event-emitter';
 import { Point2D } from '../../../shared/submodules/calculations/src/linear-algebra/point';
 import { Tick } from './app';
 
@@ -72,6 +73,10 @@ export class ActionState<T = unknown, actions = string> {
     }
 }
 
+type Events<O> = {
+    change: O;
+}
+
 /**
  * Object that can be changed
  * @date 1/9/2024 - 3:04:36 AM
@@ -82,6 +87,20 @@ export class ActionState<T = unknown, actions = string> {
  * @template [T=unknown]
  */
 export class AppObject<T = unknown, actions = string> {
+    public readonly em = new EventEmitter<keyof Events<this>>();
+
+    public on<K extends keyof Events<this>>(event: K, listener: (arg: Events<this>[K]) => void) {
+        this.em.on(event, listener);
+    }
+
+    public off<K extends keyof Events<this>>(event: K, listener: (arg: Events<this>[K]) => void) {
+        this.em.off(event, listener);
+    }
+
+    public emit<K extends keyof Events<this>>(event: K, arg: Events<this>[K]) {
+        this.em.emit(event, arg);
+    }
+
     /**
      * Current state of the object
      * @date 1/9/2024 - 3:04:36 AM
@@ -184,6 +203,9 @@ export class AppObject<T = unknown, actions = string> {
         } else {
             console.warn('No toChange callback set for action ' + this.name);
         }
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        this.emit('change', this);
 
         return this.state;
     }
