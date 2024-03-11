@@ -146,17 +146,36 @@ export const generate2024App = (
             t => t.index < 65
         );
 
+        let p: Point2D | null = null;
+
         t.on('change', o => {
             console.log('change', o);
             if (o.state) {
                 btn.classList.remove('btn-outline-dark');
                 btn.classList.add('btn-dark');
+
+                try {
+                    p = app.currentLocation || null;
+
+                    o.lastState!.tick!.point = [
+                        pos[0],
+                        pos[1]
+                    ];
+                } catch (error) {
+                    console.error(error);
+                }
             } else {
                 btn.classList.remove('btn-dark');
                 btn.classList.add('btn-outline-dark');
                 // remove all states matching this AppObject
                 for (const s of o.stateHistory) {
                     s.tick?.clear();
+                }
+
+                try {
+                    o.lastState!.tick!.point = p;
+                } catch (error) {
+                    console.error(error);
                 }
             }
         });

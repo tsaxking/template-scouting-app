@@ -216,6 +216,10 @@ export class AppObject<T = unknown, actions = string> {
         return this.state;
     }
 
+    public get lastState(): ActionState<T, string> | undefined {
+        return this.stateHistory[this.stateHistory.length - 1];
+    }
+
     /**
      * Undo the last change to the state of the object
      * @date 1/9/2024 - 3:04:36 AM
