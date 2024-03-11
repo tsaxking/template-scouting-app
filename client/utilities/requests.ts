@@ -780,8 +780,11 @@ export class ServerRequest<T = unknown> {
                 },
                 body: JSON.stringify(this.body)
             })
-                .then(r => r.json() as Promise<T>)
-                .then(async data => {
+                .then(async r => ({
+                    status: r.status,
+                    data: (await r.json()) as T
+                }))
+                .then(async ({ status, data }) => {
                     data = bigIntDecode(data);
 
                     if (!this.url.includes('socket')) {
@@ -811,6 +814,14 @@ export class ServerRequest<T = unknown> {
                         await sleep((data as StatusJson).sleep as number);
                         location.href = (data as StatusJson).redirect as string;
                     }
+
+                    if (
+                        status.toString().startsWith('4') ||
+                        status.toString().startsWith('5')
+                    ) {
+                        throw new Error('Invalid request');
+                    }
+
                     res(data as T);
                 })
                 .catch(e => {
