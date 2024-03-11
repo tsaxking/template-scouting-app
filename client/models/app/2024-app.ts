@@ -157,10 +157,7 @@ export const generate2024App = (
                 try {
                     p = app.currentLocation || null;
 
-                    o.lastState!.tick!.point = [
-                        pos[0],
-                        pos[1]
-                    ];
+                    o.lastState!.tick!.point = [pos[0], pos[1]];
                 } catch (error) {
                     console.error(error);
                 }
