@@ -395,6 +395,17 @@ export class App<
     z extends Zones = Zones,
     p extends TraceParse = TraceParse
 > {
+    public static button(classes: string[], html: string | Node) {
+        const b = document.createElement('button');
+        if (typeof html === 'string') {
+            b.innerHTML = html;
+        } else {
+            b.appendChild(html);
+        }
+        b.classList.add('btn', 'p-1', ...classes);
+        return b;
+    }
+
     private static readonly emitter = new EventEmitter<keyof GlobalEvents>();
 
     public static on<E extends keyof GlobalEvents>(
@@ -953,7 +964,7 @@ export class App<
             this.yOffset = 0;
 
             for (const o of this.gameObjects) {
-                const { element } = o;
+                const { element, viewCondition } = o;
                 let { x, y } = o;
 
                 x = App.flipY ? 1 - x : x; // flip around y axis
@@ -961,6 +972,14 @@ export class App<
 
                 element.style.left = `${x * this.canvas.width + xOffset}px`;
                 element.style.top = `${y * this.canvas.height}px`;
+
+                if (viewCondition && this.currentTick) {
+                    if (viewCondition(this.currentTick)) {
+                        element.style.display = 'block';
+                    } else {
+                        element.style.display = 'none';
+                    }
+                }
             }
         } else {
             const yOffset = (target.clientHeight - target.clientWidth / 2) / 2;
@@ -974,7 +993,7 @@ export class App<
             this.yOffset = yOffset;
 
             for (const o of this.gameObjects) {
-                const { element } = o;
+                const { element, viewCondition } = o;
                 let { x, y } = o;
 
                 x = App.flipX ? 1 - x : x; // flip around y axis
@@ -982,6 +1001,14 @@ export class App<
 
                 element.style.left = `${x * this.canvas.width}px`;
                 element.style.top = `${y * this.canvas.height + yOffset}px`;
+
+                if (viewCondition && this.currentTick) {
+                    if (viewCondition(this.currentTick)) {
+                        element.style.display = 'block';
+                    } else {
+                        element.style.display = 'none';
+                    }
+                }
             }
         }
 
@@ -1108,6 +1135,7 @@ export class App<
         object: AppObject<any, a>;
         element: HTMLElement;
         alliance: 'red' | 'blue' | null;
+        viewCondition?: (tick: Tick<a>) => boolean;
     }[] = [];
 
     public readonly areas = {} as {
@@ -1530,10 +1558,11 @@ export class App<
         object: AppObject<T, a>,
         button: HTMLElement,
         convert?: (state: T) => string,
-        alliance: 'red' | 'blue' | null = null
+        alliance: 'red' | 'blue' | null = null,
+        viewCondition?: (tick: Tick) => boolean
     ) {
         const [x, y] = point;
-        this.gameObjects.push({ x, y, object, element: button, alliance });
+        this.gameObjects.push({ x, y, object, element: button, alliance, viewCondition });
         if (!button.innerHTML) button.innerText = object.name;
         const defaultHTML = button.innerHTML;
         button.style.position = 'absolute';
@@ -1550,9 +1579,11 @@ export class App<
                     break;
             }
 
-            button.innerHTML = `${defaultHTML}: ${
-                convert ? convert(state.state) : state.state
-            }`;
+            const content = convert ? convert(
+                state as any
+            ) : state;
+
+            button.innerHTML = `${defaultHTML}${content ? `: ${content}` : ''}`;
         });
 
         button.addEventListener('click', () => {
