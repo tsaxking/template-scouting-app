@@ -119,6 +119,7 @@ export type Update_sessions_update = {
     ip: string | undefined;
     prevUrl: string | undefined;
     id: string;
+    customData: string;
 };
 
 export type Insert_sessions_new = {
@@ -130,6 +131,7 @@ export type Insert_sessions_new = {
     created: number;
     ip: string | undefined;
     prevUrl: string | undefined;
+    customData: string;
 };
 
 export type Select_sessions_get = {

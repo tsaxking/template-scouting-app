@@ -1,4 +1,4 @@
-import { StatusMessage } from './status-messages.ts';
+import { StatusMessage } from './status-messages';
 
 export type StatusCode =
     | 100
@@ -149,4 +149,5 @@ export type StatusJson = StatusMessage & {
     data?: {
         [key: string]: unknown;
     };
+    sleep?: number;
 };

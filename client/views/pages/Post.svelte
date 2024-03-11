@@ -22,21 +22,16 @@ type PostData = {
     comment: string;
 };
 
-type Types =
-    | 'autoMobility'
-    | 'parked'
-    | 'playedDefense'
-    | 'tippy'
-    | 'easilyDefended'
-    | 'robotDied'
-    | 'problemsDriving'
-    | 'groundPicks'
-    | 'autoCenterPick';
-
 let data: {
-    [key in Types]: PostData;
+    [key: string]: PostData;
 } = {
     autoMobility: {
+        value: false,
+        color: 'success',
+        comments: false,
+        comment: ''
+    },
+    parked: {
         value: false,
         color: 'success',
         comments: false,
@@ -84,12 +79,12 @@ let data: {
         comments: true,
         comment: ''
     },
-    parked: {
+    penalized: {
         value: false,
-        color: 'success',
-        comments: false,
+        color: 'danger',
+        comments: true,
         comment: ''
-    },
+    }
 };
 
 let c: Canvas;
@@ -98,6 +93,11 @@ let stop = () => {};
 const open = async (active: string) => {
     if (active !== 'Post') return;
     stop();
+
+    for (const key in data) {
+        data[key].value = false;
+        data[key].comment = '';
+    }
 
     const traceArray = app.pull();
     console.log(traceArray);
@@ -114,7 +114,9 @@ const open = async (active: string) => {
     }
 
     if (!c) {
-        c = new Canvas(canvas.getContext('2d'));
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return console.error('Could not get canvas context');
+        c = new Canvas(ctx);
     }
     stop = c.animate();
 
@@ -131,19 +133,18 @@ const open = async (active: string) => {
             max: container.children.length - 1,
             values: [0, container.children.length - 1],
             slide: (_, ui) => {
-                const [start, end] = ui.values;
+                const [start, end] = ui.values as [number, number];
                 container.filter((_, i) => i >= start && i <= end);
             }
         });
     }
-    
-        // if the number of shots is larger than the number of picks from the source + 1, then the robot picked off the ground
-        // + 1 because the robot starts with a note
-    app.parsed.groundPicks =
-        Trace.yearInfo[2024].mustGroundPick(traceArray);
 
-    data.autoMobility.value = app.parsed.mobility;
-    data.parked.value = app.parsed.parked;
+    // if the number of shots is larger than the number of picks from the source + 1, then the robot picked off the ground
+    // + 1 because the robot starts with a note
+    app.parsed.groundPicks = Trace.yearInfo[2024].mustGroundPick(traceArray);
+
+    data.autoMobility.value = !!app.parsed.mobility;
+    data.parked.value = !!app.parsed.parked;
     data.groundPicks.value = app.parsed.groundPicks;
 
     // reset the view
@@ -185,7 +186,7 @@ const submit = async () => {
             .map(([key, value]) => (value.value ? key : null))
             .filter(Boolean),
         comments: {
-            ...(() => {
+            ...() => {
                 let comments = {};
                 for (const [key, value] of Object.entries(data)) {
                     if (value.value && value.comments) {
@@ -196,7 +197,7 @@ const submit = async () => {
                     }
                 }
                 return comments;
-            }),
+            },
             general: generalComment,
             auto: autoComment
         }
@@ -211,7 +212,7 @@ const submit = async () => {
     }
 };
 
-$: console.log({commentsSections});
+$: console.log({ commentsSections });
 </script>
 
 <div class="container mb-3">

@@ -1,9 +1,8 @@
-import { DB } from '../utilities/databases.ts';
-import { RolePermission } from '../../shared/db-types.ts';
-import { Permission } from '../../shared/permissions.ts';
-import { Role as RoleObject } from '../../shared/db-types.ts';
-import { ServerFunction } from './app/app.ts';
-import { uuid } from '../utilities/uuid.ts';
+import { DB } from '../utilities/databases';
+import { RolePermission } from '../../shared/db-types';
+import { Role as RoleObject } from '../../shared/db-types';
+import { ServerFunction } from './app/app';
+import { uuid } from '../utilities/uuid';
 
 /**
  * Role object, contains permission information and role name
@@ -26,7 +25,7 @@ export default class Role {
     static allowRoles(..._role: never[]): ServerFunction {
         return async (_req, _res, _next) => {
             throw new Error(
-                'This method is deprecated, use Account.allowPermissions() instead',
+                'This method is deprecated, use Account.allowPermissions() instead'
             );
         };
     }
@@ -43,11 +42,19 @@ export default class Role {
     static preventRoles(..._role: never[]): ServerFunction {
         return async (_req, _res, _next) => {
             throw new Error(
-                'This method is deprecated, use Account.allowPermissions() instead',
+                'This method is deprecated, use Account.allowPermissions() instead'
             );
         };
     }
 
+    /**
+     * Retrieves all permissions from the database
+     * @date 3/8/2024 - 6:07:41 AM
+     *
+     * @static
+     * @async
+     * @returns {Promise<RolePermission[]>}
+     */
     static async getAllPermissions(): Promise<RolePermission[]> {
         const res = await DB.all('permissions/all');
         if (res.isOk()) {
@@ -66,7 +73,7 @@ export default class Role {
      */
     static async fromId(id: string): Promise<Role | undefined> {
         const r = await DB.get('roles/from-id', {
-            id,
+            id
         });
         if (r.isOk() && r.value) return new Role(r.value);
         return;
@@ -82,7 +89,7 @@ export default class Role {
      */
     static async fromName(name: string): Promise<Role | undefined> {
         const r = await DB.get('roles/from-name', {
-            name,
+            name
         });
         if (r.isOk() && r.value) return new Role(r.value);
         return;
@@ -106,19 +113,29 @@ export default class Role {
         return [];
     }
 
+    /**
+     * Creates a new role and adds it to the database
+     * @date 3/8/2024 - 6:07:41 AM
+     *
+     * @static
+     * @param {string} name
+     * @param {string} description
+     * @param {number} rank
+     * @returns {Role}
+     */
     static new(name: string, description: string, rank: number): Role {
         const id = uuid();
         DB.run('roles/new', {
             name,
             description,
             id,
-            rank,
+            rank
         });
         return new Role({
             name,
             description,
             id,
-            rank,
+            rank
         });
     }
 
@@ -173,31 +190,51 @@ export default class Role {
      */
     async getPermissions(): Promise<RolePermission[]> {
         const data = await DB.all('permissions/from-role', {
-            roleId: this.id,
+            roleId: this.id
         });
         if (data.isOk()) {
             return data.value.filter((p, i, a) => {
-                return a.findIndex((pp) => pp.permission === p.permission) ===
-                    i;
+                return a.findIndex(pp => pp.permission === p.permission) === i;
             });
         }
         return [];
     }
 
+    /**
+     * Adds a permission to the role
+     * @date 3/8/2024 - 6:07:40 AM
+     *
+     * @param {string} permission
+     * @returns {Promise<Result<Queries>>}
+     */
     addPermission(permission: string) {
         return DB.run('permissions/add-to-role', {
             permission,
-            roleId: this.id,
+            roleId: this.id
         });
     }
 
+    /**
+     * Removes a permission from the role
+     * @date 3/8/2024 - 6:07:40 AM
+     *
+     * @param {string} permission
+     * @returns {Promise<Result<Queries>>}
+     */
     removePermission(permission: string) {
         return DB.run('permissions/remove-from-role', {
             roleId: this.id,
-            permission,
+            permission
         });
     }
 
+    /**
+     * Deletes the role from the database
+     * @date 3/8/2024 - 6:07:40 AM
+     *
+     * @async
+     * @returns {*}
+     */
     async delete() {
         // Remove all permissions
         const permissions = await this.getPermissions();
@@ -206,16 +243,23 @@ export default class Role {
         }
 
         DB.run('roles/delete', {
-            id: this.id,
+            id: this.id
         });
     }
 
+    /**
+     * Saves the role to the database
+     * @date 3/8/2024 - 6:07:40 AM
+     *
+     * @async
+     * @returns {unknown}
+     */
     async save() {
         return DB.run('roles/update', {
             id: this.id,
             name: this.name,
             description: this.description,
-            rank: this.rank,
+            rank: this.rank
         });
     }
 }

@@ -21,9 +21,15 @@ let currentMatchIndex: number | undefined = undefined;
 
 let matchAssignments: number[] = [];
 
+App.on('new-event', async () => {
+    console.log('new event');
+    await fns.getMatches(app);
+    await fns.setCustom(matches);
+});
+
 const fns = {
     setCustom: async (m: TBAMatch[]) => {
-        if (customMatches.length) return; // avoid infinite loop
+        // if (customMatches.length) return; // avoid infinite loop
         const res = await App.getEventData();
         if (res.isErr()) return console.error(res.error);
         const eventData = res.value;
@@ -59,7 +65,7 @@ const fns = {
                 eventData.assignments.matchAssignments[App.group][matchIndex];
         } else {
             App.group = eventData.assignments.groups.findIndex(g =>
-                g.includes(team)
+                g.includes(team as number)
             );
         }
 

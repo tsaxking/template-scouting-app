@@ -21,3 +21,18 @@ export const daysTimeout = (cb: () => void, days: number) => {
         }
     }, day);
 };
+
+/**
+ * Sleep until a given date
+ * @date 3/8/2024 - 6:42:59 AM
+ *
+ * @param {() => void} cb
+ * @param {Date} date
+ * @returns {void, date: Date) => void}
+ */
+export const sleepUntil = (cb: () => void, date: Date) => {
+    const now = new Date().getTime();
+    const then = date.getTime();
+    const days = Math.floor((then - now) / (1000 * 60 * 60 * 24));
+    daysTimeout(cb, days);
+};

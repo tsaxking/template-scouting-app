@@ -1,49 +1,48 @@
 <script lang="ts">
-import { onMount } from "svelte";
-    import { App } from "../../models/app/app";
-    import { actions } from '../../../shared/submodules/tatorscout-calculations/trace';
+import { onMount } from 'svelte';
+import { App } from '../../models/app/app';
+import { actions } from '../../../shared/submodules/tatorscout-calculations/trace';
 
+export let app: App | undefined = undefined;
 
-    export let app: App | undefined = undefined;
+let pulled: {
+    [key: string]: number;
+} = {};
 
-    let pulled: {
-        [key: string]: number;
-    } = {};
+const fns = {
+    set: (app: App) => {
+        if (!app) return;
 
+        const data = app.pull();
 
-    const fns = {
-        set: (app: App) => {
-            if (!app) return;
+        // reset
+        pulled = {};
 
-            const data = app.pull();
+        for (const point of data) {
+            const [i, x, y, a] = point;
 
-            // reset
-            pulled = {};
-
-            for (const point of data) {
-                const [i, x, y, a] = point;
-
-                if (a) {
-                    pulled[actions[a]] = pulled[actions[a]] ? pulled[actions[a]] + 1 : 1;
-                }
+            if (a) {
+                pulled[actions[a]] = pulled[actions[a]]
+                    ? pulled[actions[a]] + 1
+                    : 1;
             }
-
-            // reassign to trigger reactivity
-            pulled = { ...pulled };
         }
+
+        // reassign to trigger reactivity
+        pulled = { ...pulled };
     }
+};
 
-    $: fns.set(app);
+$: fns.set(app);
 
-    onMount(() => fns.set(app));
+onMount(() => fns.set(app));
 </script>
-<h5 class="text-center">
-    Summary
-</h5>
+
+<h5 class="text-center">Summary</h5>
 <ul class="list-group">
     {#each Object.keys(pulled) as key}
         <li class="list-group-item">
             {key}: {pulled[key]}
         </li>
-    {/each} 
+    {/each}
 </ul>
