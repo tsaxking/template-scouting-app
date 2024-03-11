@@ -334,17 +334,21 @@ app.post<{
     }
 });
 
-app.post<{ year: number; }>('/get-events', validate({
-    year: 'number'
-}), async (req, res) => {
-    if (!env.ALLOW_PRESCOUTING) return res.json([]); // if prescouting is not allowed, return an empty array
-    const events = await TBA.get<TBAEvent[]>('/events/' + req.body.year);
-    if (events.isOk()) {
-        res.json(events.value);
-    } else {
-        res.status(500).json(events.error);
+app.post<{ year: number }>(
+    '/get-events',
+    validate({
+        year: 'number'
+    }),
+    async (req, res) => {
+        if (!env.ALLOW_PRESCOUTING) return res.json([]); // if prescouting is not allowed, return an empty array
+        const events = await TBA.get<TBAEvent[]>('/events/' + req.body.year);
+        if (events.isOk()) {
+            res.json(events.value);
+        } else {
+            res.status(500).json(events.error);
+        }
     }
-});
+);
 
 app.get('/*', (req, res) => {
     if (!res.fulfilled) {

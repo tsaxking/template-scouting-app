@@ -31,14 +31,14 @@ const onEventSelect = async (eventKey: string) => {
 
     matchNum = '';
     teamNum = 0;
-}
+};
 
 $: onEventSelect(event);
 </script>
 
 <SelectedInfo />
 
-{#if !!events.length} 
+{#if !!events.length}
     <!-- prescouting checkbox -->
     <div class="form-check form-switch mb-3">
         <input
