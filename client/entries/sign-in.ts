@@ -1,5 +1,5 @@
 import '../utilities/imports';
-import SignIn from '../views/components/SignIn.svelte';
+import SignIn from '../views/pages/SignIn.svelte';
 
 new SignIn({
     target: document.body

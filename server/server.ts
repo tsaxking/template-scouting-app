@@ -37,7 +37,7 @@ if (process.argv.includes('--stats')) {
 const port = +(env.PORT || 3000);
 
 export const app = new App<{
-    test: string;
+    isTrusted: boolean;
 }>(port, env.DOMAIN || `http://localhost:${port}`);
 
 if (process.argv.includes('--ping')) {
@@ -175,17 +175,22 @@ app.get('/test/:page', (req, res, next) => {
 app.route('/api', api);
 app.route('/account', account);
 
-app.use('/sign-in', (req, res, next) => {
-    res.sendTemplate('entries/sign-in');
+app.get('/sign-in', (req, res) => {
+    if (env.SECURITY_PIN && !req.session.customData.isTrusted) {
+        res.sendTemplate('entries/sign-in');
+    } else {
+        res.redirect('/app');
+    }
 });
 
 app.post<{
     pin: string;
-}>('/pin', validate({
+}>('/sign-in', validate({
     pin: 'string'
 }), (req, res) => {
+    console.log('pin:', req.body.pin, env.SECURITY_PIN);
     if (req.body.pin === env.SECURITY_PIN) {
-        req.session.accountId = 'trusted';
+        req.session.customData.isTrusted = true;
         req.session.save();
         res.redirect('/app');
     } else {
@@ -194,7 +199,9 @@ app.post<{
 });
 
 app.use('/*', (req, res, next) => {
-    if (env.SECURITY_PIN && !req.session.accountId) {
+    console.log('isTrusted:', req.session.customData);
+    if (env.SECURITY_PIN && !req.session.customData.isTrusted) {
+        console.log('redirecting to sign-in');
         res.redirect('/sign-in');
     } else {
         next();
