@@ -252,6 +252,20 @@ const createEnv = async () => {
         undefined,
         true
     );
+    await setKey(
+        'ALLOW_INTERNET',
+        'Allow Internet: (default: n) (y/n)',
+        'n',
+        i => ['y', 'n'].includes(i),
+        true
+    );
+    await setKey(
+        'ALLOW_PRESCOUTING',
+        'Allow Prescouting: (default: n) (y/n)',
+        'n',
+        i => ['y', 'n'].includes(i),
+        true
+    );
 
     const e = Object.keys(values)
         .map(key => `${key} = '${values[key]}'`)

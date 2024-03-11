@@ -22,6 +22,8 @@ import {
 } from '../shared/submodules/tatorscout-calculations/trace';
 import { validate } from './middleware/data-type';
 import { ServerRequest } from './utilities/requests';
+import { TBA } from './utilities/tba/tba';
+import { TBAEvent } from '../shared/tba';
 
 if (process.argv.includes('--stats')) {
     const measure = () => {
@@ -55,7 +57,9 @@ if (process.argv.includes('--ping')) {
 
 app.post('/env', (req, res) => {
     res.json({
-        ENVIRONMENT: env.ENVIRONMENT
+        ENVIRONMENT: env.ENVIRONMENT,
+        ALLOW_INTERNET: env.ALLOW_INTERNET,
+        ALLOW_PRESCOUTING: env.ALLOW_PRESCOUTING
     });
 });
 
@@ -245,8 +249,13 @@ app.post<Match>(
             scout,
             date,
             group,
-            trace
+            trace,
+            preScouting
         } = req.body;
+
+        if (preScouting && !env.ALLOW_PRESCOUTING) {
+            return res.sendStatus('pre-scouting:not-allowed');
+        }
 
         // I don't want to pass in req.body because it can have extra unneeded properties
         const result = await ServerRequest.submitMatch({
@@ -259,7 +268,8 @@ app.post<Match>(
             scout,
             date,
             group,
-            trace
+            trace,
+            preScouting
         });
 
         if (result.isOk()) {
@@ -301,14 +311,38 @@ app.post<Match>(
     }
 );
 
-app.post('/event-data', async (_req, res) => {
+app.post<{
+    key: string;
+}>('/event-data', async (req, res) => {
+    const { key } = req.body;
+
     let name = 'dummy-event-data.json';
     if (env.ENVIRONMENT === 'prod') name = 'event-data.json';
+
+    if (env.ALLOW_PRESCOUTING && req.body.key) {
+        const data = await ServerRequest.getEventData(key);
+        // console.log(data);
+        if (data.isOk()) return res.json(data.value);
+        else return res.status(500).json(data.error);
+    }
+
     const data = getJSONSync(name);
     if (data.isOk()) {
         res.json(data.value);
     } else {
         res.status(500).json(data.error);
+    }
+});
+
+app.post<{ year: number; }>('/get-events', validate({
+    year: 'number'
+}), async (req, res) => {
+    if (!env.ALLOW_PRESCOUTING) return res.json([]); // if prescouting is not allowed, return an empty array
+    const events = await TBA.get<TBAEvent[]>('/events/' + req.body.year);
+    if (events.isOk()) {
+        res.json(events.value);
+    } else {
+        res.status(500).json(events.error);
     }
 });
 

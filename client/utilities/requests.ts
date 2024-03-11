@@ -782,7 +782,7 @@ export class ServerRequest<T = unknown> {
             })
                 .then(async r => ({
                     status: r.status,
-                    data: (await r.json()) as T
+                    data: await r.json() as T
                 }))
                 .then(async ({ status, data }) => {
                     data = bigIntDecode(data);
