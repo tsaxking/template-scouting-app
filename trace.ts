@@ -9,7 +9,7 @@ import { Point2D } from '../calculations/src/linear-algebra/point';
  * @export
  * @typedef {Action2024}
  */
-export type Action2024 = 'spk' | 'amp' | 'src' | 'trp' | 'clb';
+export type Action2024 = 'spk' | 'amp' | 'src' | 'trp' | 'clb' | 'nte';
 /**
  * Description placeholder
  * @date 1/25/2024 - 4:58:49 PM
@@ -645,6 +645,7 @@ export type Match = {
     date: number;
     group: 0 | 1 | 2 | 3 | 4 | 5;
     trace: TraceArray;
+    preScouting: boolean;
 };
 
 export const validateObj = {
@@ -659,5 +660,6 @@ export const validateObj = {
     eventKey: 'string',
     scout: 'string',
     date: 'number',
-    group: [0, 1, 2, 3, 4, 5]
+    group: [0, 1, 2, 3, 4, 5],
+    preScouting: 'boolean'
 };
