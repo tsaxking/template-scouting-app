@@ -36,7 +36,9 @@ if (process.argv.includes('--stats')) {
 
 const port = +(env.PORT || 3000);
 
-export const app = new App(port, env.DOMAIN || `http://localhost:${port}`);
+export const app = new App<{
+    test: string;
+}>(port, env.DOMAIN || `http://localhost:${port}`);
 
 if (process.argv.includes('--ping')) {
     const pinger = startPinger();

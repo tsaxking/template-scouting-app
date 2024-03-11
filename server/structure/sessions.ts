@@ -96,10 +96,10 @@ export class Session<T = unknown> {
      * @returns {Promise<Session>}
      */
     public static async from<sessionInfo = unknown>(
-        app: App,
+        app: App<unknown>,
         req: express.Request,
         res: express.Response
-    ): Promise<Session> {
+    ): Promise<Session<sessionInfo>> {
         const id = req.headers.cookie
             ?.split(';')
             .find(c => c.includes('ssid'))
@@ -188,7 +188,7 @@ export class Session<T = unknown> {
     static async get<sessionInfo = unknown>(
         app: App,
         id: string
-    ): Promise<Session | undefined> {
+    ): Promise<Session<sessionInfo> | undefined> {
         // if (Session.cache.has(id)) {
         //     return Session.cache.get(id);
         // }
@@ -215,7 +215,7 @@ export class Session<T = unknown> {
     static fromSessObj<sessionInfo = unknown>(
         app: App,
         s: SessionObj
-    ): Session {
+    ): Session<sessionInfo> {
         // log('Building from:', s);
 
         const session = new Session<sessionInfo>(app);
@@ -246,7 +246,7 @@ export class Session<T = unknown> {
         app: App,
         req: express.Request,
         res: express.Response
-    ): Session {
+    ): Session<sessionInfo> {
         const s = new Session<sessionInfo>(app, req);
         // res.cookie(Session.sessionName, s.id, {
         //     maxAge: Session.cookieOptions.maxAge,
