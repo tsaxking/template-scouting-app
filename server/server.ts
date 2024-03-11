@@ -185,18 +185,22 @@ app.get('/sign-in', (req, res) => {
 
 app.post<{
     pin: string;
-}>('/sign-in', validate({
-    pin: 'string'
-}), (req, res) => {
-    console.log('pin:', req.body.pin, env.SECURITY_PIN);
-    if (req.body.pin === env.SECURITY_PIN) {
-        req.session.customData.isTrusted = true;
-        req.session.save();
-        res.redirect('/app');
-    } else {
-        res.sendStatus('pin:incorrect');
+}>(
+    '/sign-in',
+    validate({
+        pin: 'string'
+    }),
+    (req, res) => {
+        console.log('pin:', req.body.pin, env.SECURITY_PIN);
+        if (req.body.pin === env.SECURITY_PIN) {
+            req.session.customData.isTrusted = true;
+            req.session.save();
+            res.redirect('/app');
+        } else {
+            res.sendStatus('pin:incorrect');
+        }
     }
-});
+);
 
 app.use('/*', (req, res, next) => {
     console.log('isTrusted:', req.session.customData);
