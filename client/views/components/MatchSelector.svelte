@@ -8,8 +8,6 @@ const d = createEventDispatcher();
 
 export let app: App;
 
-let matches: TBAMatch[] = [];
-
 const fns = {
     next: async () => {
         await App.moveMatchIndex(1);

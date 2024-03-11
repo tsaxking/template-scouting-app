@@ -5,6 +5,9 @@ import { Modal } from '../../utilities/modals';
 import CustomMatchInfo from './CustomMatchInfo.svelte';
 import AssignedTeams from './AssignedTeams.svelte';
 import FieldOrientation from './FieldOrientation.svelte';
+import { env } from '../../utilities/env';
+import { ServerRequest } from '../../utilities/requests';
+import { type TBAEvent } from '../../../shared/submodules/tatorscout-calculations/tba';
 let matchNum: number;
 let teamNum: number;
 let compLevel: string;
@@ -37,9 +40,17 @@ const fns = {
             teamNum: App.matchData.teamNumber
         };
 
+        let events: TBAEvent[] = [];
+        if (env.ALLOW_PRESCOUTING) {
+            const data = await ServerRequest.post<TBAEvent[]>('/get-events', { year: new Date().getFullYear() });
+            if (data.isOk()) {
+                events = data.value.filter(e => e.end_date < new Date().toISOString());
+            }
+        }
+
         // automatically appends to the body
         const body = new CustomMatchInfo({
-            target: m.target.querySelector('.modal-body'),
+            target: m.target.querySelector('.modal-body') as HTMLElement,
             props: {
                 teams: eventData.teams.map(t => ({
                     number: t.team_number,
@@ -47,7 +58,9 @@ const fns = {
                 })),
                 compLevel: App.matchData.compLevel,
                 teamNum: App.matchData.teamNumber,
-                matchNum: String(App.matchData.matchNumber)
+                matchNum: String(App.matchData.matchNumber),
+                events,
+                event: eventData.eventKey
             }
         });
 
@@ -80,7 +93,7 @@ const fns = {
         const m = new Modal();
         m.setTitle('Your Assigned Teams');
         const body = new AssignedTeams({
-            target: m.target.querySelector('.modal-body'),
+            target: m.target.querySelector('.modal-body') as HTMLElement,
             props: {
                 group: App.group
             }
@@ -124,7 +137,7 @@ const fns = {
                 flipX: App.flipX,
                 flipY: App.flipY
             },
-            target: m.target.querySelector('.modal-body')
+            target: m.target.querySelector('.modal-body') as HTMLElement
         });
 
         body.$on('flipX', e => {

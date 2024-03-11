@@ -74,6 +74,8 @@ CREATE TABLE IF NOT EXISTS Sessions (
     requests INTEGER NOT NULL DEFAULT 0,
     created BIGINT NOT NULL,
     prevUrl TEXT
+
+    -- customData TEXT NOT NULL DEFAULT '{}' -- added in 1-4-0
 );
 
 CREATE TABLE IF NOT EXISTS AccountSettings (
@@ -106,5 +108,5 @@ CREATE TABLE IF NOT EXISTS ServerRequests (
     url TEXT NOT NULL,
     body TEXT NOT NULL,
     response TEXT,
-    date TEXT NOT NULL
+    date INTEGER NOT NULL
 );

@@ -17,7 +17,7 @@ import { Polygon } from '../canvas/polygon';
 import { Circle } from '../canvas/circle';
 import { Color } from '../../submodules/colors/color';
 import { Settings } from '../settings';
-import { attempt, attemptAsync, Result } from '../../../shared/attempt';
+import { attempt, attemptAsync, Result } from '../../../shared/check';
 import { Container } from '../canvas/container';
 import { TraceArray } from '../../../shared/submodules/tatorscout-calculations/trace';
 import {
@@ -249,7 +249,11 @@ class MatchData {
     public static get(): MatchData {
         const d = window.localStorage.getItem('matchData');
         if (!d) return new MatchData();
-        const data = JSON.parse(d);
+        const data = JSON.parse(d) as {
+            matchNumber: number;
+            teamNumber: number;
+            compLevel: 'pr' | 'qm' | 'qf' | 'sf' | 'f';
+        };
         return new MatchData(data.matchNumber, data.teamNumber, data.compLevel);
     }
 
@@ -325,7 +329,10 @@ class FieldOrientation {
     public static get() {
         const d = window.localStorage.getItem('fieldOrientation');
         if (!d) return new FieldOrientation();
-        const data = JSON.parse(d);
+        const data = JSON.parse(d) as {
+            flipX: boolean;
+            flipY: boolean;
+        };
         return new FieldOrientation(data.flipX, data.flipY);
     }
 
@@ -373,6 +380,7 @@ type GlobalEvents = {
     'change-group': number;
     'change-match': MatchData;
     'change-name': string;
+    'new-event': EventData;
 };
 
 /**
@@ -388,6 +396,17 @@ export class App<
     z extends Zones = Zones,
     p extends TraceParse = TraceParse
 > {
+    public static button(classes: string[], html: string | Node) {
+        const b = document.createElement('button');
+        if (typeof html === 'string') {
+            b.innerHTML = html;
+        } else {
+            b.appendChild(html);
+        }
+        b.classList.add('btn', 'p-1', ...classes);
+        return b;
+    }
+
     private static readonly emitter = new EventEmitter<keyof GlobalEvents>();
 
     public static on<E extends keyof GlobalEvents>(
@@ -431,6 +450,16 @@ export class App<
 
     public static matchData = MatchData.get();
     public static $scoutName = window.localStorage.getItem('scoutName') || '';
+    public static $preScouting = window.localStorage.getItem('preScouting') === 'true';
+
+    public static get preScouting() {
+        return App.$preScouting;
+    }
+
+    public static set preScouting(preScouting: boolean) {
+        App.$preScouting = preScouting;
+        window.localStorage.setItem('preScouting', preScouting.toString());
+    }
 
     public static get scoutName() {
         return App.$scoutName;
@@ -574,7 +603,10 @@ export class App<
                 app.currentTick = tick;
                 tick.point = [p[1], p[2]];
                 app.currentLocation = tick.point;
-                const obj = app.appObjects[p[3]] as AppObject<unknown, Action>;
+                const obj = app.appObjects[p[3] as number] as AppObject<
+                    unknown,
+                    Action
+                >;
                 obj.change(app.currentLocation);
             } catch (e) {
                 console.error(e);
@@ -608,7 +640,7 @@ export class App<
             const data = files.value
                 .map(d => {
                     try {
-                        const data = JSON.parse(d.text);
+                        const data = JSON.parse(d.text) as Match;
                         if (!data.trace) throw new Error('Data is not correct');
                         return data;
                     } catch (e) {
@@ -640,12 +672,20 @@ export class App<
         });
     }
 
-    public static async getEventData(): Promise<Result<EventData>> {
+    public static async getEventData(key?: string): Promise<Result<EventData>> {
         return attemptAsync(async () => {
-            if (App.$eventData) return App.$eventData;
-            const res = await ServerRequest.post<EventData>('/event-data');
+            // console.log(!key, App.$eventData);
+            if (!key && !!App.$eventData) return App.$eventData;
+            // console.log('Requesting event data');
+            const res = await ServerRequest.post<EventData>('/event-data', {
+                key: key || '',
+            });
             if (res.isOk()) {
+                const prev = App.$eventData;
                 App.$eventData = res.value;
+                if (prev?.eventKey !== res.value.eventKey) {
+                    App.emit('new-event', res.value);
+                }
                 return res.value;
             } else {
                 alert('Error getting scout groups');
@@ -765,7 +805,7 @@ export class App<
         this.canvas.data = this;
 
         for (const [action, icon] of Object.entries(this.icons)) {
-            this.icons[action] = icon.clone();
+            this.icons[action as keyof typeof this.icons] = icon.clone();
         }
 
         // if (App.cache()) {
@@ -932,7 +972,7 @@ export class App<
             this.yOffset = 0;
 
             for (const o of this.gameObjects) {
-                const { element } = o;
+                const { element, viewCondition } = o;
                 let { x, y } = o;
 
                 x = App.flipY ? 1 - x : x; // flip around y axis
@@ -940,6 +980,14 @@ export class App<
 
                 element.style.left = `${x * this.canvas.width + xOffset}px`;
                 element.style.top = `${y * this.canvas.height}px`;
+
+                if (viewCondition && this.currentTick) {
+                    if (viewCondition(this.currentTick)) {
+                        element.style.display = 'block';
+                    } else {
+                        element.style.display = 'none';
+                    }
+                }
             }
         } else {
             const yOffset = (target.clientHeight - target.clientWidth / 2) / 2;
@@ -953,7 +1001,7 @@ export class App<
             this.yOffset = yOffset;
 
             for (const o of this.gameObjects) {
-                const { element } = o;
+                const { element, viewCondition } = o;
                 let { x, y } = o;
 
                 x = App.flipX ? 1 - x : x; // flip around y axis
@@ -961,6 +1009,14 @@ export class App<
 
                 element.style.left = `${x * this.canvas.width}px`;
                 element.style.top = `${y * this.canvas.height + yOffset}px`;
+
+                if (viewCondition && this.currentTick) {
+                    if (viewCondition(this.currentTick)) {
+                        element.style.display = 'block';
+                    } else {
+                        element.style.display = 'none';
+                    }
+                }
             }
         }
 
@@ -1087,6 +1143,7 @@ export class App<
         object: AppObject<any, a>;
         element: HTMLElement;
         alliance: 'red' | 'blue' | null;
+        viewCondition?: (tick: Tick<a>) => boolean;
     }[] = [];
 
     public readonly areas = {} as {
@@ -1246,7 +1303,7 @@ export class App<
      * @readonly
      * @type {Tick[]}
      */
-    public ticks: Tick<a>[];
+    public ticks: Tick<a>[] = [];
 
     /**
      * Description placeholder
@@ -1323,9 +1380,17 @@ export class App<
             App.save(this as App<any, any, any>);
         };
 
-        const start = () => {
+        const start = (e: MouseEvent | TouchEvent) => {
+            const [x, y] = this.canvas.getXY(e);
             cover.style.display = 'none';
             run(this.currentTick || this.ticks[0], 0);
+            const newEvent = new Event('mousedown');
+            Object.defineProperties(newEvent, {
+                clientX: { value: x },
+                clientY: { value: y },
+                touches: { value: [{ clientX: x, clientY: y }] }
+            });
+            this.canvasEl.dispatchEvent(newEvent);
             cover.removeEventListener('mousedown', start);
             cover.removeEventListener('touchstart', start);
         };
@@ -1404,7 +1469,9 @@ export class App<
     get state(): {
         [key: string]: unknown;
     } {
-        const output = {};
+        const output: {
+            [key: string]: unknown;
+        } = {};
         for (const action of this.gameObjects) {
             output[action.object.name] = action.object.state;
         }
@@ -1499,10 +1566,11 @@ export class App<
         object: AppObject<T, a>,
         button: HTMLElement,
         convert?: (state: T) => string,
-        alliance: 'red' | 'blue' | null = null
+        alliance: 'red' | 'blue' | null = null,
+        viewCondition?: (tick: Tick) => boolean
     ) {
         const [x, y] = point;
-        this.gameObjects.push({ x, y, object, element: button, alliance });
+        this.gameObjects.push({ x, y, object, element: button, alliance, viewCondition });
         if (!button.innerHTML) button.innerText = object.name;
         const defaultHTML = button.innerHTML;
         button.style.position = 'absolute';
@@ -1519,9 +1587,11 @@ export class App<
                     break;
             }
 
-            button.innerHTML = `${defaultHTML}: ${
-                convert ? convert(state.state) : state.state
-            }`;
+            const content = convert ? convert(
+                state as any
+            ) : state;
+
+            button.innerHTML = `${defaultHTML}${content ? `: ${content}` : ''}`;
         });
 
         button.addEventListener('click', () => {
@@ -1700,7 +1770,7 @@ export class App<
             move(x, y);
         });
 
-        this.canvasEl.addEventListener('touchend', e => {
+        this.canvasEl.addEventListener('touchend', _e => {
             // e.preventDefault();
 
             this.isDrawing = false;
@@ -1912,7 +1982,8 @@ export class App<
             matchNumber: App.matchData.matchNumber,
             teamNumber: App.matchData.teamNumber,
             group: App.group as 0 | 1 | 2 | 3 | 4 | 5,
-            compLevel: App.matchData.compLevel
+            compLevel: App.matchData.compLevel,
+            preScouting: App.preScouting
             // don't need orientation, because it's corrected in this.pull()
         };
 

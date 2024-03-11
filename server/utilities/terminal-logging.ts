@@ -1,24 +1,31 @@
-import { __root } from './env.ts';
-import { Colors } from './colors.ts';
-import * as blog from 'https://deno.land/x/blog@0.3.3/deps.ts';
-import { relative, unify } from './env.ts';
-import { log as toCsv } from './files.ts';
-import { dateTime } from '../../shared/clock.ts';
+import { __root } from './env';
+import { Colors } from './colors';
+import { dateTime } from '../../shared/clock';
+import stack from 'callsite';
+import path from 'path';
 
 /**
- * Retrieves the callsite information
- * @date 10/12/2023 - 3:26:33 PM
+ * Returns the file path, line number, and function name of the current site
+ * @date 3/8/2024 - 5:58:55 AM
+ *
+ * @returns {{ filePath: any; lineNumber: any; fn: any; }}
  */
 const getSite = () => {
-    const site = blog.callsites()[3];
-    const p = site.getFileName() || '';
+    const s = stack()[3];
     return {
-        filePath: relative(__root, unify(site.getFileName() || '')),
-        lineNumber: (site.getLineNumber() || 0) + 1,
-        fn: site.getFunctionName() + '()' || 'Global | Unnamed',
+        filePath: s.getFileName() || '',
+        lineNumber: (s.getLineNumber() || 0) + 1,
+        fn: s.getFunctionName() || 'Global | Unnamed'
     };
 };
 
+/**
+ * Runs a log, error, or warn message
+ * @date 3/8/2024 - 5:58:55 AM
+ *
+ * @param {('log' | 'error' | 'warn')} type
+ * @param {...unknown[]} args
+ */
 const runLog = (type: 'log' | 'error' | 'warn', ...args: unknown[]) => {
     let color = Colors.FgGreen;
     switch (type) {
@@ -39,45 +46,36 @@ const runLog = (type: 'log' | 'error' | 'warn', ...args: unknown[]) => {
 
     const d = dateTime();
 
-    if (!Deno.args.includes('--no-console')) {
-        console[type](
-            color,
-            `[${filePath}:${lineNumber}]`,
-            // Colors.FgMagenta,
-            // `[${d}]`,
-            Colors.FgCyan,
-            `[${fn}]`,
-            Colors.Reset,
-            ...args,
-        );
-    }
-
-    if (Deno.args.includes('--console-to-csv')) {
-        toCsv('console', {
-            type,
-            date: d,
-            file: filePath,
-            line: lineNumber,
-            fn,
-            args: args ? JSON.stringify(args) : '',
-        });
-    }
+    console[type](
+        color,
+        `[${path.relative(__root, filePath)}:${lineNumber}]`,
+        Colors.FgCyan,
+        `[${fn}]`,
+        Colors.FgMagenta,
+        `[${d}]`,
+        Colors.Reset,
+        ...args
+    );
 };
 
 /**
- * Creates a log message, including the file path, line number, and function name
- * @date 10/12/2023 - 3:26:33 PM
+ * Logs a message
+ * @date 3/8/2024 - 5:58:55 AM
+ *
+ * @param {...unknown[]} args
  */
 export const log = (...args: unknown[]) => runLog('log', ...args);
-
 /**
- * Creates an error message, including the file path, line number, and function name
- * @date 10/12/2023 - 3:26:33 PM
+ * Logs an error message
+ * @date 3/8/2024 - 5:58:55 AM
+ *
+ * @param {...unknown[]} args
  */
 export const error = (...args: unknown[]) => runLog('error', ...args);
-
 /**
- * Creates a warning message, including the file path, line number, and function name
- * @date 10/12/2023 - 3:26:32 PM
+ * Logs a warning message
+ * @date 3/8/2024 - 5:58:55 AM
+ *
+ * @param {...unknown[]} args
  */
 export const warn = (...args: unknown[]) => runLog('warn', ...args);

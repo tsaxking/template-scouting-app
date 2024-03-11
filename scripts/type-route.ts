@@ -1,36 +1,40 @@
-const parse = (ts: string) => {
-    // console.log(ts);
-    // ts is a typescript file
-    // parse it for the generic
-    // (router|app).(get/post/use/final)<{generic}>(path, ...middleware, callback);
+// Purpose: find all <{generic}> then create a validate function for each
+// this is currently in the process of being implemented, don't use it yet pls
 
-    const generic = /(router|app)\.(get|post|use|final)<{([\s\S]+?)}>/g;
-    const middleware = /(router|app)\.(get|post|use|final)\(([\s\S]+?)\)/g;
+{
+    const parse = (ts: string) => {
+        // console.log(ts);
+        // ts is a typescript file
+        // parse it for the generic
+        // (router|app).(get/post/use/final)<{generic}>(path, ...middleware, callback);
 
-    const generics = Array.from(ts.matchAll(generic)).map(m => {
-        const [_, _router, _method, generic] = m as string[];
+        const generic = /(router|app)\.(get|post|use|final)<{([\s\S]+?)}>/g;
+        const middleware = /(router|app)\.(get|post|use|final)\(([\s\S]+?)\)/g;
+
+        const generics = Array.from(ts.matchAll(generic)).map(m => {
+            const [_, _router, _method, generic] = m as string[];
+
+            return {
+                generic
+            };
+        });
+
+        const middlewares = Array.from(ts.matchAll(middleware)).map(m => {
+            const [_, _router, _method, middleware] = m as string[];
+
+            return {
+                middleware
+            };
+        });
 
         return {
-            generic
+            generics,
+            middlewares
         };
-    });
-
-    const middlewares = Array.from(ts.matchAll(middleware)).map(m => {
-        const [_, _router, _method, middleware] = m as string[];
-
-        return {
-            middleware
-        };
-    });
-
-    return {
-        generics,
-        middlewares
     };
-};
 
-console.log(
-    parse(`
+    console.log(
+        parse(`
 router.post('/get-roles', (req, res) => {
     res.json(Role.all());
 });
@@ -113,4 +117,5 @@ router.post<{
     res.sendStatus('account:' + status as StatusId, { username });
 });
 `)
-);
+    );
+}

@@ -1,28 +1,34 @@
-import env, { __root, resolve } from './utilities/env.ts';
-import { error, log } from './utilities/terminal-logging.ts';
-import { App, ResponseStatus } from './structure/app/app.ts';
-import { log as serverLog } from './utilities/files.ts';
-import { router as admin } from './routes/admin.ts';
-import { router as account } from './routes/account.ts';
-import { router as api } from './routes/api.ts';
-import { FileUpload } from './middleware/stream.ts';
-import { ReqBody } from './structure/app/req.ts';
-import { validate } from './middleware/data-type.ts';
-import { parseCookie } from '../shared/cookie.ts';
-import { io, Socket } from './structure/socket.ts';
+import env, { __root } from './utilities/env';
+import { error, log } from './utilities/terminal-logging';
+import { App, ResponseStatus } from './structure/app/app';
+import { getJSON, getJSONSync, log as serverLog } from './utilities/files';
+import { homeBuilder } from './utilities/page-builder';
+import Account from './structure/accounts';
+import { router as admin } from './routes/admin';
+import { router as account } from './routes/account';
+import { router as api } from './routes/api';
+import { router as role } from './routes/roles';
+import { FileUpload } from './middleware/stream';
+import { ReqBody } from './structure/app/req';
+import { parseCookie } from '../shared/cookie';
+import { stdin } from './utilities/stdin';
+import path from 'path';
+import { DB } from './utilities/databases';
+import { Session } from './structure/sessions';
+import { startPinger } from './utilities/ping';
 import {
     Match,
-    validateObj,
-} from '../shared/submodules/tatorscout-calculations/trace.ts';
-import { ServerRequest } from './utilities/requests.ts';
-import { getJSONSync } from './utilities/files.ts';
-import { startPinger } from './utilities/ping.ts';
-import Account from './structure/accounts.ts';
+    validateObj
+} from '../shared/submodules/tatorscout-calculations/trace';
+import { validate } from './middleware/data-type';
+import { ServerRequest } from './utilities/requests';
+import { TBA } from './utilities/tba/tba';
+import { TBAEvent } from '../shared/tba';
 
-if (Deno.args.includes('--stats')) {
+if (process.argv.includes('--stats')) {
     const measure = () => {
         console.clear();
-        const { rss, heapUsed, heapTotal } = Deno.memoryUsage();
+        const { rss, heapUsed, heapTotal } = process.memoryUsage();
         console.log('rss:', rss / 1024 / 1024, 'MB');
         console.log('heap:', heapUsed / 1024 / 1024, 'MB');
         console.log('total:', heapTotal / 1024 / 1024, 'MB');
@@ -32,22 +38,11 @@ if (Deno.args.includes('--stats')) {
 
 const port = +(env.PORT || 3000);
 
-export const app = new App(port, env.DOMAIN || `http://localhost:${port}`, {
-    // onListen: () => {
-    // log(`Listening on ${domain}`);
-    // },
-    // onConnection: (socket) => {
-    // log('New connection:', socket.id);
-    // },
-    blockedIps: (() => {
-        const blocked = getJSONSync<string[]>('blocked-ips');
-        if (blocked.isOk()) return blocked.value;
-        return [];
-    })(),
-    ioPort: +(env.SOCKET_PORT || port + 1),
-});
+export const app = new App<{
+    isTrusted: boolean;
+}>(port, env.DOMAIN || `http://localhost:${port}`);
 
-if (Deno.args.includes('--ping')) {
+if (process.argv.includes('--ping')) {
     const pinger = startPinger();
     pinger.on('disconnect', () => {
         console.log('Servers are disconnected!');
@@ -60,26 +55,17 @@ if (Deno.args.includes('--ping')) {
     });
 }
 
-io.on('connection', (s: Socket) => {
-    log('New connection:', s.id);
-    s.on('disconnect', () => {
-        log('Disconnected:', s.id);
-    });
-});
-app.use('/*', (req, res, next) => {
-    log(`[${req.method}] ${req.url}`);
-    next();
-});
-
 app.post('/env', (req, res) => {
     res.json({
         ENVIRONMENT: env.ENVIRONMENT,
+        ALLOW_INTERNET: env.ALLOW_INTERNET,
+        ALLOW_PRESCOUTING: env.ALLOW_PRESCOUTING
     });
 });
 
 app.post('/socket-init', (req, res) => {
     const cookie = req.headers.get('cookie');
-    res.json(parseCookie(cookie));
+    res.json(parseCookie(cookie || ''));
 });
 
 app.get('/*', (req, res, next) => {
@@ -87,23 +73,26 @@ app.get('/*', (req, res, next) => {
     next();
 });
 
-app.static('/client', resolve(__root, './client'));
-app.static('/public', resolve(__root, './public'));
-app.static('/dist', resolve(__root, './dist'));
-app.static('/uploads', resolve(__root, './uploads'));
+app.static('/client', path.resolve(__root, './client'));
+app.static('/public', path.resolve(__root, './public'));
+app.static('/dist', path.resolve(__root, './dist'));
+app.static('/uploads', path.resolve(__root, './storage/uploads'));
 
 app.post('/socket-url', (req, res) => {
     res.json({
-        url: env.SOCKET_DOMAIN,
+        url: env.SOCKET_DOMAIN
     });
 });
 
 app.get('/favicon.ico', (req, res) => {
-    res.sendFile(resolve(__root, './public/pictures/logo-square.png'));
+    res.sendFile(path.resolve(__root, './public/pictures/logo-square.png'));
 });
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function stripHtml(body: any) {
+app.get('/robots.txt', (req, res) => {
+    res.sendFile(path.resolve(__root, './public/pictures/robots.jpg'));
+});
+
+function stripHtml(body: ReqBody) {
     if (!body) return body;
     let files: unknown;
 
@@ -116,7 +105,8 @@ function stripHtml(body: any) {
 
     const remove = (str: string) => str.replace(/(<([^>]+)>)/gi, '');
 
-    const strip = (obj: unknown): unknown => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const strip = (obj: any): unknown => {
         switch (typeof obj) {
             case 'string':
                 return remove(obj);
@@ -145,7 +135,7 @@ function stripHtml(body: any) {
 app.post('/*', (req, res, next) => {
     req.body = stripHtml(req.body as ReqBody);
 
-    log('[POST]', req.url.pathname);
+    log('[POST]', req.url);
     try {
         const b = JSON.parse(JSON.stringify(req.body)) as {
             $$files?: FileUpload[];
@@ -163,25 +153,25 @@ app.post('/*', (req, res, next) => {
     next();
 });
 
-// TODO: There is an error with the email validation middleware
-// app.post('/*', emailValidation(['email', 'confirmEmail'], {
-//     onspam: (req, res, next) => {
-//         res.sendStatus('spam:detected');
-//     },
-//     // onerror: (req, res, next) => {
-//     //     // res.sendStatus('unknown:error');
-//     //     next();
-//     // }
-// }));
-
 app.get('/', (req, res) => {
     res.redirect('/home');
+});
+
+app.get('/*', async (req, res, next) => {
+    const homePages = await getJSON<string[]>('pages/home');
+    if (homePages.isOk()) {
+        if (homePages.value.includes(req.url.slice(1))) {
+            const r = await homeBuilder(req.url);
+            if (r.isOk()) res.send(r.value);
+        }
+    }
+    next();
 });
 
 app.get('/test/:page', (req, res, next) => {
     if (env.ENVIRONMENT !== 'dev') return next();
     const s = res.sendTemplate('entries/test/' + req.params.page);
-    if (s === ResponseStatus.error || s === ResponseStatus.fileNotFound) {
+    if (s.isErr()) {
         res.sendStatus('page:not-found', { page: req.params.page });
     }
 });
@@ -189,26 +179,42 @@ app.get('/test/:page', (req, res, next) => {
 app.route('/api', api);
 app.route('/account', account);
 
-// app.use('/*', Account.autoSignIn(env.AUTO_SIGN_IN));
+app.get('/sign-in', (req, res) => {
+    if (env.SECURITY_PIN && !req.session.customData.isTrusted) {
+        res.sendTemplate('entries/sign-in');
+    } else {
+        res.redirect('/app');
+    }
+});
 
-// app.get('/*', (req, res, next) => {
-//     if (!req.session.accountId) {
-//         if (
-//             ![
-//                 '/account/sign-in',
-//                 '/account/sign-up',
-//                 '/account/forgot-password',
-//             ].includes(req.url)
-//         ) {
-//             // only save the previous url if it's not a sign-in, sign-up, or forgot-password page
-//             // this is so that the user can be redirected back to the page they initially were trying to access
-//             req.session.prevUrl = req.url;
-//         }
-//         return res.redirect('/account/sign-in');
-//     }
+app.post<{
+    pin: string;
+}>(
+    '/sign-in',
+    validate({
+        pin: 'string'
+    }),
+    (req, res) => {
+        console.log('pin:', req.body.pin, env.SECURITY_PIN);
+        if (req.body.pin === env.SECURITY_PIN) {
+            req.session.customData.isTrusted = true;
+            req.session.save();
+            res.redirect('/app');
+        } else {
+            res.sendStatus('pin:incorrect');
+        }
+    }
+);
 
-//     next();
-// });
+app.use('/*', (req, res, next) => {
+    console.log('isTrusted:', req.session.customData);
+    if (env.SECURITY_PIN && !req.session.customData.isTrusted) {
+        console.log('redirecting to sign-in');
+        res.redirect('/sign-in');
+    } else {
+        next();
+    }
+});
 
 app.get('/dashboard/admin', Account.allowPermissions('admin'), (_req, res) => {
     res.sendTemplate('entries/dashboard/admin');
@@ -230,7 +236,7 @@ app.post<Match>(
         validateObj as {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             [key in keyof Match]: any; // TODO: export IsValid type
-        },
+        }
     ),
     async (req, res) => {
         const {
@@ -244,7 +250,12 @@ app.post<Match>(
             date,
             group,
             trace,
+            preScouting
         } = req.body;
+
+        if (preScouting && !env.ALLOW_PRESCOUTING) {
+            return res.sendStatus('pre-scouting:not-allowed');
+        }
 
         // I don't want to pass in req.body because it can have extra unneeded properties
         const result = await ServerRequest.submitMatch({
@@ -258,6 +269,7 @@ app.post<Match>(
             date,
             group,
             trace,
+            preScouting
         });
 
         if (result.isOk()) {
@@ -265,10 +277,9 @@ app.post<Match>(
                 matchNumber,
                 teamNumber,
                 compLevel,
-                data: result.value,
+                data: result.value
             });
         } else {
-            error;
             res.sendStatus('server-request:match-error', {
                 matchNumber,
                 teamNumber,
@@ -277,7 +288,7 @@ app.post<Match>(
                 scout,
                 date,
                 group,
-                trace,
+                trace
             });
 
             if (result.isOk()) {
@@ -285,7 +296,7 @@ app.post<Match>(
                     matchNumber,
                     teamNumber,
                     compLevel,
-                    data: result.value,
+                    data: result.value
                 });
             } else {
                 error('Match submission error:', result.error);
@@ -293,21 +304,51 @@ app.post<Match>(
                     matchNumber,
                     teamNumber,
                     compLevel,
-                    error: result.error,
+                    error: result.error
                 });
             }
         }
-    },
+    }
 );
 
-app.post('/event-data', async (_req, res) => {
-    let name: string = 'dummy-event-data.json';
+app.post<{
+    key: string;
+}>('/event-data', async (req, res) => {
+    const { key } = req.body;
+
+    let name = 'dummy-event-data.json';
     if (env.ENVIRONMENT === 'prod') name = 'event-data.json';
+
+    if (env.ALLOW_PRESCOUTING && req.body.key) {
+        const data = await ServerRequest.getEventData(key);
+        // console.log(data);
+        if (data.isOk()) return res.json(data.value);
+        else return res.status(500).json(data.error);
+    }
+
     const data = getJSONSync(name);
     if (data.isOk()) {
         res.json(data.value);
     } else {
         res.status(500).json(data.error);
+    }
+});
+
+app.post<{ year: number; }>('/get-events', validate({
+    year: 'number'
+}), async (req, res) => {
+    if (!env.ALLOW_PRESCOUTING) return res.json([]); // if prescouting is not allowed, return an empty array
+    const events = await TBA.get<TBAEvent[]>('/events/' + req.body.year);
+    if (events.isOk()) {
+        res.json(events.value);
+    } else {
+        res.status(500).json(events.error);
+    }
+});
+
+app.get('/*', (req, res) => {
+    if (!res.fulfilled) {
+        res.sendStatus('page:not-found', { page: req.pathname });
     }
 });
 
@@ -318,35 +359,37 @@ app.final<{
 }>((req, res) => {
     // req.session.save();
 
-    serverLog('request', {
-        date: Date.now(),
-        duration: Date.now() - req.start,
-        ip: req.session?.ip,
-        method: req.method,
-        url: req.url.pathname,
-        status: res._status,
-        userAgent: req.headers.get('user-agent') || '',
-        body: req.method == 'post'
-            ? JSON.stringify(
-                (() => {
-                    let { body } = req;
-                    body = JSON.parse(JSON.stringify(body)) as {
-                        $$files?: FileUpload;
-                        password?: string;
-                        confirmPassword?: string;
-                    };
-                    delete body?.password;
-                    delete body?.confirmPassword;
-                    delete body?.$$files;
-                    return body;
-                })(),
-            )
-            : '',
-        params: JSON.stringify(req.params),
-        query: JSON.stringify(req.query),
-    });
-
-    if (!res.fulfilled) {
-        res.sendStatus('page:not-found');
+    if (res.fulfilled) {
+        serverLog('request', {
+            date: Date.now(),
+            duration: Date.now() - req.start,
+            ip: req.session?.ip,
+            method: req.method,
+            url: req.pathname,
+            status: res._status,
+            userAgent: req.headers.get('user-agent') || '',
+            // body: '',
+            body:
+                req.method == 'post' && req.body
+                    ? JSON.stringify(
+                          (() => {
+                              let { body } = req;
+                              body = JSON.parse(JSON.stringify(body)) as {
+                                  $$files?: FileUpload;
+                                  password?: string;
+                                  confirmPassword?: string;
+                              };
+                              delete body?.password;
+                              delete body?.confirmPassword;
+                              delete body?.$$files;
+                              return body;
+                          })()
+                      )
+                    : '',
+            params: JSON.stringify(req.params),
+            query: JSON.stringify(req.query)
+        });
     }
 });
+
+DB.em.on('connect', () => app.start());
