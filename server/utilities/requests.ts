@@ -43,24 +43,22 @@ export class ServerRequest {
             if (data.isErr()) throw data.error;
 
             if (data.isOk()) {
-                if (data.value.status.toString().startsWith('4')) {
+                if (data.value.status?.toString().startsWith('4')) {
                     throw new Error('Invalid request');
                 }
 
-                if (data.value.status.toString().startsWith('5')) {
+                if (data.value.status?.toString().startsWith('5')) {
                     throw new Error('Server error');
                 }
-
-                const json = await data.value.json();
 
                 if (url !== '/ping') {
                     DB.run('server-requests/update', {
                         id,
-                        response: JSON.stringify(json)
+                        response: JSON.stringify(data.value)
                     });
                 }
 
-                return json as T;
+                return data.value as T;
             } else {
                 throw new Error('No data');
             }

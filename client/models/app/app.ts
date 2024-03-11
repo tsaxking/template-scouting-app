@@ -379,6 +379,7 @@ type GlobalEvents = {
     'change-group': number;
     'change-match': MatchData;
     'change-name': string;
+    'new-event': EventData;
 };
 
 /**
@@ -437,6 +438,16 @@ export class App<
 
     public static matchData = MatchData.get();
     public static $scoutName = window.localStorage.getItem('scoutName') || '';
+    public static $preScouting = window.localStorage.getItem('preScouting') === 'true';
+
+    public static get preScouting() {
+        return App.$preScouting;
+    }
+
+    public static set preScouting(preScouting: boolean) {
+        App.$preScouting = preScouting;
+        window.localStorage.setItem('preScouting', preScouting.toString());
+    }
 
     public static get scoutName() {
         return App.$scoutName;
@@ -642,12 +653,20 @@ export class App<
         });
     }
 
-    public static async getEventData(): Promise<Result<EventData>> {
+    public static async getEventData(key?: string): Promise<Result<EventData>> {
         return attemptAsync(async () => {
-            if (App.$eventData) return App.$eventData;
-            const res = await ServerRequest.post<EventData>('/event-data');
+            // console.log(!key, App.$eventData);
+            if (!key && !!App.$eventData) return App.$eventData;
+            // console.log('Requesting event data');
+            const res = await ServerRequest.post<EventData>('/event-data', {
+                key: key || '',
+            });
             if (res.isOk()) {
+                const prev = App.$eventData;
                 App.$eventData = res.value;
+                if (prev?.eventKey !== res.value.eventKey) {
+                    App.emit('new-event', res.value);
+                }
                 return res.value;
             } else {
                 alert('Error getting scout groups');
@@ -1712,7 +1731,7 @@ export class App<
             move(x, y);
         });
 
-        this.canvasEl.addEventListener('touchend', e => {
+        this.canvasEl.addEventListener('touchend', _e => {
             // e.preventDefault();
 
             this.isDrawing = false;
@@ -1924,7 +1943,8 @@ export class App<
             matchNumber: App.matchData.matchNumber,
             teamNumber: App.matchData.teamNumber,
             group: App.group as 0 | 1 | 2 | 3 | 4 | 5,
-            compLevel: App.matchData.compLevel
+            compLevel: App.matchData.compLevel,
+            preScouting: App.preScouting
             // don't need orientation, because it's corrected in this.pull()
         };
 
