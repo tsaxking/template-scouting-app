@@ -71,7 +71,7 @@ const fns = {
             currentMatch.match_number,
             currentMatch.comp_level as 'pr' | 'qm' | 'qf' | 'sf' | 'f'
         );
-        
+
         App.group = eventData.assignments.groups.findIndex(g =>
             g.includes(team as number)
         );
