@@ -18,6 +18,9 @@ const sections: {
 let time = 0;
 
 let prev: App;
+let matchNumber: number = 0;
+let teamNumber: number = 0;
+let compLevel: string = '';
 
 const section = (s: Section) => {
     currentSection = s;
@@ -42,6 +45,10 @@ $: {
         app.on('end', end);
 
         prev = app;
+
+        matchNumber = App.matchData.matchNumber;
+        teamNumber = App.matchData.teamNumber;
+        compLevel = App.matchData.compLevel;
     }
 }
 
@@ -94,8 +101,7 @@ const formatTime = (time: number) => {
     {/each}
     <!-- team info -->
     <div class="position-absolute w-100 text-center bg-dark rounded text-light">
-        {App.matchData.teamNumber} - {App.matchData.compLevel}{App.matchData
-            .matchNumber}
+        {teamNumber} - {compLevel}{matchNumber}
     </div>
 </div>
 

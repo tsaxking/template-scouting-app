@@ -29,19 +29,10 @@ const onEventSelect = async (eventKey: string) => {
         name: t.nickname
     }));
 
-<<<<<<< Updated upstream
-    matchNum =
-        eventData.value.eventKey === eventKey
-            ? String(App.matchData.matchNumber)
-            : '';
-    teamNum =
-        eventData.value.eventKey === eventKey ? App.matchData.teamNumber : 0;
-=======
     matchNum = eventKey === eventData.value.eventKey ? String(App.matchData.matchNumber) : '';
     teamNum = eventKey === eventData.value.eventKey ? App.matchData.teamNumber : 0;
 
     App.selectMatch(1, 'qm');
->>>>>>> Stashed changes
 };
 
 $: onEventSelect(event);
