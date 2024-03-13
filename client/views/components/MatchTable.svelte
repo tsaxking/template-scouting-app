@@ -51,6 +51,7 @@ const fns = {
     },
     select: async (matchIndex: number, teamIndex?: number) => {
         d('select', { matchIndex, teamIndex });
+        // console.log('select', matchIndex, teamIndex);
         const res = await App.getEventData();
         if (res.isErr()) return console.error(res.error);
         const eventData = res.value;
@@ -60,14 +61,16 @@ const fns = {
         currentMatch = customMatches[matchIndex];
         let team: number | undefined = undefined;
 
-        if (team === undefined) {
+        // if (team === undefined) {
             team =
-                eventData.assignments.matchAssignments[App.group][matchIndex];
-        } else {
+                typeof teamIndex === 'number'
+                    ? currentMatch.teams[teamIndex]
+                    : eventData.assignments.matchAssignments[App.group][matchIndex];
+        // } else {
             App.group = eventData.assignments.groups.findIndex(g =>
                 g.includes(team as number)
             );
-        }
+        // }
 
         App.matchData.teamNumber = team;
         App.selectMatch(
@@ -168,7 +171,7 @@ onMount(() => {
                 {#each match.teams as team, index}
                     <td
                         class:fw-bold="{match.scoutIndex === index}"
-                        on:click="{() => fns.select(i, team)}"
+                        on:click="{() => fns.select(i, index)}"
                     >
                         {#if index > 2}
                             <!-- Blue alliance -->

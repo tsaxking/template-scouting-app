@@ -108,5 +108,5 @@ CREATE TABLE IF NOT EXISTS ServerRequests (
     url TEXT NOT NULL,
     body TEXT NOT NULL,
     response TEXT,
-    date INTEGER NOT NULL
+    date BIGINT NOT NULL
 );
