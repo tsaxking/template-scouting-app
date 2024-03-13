@@ -1445,9 +1445,10 @@ export class App<
      * @public
      * @type {*}
      */
-    public set border(b: Border) {
+    public set border(b: Border | undefined) {
+        if (this.$border) this.canvas.remove(this.$border);
         this.$border = b;
-        this.canvas.add(b);
+        if (b) this.canvas.add(b);
     }
 
     // ms since start
