@@ -29,8 +29,12 @@ const onEventSelect = async (eventKey: string) => {
         name: t.nickname
     }));
 
-    matchNum = eventKey === eventData.value.eventKey ? String(App.matchData.matchNumber) : '';
-    teamNum = eventKey === eventData.value.eventKey ? App.matchData.teamNumber : 0;
+    matchNum =
+        eventKey === eventData.value.eventKey
+            ? String(App.matchData.matchNumber)
+            : '';
+    teamNum =
+        eventKey === eventData.value.eventKey ? App.matchData.teamNumber : 0;
 
     App.selectMatch(1, 'qm');
 };
