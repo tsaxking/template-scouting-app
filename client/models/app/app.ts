@@ -453,7 +453,9 @@ export class App<
     public static $preScouting =
         window.localStorage.getItem('preScouting') === 'true';
 
-    public static $events: TBAEvent[] = JSON.parse(window.localStorage.getItem('events') || '[]');
+    public static $events: TBAEvent[] = JSON.parse(
+        window.localStorage.getItem('events') || '[]'
+    );
 
     public static get events() {
         return App.$events;

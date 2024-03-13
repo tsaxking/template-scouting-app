@@ -29,8 +29,12 @@ const onEventSelect = async (eventKey: string) => {
         name: t.nickname
     }));
 
-    matchNum = eventData.value.eventKey === eventKey ? String(App.matchData.matchNumber) : '';
-    teamNum = eventData.value.eventKey === eventKey ? App.matchData.teamNumber : 0;
+    matchNum =
+        eventData.value.eventKey === eventKey
+            ? String(App.matchData.matchNumber)
+            : '';
+    teamNum =
+        eventData.value.eventKey === eventKey ? App.matchData.teamNumber : 0;
 };
 
 $: onEventSelect(event);

@@ -65,7 +65,7 @@ const fns = {
                 events: events.filter(
                     e => e.end_date < new Date().toISOString()
                 ),
-                event: eventData.eventKey,
+                event: eventData.eventKey
             }
         });
 
