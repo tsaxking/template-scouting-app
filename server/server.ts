@@ -347,7 +347,9 @@ app.post<{ year: number }>(
     async (req, res) => {
         if (!env.ALLOW_PRESCOUTING) return res.json([]); // if prescouting is not allowed, return an empty array
         const events = await TBA.get<TBAEvent[]>('/events/' + req.body.year);
+        // console.log({ events });
         if (events.isOk()) {
+            // console.log('num events:', events.value?.length);
             res.json(events.value);
         } else {
             res.status(500).json(events.error);

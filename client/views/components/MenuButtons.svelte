@@ -41,7 +41,7 @@ const fns = {
         };
 
         let events: TBAEvent[] = [];
-        if (env.ALLOW_PRESCOUTING) {
+        if ((await env).ALLOW_PRESCOUTING === 'true') {
             const data = await ServerRequest.post<TBAEvent[]>('/get-events', {
                 year: new Date().getFullYear()
             });
