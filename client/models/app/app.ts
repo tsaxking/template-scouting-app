@@ -474,7 +474,7 @@ export class App<
 
     public static $group = window.localStorage.getItem('group')
         ? parseInt(window.localStorage.getItem('group')!)
-        : -1;
+        : 0; // force to be group 1 if none is selected
 
     public static get group() {
         return App.$group;
@@ -2025,7 +2025,7 @@ socket.on('connect', async () => {
     ) as Match[];
     const results = await App.upload(...failed);
     if (results.isOk()) {
-        window.localStorage.saveItem(
+        window.localStorage.setItem(
             'savedMatches',
             JSON.stringify(failed.filter((m, i) => !results.value[i]))
         );

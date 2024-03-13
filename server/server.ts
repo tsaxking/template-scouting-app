@@ -324,6 +324,7 @@ app.post<{
     if (env.ENVIRONMENT === 'prod') name = 'event-data.json';
 
     if (env.ALLOW_PRESCOUTING && req.body.key) {
+        console.log('Requesting event data for', key);
         const data = await ServerRequest.getEventData(key);
         // console.log(data);
         if (data.isOk()) return res.json(data.value);
