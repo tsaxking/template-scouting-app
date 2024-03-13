@@ -21,7 +21,7 @@ let app: App;
 
 const generate = () =>
     App.matchData.getAlliance().then(a => {
-        console.log(a);
+        console.log('Building app:', a);
         if (a) {
             app = generate2024App(a);
             // reassign app at restart
