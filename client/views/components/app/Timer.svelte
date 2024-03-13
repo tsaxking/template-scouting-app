@@ -94,7 +94,8 @@ const formatTime = (time: number) => {
     {/each}
     <!-- team info -->
     <div class="position-absolute w-100 text-center bg-dark rounded text-light">
-        {App.matchData.teamNumber} - {App.matchData.compLevel}{App.matchData.matchNumber}
+        {App.matchData.teamNumber} - {App.matchData.compLevel}{App.matchData
+            .matchNumber}
     </div>
 </div>
 
