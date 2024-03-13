@@ -453,6 +453,17 @@ export class App<
     public static $preScouting =
         window.localStorage.getItem('preScouting') === 'true';
 
+    public static $events: TBAEvent[] = JSON.parse(window.localStorage.getItem('events') || '[]');
+
+    public static get events() {
+        return App.$events;
+    }
+
+    public static set events(events: TBAEvent[]) {
+        App.$events = events;
+        window.localStorage.setItem('events', JSON.stringify(events));
+    }
+
     public static get preScouting() {
         return App.$preScouting;
     }
@@ -1601,7 +1612,7 @@ export class App<
                     break;
             }
 
-            const content = convert ? convert(state as any) : state;
+            const content = convert ? convert(state.state) : state;
 
             button.innerHTML = `${defaultHTML}${content ? `: ${content}` : ''}`;
         });

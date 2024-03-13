@@ -40,15 +40,14 @@ const fns = {
             teamNum: App.matchData.teamNumber
         };
 
-        let events: TBAEvent[] = [];
-        if ((await env).ALLOW_PRESCOUTING === 'true') {
+        let events: TBAEvent[] = App.events;
+        if ((await env).ALLOW_PRESCOUTING === 'true' && !events.length) {
             const data = await ServerRequest.post<TBAEvent[]>('/get-events', {
                 year: new Date().getFullYear()
             });
             if (data.isOk()) {
-                events = data.value.filter(
-                    e => e.end_date < new Date().toISOString()
-                );
+                events = data.value;
+                App.events = data.value;
             }
         }
 
@@ -63,8 +62,10 @@ const fns = {
                 compLevel: App.matchData.compLevel,
                 teamNum: App.matchData.teamNumber,
                 matchNum: String(App.matchData.matchNumber),
-                events,
-                event: eventData.eventKey
+                events: events.filter(
+                    e => e.end_date < new Date().toISOString()
+                ),
+                event: eventData.eventKey,
             }
         });
 
