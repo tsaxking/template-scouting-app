@@ -61,21 +61,19 @@ const fns = {
         currentMatch = customMatches[matchIndex];
         let team: number | undefined = undefined;
 
-        // if (team === undefined) {
         team =
             typeof teamIndex === 'number'
                 ? currentMatch.teams[teamIndex]
                 : eventData.assignments.matchAssignments[App.group][matchIndex];
-        // } else {
-        App.group = eventData.assignments.groups.findIndex(g =>
-            g.includes(team as number)
-        );
-        // }
 
         App.matchData.teamNumber = team;
         App.selectMatch(
             currentMatch.match_number,
             currentMatch.comp_level as 'pr' | 'qm' | 'qf' | 'sf' | 'f'
+        );
+        
+        App.group = eventData.assignments.groups.findIndex(g =>
+            g.includes(team as number)
         );
 
         currentMatchIndex = matchIndex;
