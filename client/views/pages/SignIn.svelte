@@ -17,11 +17,13 @@ let form: HTMLFormElement;
                 on:submit|preventDefault="{() => {
                     ServerRequest.post('/sign-in', {
                         pin: form.pin.value
-                    }).then(() => {
-                        window.location.href = '/';
-                    }).catch((error) => {
-                        console.error(error);
-                    });
+                    })
+                        .then(() => {
+                            window.location.href = '/';
+                        })
+                        .catch(error => {
+                            console.error(error);
+                        });
                 }}"
             >
                 <div class="form-group">
