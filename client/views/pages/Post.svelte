@@ -100,7 +100,6 @@ const open = async (active: string) => {
     }
 
     const traceArray = app.pull();
-    console.log(traceArray);
     const secondsNotMoving = Trace.secondsNotMoving(
         traceArray.filter((p, i, a) => {
             const lastClimb = a.findLastIndex(p => p[3] === 'clb');
@@ -120,13 +119,10 @@ const open = async (active: string) => {
     }
     stop = c.animate();
 
-    console.log('Animating...');
-
     const res = await app.getRecap(c);
     if (res.isErr()) console.warn(res.error);
     if (res.isOk()) {
         const container = res.value;
-        console.log({ container });
         jQuery('#slider').slider({
             range: true,
             min: 0,
