@@ -217,6 +217,11 @@ const submit = async () => {
         data[key].value = false;
         data[key].comment = '';
     }
+
+    // these will reset the comments
+    selectedAuto = [];
+    selectedTeleop = [];
+    selectedEnd = [];
 };
 
 const buildComment = (type: 'auto' | 'tele' | 'end') => {
