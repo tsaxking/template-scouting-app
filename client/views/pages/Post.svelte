@@ -267,8 +267,7 @@ const buildComment = (type: 'auto' | 'tele' | 'end') => {
     modal.addButton(submit);
 
     modal.show();
-}
-
+};
 </script>
 
 <div class="container mb-3">
@@ -302,11 +301,10 @@ const buildComment = (type: 'auto' | 'tele' | 'end') => {
                             bind:value="{data[section].comment}"
                         ></textarea>
                     </div>
-                    <hr>
+                    <hr />
                 {/each}
             </div>
         </div>
-
     {/if}
 
     <div class="row mb-1">
@@ -326,24 +324,23 @@ const buildComment = (type: 'auto' | 'tele' | 'end') => {
             </button>
         </div>
         <div class="col-12 mt-1">
-
             <textarea
-            class="form-control"
-            rows="5"
-            id="textarea-auto"
-            bind:value="{autoComment}"
-        ></textarea>
+                class="form-control"
+                rows="5"
+                id="textarea-auto"
+                bind:value="{autoComment}"
+            ></textarea>
         </div>
     </div>
 
-    <hr>
+    <hr />
 
     <div class="row mb-3">
         <div class="col-8">
             <label for="textarea-general">
-                Please leave a comment here on how the robot performed in the teleop period.
-                (These are very helpful for analyzing the robot's performance,
-                please be detailed)
+                Please leave a comment here on how the robot performed in the
+                teleop period. (These are very helpful for analyzing the robot's
+                performance, please be detailed)
             </label>
         </div>
         <div class="col-4">
@@ -364,13 +361,14 @@ const buildComment = (type: 'auto' | 'tele' | 'end') => {
         </div>
     </div>
 
-    <hr>
+    <hr />
 
     <div class="row mb-3">
         <div class="col-8">
             <label for="textarea-end">
-                Please leave a comment here on how the robot performed in the endgame period.
-                (If the robot climbed, how did it do? If it didn't, why not?)
+                Please leave a comment here on how the robot performed in the
+                endgame period. (If the robot climbed, how did it do? If it
+                didn't, why not?)
             </label>
         </div>
         <div class="col-4">
@@ -390,12 +388,6 @@ const buildComment = (type: 'auto' | 'tele' | 'end') => {
             ></textarea>
         </div>
     </div>
-
-
-
-
-
-
 
     <div class="row mb-3">
         <button class="btn btn-success btn-lg w-100" on:click="{submit}"

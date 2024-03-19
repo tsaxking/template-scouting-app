@@ -1,35 +1,32 @@
 <script lang="ts">
-    import { comments } from '../../models/app/comments';
-    import { createEventDispatcher } from 'svelte';
-    const d = createEventDispatcher();
+import { comments } from '../../models/app/comments';
+import { createEventDispatcher } from 'svelte';
+const d = createEventDispatcher();
 
-    type T = 'auto' | 'tele' | 'end';
-    type Y = 2024;
+type T = 'auto' | 'tele' | 'end';
+type Y = 2024;
 
-    export let type: T;
-    export let year: Y;
+export let type: T;
+export let year: Y;
 
-    let availableComments: string[] = [];
-    export let selected: string[] = [];
+let availableComments: string[] = [];
+export let selected: string[] = [];
 
-    const fns = {
-        getComments: (type: T, year: Y) => {
-            const general = comments.general[type];
-            const yearComments = comments[year][type];
+const fns = {
+    getComments: (type: T, year: Y) => {
+        const general = comments.general[type];
+        const yearComments = comments[year][type];
 
-            if (general && yearComments) {
-                availableComments = [
-                    ...general,
-                    ...yearComments
-                ];
-            } else {
-                availableComments = general || yearComments || [];
-            }
+        if (general && yearComments) {
+            availableComments = [...general, ...yearComments];
+        } else {
+            availableComments = general || yearComments || [];
         }
-    };
+    }
+};
 
-    $: fns.getComments(type, year);
-    $: d('comments', selected);
+$: fns.getComments(type, year);
+$: d('comments', selected);
 </script>
 
 <!-- Checkboxes -->
@@ -38,11 +35,11 @@
         <input
             type="checkbox"
             class="form-check-input"
-            bind:group={selected}
-            value={comment}
-            id={comment}
-            checked={selected.includes(comment)}
-        >
-        <label class="form-check-label" for={comment}>{comment}</label>
+            bind:group="{selected}"
+            value="{comment}"
+            id="{comment}"
+            checked="{selected.includes(comment)}"
+        />
+        <label class="form-check-label" for="{comment}">{comment}</label>
     </div>
 {/each}
