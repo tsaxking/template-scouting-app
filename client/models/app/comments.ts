@@ -2,25 +2,22 @@ export type CommentSection = {
     auto: string[];
     tele: string[];
     end: string[];
-}
+};
 
 export const comments: {
     general: CommentSection;
     2024: CommentSection;
 } = {
     general: {
-        auto: [
-            'Did not move in autonomous',
-            'Mobility only in auto'
-        ],
+        auto: ['Did not move in autonomous', 'Mobility only in auto'],
         tele: [
             '"Dead" after hard hit',
             'clever driver, adapts quickly',
             'Drove around aimlessly',
             'fast and maneuverable',
             'gets fouls hitting bots in protected zones',
-            'gets in partner\'s way',
-            'hits opponents very hard', 
+            "gets in partner's way",
+            'hits opponents very hard',
             'Mostly played defense',
             'Very slow'
         ],
@@ -33,7 +30,7 @@ export const comments: {
             '3 note auto',
             '4 note auto',
             '5 note auto',
-            '6 note auto',
+            '6 note auto'
         ],
         tele: [
             'Amp only',
@@ -45,13 +42,10 @@ export const comments: {
             'Note jammed in bot',
             'Often misses floor pick',
             'Only shoots from subwoofer',
-            'Steals from opponents\' source',
+            "Steals from opponents' source",
             'Takes a long time to set up shot',
             'Very fast floor pick'
         ],
-        end: [
-            'Climbs quickly',
-            'Cannot climb'
-        ]
+        end: ['Climbs quickly', 'Cannot climb']
     }
-}
+};
