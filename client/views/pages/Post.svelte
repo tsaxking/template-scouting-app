@@ -164,9 +164,24 @@ let selectedTeleop: string[] = [];
 let selectedAuto: string[] = [];
 let selectedEnd: string[] = [];
 
-$: teleopComment = selectedTeleop.join('\n');
-$: autoComment = selectedAuto.join('\n');
-$: endComment = selectedEnd.join('\n');
+const setComment = (type: 'auto' | 'tele' | 'end', comments: string[]) => {
+    switch (type) {
+        case 'auto':
+            autoComment = comments.join('\n');
+            break;
+        case 'tele':
+            teleopComment = comments.join('\n');
+            break;
+        case 'end':
+            endComment = comments.join('\n');
+            break;
+    }
+};
+
+$: setComment('auto', selectedAuto);
+$: setComment('tele', selectedTeleop);
+$: setComment('end', selectedEnd);
+
 const submit = async () => {
     if (
         !data.groundPicks.value &&
