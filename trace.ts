@@ -1,6 +1,7 @@
 import { all as all2024, zones } from './2024-areas';
 import { isInside } from '../calculations/src/polygon';
 import { Point2D } from '../calculations/src/linear-algebra/point';
+import { $Math } from '../../math';
 
 /**
  * Description placeholder
@@ -624,10 +625,68 @@ export class Trace {
                         trace.filter(Trace.filterAction('spk')).length >
                         trace.filter(Trace.filterAction('src')).length + 1
                     );
+                },
+                summarize: (trace: {trace: TraceArray, alliance: 'red' | 'blue' }[]): {
+                    title: string;
+                    labels: string[];
+                    data: number[];
+                }[] => {
+                    const traceData = trace.map(t => Trace.score.parse2024(t.trace, t.alliance));
+                    return [
+                        {
+                            title: 'Auto Points',
+                            labels: ['Speaker', 'Amp', 'Mobility'],
+                            data: [
+                                traceData.map(t => t.auto.spk),
+                                traceData.map(t => t.auto.amp),
+                                traceData.map(t => t.auto.mobility)
+                            ].map($Math.average)
+                        }, {
+                            title: 'Teleop Points',
+                            labels: ['Speaker', 'Amp', 'Trap', 'Total'],
+                            data: [
+                                traceData.map(t => t.teleop.spk),
+                                traceData.map(t => t.teleop.amp),
+                                traceData.map(t => t.teleop.trp),
+                                traceData.map(t => t.teleop.total)
+                            ].map($Math.average)
+                        },
+                        {
+                            title: 'Endgame Points',
+                            labels: ['Climb', 'Park', 'Total'],
+                            data: [
+                                traceData.map(t => t.endgame.clb),
+                                traceData.map(t => t.endgame.park),
+                                traceData.map(t => t.endgame.total)
+                            ].map($Math.average)
+                        },
+                        {
+                            title: 'Total Points',
+                            labels: ['Total'],
+                            data: [
+                                traceData.map(t => t.total)
+                            ].map($Math.average)
+                        }, {
+                            title: 'Average Velocity',
+                            labels: ['Velocity'],
+                            data: [
+                                Trace.velocity.average(trace[0].trace)
+                            ]
+                        },
+                        {
+                            title: 'Seconds Not Moving',
+                            labels: ['Seconds'],
+                            data: [
+                                Trace.secondsNotMoving(trace[0].trace, true)
+                            ]
+                        }
+                    ]
                 }
             }
         } as const;
     }
+
+    static builtYears = [2024];
 }
 
 export type Match = {
