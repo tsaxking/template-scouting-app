@@ -67,7 +67,7 @@ const viewServerConnection = async () => {
 const submitFailedMatches = async () => {
     const data = await DB.all('server-requests/all');
     if (data.isErr()) return backToMain('Error getting failed matches');
-    const failed = data.value
+    const failed = data.value;
 
     for (const f of failed) {
         ServerRequest.submitMatch(JSON.parse(f.body) as Match);
