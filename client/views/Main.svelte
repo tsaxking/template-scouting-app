@@ -33,55 +33,55 @@ const generate = () =>
 
 App.on('change-group', generate);
 App.on('change-match', generate);
-// App.on('change-alliance', generate);
+App.on('change-alliance', generate);
 
-// const fullscreen = () => {
-//     try {
-//         if (isFullscreen()) {
-//             exitFullscreen();
-//         } else {
-//             document.documentElement.requestFullscreen();
-//             fs = true;
-//         }
-//     } catch (error) {
-//         console.warn(error);
-//     }
-// };
-// const exitFullscreen = () => {
-//     try {
-//         if (document['exitFullscreen']) {
-//             document['exitFullscreen']();
-//         } else if (document['webkitExitFullscreen']) {
-//             document['webkitExitFullscreen']();
-//         } else if (document['mozCancelFullScreen']) {
-//             document['mozCancelFullScreen']();
-//         } else if (document['msExitFullscreen']) {
-//             document['msExitFullscreen']();
-//         }
-//         fs = false;
-//     } catch (error) {
-//         console.warn(error);
-//     }
-// };
+const fullscreen = () => {
+    try {
+        if (isFullscreen()) {
+            exitFullscreen();
+        } else {
+            document.documentElement.requestFullscreen();
+            fs = true;
+        }
+    } catch (error) {
+        console.warn(error);
+    }
+};
+const exitFullscreen = () => {
+    try {
+        if (document['exitFullscreen']) {
+            document['exitFullscreen']();
+        } else if (document['webkitExitFullscreen']) {
+            document['webkitExitFullscreen']();
+        } else if (document['mozCancelFullScreen']) {
+            document['mozCancelFullScreen']();
+        } else if (document['msExitFullscreen']) {
+            document['msExitFullscreen']();
+        }
+        fs = false;
+    } catch (error) {
+        console.warn(error);
+    }
+};
 
-// $: {
-//     if (active === 'App') {
-//         fullscreen();
-//     } else {
-//         exitFullscreen();
-//     }
-// }
+$: {
+    if (active === 'App') {
+        fullscreen();
+    } else {
+        exitFullscreen();
+    }
+}
 
-// const isFullscreen = () => {
-//     return (
-//         document['fullscreenElement'] ||
-//         document['webkitFullscreenElement'] ||
-//         document['mozFullScreenElement'] ||
-//         document['msFullscreenElement']
-//     );
-// };
+const isFullscreen = () => {
+    return (
+        document['fullscreenElement'] ||
+        document['webkitFullscreenElement'] ||
+        document['mozFullScreenElement'] ||
+        document['msFullscreenElement']
+    );
+};
 
-// let fs: boolean = false;
+let fs: boolean = false;
 
 generate();
 let tabs = ['Pre', 'App', 'Post', 'Upload'];
