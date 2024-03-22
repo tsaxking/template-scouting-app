@@ -670,14 +670,14 @@ export class Trace {
                             title: 'Average Velocity',
                             labels: ['Velocity'],
                             data: [
-                                Trace.velocity.average(trace[0].trace)
+                                Trace.velocity.average(trace.flatMap(p => p.trace))
                             ]
                         },
                         {
                             title: 'Seconds Not Moving',
                             labels: ['Seconds'],
                             data: [
-                                Trace.secondsNotMoving(trace[0].trace, true)
+                                Trace.secondsNotMoving(trace.flatMap(p => p.trace), false)
                             ]
                         }
                     ]
