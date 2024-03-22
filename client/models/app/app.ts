@@ -2014,7 +2014,7 @@ export class App<
 
         downloadText(
             JSON.stringify(d),
-            `${d.eventKey}-${d.matchNumber}-${d.compLevel}.json`
+            `${d.eventKey}-${d.matchNumber}-${d.compLevel}-${d.teamNumber}.json`
         );
 
         // set data to server
