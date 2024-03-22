@@ -149,7 +149,6 @@ export const generate2024App = (
         let p: Point2D | null = null;
 
         t.on('change', o => {
-            console.log('change', o);
             if (o.state) {
                 btn.classList.remove('btn-outline-dark');
                 btn.classList.add('btn-dark');
