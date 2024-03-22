@@ -68,12 +68,9 @@ const submitFailedMatches = async () => {
     const data = await DB.all('server-requests/all');
     if (data.isErr()) return backToMain('Error getting failed matches');
     const failed = data.value
-        .filter(r => !r.response)
-        .filter((r, i, a) => a.findIndex(r2 => r2.body === r.body) === i);
 
     for (const f of failed) {
         ServerRequest.submitMatch(JSON.parse(f.body) as Match);
-        await sleep(250);
     }
 };
 

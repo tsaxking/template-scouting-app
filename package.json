@@ -56,7 +56,6 @@
         "busboy": "^1.6.0",
         "cli-select": "^1.1.2",
         "cliffy": "^2.5.1",
-        "compress-images": "^1.9.9",
         "deep-email-validator": "^0.1.21",
         "directory-tree": "^3.5.1",
         "dotenv": "^16.4.5",
