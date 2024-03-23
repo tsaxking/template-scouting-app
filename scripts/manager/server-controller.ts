@@ -74,7 +74,9 @@ const submitMatchesFromDB = async () => {
     for (const f of failed) {
         const data = JSON.parse(f.body) as Match;
         ServerRequest.submitMatch(data);
-        console.log(`Sent match: ${data.matchNumber} comp level: ${data.compLevel} group: ${data.group} team: ${data.teamNumber}`)
+        console.log(
+            `Sent match: ${data.matchNumber} comp level: ${data.compLevel} group: ${data.group} team: ${data.teamNumber}`
+        );
         await sleep(50);
     }
 };
@@ -84,13 +86,18 @@ const submitMatchesFromJson = async () => {
         path.resolve(__dirname, '../../storage/jsons/uploads')
     );
 
-    const results = await Promise.all(uploads.map(async (u) => {
-        const data = await fs.readFile(path.resolve(__dirname, '../../storage/jsons/uploads', u), 'utf-8');
-        return ServerRequest.submitMatch(JSON.parse(data) as Match);
-    }));
+    const results = await Promise.all(
+        uploads.map(async u => {
+            const data = await fs.readFile(
+                path.resolve(__dirname, '../../storage/jsons/uploads', u),
+                'utf-8'
+            );
+            return ServerRequest.submitMatch(JSON.parse(data) as Match);
+        })
+    );
 
     for (const [i, res] of Object.entries(results)) {
-        if (res.isErr()) console.log('Failed: ', uploads[+i]); 
+        if (res.isErr()) console.log('Failed: ', uploads[+i]);
     }
 
     await select('', ['[Ok]']);
