@@ -4,10 +4,12 @@ import { TBAEvent } from '../../shared/submodules/tatorscout-calculations/tba';
 import { select } from '../prompt';
 import { backToMain } from '../manager';
 import { ServerRequest } from '../../server/utilities/requests';
-import env from '../../server/utilities/env';
+import env, { __root } from '../../server/utilities/env';
 import { DB } from '../../server/utilities/databases';
 import { sleep } from '../../shared/sleep';
 import { Match } from '../../shared/submodules/tatorscout-calculations/trace';
+import fs from 'fs/promises';
+import path from 'path';
 
 const pullEvent = async () => {
     const years = Array.from({ length: new Date().getFullYear() - 2006 })
@@ -64,14 +66,36 @@ const viewServerConnection = async () => {
     }
 };
 
-const submitFailedMatches = async () => {
+const submitMatchesFromDB = async () => {
     const data = await DB.all('server-requests/all');
     if (data.isErr()) return backToMain('Error getting failed matches');
     const failed = data.value
 
     for (const f of failed) {
-        ServerRequest.submitMatch(JSON.parse(f.body) as Match);
+        const data = JSON.parse(f.body) as Match;
+        ServerRequest.submitMatch(data);
+        console.log(`Sent match: ${data.matchNumber} comp level: ${data.compLevel} group: ${data.group} team: ${data.teamNumber}`)
+        await sleep(50);
     }
+};
+
+const submitMatchesFromJson = async () => {
+    const uploads = await fs.readdir(
+        path.resolve(__dirname, '../../storage/jsons/uploads')
+    );
+
+    const results = await Promise.all(uploads.map(async (u) => {
+        const data = await fs.readFile(path.resolve(__dirname, '../../storage/jsons/uploads', u), 'utf-8');
+        return ServerRequest.submitMatch(JSON.parse(data) as Match);
+    }));
+
+    for (const [i, res] of Object.entries(results)) {
+        if (res.isErr()) console.log('Failed: ', uploads[+i]); 
+    }
+
+    await select('', ['[Ok]']);
+
+    return backToMain('Uploaded');
 };
 
 export const serverController = [
@@ -87,7 +111,12 @@ export const serverController = [
     },
     {
         icon: '🔁',
-        value: submitFailedMatches,
-        description: 'Submit failed matches'
+        value: submitMatchesFromDB,
+        description: 'Submit failed matches from the database'
+    },
+    {
+        icon: '🔁',
+        value: submitMatchesFromJson,
+        description: 'Submit failed matches from ./storage/jsons/uploads'
     }
 ];
