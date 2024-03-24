@@ -39,12 +39,6 @@ let data: {
         comments: false,
         comment: ''
     },
-    autoCenterPick: {
-        value: false,
-        color: 'success',
-        comments: true,
-        comment: ''
-    },
     playedDefense: {
         value: false,
         color: 'primary',
@@ -114,6 +108,11 @@ const open = async (active: string) => {
     }
 
     const traceArray = app.pull();
+
+    const averageVelocity = Trace.velocity.average(traceArray);
+    if (averageVelocity < 5) {
+        data.slow.value = true;
+    }
 
     if (!c) {
         const ctx = canvas.getContext('2d');
