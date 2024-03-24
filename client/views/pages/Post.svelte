@@ -86,6 +86,12 @@ let data: {
         color: 'danger',
         comments: true,
         comment: ''
+    },
+    specTator: {
+        value: false,
+        color: 'danger',
+        comments: true,
+        comment: ''
     }
 };
 
