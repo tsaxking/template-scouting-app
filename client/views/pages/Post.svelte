@@ -69,6 +69,12 @@ let data: {
         comments: true,
         comment: ''
     },
+    slow: {
+        value: false,
+        color: 'warning',
+        comments: true,
+        comment: ''
+    },
     problemsDriving: {
         value: false,
         color: 'danger',
@@ -108,17 +114,6 @@ const open = async (active: string) => {
     }
 
     const traceArray = app.pull();
-    const secondsNotMoving = Trace.secondsNotMoving(
-        traceArray.filter((p, i, a) => {
-            const lastClimb = a.findLastIndex(p => p[3] === 'clb');
-            return i > lastClimb;
-        }),
-        false
-    );
-    if (secondsNotMoving > 20) {
-        // robot likely died, was intermitent, or had problems driving
-        data.robotDied.value = true;
-    }
 
     if (!c) {
         const ctx = canvas.getContext('2d');
