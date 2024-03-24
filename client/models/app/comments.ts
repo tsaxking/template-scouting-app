@@ -46,6 +46,6 @@ export const comments: {
             'Takes a long time to set up shot',
             'Very fast floor pick'
         ],
-        end: ['Climbs quickly', 'Cannot climb']
+        end: ['Climbs quickly', 'Cannot climb', 'Slow climb']
     }
 };
