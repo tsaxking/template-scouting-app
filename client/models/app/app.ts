@@ -74,7 +74,11 @@ export type CollectedData<actions = string> = ActionState<any, actions> | null;
  */
 export type Section = 'auto' | 'teleop' | 'endgame' | 'end';
 
-type UploadStatusId = 'data parse error' | 'server error' | 'not uploaded' | 'success';
+type UploadStatusId =
+    | 'data parse error'
+    | 'server error'
+    | 'not uploaded'
+    | 'success';
 
 type UploadStatus = {
     id: string;
@@ -681,25 +685,32 @@ export class App<
 
     static getFromLocalStorage() {
         return JSON.parse(
-            window.localStorage.getItem(SAVED_MATCH_VERSION + '-savedMatches') || '[]'
+            window.localStorage.getItem(
+                SAVED_MATCH_VERSION + '-savedMatches'
+            ) || '[]'
         ) as UploadStatus[];
     }
 
     static saveToLocalStorage(...matches: Match[]) {
         const saved = JSON.parse(
-            window.localStorage.getItem(SAVED_MATCH_VERSION + '-savedMatches') || '[]'
+            window.localStorage.getItem(
+                SAVED_MATCH_VERSION + '-savedMatches'
+            ) || '[]'
         ) as UploadStatus[];
 
         const ids: string[] = [];
 
-        saved.push(...matches.map(m => {
-            const id = Random.uuid();
-            ids.push(id);
-            return {
-            id,
-            match: m,
-            status: 'not uploaded' as UploadStatus['status']}
-        }));
+        saved.push(
+            ...matches.map(m => {
+                const id = Random.uuid();
+                ids.push(id);
+                return {
+                    id,
+                    match: m,
+                    status: 'not uploaded' as UploadStatus['status']
+                };
+            })
+        );
 
         window.localStorage.setItem(
             SAVED_MATCH_VERSION + '-savedMatches',
@@ -711,7 +722,9 @@ export class App<
 
     static updateLocalStorage(id: string, status: UploadStatusId) {
         const saved = JSON.parse(
-            window.localStorage.getItem(SAVED_MATCH_VERSION + '-savedMatches') || '[]'
+            window.localStorage.getItem(
+                SAVED_MATCH_VERSION + '-savedMatches'
+            ) || '[]'
         ) as UploadStatus[];
 
         const index = saved.findIndex(s => s.id === id);
@@ -727,7 +740,9 @@ export class App<
 
     static deleteFromLocalStorage(...ids: string[]) {
         const saved = JSON.parse(
-            window.localStorage.getItem(SAVED_MATCH_VERSION + '-savedMatches') || '[]'
+            window.localStorage.getItem(
+                SAVED_MATCH_VERSION + '-savedMatches'
+            ) || '[]'
         ) as UploadStatus[];
 
         window.localStorage.setItem(
@@ -758,14 +773,17 @@ export class App<
         });
     }
 
-    static async upload(...matches: Match[]): Promise<Result<UploadStatusId[]>> {
+    static async upload(
+        ...matches: Match[]
+    ): Promise<Result<UploadStatusId[]>> {
         return attemptAsync(async () => {
             return await Promise.all(
                 matches.map(async m => {
                     const d = await ServerRequest.post('/submit', m);
                     if (d.isOk()) return 'success';
                     else {
-                        if (d.error.message.includes('invalid')) return 'data parse error';
+                        if (d.error.message.includes('invalid'))
+                            return 'data parse error';
                         else return 'server error';
                     }
                 })
