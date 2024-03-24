@@ -73,6 +73,11 @@ export type CollectedData<actions = string> = ActionState<any, actions> | null;
  */
 export type Section = 'auto' | 'teleop' | 'endgame' | 'end';
 
+type UploadStatus = {
+    reason: 'data parse error' | 'server error';
+    match: Match;
+};
+
 /**
  * Events emitted by the app
  * @date 1/9/2024 - 3:08:20 AM
@@ -647,7 +652,7 @@ export class App<
         window.localStorage.removeItem('app');
     }
 
-    static async fromJSON() {
+    static async uploadFromJSON() {
         return attemptAsync(async () => {
             const files = await loadFileContents();
             if (files.isErr()) throw files.error;
@@ -668,26 +673,47 @@ export class App<
         });
     }
 
-    static async upload(...matches: Match[]) {
+    static async saveToLocalStorage(...matches: Match[]) {
+        const saved = JSON.parse(
+            window.localStorage.getItem('savedMatches') || '[]'
+        ) as Match[];
+        window.localStorage.setItem(
+            'savedMatches',
+            JSON.stringify([...saved, ...matches])
+        );
+    }
+
+    static async uploadFromLocalStorage() {
         return attemptAsync(async () => {
+            const saved = JSON.parse(
+                window.localStorage.getItem('savedMatches') || '[]'
+            ) as Match[];
             const results = await Promise.all(
-                matches.map(async m => {
+                saved.map(async m => {
                     const d = await ServerRequest.post('/submit', m);
                     return d.isOk();
                 })
             );
 
-            const failed = matches.filter((_, i) => !results[i]);
+            const failed = saved.filter((_, i) => !results[i]);
 
-            const saved = JSON.parse(
-                window.localStorage.getItem('savedMatches') || '[]'
-            ) as Match[];
             window.localStorage.setItem(
                 'savedMatches',
                 JSON.stringify([...saved, ...failed])
             );
 
             return results;
+        });
+    }
+
+    static async upload(...matches: Match[]) {
+        return attemptAsync(async () => {
+            return await Promise.all(
+                matches.map(async m => {
+                    const d = await ServerRequest.post('/submit', m);
+                    return d.isOk();
+                })
+            );
         });
     }
 
@@ -2034,14 +2060,5 @@ Object.assign(window, {
 });
 
 socket.on('connect', async () => {
-    const failed = JSON.parse(
-        window.localStorage.getItem('savedMatches') || '[]'
-    ) as Match[];
-    const results = await App.upload(...failed);
-    if (results.isOk()) {
-        window.localStorage.setItem(
-            'savedMatches',
-            JSON.stringify(failed.filter((m, i) => !results.value[i]))
-        );
-    }
+    App.uploadFromLocalStorage();
 });
