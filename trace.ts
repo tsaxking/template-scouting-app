@@ -41,7 +41,8 @@ export const actions = {
     cne: 'cone',
     cbe: 'cube',
     bal: 'balance',
-    pck: 'pick'
+    pck: 'pick',
+    nte: 'nte'
 };
 
 export type TraceParse2024 = {
