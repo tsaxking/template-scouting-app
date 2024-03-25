@@ -1317,16 +1317,25 @@ export type TBATeamEventStatus = {
     last_match_key: string;
 };
 
+type TeamArr = [number, number, number, number, number, number];
+
 export const teamsFromMatch = (
     match: TBAMatch
-): [number, number, number, number, number, number] => {
-    return match.alliances.red.team_keys
+): TeamArr => {
+    let arr = match.alliances.red.team_keys
         .concat(match.alliances.blue.team_keys)
         .map((key: string) => {
             const num = key.match(/[0-9]/g)?.join('');
             if (!num) return 0;
             return parseInt(num);
-        }) as [number, number, number, number, number, number];
+        });
+
+    if (arr.length === 12) {
+        // return only 1, 3, 5, 7, 9, 11
+        arr = arr.filter((_, i) => i % 2 === 1);
+    }
+
+    return arr as TeamArr;
 };
 
 export const matchSort = (a: TBAMatch, b: TBAMatch) => {
