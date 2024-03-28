@@ -10,12 +10,12 @@ export let app: App;
 
 const fns = {
     next: async () => {
-        await App.moveMatchIndex(1);
+        App.matchData.next();
         d('next');
         d('change');
     },
     prev: async () => {
-        await App.moveMatchIndex(-1);
+        App.matchData.prev();
         d('prev');
         d('change');
     },

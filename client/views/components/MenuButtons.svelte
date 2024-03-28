@@ -86,9 +86,7 @@ const fns = {
         save.textContent = 'Save';
         save.addEventListener('click', () => {
             m.hide();
-            App.matchData.teamNumber = data.teamNum || App.matchData.teamNumber;
-
-            App.selectMatch(data.matchNum, data.compLevel);
+            App.matchData.selectMatch(data.matchNum, data.compLevel, data.teamNum || App.matchData.teamNumber)
         });
         m.addButton(save);
 
@@ -104,10 +102,10 @@ const fns = {
             }
         });
 
-        body.$on('group', async e => {
+        body.$on('group', async (e: CustomEvent<number>) => {
             fns.getAssignedTeams(e.detail);
+            App.matchData.selectGroup(e.detail);
             d('group', e.detail);
-            App.group = e.detail;
             const { matchNumber, compLevel } = App.matchData;
             const res = await App.getEventData();
 
@@ -121,15 +119,7 @@ const fns = {
 
             // set matchdata in App
             const match = eventData.matches[matchIndex];
-            App.matchData.matchNumber = match.match_number;
-            App.matchData.compLevel = match.comp_level as
-                | 'pr'
-                | 'qm'
-                | 'qf'
-                | 'sf'
-                | 'f';
-            App.matchData.teamNumber =
-                eventData.assignments.groups[App.group][matchIndex];
+            App.matchData.selectMatch(match.match_number, match.comp_level as 'qm' | 'qf' | 'sf' | 'f' | 'pr');
         });
 
         m.show();

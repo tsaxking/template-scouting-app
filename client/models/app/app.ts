@@ -41,6 +41,8 @@ import { downloadText, loadFileContents } from '../../utilities/downloads';
 import { sleep } from '../../../shared/sleep';
 import { socket } from '../../utilities/socket';
 import { Random } from '../../../shared/math';
+import { Tick } from './tick';
+import { MatchData } from './match-data';
 
 /**
  * Description placeholder
@@ -111,146 +113,7 @@ type AppEvents = {
     };
 };
 
-/**
- * Tick of the match
- * @date 1/9/2024 - 3:08:20 AM
- *
- * @export
- * @class Tick
- * @typedef {Tick}
- */
-export class Tick<actions = Action> {
-    /**
-     * Data collected at this tick
-     * @date 1/9/2024 - 3:08:20 AM
-     *
-     * @private
-     * @type {CollectedData}
-     */
-    private data: CollectedData<actions> | null = null;
 
-    /**
-     * Point of the robot at this tick
-     * @date 1/9/2024 - 3:08:20 AM
-     *
-     * @public
-     * @type {(Point2D | null)}
-     */
-    public point: Point2D | null = null;
-
-    /**
-     * Creates an instance of Tick.
-     * @date 1/9/2024 - 3:08:20 AM
-     *
-     * @constructor
-     * @param {number} time
-     * @param {number} index
-     * @param {App} app
-     */
-    constructor(
-        public readonly time: number,
-        public readonly index: number,
-        public readonly app: App
-    ) {}
-
-    /**
-     * Nearest second
-     * @date 1/9/2024 - 3:08:20 AM
-     *
-     * @public
-     * @readonly
-     * @type {number}
-     */
-    public get second(): number {
-        // console.log(this.index);
-        return Math.round(this.index / App.ticksPerSecond);
-    }
-
-    /**
-     * Section of the match
-     * @date 1/9/2024 - 3:08:20 AM
-     *
-     * @public
-     * @readonly
-     * @type {(Section | null)}
-     */
-    public get section(): Section | null {
-        for (const [section, range] of Object.entries(App.sections)) {
-            const [start, end] = range as number[];
-            if (this.second >= start && this.second <= end) {
-                return section as Section;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Set the data collected at this tick
-     * @date 1/9/2024 - 3:08:20 AM
-     *
-     * @public
-     * @param {CollectedData} data
-     */
-    public set(data: CollectedData) {
-        if (this.data instanceof ActionState) {
-            this.next()?.set(data); // set next tick's data
-            return;
-        }
-        this.data = data;
-
-        if (data instanceof ActionState) {
-            data.tick = this;
-        }
-    }
-
-    /**
-     * Removes data collected at this tick
-     * @date 1/25/2024 - 4:59:07 PM
-     *
-     * @public
-     */
-    public clear() {
-        if (this.data instanceof ActionState) {
-            this.data.tick = null;
-        }
-
-        this.data = null;
-    }
-
-    /**
-     * Get the data collected at this tick
-     * @date 1/9/2024 - 3:08:20 AM
-     *
-     * @public
-     * @returns {CollectedData}
-     */
-    public get(): CollectedData {
-        return this.data;
-    }
-
-    /**
-     * returns the next tick
-     * @date 1/9/2024 - 3:08:20 AM
-     *
-     * @public
-     * @returns {(Tick | undefined)}
-     */
-    public next(): Tick | undefined {
-        return this.app.ticks[this.index + 1];
-    }
-
-    /**
-     * returns the previous tick
-     * @date 1/9/2024 - 3:08:20 AM
-     *
-     * @public
-     * @returns {(Tick | undefined)}
-     */
-    public prev(): Tick | undefined {
-        return this.app.ticks[this.index - 1];
-    }
-}
 
 export type EventData = {
     assignments: Assignment;
@@ -260,85 +123,7 @@ export type EventData = {
     event: TBAEvent;
 };
 
-class MatchData {
-    public static get(): MatchData {
-        const d = window.localStorage.getItem('matchData');
-        if (!d) return new MatchData();
-        const data = JSON.parse(d) as {
-            matchNumber: number;
-            teamNumber: number;
-            compLevel: 'pr' | 'qm' | 'qf' | 'sf' | 'f';
-        };
-        return new MatchData(data.matchNumber, data.teamNumber, data.compLevel);
-    }
 
-    constructor(
-        public $matchNumber: number = 0,
-        public $teamNumber: number = 0,
-        public $compLevel: 'pr' | 'qm' | 'qf' | 'sf' | 'f' = 'pr'
-    ) {}
-
-    public get matchNumber() {
-        return this.$matchNumber;
-    }
-
-    public set matchNumber(matchNumber: number) {
-        this.$matchNumber = matchNumber;
-        this.save();
-    }
-
-    public get teamNumber() {
-        return this.$teamNumber;
-    }
-
-    public set teamNumber(teamNumber: number) {
-        this.$teamNumber = teamNumber;
-        this.save();
-    }
-
-    public async getAlliance(): Promise<'red' | 'blue' | null> {
-        const res = await App.getEventData();
-        if (res.isErr()) return null;
-
-        const { matches } = res.value;
-        const match = matches.find(
-            m =>
-                m.match_number === this.matchNumber &&
-                m.comp_level === this.compLevel
-        );
-
-        if (!match) return null;
-
-        // console.log(match, this.teamNumber);
-
-        if (match.alliances.red.team_keys.includes(`frc${this.$teamNumber}`)) {
-            return 'red';
-        }
-        if (match.alliances.blue.team_keys.includes(`frc${this.$teamNumber}`)) {
-            return 'blue';
-        }
-        return null;
-    }
-
-    public get compLevel() {
-        return this.$compLevel;
-    }
-
-    public set compLevel(compLevel: 'pr' | 'qm' | 'qf' | 'sf' | 'f') {
-        this.$compLevel = compLevel;
-        this.save();
-    }
-    private save() {
-        window.localStorage.setItem(
-            'matchData',
-            JSON.stringify({
-                matchNumber: this.$matchNumber,
-                teamNumber: this.$teamNumber,
-                compLevel: this.$compLevel
-            })
-        );
-    }
-}
 
 class FieldOrientation {
     public static get() {
@@ -392,10 +177,9 @@ type Area = {
 };
 
 type GlobalEvents = {
-    'change-group': number;
-    'change-match': MatchData;
     'change-name': string;
     'new-event': EventData;
+    'select-match': MatchData;
 };
 
 /**
@@ -452,15 +236,6 @@ export class App<
         App.emitter.once(event, listener);
     }
 
-    public static selectMatch(
-        number: number,
-        compLevel: 'pr' | 'qm' | 'qf' | 'sf' | 'f'
-    ) {
-        App.matchData.matchNumber = number;
-        App.matchData.compLevel = compLevel;
-        this.emit('change-match', App.matchData);
-    }
-
     private static $eventData?: EventData;
 
     public static matchData = MatchData.get();
@@ -500,53 +275,8 @@ export class App<
         App.emit('change-name', scoutName);
     }
 
-    public static $group = window.localStorage.getItem('group')
-        ? parseInt(window.localStorage.getItem('group')!)
-        : 0; // force to be group 1 if none is selected
-
     public static get group() {
-        return App.$group;
-    }
-
-    public static set group(group: number) {
-        console.log({ group });
-        App.$group = group;
-        window.localStorage.setItem('group', group.toString());
-        App.emit('change-group', group);
-    }
-
-    // move the match by the index (i) (i.e. -1 for previous match, 1 for next match)
-    static async moveMatchIndex(i: number) {
-        return attemptAsync(async () => {
-            const currentMatch = App.matchData.matchNumber;
-            const nextMatch = currentMatch + i;
-            const res = await App.getEventData();
-            if (res.isOk()) {
-                const { matches, assignments } = res.value;
-                console.log({ matches });
-                const matchIndex = matches.findIndex(
-                    m =>
-                        m.match_number === nextMatch &&
-                        m.comp_level === App.matchData.compLevel
-                );
-                console.log({ matchIndex });
-                const match = matches[matchIndex];
-                if (match) {
-                    App.selectMatch(
-                        nextMatch,
-                        match.comp_level as 'pr' | 'qm' | 'qf' | 'sf' | 'f'
-                    );
-
-                    App.matchData.teamNumber =
-                        assignments.matchAssignments[App.group][matchIndex];
-                    return match;
-                } else {
-                    throw new Error('Match not found');
-                }
-            } else {
-                throw res.error;
-            }
-        });
+        return App.matchData.group;
     }
 
     public static current?: App<any, any, any>;
