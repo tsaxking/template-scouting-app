@@ -66,15 +66,8 @@ const fns = {
                 ? currentMatch.teams[teamIndex]
                 : eventData.assignments.matchAssignments[App.group][matchIndex];
 
-        App.matchData.teamNumber = team;
-        App.selectMatch(
-            currentMatch.match_number,
-            currentMatch.comp_level as 'pr' | 'qm' | 'qf' | 'sf' | 'f'
-        );
-
-        App.group = eventData.assignments.groups.findIndex(g =>
-            g.includes(team as number)
-        );
+        App.matchData.selectGroup(App.group);
+        App.matchData.selectMatch(currentMatch.match_number, currentMatch.comp_level as 'qm' | 'qf' | 'sf' | 'f' | 'pr');
 
         currentMatchIndex = matchIndex;
         matches = matches; // force view update
@@ -114,8 +107,6 @@ $: {
     fns.getMatches(app);
 }
 
-App.on('change-group', () => fns.getMatches(app));
-App.on('change-match', () => fns.getMatches(app));
 
 onMount(() => {
     fns.getMatches(app);

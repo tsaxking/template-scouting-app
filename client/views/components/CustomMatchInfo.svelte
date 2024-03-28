@@ -36,7 +36,7 @@ const onEventSelect = async (eventKey: string) => {
     teamNum =
         eventKey === eventData.value.eventKey ? App.matchData.teamNumber : 0;
 
-    App.selectMatch(1, 'qm');
+    App.matchData.selectMatch(1, 'qm');
 };
 
 $: onEventSelect(event);

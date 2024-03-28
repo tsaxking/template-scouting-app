@@ -87,7 +87,7 @@ let data: {
         comments: true,
         comment: ''
     },
-    specTator: {
+    spectator: {
         value: false,
         color: 'danger',
         comments: true,
@@ -225,7 +225,7 @@ const submit = async () => {
         }
     });
 
-    await App.moveMatchIndex(1);
+    await App.matchData.next();
     d('submit');
 
     for (const key in data) {

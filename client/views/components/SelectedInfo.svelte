@@ -12,9 +12,9 @@ let alliance: string;
 
 const select = async () => {
     const eventData = await App.getEventData();
+    if (eventData.isErr()) return console.error(eventData.error);
     const { matchData } = App;
     const calculatedAlliance = await matchData.getAlliance();
-    if (eventData.isErr()) return console.error(eventData.error);
 
     match = matchData.matchNumber;
     team = matchData.teamNumber;
@@ -37,11 +37,12 @@ const select = async () => {
     event = eventData.value.event.name;
     scout = App.scoutName;
     group = App.group;
-    alliance = calculatedAlliance;
+    alliance = calculatedAlliance || 'red';
 };
 
-App.on('change-group', select);
-App.on('change-match', select);
+// App.on('change-group', select);
+// App.on('change-match', select);
+App.on('select-match', select);
 onMount(select);
 </script>
 
