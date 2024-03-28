@@ -67,7 +67,10 @@ const fns = {
                 : eventData.assignments.matchAssignments[App.group][matchIndex];
 
         App.matchData.selectGroup(App.group);
-        App.matchData.selectMatch(currentMatch.match_number, currentMatch.comp_level as 'qm' | 'qf' | 'sf' | 'f' | 'pr');
+        App.matchData.selectMatch(
+            currentMatch.match_number,
+            currentMatch.comp_level as 'qm' | 'qf' | 'sf' | 'f' | 'pr'
+        );
 
         currentMatchIndex = matchIndex;
         matches = matches; // force view update
@@ -106,7 +109,6 @@ export let app: App;
 $: {
     fns.getMatches(app);
 }
-
 
 onMount(() => {
     fns.getMatches(app);

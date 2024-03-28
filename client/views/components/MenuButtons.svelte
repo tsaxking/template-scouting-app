@@ -86,7 +86,11 @@ const fns = {
         save.textContent = 'Save';
         save.addEventListener('click', () => {
             m.hide();
-            App.matchData.selectMatch(data.matchNum, data.compLevel, data.teamNum || App.matchData.teamNumber)
+            App.matchData.selectMatch(
+                data.matchNum,
+                data.compLevel,
+                data.teamNum || App.matchData.teamNumber
+            );
         });
         m.addButton(save);
 
@@ -119,7 +123,10 @@ const fns = {
 
             // set matchdata in App
             const match = eventData.matches[matchIndex];
-            App.matchData.selectMatch(match.match_number, match.comp_level as 'qm' | 'qf' | 'sf' | 'f' | 'pr');
+            App.matchData.selectMatch(
+                match.match_number,
+                match.comp_level as 'qm' | 'qf' | 'sf' | 'f' | 'pr'
+            );
         });
 
         m.show();
