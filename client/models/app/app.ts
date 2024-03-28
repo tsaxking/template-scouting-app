@@ -113,8 +113,6 @@ type AppEvents = {
     };
 };
 
-
-
 export type EventData = {
     assignments: Assignment;
     matches: TBAMatch[];
@@ -122,8 +120,6 @@ export type EventData = {
     eventKey: string;
     event: TBAEvent;
 };
-
-
 
 class FieldOrientation {
     public static get() {

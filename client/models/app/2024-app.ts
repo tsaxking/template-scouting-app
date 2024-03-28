@@ -15,11 +15,12 @@ import {
     TraceParse2024,
     Zones2024
 } from '../../../shared/submodules/tatorscout-calculations/trace';
-import { App, Tick } from './app';
+import { App } from './app';
 import { Point2D } from '../../../shared/submodules/calculations/src/linear-algebra/point';
 import { Icon } from '../canvas/material-icons';
 import { SVG } from '../canvas/svg';
 import { Img } from '../canvas/image';
+import { Tick } from './tick';
 
 /**
  * Builds the app for the 2024 game

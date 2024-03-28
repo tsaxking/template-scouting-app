@@ -1,10 +1,10 @@
-import { attempt, attemptAsync } from "../../../shared/check";
-import { teamsFromMatch } from "../../../shared/submodules/tatorscout-calculations/tba";
-import { TBAMatch } from "../../../shared/tba";
-import { App } from "./app";
+import { attempt, attemptAsync } from '../../../shared/check';
+import { teamsFromMatch } from '../../../shared/submodules/tatorscout-calculations/tba';
+import { TBAMatch } from '../../../shared/tba';
+import { App } from './app';
 
-
-const filter = (m: TBAMatch): number[] => teamsFromMatch(m).filter((_, i) => [3, 7].includes(i)) as number[];
+const filter = (m: TBAMatch): number[] =>
+    teamsFromMatch(m).filter((_, i) => [3, 7].includes(i)) as number[];
 
 export class MatchData {
     public static get(): MatchData {
@@ -16,7 +16,12 @@ export class MatchData {
             compLevel: 'pr' | 'qm' | 'qf' | 'sf' | 'f';
             group: number;
         };
-        return new MatchData(data.matchNumber, data.teamNumber, data.compLevel, data.group);
+        return new MatchData(
+            data.matchNumber,
+            data.teamNumber,
+            data.compLevel,
+            data.group
+        );
     }
 
     constructor(
@@ -132,13 +137,18 @@ export class MatchData {
             if (group >= 6) throw new Error('Group not found');
             this.group = group;
 
-            this.teamNumber = eventData.value.assignments.matchAssignments[group][index];
+            this.teamNumber =
+                eventData.value.assignments.matchAssignments[group][index];
 
             this.save();
         });
     }
 
-    async selectMatch(matchNumber: number, compLevel: 'qm' | 'qf' | 'sf' | 'f' | 'pr', teamNumber?: number) {
+    async selectMatch(
+        matchNumber: number,
+        compLevel: 'qm' | 'qf' | 'sf' | 'f' | 'pr',
+        teamNumber?: number
+    ) {
         return attemptAsync(async () => {
             const current = this.matchNumber;
             const indexMove = matchNumber - current;
@@ -148,16 +158,19 @@ export class MatchData {
             const currentMatch = await this.getCurrentMatch();
             if (currentMatch.isErr()) throw currentMatch.error;
             if (!currentMatch) throw new Error('Match not found');
-            
+
             if (currentMatch.value) {
                 if (teamNumber) {
                     const teams = teamsFromMatch(currentMatch.value);
-                    if (!teams.includes(teamNumber)) throw new Error('Team not found in match');
+                    if (!teams.includes(teamNumber))
+                        throw new Error('Team not found in match');
                     this.teamNumber = teamNumber;
                 } else {
                     const alliance = await this.getAlliance();
                     if (!alliance) throw new Error('Team not found in match');
-                    const teams = currentMatch.value.alliances[alliance].team_keys.map(t => parseInt(t.replace('frc', '')));
+                    const teams = currentMatch.value.alliances[
+                        alliance
+                    ].team_keys.map(t => parseInt(t.replace('frc', '')));
                     this.teamNumber = teams[0];
                 }
             }
@@ -177,14 +190,11 @@ export class MatchData {
             if (eventData.isErr()) throw eventData.error;
             const { group } = App;
 
-
             let index = eventData.value.matches.findIndex(
                 m =>
                     m.match_number === this.matchNumber + 1 &&
                     m.comp_level === this.compLevel
             );
-
-            
 
             const prev = eventData.value.matches[index];
             const prevTeams = filter(prev);

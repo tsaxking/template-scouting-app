@@ -5,7 +5,7 @@
 
 import { EventEmitter } from '../../../shared/event-emitter';
 import { Point2D } from '../../../shared/submodules/calculations/src/linear-algebra/point';
-import { Tick } from './app';
+import { Tick } from './tick';
 
 /**
  * State of an action at a given point in time
