@@ -41,7 +41,8 @@ export const actions = {
     cne: 'cone',
     cbe: 'cube',
     bal: 'balance',
-    pck: 'pick'
+    pck: 'pick',
+    nte: 'nte'
 };
 
 export type TraceParse2024 = {
@@ -675,12 +676,16 @@ export class Trace {
                         {
                             title: 'Average Velocity',
                             labels: ['Velocity'],
-                            data: [Trace.velocity.average(trace[0].trace)]
+                            data: [
+                                Trace.velocity.average(trace.flatMap(p => p.trace))
+                            ]
                         },
                         {
                             title: 'Seconds Not Moving',
                             labels: ['Seconds'],
-                            data: [Trace.secondsNotMoving(trace[0].trace, true)]
+                            data: [
+                                Trace.secondsNotMoving(trace.flatMap(p => p.trace), false)
+                            ]
                         }
                     ];
                 }
