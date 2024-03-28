@@ -1317,16 +1317,21 @@ export type TBATeamEventStatus = {
     last_match_key: string;
 };
 
-export const teamsFromMatch = (
-    match: TBAMatch
-): [number, number, number, number, number, number] => {
-    return match.alliances.red.team_keys
-        .concat(match.alliances.blue.team_keys)
-        .map((key: string) => {
-            const num = key.match(/[0-9]/g)?.join('');
-            if (!num) return 0;
-            return parseInt(num);
-        }) as [number, number, number, number, number, number];
+export type Alliance = [number, number, number, number | null];
+export type MatchTeams = [...Alliance, ...Alliance];
+
+export const teamsFromMatch = (match: TBAMatch): MatchTeams => {
+    const red: (string | null)[] = match.alliances.red.team_keys;
+    if (red.length !== 4) red.push(null);
+    const blue: (string | null)[] = match.alliances.blue.team_keys;
+    if (blue.length !== 4) blue.push(null);
+
+    return red.concat(blue).map((key: string | null) => {
+        if (!key) return null;
+        const num = key.match(/[0-9]/g)?.join('');
+        if (!num) return null;
+        return parseInt(num);
+    }) as MatchTeams;
 };
 
 export const matchSort = (a: TBAMatch, b: TBAMatch) => {

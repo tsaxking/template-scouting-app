@@ -626,12 +626,16 @@ export class Trace {
                         trace.filter(Trace.filterAction('src')).length + 1
                     );
                 },
-                summarize: (trace: {trace: TraceArray, alliance: 'red' | 'blue' }[]): {
+                summarize: (
+                    trace: { trace: TraceArray; alliance: 'red' | 'blue' }[]
+                ): {
                     title: string;
                     labels: string[];
                     data: number[];
                 }[] => {
-                    const traceData = trace.map(t => Trace.score.parse2024(t.trace, t.alliance));
+                    const traceData = trace.map(t =>
+                        Trace.score.parse2024(t.trace, t.alliance)
+                    );
                     return [
                         {
                             title: 'Auto Points',
@@ -641,7 +645,8 @@ export class Trace {
                                 traceData.map(t => t.auto.amp),
                                 traceData.map(t => t.auto.mobility)
                             ].map($Math.average)
-                        }, {
+                        },
+                        {
                             title: 'Teleop Points',
                             labels: ['Speaker', 'Amp', 'Trap', 'Total'],
                             data: [
@@ -663,24 +668,21 @@ export class Trace {
                         {
                             title: 'Total Points',
                             labels: ['Total'],
-                            data: [
-                                traceData.map(t => t.total)
-                            ].map($Math.average)
-                        }, {
+                            data: [traceData.map(t => t.total)].map(
+                                $Math.average
+                            )
+                        },
+                        {
                             title: 'Average Velocity',
                             labels: ['Velocity'],
-                            data: [
-                                Trace.velocity.average(trace[0].trace)
-                            ]
+                            data: [Trace.velocity.average(trace[0].trace)]
                         },
                         {
                             title: 'Seconds Not Moving',
                             labels: ['Seconds'],
-                            data: [
-                                Trace.secondsNotMoving(trace[0].trace, true)
-                            ]
+                            data: [Trace.secondsNotMoving(trace[0].trace, true)]
                         }
-                    ]
+                    ];
                 }
             }
         } as const;
