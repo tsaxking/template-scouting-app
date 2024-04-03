@@ -97,9 +97,11 @@ const fns = {
                 data.teamNum || App.matchData.teamNumber
             );
 
-            console.log({ res });
+            
 
-            if (res.isErr()) alert("Error selecting match and team number. Please ensure you've entered a valid match number and team number.");
+            if (res.isErr()) {
+                console.error(res.error);
+                alert("Error selecting match and team number. Please ensure you've entered a valid match number and team number.");}
             
         });
         m.addButton(save);
