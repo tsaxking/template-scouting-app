@@ -1,7 +1,11 @@
 <script lang="ts">
 import {
     type TBAMatch,
-    matchSort
+    type MatchTeams,
+    matchSort,
+
+    teamsFromMatch
+
 } from '../../../shared/submodules/tatorscout-calculations/tba';
 import { App } from '../../models/app/app';
 import { createEventDispatcher, onMount } from 'svelte';
@@ -35,16 +39,14 @@ const fns = {
         const eventData = res.value;
 
         customMatches = m.map((match, i) => {
-            const teams = match.alliances.red.team_keys
-                .concat(match.alliances.blue.team_keys)
-                .map(t => parseInt(t.slice(3)));
+            const teams = teamsFromMatch(match).filter(Boolean);
             return {
                 ...match,
                 teams,
                 scoutIndex: teams.findIndex(
                     t =>
                         t ===
-                        eventData.assignments.matchAssignments[App.group][i]
+                        eventData.assignments.matchAssignments[App.group]?.[i]
                 )
             };
         }) as M[];
@@ -61,16 +63,17 @@ const fns = {
         currentMatch = customMatches[matchIndex];
         let team: number | undefined = undefined;
 
-        team =
-            typeof teamIndex === 'number'
-                ? currentMatch.teams[teamIndex]
-                : eventData.assignments.matchAssignments[App.group][matchIndex];
+        const t = eventData.assignments.matchAssignments[App.group][matchIndex];
+        const _t =  typeof teamIndex === 'number' ? currentMatch.teams[teamIndex] : t;
+        team = _t ? _t : t;
 
         App.matchData.selectGroup(App.group);
-        App.matchData.selectMatch(
+        const result = await App.matchData.selectMatch(
             currentMatch.match_number,
             currentMatch.comp_level as 'qm' | 'qf' | 'sf' | 'f' | 'pr'
         );
+
+        if (result.isErr()) console.error(result.error);
 
         currentMatchIndex = matchIndex;
         matches = matches; // force view update
@@ -85,10 +88,7 @@ const fns = {
         matches = eventData.matches.map(m => {
             return {
                 ...m,
-                teams: [
-                    ...m.alliances.red.team_keys.map(t => parseInt(t.slice(3))),
-                    ...m.alliances.blue.team_keys.map(t => parseInt(t.slice(3)))
-                ] as [number, number, number, number, number, number],
+                teams: teamsFromMatch(m).filter(Boolean),
                 scoutIndex: undefined
             };
         });
@@ -167,14 +167,14 @@ onMount(() => {
                         {#if index > 2}
                             <!-- Blue alliance -->
                             <span
-                                class:selected-team="{matchAssignments[i] ===
+                                class:selected-team="{matchAssignments?.[i] ===
                                     team}"
                                 class="text-primary">{team}</span
                             >
                         {:else}
                             <!-- Red alliance -->
                             <span
-                                class:selected-team="{matchAssignments[i] ===
+                                class:selected-team="{matchAssignments?.[i] ===
                                     team}"
                                 class="text-danger">{team}</span
                             >

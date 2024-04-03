@@ -150,6 +150,14 @@ export class MatchData {
         teamNumber?: number
     ) {
         return attemptAsync(async () => {
+            if (compLevel === 'pr') {
+                this.compLevel = 'pr';
+                this.matchNumber = matchNumber;
+                this.teamNumber = teamNumber || 0;
+                this.save();
+                return;
+            }
+
             const current = this.matchNumber;
             const indexMove = matchNumber - current;
             const result = await this.moveIndex(indexMove);
@@ -157,11 +165,11 @@ export class MatchData {
 
             const currentMatch = await this.getCurrentMatch();
             if (currentMatch.isErr()) throw currentMatch.error;
-            if (!currentMatch) throw new Error('Match not found');
 
             if (currentMatch.value) {
+                console.log('Found match', currentMatch.value);
                 if (teamNumber) {
-                    const teams = teamsFromMatch(currentMatch.value);
+                    const teams = teamsFromMatch(currentMatch.value).filter(Boolean);
                     if (!teams.includes(teamNumber))
                         throw new Error('Team not found in match');
                     this.teamNumber = teamNumber;
@@ -190,17 +198,17 @@ export class MatchData {
             if (eventData.isErr()) throw eventData.error;
             const { group } = App;
 
-            let index = eventData.value.matches.findIndex(
+            let currentIndex = eventData.value.matches.findIndex(
                 m =>
-                    m.match_number === this.matchNumber + 1 &&
+                    m.match_number === this.matchNumber &&
                     m.comp_level === this.compLevel
             );
 
-            const prev = eventData.value.matches[index];
+            const prev = eventData.value.matches[currentIndex];
             const prevTeams = filter(prev);
-            index += i;
+            currentIndex += i;
 
-            const match = eventData.value.matches[index];
+            const match = eventData.value.matches[currentIndex];
 
             if (!match) {
                 throw new Error('Match not found, match not changed');
