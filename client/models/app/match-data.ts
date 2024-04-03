@@ -4,8 +4,8 @@ import { TBAMatch } from '../../../shared/tba';
 import { App } from './app';
 
 const filter = (m: TBAMatch): number[] =>
-    teamsFromMatch(m).filter((_, i) => [3, 7].includes(i)) as number[];
-
+    teamsFromMatch(m).filter((_, i) => ![3, 7].includes(i)) as number[];
+    // .filter(Boolean) as number[];
 export class MatchData {
     public static get(): MatchData {
         const d = window.localStorage.getItem('matchData');
@@ -17,10 +17,10 @@ export class MatchData {
             group: number;
         };
         return new MatchData(
-            data.matchNumber,
-            data.teamNumber,
+            +data.matchNumber,
+            +data.teamNumber,
             data.compLevel,
-            data.group
+            +data.group
         );
     }
 
@@ -36,7 +36,7 @@ export class MatchData {
     }
 
     private set matchNumber(matchNumber: number) {
-        this.$matchNumber = matchNumber;
+        this.$matchNumber = +matchNumber;
         this.save();
     }
 
@@ -45,7 +45,7 @@ export class MatchData {
     }
 
     private set teamNumber(teamNumber: number) {
-        this.$teamNumber = teamNumber;
+        this.$teamNumber = +teamNumber;
         this.save();
     }
 
@@ -54,7 +54,7 @@ export class MatchData {
     }
 
     public set group(group: number) {
-        this.$group = group;
+        this.$group = +group;
         this.save();
     }
 
@@ -95,10 +95,10 @@ export class MatchData {
         window.localStorage.setItem(
             'matchData',
             JSON.stringify({
-                matchNumber: this.$matchNumber,
-                teamNumber: this.$teamNumber,
+                matchNumber: +this.$matchNumber,
+                teamNumber: +this.$teamNumber,
                 compLevel: this.$compLevel,
-                group: this.group
+                group: +this.group
             })
         );
 
@@ -159,6 +159,7 @@ export class MatchData {
             }
 
             const current = this.matchNumber;
+            const currentTeam = this.teamNumber;
             const indexMove = matchNumber - current;
             const result = await this.moveIndex(indexMove);
             if (result.isErr()) throw result.error;
@@ -170,21 +171,28 @@ export class MatchData {
                 console.log('Found match', currentMatch.value);
                 if (teamNumber) {
                     const teams = teamsFromMatch(currentMatch.value).filter(Boolean);
-                    if (!teams.includes(teamNumber))
-                        throw new Error('Team not found in match');
-                    this.teamNumber = teamNumber;
+                    if (teams.includes(teamNumber)) {
+                        this.teamNumber = teamNumber;
+                    } else {
+                        this.teamNumber = teams[0];
+                    }
+                    this.matchNumber = matchNumber;
+                    this.compLevel = compLevel;
                 } else {
-                    const alliance = await this.getAlliance();
-                    if (!alliance) throw new Error('Team not found in match');
-                    const teams = currentMatch.value.alliances[
-                        alliance
-                    ].team_keys.map(t => parseInt(t.replace('frc', '')));
-                    this.teamNumber = teams[0];
+                    const teams = teamsFromMatch(currentMatch.value).filter(Boolean);
+                    this.matchNumber = matchNumber;
+                    this.compLevel = compLevel;
+                    
+                    const m = await this.getCurrentMatch();
+                    if (m.isErr()) throw m.error;
+                    if (!m.value) throw new Error('Match not found');
+                    const newTeams = teamsFromMatch(m.value).filter(Boolean);
+                    let index = teams.indexOf(currentTeam);
+                    if (index === -1) index = 0;
+                    this.teamNumber = newTeams[index];
                 }
             }
 
-            this.matchNumber = matchNumber;
-            this.compLevel = compLevel;
 
             this.save();
 
@@ -203,6 +211,8 @@ export class MatchData {
                     m.match_number === this.matchNumber &&
                     m.comp_level === this.compLevel
             );
+
+            if (currentIndex === -1 && i !== 1) currentIndex = 0;
 
             const prev = eventData.value.matches[currentIndex];
             const prevTeams = filter(prev);
