@@ -8,6 +8,7 @@ import FieldOrientation from './FieldOrientation.svelte';
 import { env } from '../../utilities/env';
 import { ServerRequest } from '../../utilities/requests';
 import { type TBAEvent } from '../../../shared/submodules/tatorscout-calculations/tba';
+import { alert } from '../../utilities/notifications';
 let matchNum: number;
 let teamNum: number;
 let compLevel: string;
@@ -70,27 +71,36 @@ const fns = {
         });
 
         body.$on('compLevel', e => {
+            console.log({ detail: e.detail });
             data.compLevel = e.detail;
         });
 
         body.$on('matchNum', e => {
+            console.log({ detail: e.detail });
             data.matchNum = Number(e.detail);
         });
 
         body.$on('teamNum', e => {
+            console.log({ detail: e.detail });
             data.teamNum = e.detail;
         });
 
         const save = document.createElement('button');
         save.classList.add('btn', 'btn-primary');
         save.textContent = 'Save';
-        save.addEventListener('click', () => {
+        save.addEventListener('click', async () => {
+            console.log({data});
             m.hide();
-            App.matchData.selectMatch(
+            const res = await App.matchData.selectMatch(
                 data.matchNum,
                 data.compLevel,
                 data.teamNum || App.matchData.teamNumber
             );
+
+            console.log({ res });
+
+            if (res.isErr()) alert("Error selecting match and team number. Please ensure you've entered a valid match number and team number.");
+            
         });
         m.addButton(save);
 
