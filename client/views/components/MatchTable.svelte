@@ -195,9 +195,7 @@ App.on('select-match', () => fns.getMatches(app));
                     {match.comp_level}
                 </td>
                 {#each match.teams as team, index}
-                    <td
-                        on:click="{() => fns.select(i, index)}"
-                    >
+                    <td on:click="{() => fns.select(i, index)}">
                         {#if index > 2}
                             <!-- Blue alliance -->
                             <span
