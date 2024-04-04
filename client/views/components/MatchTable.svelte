@@ -227,7 +227,6 @@ App.on('select-match', () => fns.getMatches(app));
 
 <style>
 .selected-team {
-    font-weight: bold !important;
     color: #5a5555 !important;
 }
 </style>
