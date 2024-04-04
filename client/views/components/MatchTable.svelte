@@ -196,7 +196,6 @@ App.on('select-match', () => fns.getMatches(app));
                 </td>
                 {#each match.teams as team, index}
                     <td
-                        class:fw-bold="{match.scoutIndex === index}"
                         on:click="{() => fns.select(i, index)}"
                     >
                         {#if index > 2}
@@ -226,7 +225,10 @@ App.on('select-match', () => fns.getMatches(app));
 </table>
 
 <style>
-.selected-team {
+.is-group {
     color: #5a5555 !important;
+}
+.selected-team {
+    color: #f8f9fa !important;
 }
 </style>
