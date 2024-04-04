@@ -423,7 +423,7 @@ const buildComment = (type: 'auto' | 'tele' | 'end') => {
                         "No, don't delete this match"
                     ).then(res => {
                         if (res?.toLowerCase().includes('yes')) {
-                            app.destroy();
+                            App.abort();
                         }
                     })}"
             >

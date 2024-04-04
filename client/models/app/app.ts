@@ -612,6 +612,10 @@ export class App<
             [key in Action]: Icon | SVG | Img;
         }>
     ) {
+        
+        if (App.current) {
+            App.current.destroy();
+        }
         App.current = this;
         this.canvas.$ctx.canvas.style.position = 'absolute';
 
@@ -652,6 +656,7 @@ export class App<
         for (const [action, icon] of Object.entries(this.icons)) {
             this.icons[action as keyof typeof this.icons] = icon.clone();
         }
+
 
         // if (App.cache()) {
         //     choose(
@@ -729,7 +734,7 @@ export class App<
                     'Are you sure you want to cancel?'
                 );
                 if (!confirmed) return;
-                this.destroy();
+                App.abort();
                 this.emit('restart');
             };
             target.appendChild(this.cancel);
@@ -1860,8 +1865,13 @@ export class App<
 
     // TODO: Destroy without reloading
     destroy() {
+        this.canvas.$animating = false;
+        this.canvas.clearDrawables();
+    }
+
+    public static abort() {
         App.clearCache();
-        location.reload();
+        location.reload
     }
 }
 
