@@ -200,12 +200,11 @@ onMount(() => {
                         {#if index > 2}
                             <!-- Blue alliance -->
                             <span
-                            class="text-primary"
+                                class="text-primary"
                                 class:selected-team="{currentMatchIndex === i &&
                                     currentTeam === team}"
                                 class:is-group="{matchAssignments?.[i] ===
-                                    index}"
-                                >{team}</span
+                                    index}">{team}</span
                             >
                         {:else}
                             <!-- Red alliance -->
@@ -214,8 +213,7 @@ onMount(() => {
                                 class:selected-team="{currentMatchIndex === i &&
                                     currentTeam === team}"
                                 class:is-group="{matchAssignments?.[i] ===
-                                    index}"
-                                >{team}</span
+                                    index}">{team}</span
                             >
                         {/if}
                     </td>
