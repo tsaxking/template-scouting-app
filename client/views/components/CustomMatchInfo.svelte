@@ -4,7 +4,7 @@ import { App } from '../../models/app/app';
 import SelectedInfo from './SelectedInfo.svelte';
 import { type TBAEvent } from '../../../shared/submodules/tatorscout-calculations/tba';
 
-export let compLevel: 'pr' | 'qm' | 'qf' | 'sf' | 'f' = 'qm';
+export let compLevel: 'pr' | 'qm' | 'qf' | 'sf' | 'f' = App.matchData.compLevel;
 export let matchNum: string = String(App.matchData.matchNumber || '');
 export let teamNum: number = App.matchData.teamNumber;
 export let teams: {
@@ -21,20 +21,26 @@ $: d('matchNum', matchNum);
 $: d('teamNum', teamNum);
 
 const onEventSelect = async (eventKey: string) => {
-    const eventData = await App.getEventData(eventKey);
-    if (eventData.isErr()) return console.error(eventData.error);
+    const [current, newData] = await Promise.all([
+        App.getEventData(),
+        App.getEventData(eventKey)
+    ]);
+    if (current.isErr()) return console.error(current.error);
+    if (newData.isErr()) return console.error(newData.error);
 
-    teams = eventData.value.teams.map(t => ({
+    if (current.value.eventKey === newData.value.eventKey) return;
+
+    teams = newData.value.teams.map(t => ({
         number: t.team_number,
         name: t.nickname
     }));
 
     matchNum =
-        eventKey === eventData.value.eventKey
+        eventKey === newData.value.eventKey
             ? String(App.matchData.matchNumber)
             : '';
     teamNum =
-        eventKey === eventData.value.eventKey ? App.matchData.teamNumber : 0;
+        eventKey === newData.value.eventKey ? App.matchData.teamNumber : 0;
 
     App.matchData.selectMatch(1, 'qm');
 };
