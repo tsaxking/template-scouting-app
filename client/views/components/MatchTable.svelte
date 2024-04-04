@@ -146,6 +146,8 @@ $: {
 onMount(() => {
     fns.getMatches(app);
 });
+
+App.on('select-match', () => fns.getMatches(app));
 </script>
 
 <table class="table table-dark table-hover">

@@ -91,18 +91,25 @@ const fns = {
         save.addEventListener('click', async () => {
             console.log({ data });
             m.hide();
-            const res = await App.matchData.selectMatch(
-                data.matchNum,
-                data.compLevel,
-                data.teamNum || App.matchData.teamNumber
-            );
 
-            if (res.isErr()) {
-                console.error(res.error);
-                alert(
-                    "Error selecting match and team number. Please ensure you've entered a valid match number and team number."
-                );
-            }
+            App.matchData.$matchNumber = data.matchNum;
+            App.matchData.$teamNumber = data.teamNum;
+            App.matchData.$compLevel = data.compLevel;
+
+            App.emit('select-match', App.matchData);
+
+            // const res = await App.matchData.selectMatch(
+            //     data.matchNum,
+            //     data.compLevel,
+            //     data.teamNum || App.matchData.teamNumber
+            // );
+
+            // if (res.isErr()) {
+            //     console.error(res.error);
+            //     alert(
+            //         "Error selecting match and team number. Please ensure you've entered a valid match number and team number."
+            //     );
+            // }
         });
         m.addButton(save);
 
