@@ -612,7 +612,6 @@ export class App<
             [key in Action]: Icon | SVG | Img;
         }>
     ) {
-        
         if (App.current) {
             App.current.destroy();
         }
@@ -656,7 +655,6 @@ export class App<
         for (const [action, icon] of Object.entries(this.icons)) {
             this.icons[action as keyof typeof this.icons] = icon.clone();
         }
-
 
         // if (App.cache()) {
         //     choose(
@@ -1871,7 +1869,7 @@ export class App<
 
     public static abort() {
         App.clearCache();
-        location.reload
+        location.reload;
     }
 }
 
