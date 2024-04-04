@@ -225,9 +225,10 @@ App.on('select-match', () => fns.getMatches(app));
 
 <style>
 .is-group {
-    color: #f8f9fa !important;
+    color: #404346 !important;
 }
 .selected-team {
     color: #1f1c1c !important;
+    font-weight: bold;
 }
 </style>
