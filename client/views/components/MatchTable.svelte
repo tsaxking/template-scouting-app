@@ -195,17 +195,15 @@ App.on('select-match', () => fns.getMatches(app));
                     {match.comp_level}
                 </td>
                 {#each match.teams as team, index}
-                    <td
-                        
-                        on:click="{() => fns.select(i, index)}"
-                    >
+                    <td on:click="{() => fns.select(i, index)}">
                         {#if index > 2}
                             <!-- Blue alliance -->
                             <span
                                 class="text-primary"
                                 class:selected-team="{currentMatchIndex === i &&
                                     currentTeam === team}"
-                                class:is-group="{match.scoutIndex === index}">{team}</span
+                                class:is-group="{match.scoutIndex === index}"
+                                >{team}</span
                             >
                         {:else}
                             <!-- Red alliance -->
@@ -213,7 +211,8 @@ App.on('select-match', () => fns.getMatches(app));
                                 class="text-danger"
                                 class:selected-team="{currentMatchIndex === i &&
                                     currentTeam === team}"
-                                class:is-group="{match.scoutIndex === index}">{team}</span
+                                class:is-group="{match.scoutIndex === index}"
+                                >{team}</span
                             >
                         {/if}
                     </td>
