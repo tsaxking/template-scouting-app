@@ -5,7 +5,7 @@ import { App } from './app';
 
 const filter = (m: TBAMatch): number[] =>
     teamsFromMatch(m).filter((_, i) => ![3, 7].includes(i)) as number[];
-    // .filter(Boolean) as number[];
+// .filter(Boolean) as number[];
 export class MatchData {
     public static get(): MatchData {
         const d = window.localStorage.getItem('matchData');
@@ -170,7 +170,9 @@ export class MatchData {
             if (currentMatch.value) {
                 console.log('Found match', currentMatch.value);
                 if (teamNumber) {
-                    const teams = teamsFromMatch(currentMatch.value).filter(Boolean);
+                    const teams = teamsFromMatch(currentMatch.value).filter(
+                        Boolean
+                    );
                     if (teams.includes(teamNumber)) {
                         this.teamNumber = teamNumber;
                     } else {
@@ -179,10 +181,12 @@ export class MatchData {
                     this.matchNumber = matchNumber;
                     this.compLevel = compLevel;
                 } else {
-                    const teams = teamsFromMatch(currentMatch.value).filter(Boolean);
+                    const teams = teamsFromMatch(currentMatch.value).filter(
+                        Boolean
+                    );
                     this.matchNumber = matchNumber;
                     this.compLevel = compLevel;
-                    
+
                     const m = await this.getCurrentMatch();
                     if (m.isErr()) throw m.error;
                     if (!m.value) throw new Error('Match not found');
@@ -192,7 +196,6 @@ export class MatchData {
                     this.teamNumber = newTeams[index];
                 }
             }
-
 
             this.save();
 

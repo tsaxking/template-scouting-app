@@ -89,7 +89,7 @@ const fns = {
         save.classList.add('btn', 'btn-primary');
         save.textContent = 'Save';
         save.addEventListener('click', async () => {
-            console.log({data});
+            console.log({ data });
             m.hide();
             const res = await App.matchData.selectMatch(
                 data.matchNum,
@@ -97,12 +97,12 @@ const fns = {
                 data.teamNum || App.matchData.teamNumber
             );
 
-            
-
             if (res.isErr()) {
                 console.error(res.error);
-                alert("Error selecting match and team number. Please ensure you've entered a valid match number and team number.");}
-            
+                alert(
+                    "Error selecting match and team number. Please ensure you've entered a valid match number and team number."
+                );
+            }
         });
         m.addButton(save);
 
