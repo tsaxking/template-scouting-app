@@ -14,9 +14,9 @@ const fns = {
 
         teams = data.value.assignments.groups[g] || [];
     },
-    switchGroup: (g: number) => {
+    switchGroup: async (g: number) => {
+        await App.matchData.selectGroup(g);
         group = g;
-        App.group = g;
         d('group', g);
     }
 };
