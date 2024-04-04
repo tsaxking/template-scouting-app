@@ -226,7 +226,7 @@ onMount(() => {
 </table>
 
 <style>
-.is-group {
+.selected-team {
     font-weight: bold !important;
     color: #5a5555 !important;
 }
