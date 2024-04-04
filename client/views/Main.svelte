@@ -31,9 +31,7 @@ const generate = () =>
         app.on('restart', generate);
     });
 
-App.on('change-group', generate);
-App.on('change-match', generate);
-App.on('change-alliance', generate);
+App.on('select-match', generate);
 
 const fullscreen = () => {
     try {

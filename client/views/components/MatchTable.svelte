@@ -1,10 +1,16 @@
 <script lang="ts">
 import {
     type TBAMatch,
-    matchSort
+    type MatchTeams,
+    matchSort,
+
+    teamsFromMatch
+
 } from '../../../shared/submodules/tatorscout-calculations/tba';
 import { App } from '../../models/app/app';
 import { createEventDispatcher, onMount } from 'svelte';
+import { MatchData } from '../../models/app/match-data';
+import { getMaxListeners } from 'events';
 
 const d = createEventDispatcher();
 
@@ -18,6 +24,7 @@ export let matches: TBAMatch[] = [];
 let customMatches: M[] = [];
 let currentMatch: M | undefined = undefined;
 let currentMatchIndex: number | undefined = undefined;
+let currentTeam: number | undefined = undefined;
 
 let matchAssignments: number[] = [];
 
@@ -35,23 +42,21 @@ const fns = {
         const eventData = res.value;
 
         customMatches = m.map((match, i) => {
-            const teams = match.alliances.red.team_keys
-                .concat(match.alliances.blue.team_keys)
-                .map(t => parseInt(t.slice(3)));
+            const teams = teamsFromMatch(match).filter(Boolean);
             return {
                 ...match,
                 teams,
                 scoutIndex: teams.findIndex(
                     t =>
                         t ===
-                        eventData.assignments.matchAssignments[App.group][i]
+                        eventData.assignments.matchAssignments[App.group]?.[i]
                 )
             };
         }) as M[];
     },
     select: async (matchIndex: number, teamIndex?: number) => {
         d('select', { matchIndex, teamIndex });
-        // console.log('select', matchIndex, teamIndex);
+        console.log('select', matchIndex, teamIndex);
         const res = await App.getEventData();
         if (res.isErr()) return console.error(res.error);
         const eventData = res.value;
@@ -61,23 +66,45 @@ const fns = {
         currentMatch = customMatches[matchIndex];
         let team: number | undefined = undefined;
 
-        team =
-            typeof teamIndex === 'number'
-                ? currentMatch.teams[teamIndex]
-                : eventData.assignments.matchAssignments[App.group][matchIndex];
+        let g = App.group;
 
-        App.matchData.teamNumber = team;
-        App.selectMatch(
-            currentMatch.match_number,
-            currentMatch.comp_level as 'pr' | 'qm' | 'qf' | 'sf' | 'f'
+        if (+g === -1) g = 0;
+
+        const useTeamIndex = () => {
+            if (teamIndex === undefined) throw new Error('teamIndex is undefined, this should not happen');
+            team = currentMatch?.teams[teamIndex];
+
+            if (team !== undefined) {
+                currentTeam = team;
+
+                const groupIndex = eventData.assignments.matchAssignments.findIndex(
+                    a => a[matchIndex] === team
+                );
+                App.matchData.selectGroup(groupIndex);
+                fns.getMatches(app);
+            }
+        };
+
+        if (typeof teamIndex === 'number' && teamIndex >= 0 && teamIndex < 6) {
+            // use teamIndex, and force scout group
+            useTeamIndex();
+        } else if (App.group !== -1) {
+            // use scout group only
+            team = eventData.assignments.matchAssignments[App.group]?.[matchIndex];
+        } else {
+            teamIndex = 0;
+            useTeamIndex();
+        }
+        
+        if (team !== undefined) {
+            currentTeam = team;
+        }
+
+        App.matchData.selectMatch(
+            currentMatch?.match_number || 0,
+            currentMatch?.comp_level as 'qm' | 'qf' | 'sf' | 'f' | 'pr' || 'qm',
+            team || 0
         );
-
-        App.group = eventData.assignments.groups.findIndex(g =>
-            g.includes(team as number)
-        );
-
-        currentMatchIndex = matchIndex;
-        matches = matches; // force view update
     },
     getMatches: async (app: App) => {
         const res = await App.getEventData();
@@ -89,10 +116,7 @@ const fns = {
         matches = eventData.matches.map(m => {
             return {
                 ...m,
-                teams: [
-                    ...m.alliances.red.team_keys.map(t => parseInt(t.slice(3))),
-                    ...m.alliances.blue.team_keys.map(t => parseInt(t.slice(3)))
-                ] as [number, number, number, number, number, number],
+                teams: teamsFromMatch(m).filter(Boolean),
                 scoutIndex: undefined
             };
         });
@@ -105,6 +129,7 @@ const fns = {
                 m.match_number === App.matchData.matchNumber
         );
         currentMatch = customMatches[currentMatchIndex];
+        currentTeam = matchAssignments?.[+currentMatchIndex] || -1;
     }
 };
 
@@ -113,9 +138,6 @@ export let app: App;
 $: {
     fns.getMatches(app);
 }
-
-App.on('change-group', () => fns.getMatches(app));
-App.on('change-match', () => fns.getMatches(app));
 
 onMount(() => {
     fns.getMatches(app);
@@ -174,16 +196,21 @@ onMount(() => {
                         {#if index > 2}
                             <!-- Blue alliance -->
                             <span
-                                class:selected-team="{matchAssignments[i] ===
-                                    team}"
-                                class="text-primary">{team}</span
+                            class:selected-team="{currentMatchIndex === i &&
+                                currentTeam === team}"
+                            class:is-group="{matchAssignments?.[i] === index}"
+                            style="color: rgba(0, 123, 255, 1)"
+                            >{team}</span
                             >
                         {:else}
                             <!-- Red alliance -->
                             <span
-                                class:selected-team="{matchAssignments[i] ===
-                                    team}"
-                                class="text-danger">{team}</span
+                            class="text-danger"
+                            class:selected-team="{currentMatchIndex === i &&
+                                currentTeam === team}"
+                            class:is-group="{matchAssignments?.[i] === index}"
+                            style="color: rgba(220, 53, 69, 1)"
+                            >{team}</span
                             >
                         {/if}
                     </td>
@@ -194,8 +221,10 @@ onMount(() => {
 </table>
 
 <style>
+.is-group {
+    font-weight: bold !important;
+}
 .selected-team {
     color: #5a5555 !important;
-    font-weight: bold !important;
 }
 </style>

@@ -8,6 +8,7 @@ import FieldOrientation from './FieldOrientation.svelte';
 import { env } from '../../utilities/env';
 import { ServerRequest } from '../../utilities/requests';
 import { type TBAEvent } from '../../../shared/submodules/tatorscout-calculations/tba';
+import { alert } from '../../utilities/notifications';
 let matchNum: number;
 let teamNum: number;
 let compLevel: string;
@@ -70,25 +71,38 @@ const fns = {
         });
 
         body.$on('compLevel', e => {
+            console.log({ detail: e.detail });
             data.compLevel = e.detail;
         });
 
         body.$on('matchNum', e => {
+            console.log({ detail: e.detail });
             data.matchNum = Number(e.detail);
         });
 
         body.$on('teamNum', e => {
+            console.log({ detail: e.detail });
             data.teamNum = e.detail;
         });
 
         const save = document.createElement('button');
         save.classList.add('btn', 'btn-primary');
         save.textContent = 'Save';
-        save.addEventListener('click', () => {
+        save.addEventListener('click', async () => {
+            console.log({data});
             m.hide();
-            App.matchData.teamNumber = data.teamNum || App.matchData.teamNumber;
+            const res = await App.matchData.selectMatch(
+                data.matchNum,
+                data.compLevel,
+                data.teamNum || App.matchData.teamNumber
+            );
 
-            App.selectMatch(data.matchNum, data.compLevel);
+            
+
+            if (res.isErr()) {
+                console.error(res.error);
+                alert("Error selecting match and team number. Please ensure you've entered a valid match number and team number.");}
+            
         });
         m.addButton(save);
 
@@ -104,10 +118,10 @@ const fns = {
             }
         });
 
-        body.$on('group', async e => {
+        body.$on('group', async (e: CustomEvent<number>) => {
             fns.getAssignedTeams(e.detail);
+            App.matchData.selectGroup(e.detail);
             d('group', e.detail);
-            App.group = e.detail;
             const { matchNumber, compLevel } = App.matchData;
             const res = await App.getEventData();
 
@@ -121,15 +135,10 @@ const fns = {
 
             // set matchdata in App
             const match = eventData.matches[matchIndex];
-            App.matchData.matchNumber = match.match_number;
-            App.matchData.compLevel = match.comp_level as
-                | 'pr'
-                | 'qm'
-                | 'qf'
-                | 'sf'
-                | 'f';
-            App.matchData.teamNumber =
-                eventData.assignments.groups[App.group][matchIndex];
+            App.matchData.selectMatch(
+                match.match_number,
+                match.comp_level as 'qm' | 'qf' | 'sf' | 'f' | 'pr'
+            );
         });
 
         m.show();
