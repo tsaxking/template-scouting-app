@@ -4,7 +4,7 @@ import Checkboxes from '../components/app/Checkboxes.svelte';
 import type { BootstrapColor } from '../../submodules/colors/color';
 import { capitalize, fromCamelCase } from '../../../shared/text';
 import { Trace } from '../../../shared/submodules/tatorscout-calculations/trace';
-import { confirm, notify } from '../../utilities/notifications';
+import { choose, confirm, notify } from '../../utilities/notifications';
 import { createEventDispatcher } from 'svelte';
 import { Canvas } from '../../models/canvas/canvas';
 import Summary from '../components/Summary.svelte';
@@ -410,9 +410,23 @@ const buildComment = (type: 'auto' | 'tele' | 'end') => {
     </div>
 
     <div class="row mb-3">
-        <button class="btn btn-success btn-lg w-100" on:click="{submit}"
-            >Submit Match</button
-        >
+        <div class="btn-group">
+            <button
+                class="btn btn-success btn-lg"
+                on:click="{() => submit()}"
+            >
+                Submit Match
+            </button>
+            <button class="btn btn-danger btn-lg"
+                on:click="{() => choose('Are you sure you want to delete this match?', 'Yes, delete this match', 'No, don\'t delete this match').then((res) => {
+                    if (res?.toLowerCase().includes('yes')) {
+                        app.destroy();
+                    }
+                })}"
+            >
+                Delete match (Scouted wrong team/match)
+            </button>
+        </div>
     </div>
     <div class="row mb-3">
         <Summary {app} />

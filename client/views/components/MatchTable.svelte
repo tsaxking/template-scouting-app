@@ -10,6 +10,7 @@ import {
 import { App } from '../../models/app/app';
 import { createEventDispatcher, onMount } from 'svelte';
 import { MatchData } from '../../models/app/match-data';
+import { getMaxListeners } from 'events';
 
 const d = createEventDispatcher();
 
@@ -69,17 +70,41 @@ const fns = {
 
         if (+g === -1) g = 0;
 
-        const useTeamIndex = () => {};
+        const useTeamIndex = () => {
+            if (teamIndex === undefined) throw new Error('teamIndex is undefined, this should not happen');
+            team = currentMatch?.teams[teamIndex];
+
+            if (team !== undefined) {
+                currentTeam = team;
+
+                const groupIndex = eventData.assignments.matchAssignments.findIndex(
+                    a => a[matchIndex] === team
+                );
+                App.matchData.selectGroup(groupIndex);
+                fns.getMatches(app);
+            }
+        };
 
         if (typeof teamIndex === 'number' && teamIndex >= 0 && teamIndex < 6) {
             // use teamIndex, and force scout group
             useTeamIndex();
         } else if (App.group !== -1) {
             // use scout group only
+            team = eventData.assignments.matchAssignments[App.group]?.[matchIndex];
         } else {
             teamIndex = 0;
             useTeamIndex();
         }
+        
+        if (team !== undefined) {
+            currentTeam = team;
+        }
+
+        App.matchData.selectMatch(
+            currentMatch?.match_number || 0,
+            currentMatch?.comp_level as 'qm' | 'qf' | 'sf' | 'f' | 'pr' || 'qm',
+            team || 0
+        );
     },
     getMatches: async (app: App) => {
         const res = await App.getEventData();
@@ -173,14 +198,19 @@ onMount(() => {
                             <span
                             class:selected-team="{currentMatchIndex === i &&
                                 currentTeam === team}"
-                                class="text-primary">{team}</span
+                            class:is-group="{matchAssignments?.[i] === index}"
+                            style="color: rgba(0, 123, 255, 1)"
+                            >{team}</span
                             >
                         {:else}
                             <!-- Red alliance -->
                             <span
-                                class:selected-team="{currentMatchIndex === i &&
-                                    currentTeam === team}"
-                                class="text-danger">{team}</span
+                            class="text-danger"
+                            class:selected-team="{currentMatchIndex === i &&
+                                currentTeam === team}"
+                            class:is-group="{matchAssignments?.[i] === index}"
+                            style="color: rgba(220, 53, 69, 1)"
+                            >{team}</span
                             >
                         {/if}
                     </td>
@@ -191,8 +221,10 @@ onMount(() => {
 </table>
 
 <style>
+.is-group {
+    font-weight: bold !important;
+}
 .selected-team {
     color: #5a5555 !important;
-    font-weight: bold !important;
 }
 </style>
