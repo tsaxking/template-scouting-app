@@ -196,7 +196,7 @@ App.on('select-match', () => fns.getMatches(app));
                 </td>
                 {#each match.teams as team, index}
                     <td
-                        class:is-group="{match.scoutIndex === index}"
+                        
                         on:click="{() => fns.select(i, index)}"
                     >
                         {#if index > 2}
@@ -205,8 +205,7 @@ App.on('select-match', () => fns.getMatches(app));
                                 class="text-primary"
                                 class:selected-team="{currentMatchIndex === i &&
                                     currentTeam === team}"
-                                class:is-group="{matchAssignments?.[i] ===
-                                    index}">{team}</span
+                                class:is-group="{match.scoutIndex === index}">{team}</span
                             >
                         {:else}
                             <!-- Red alliance -->
@@ -214,8 +213,7 @@ App.on('select-match', () => fns.getMatches(app));
                                 class="text-danger"
                                 class:selected-team="{currentMatchIndex === i &&
                                     currentTeam === team}"
-                                class:is-group="{matchAssignments?.[i] ===
-                                    index}">{team}</span
+                                class:is-group="{match.scoutIndex === index}">{team}</span
                             >
                         {/if}
                     </td>
@@ -227,7 +225,7 @@ App.on('select-match', () => fns.getMatches(app));
 
 <style>
 .is-group {
-    color: #45484b !important;
+    color: #f8f9fa !important;
 }
 .selected-team {
     color: #1f1c1c !important;
