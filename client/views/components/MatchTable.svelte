@@ -3,9 +3,7 @@ import {
     type TBAMatch,
     type MatchTeams,
     matchSort,
-
     teamsFromMatch
-
 } from '../../../shared/submodules/tatorscout-calculations/tba';
 import { App } from '../../models/app/app';
 import { createEventDispatcher, onMount } from 'svelte';
@@ -71,15 +69,19 @@ const fns = {
         if (+g === -1) g = 0;
 
         const useTeamIndex = () => {
-            if (teamIndex === undefined) throw new Error('teamIndex is undefined, this should not happen');
+            if (teamIndex === undefined)
+                throw new Error(
+                    'teamIndex is undefined, this should not happen'
+                );
             team = currentMatch?.teams[teamIndex];
 
             if (team !== undefined) {
                 currentTeam = team;
 
-                const groupIndex = eventData.assignments.matchAssignments.findIndex(
-                    a => a[matchIndex] === team
-                );
+                const groupIndex =
+                    eventData.assignments.matchAssignments.findIndex(
+                        a => a[matchIndex] === team
+                    );
                 App.matchData.selectGroup(groupIndex);
                 fns.getMatches(app);
             }
@@ -90,19 +92,21 @@ const fns = {
             useTeamIndex();
         } else if (App.group !== -1) {
             // use scout group only
-            team = eventData.assignments.matchAssignments[App.group]?.[matchIndex];
+            team =
+                eventData.assignments.matchAssignments[App.group]?.[matchIndex];
         } else {
             teamIndex = 0;
             useTeamIndex();
         }
-        
+
         if (team !== undefined) {
             currentTeam = team;
         }
 
         App.matchData.selectMatch(
             currentMatch?.match_number || 0,
-            currentMatch?.comp_level as 'qm' | 'qf' | 'sf' | 'f' | 'pr' || 'qm',
+            (currentMatch?.comp_level as 'qm' | 'qf' | 'sf' | 'f' | 'pr') ||
+                'qm',
             team || 0
         );
     },
@@ -196,21 +200,21 @@ onMount(() => {
                         {#if index > 2}
                             <!-- Blue alliance -->
                             <span
-                            class:selected-team="{currentMatchIndex === i &&
-                                currentTeam === team}"
-                            class:is-group="{matchAssignments?.[i] === index}"
-                            style="color: rgba(0, 123, 255, 1)"
-                            >{team}</span
+                                class:selected-team="{currentMatchIndex === i &&
+                                    currentTeam === team}"
+                                class:is-group="{matchAssignments?.[i] ===
+                                    index}"
+                                style="color: rgba(0, 123, 255, 1)">{team}</span
                             >
                         {:else}
                             <!-- Red alliance -->
                             <span
-                            class="text-danger"
-                            class:selected-team="{currentMatchIndex === i &&
-                                currentTeam === team}"
-                            class:is-group="{matchAssignments?.[i] === index}"
-                            style="color: rgba(220, 53, 69, 1)"
-                            >{team}</span
+                                class="text-danger"
+                                class:selected-team="{currentMatchIndex === i &&
+                                    currentTeam === team}"
+                                class:is-group="{matchAssignments?.[i] ===
+                                    index}"
+                                style="color: rgba(220, 53, 69, 1)">{team}</span
                             >
                         {/if}
                     </td>

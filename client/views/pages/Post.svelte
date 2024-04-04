@@ -411,18 +411,21 @@ const buildComment = (type: 'auto' | 'tele' | 'end') => {
 
     <div class="row mb-3">
         <div class="btn-group">
-            <button
-                class="btn btn-success btn-lg"
-                on:click="{() => submit()}"
-            >
+            <button class="btn btn-success btn-lg" on:click="{() => submit()}">
                 Submit Match
             </button>
-            <button class="btn btn-danger btn-lg"
-                on:click="{() => choose('Are you sure you want to delete this match?', 'Yes, delete this match', 'No, don\'t delete this match').then((res) => {
-                    if (res?.toLowerCase().includes('yes')) {
-                        app.destroy();
-                    }
-                })}"
+            <button
+                class="btn btn-danger btn-lg"
+                on:click="{() =>
+                    choose(
+                        'Are you sure you want to delete this match?',
+                        'Yes, delete this match',
+                        "No, don't delete this match"
+                    ).then(res => {
+                        if (res?.toLowerCase().includes('yes')) {
+                            app.destroy();
+                        }
+                    })}"
             >
                 Delete match (Scouted wrong team/match)
             </button>
