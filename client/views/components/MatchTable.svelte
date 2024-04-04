@@ -195,7 +195,10 @@ App.on('select-match', () => fns.getMatches(app));
                     {match.comp_level}
                 </td>
                 {#each match.teams as team, index}
-                    <td on:click="{() => fns.select(i, index)}">
+                    <td
+                        class:text-secondary="{match.scoutIndex === index}"
+                        on:click="{() => fns.select(i, index)}"
+                    >
                         {#if index > 2}
                             <!-- Blue alliance -->
                             <span
@@ -223,10 +226,7 @@ App.on('select-match', () => fns.getMatches(app));
 </table>
 
 <style>
-.is-group {
-    color: #5a5555 !important;
-}
 .selected-team {
-    color: #f8f9fa !important;
+    color: #1f1c1c !important;
 }
 </style>
