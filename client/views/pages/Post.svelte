@@ -24,7 +24,7 @@ type PostData = {
     comment: string;
 };
 
-let data: {
+let commentBuilds: {
     [key: string]: PostData;
 } = {
     autoMobility: {
@@ -95,6 +95,8 @@ let data: {
     }
 };
 
+Object.assign(window, { commentBuilds });
+
 let c: Canvas;
 let stop = () => {};
 
@@ -102,16 +104,16 @@ const open = async (active: string) => {
     if (active !== 'Post') return;
     stop();
 
-    for (const key in data) {
-        data[key].value = false;
-        data[key].comment = '';
+    for (const key in commentBuilds) {
+        commentBuilds[key].value = false;
+        commentBuilds[key].comment = '';
     }
 
     const traceArray = app.pull();
 
     const averageVelocity = Trace.velocity.average(traceArray);
     if (averageVelocity < 5) {
-        data.slow.value = true;
+        commentBuilds.slow.value = true;
     }
 
     if (!c) {
@@ -141,18 +143,18 @@ const open = async (active: string) => {
     // + 1 because the robot starts with a note
     app.parsed.groundPicks = Trace.yearInfo[2024].mustGroundPick(traceArray);
 
-    data.autoMobility.value = !!app.parsed.mobility;
-    data.parked.value = !!app.parsed.parked;
-    data.groundPicks.value = app.parsed.groundPicks;
+    commentBuilds.autoMobility.value = !!app.parsed.mobility;
+    commentBuilds.parked.value = !!app.parsed.parked;
+    commentBuilds.groundPicks.value = app.parsed.groundPicks;
 
     // reset the view
-    data = data;
+    commentBuilds = commentBuilds;
 };
 
 let commentsSections: string[] = [];
 $: open(active);
 
-$: commentsSections = Object.entries(data)
+$: commentsSections = Object.entries(commentBuilds)
     .filter(([_, data]) => data.comments && data.value)
     .map(([key]) => key);
 
@@ -184,7 +186,7 @@ $: setComment('end', selectedEnd);
 
 const submit = async () => {
     if (
-        !data.groundPicks.value &&
+        !commentBuilds.groundPicks.value &&
         Trace.yearInfo[2024].mustGroundPick(app.pull())
     ) {
         const doSubmit = await confirm(
@@ -203,22 +205,16 @@ const submit = async () => {
     }
 
     await app.submit({
-        checks: Object.entries(data)
+        checks: Object.entries(commentBuilds)
             .map(([key, value]) => (value.value ? key : null))
             .filter(Boolean),
         comments: {
-            ...() => {
-                let comments = {};
-                for (const [key, value] of Object.entries(data)) {
-                    if (value.value && value.comments) {
-                        comments = {
-                            ...data,
-                            [key]: value.comment
-                        };
-                    }
+            ...Object.entries(commentBuilds).reduce((acc, [key, value]) => {
+                if (value.value && value.comment.length > 0) {
+                    acc[key] = value.comment;
                 }
-                return comments;
-            },
+                return acc;
+            }, {} as { [key: string]: string;}),
             general: teleopComment,
             auto: autoComment,
             endgame: endComment
@@ -228,9 +224,9 @@ const submit = async () => {
     await App.matchData.next();
     d('submit');
 
-    for (const key in data) {
-        data[key].value = false;
-        data[key].comment = '';
+    for (const key in commentBuilds) {
+        commentBuilds[key].value = false;
+        commentBuilds[key].comment = '';
     }
 
     // these will reset the comments
@@ -293,12 +289,11 @@ const buildComment = (type: 'auto' | 'tele' | 'end') => {
 <div class="container mb-3">
     <div class="row d-flex justify-content-center w-100 p-0 mb-3">
         <Checkboxes
-            bind:data
+            bind:data={commentBuilds}
             on:change="{e => {
-                console.log('Change', e.detail);
                 const { key, value } = e.detail;
-                data[key].value = value;
-                data = data;
+                commentBuilds[key].value = value;
+                commentBuilds = commentBuilds;
             }}"
         />
     </div>
@@ -318,7 +313,10 @@ const buildComment = (type: 'auto' | 'tele' | 'end') => {
                             class="form-control"
                             rows="3"
                             id="textarea-{i}"
-                            bind:value="{data[section].comment}"
+                            on:input={(event) => {
+                                commentBuilds[section].comment = event.currentTarget.value;
+                                commentBuilds = commentBuilds;
+                            }}
                         ></textarea>
                     </div>
                     <hr />
