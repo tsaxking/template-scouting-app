@@ -209,12 +209,15 @@ const submit = async () => {
             .map(([key, value]) => (value.value ? key : null))
             .filter(Boolean),
         comments: {
-            ...Object.entries(commentBuilds).reduce((acc, [key, value]) => {
-                if (value.value && value.comment.length > 0) {
-                    acc[key] = value.comment;
-                }
-                return acc;
-            }, {} as { [key: string]: string;}),
+            ...Object.entries(commentBuilds).reduce(
+                (acc, [key, value]) => {
+                    if (value.value && value.comment.length > 0) {
+                        acc[key] = value.comment;
+                    }
+                    return acc;
+                },
+                {} as { [key: string]: string }
+            ),
             general: teleopComment,
             auto: autoComment,
             endgame: endComment
@@ -289,7 +292,7 @@ const buildComment = (type: 'auto' | 'tele' | 'end') => {
 <div class="container mb-3">
     <div class="row d-flex justify-content-center w-100 p-0 mb-3">
         <Checkboxes
-            bind:data={commentBuilds}
+            bind:data="{commentBuilds}"
             on:change="{e => {
                 const { key, value } = e.detail;
                 commentBuilds[key].value = value;
@@ -313,10 +316,11 @@ const buildComment = (type: 'auto' | 'tele' | 'end') => {
                             class="form-control"
                             rows="3"
                             id="textarea-{i}"
-                            on:input={(event) => {
-                                commentBuilds[section].comment = event.currentTarget.value;
+                            on:input="{event => {
+                                commentBuilds[section].comment =
+                                    event.currentTarget.value;
                                 commentBuilds = commentBuilds;
-                            }}
+                            }}"
                         ></textarea>
                     </div>
                     <hr />
