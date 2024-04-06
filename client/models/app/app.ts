@@ -1869,7 +1869,7 @@ export class App<
 
     public static abort() {
         App.clearCache();
-        location.reload;
+        location.reload();
     }
 }
 
