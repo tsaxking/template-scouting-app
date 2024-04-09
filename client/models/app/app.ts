@@ -1215,15 +1215,15 @@ export class App<
                 return this.stop();
             }
 
-            // const end = Date.now();
-            // const duration = end - start;
-            // const delay = App.tickDuration - duration;
+            const end = Date.now();
+            const duration = end - start;
+            const delay = App.tickDuration - duration;
 
             // there could be a major delay if the callback takes too long, so we need to account for that
             setTimeout(
                 () => run(this.currentTick?.next(), i++),
                 // I don't understand why I need to multiply this by 2, but evidently I need to???
-                Math.max(0, App.tickDuration) // * 2,
+                Math.max(0, delay) // * 2,
             );
             App.save(this as App<any, any, any>);
         };
