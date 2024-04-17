@@ -640,10 +640,14 @@ export class Trace {
                     return [
                         {
                             title: 'Auto Points',
-                            labels: ['Speaker', 'Amp', 'Mobility'],
+                            labels: [
+                                'Speaker', 
+                                // 'Amp', 
+                                'Mobility'
+                            ],
                             data: [
                                 traceData.map(t => t.auto.spk),
-                                traceData.map(t => t.auto.amp),
+                                // traceData.map(t => t.auto.amp),
                                 traceData.map(t => t.auto.mobility)
                             ].map($Math.average)
                         },
