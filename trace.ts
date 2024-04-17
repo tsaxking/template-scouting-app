@@ -711,7 +711,7 @@ export type Match = {
     eventKey: string;
     scout: string;
     date: number;
-    group: 0 | 1 | 2 | 3 | 4 | 5 | null;
+    group: -1 | 0 | 1 | 2 | 3 | 4 | 5 | null;
     trace: TraceArray;
     preScouting: boolean;
 };
@@ -728,6 +728,6 @@ export const validateObj = {
     eventKey: 'string',
     scout: 'string',
     date: 'number',
-    group: (d: number | null) => d === null || (d >= 0 && d <= 5),
+    group: (d: number | null) => d === null || (d >= -1 && d <= 5),
     preScouting: 'boolean'
 };
