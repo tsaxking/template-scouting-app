@@ -30,6 +30,7 @@ import { ServerRequest } from '../../utilities/requests';
 import { alert, choose, confirm } from '../../utilities/notifications';
 import { Assignment } from '../../../shared/submodules/tatorscout-calculations/scout-groups';
 import {
+    matchSort,
     TBAEvent,
     TBAMatch,
     TBATeam
@@ -529,6 +530,7 @@ export class App<
                 const prev = App.$eventData;
                 App.$eventData = res.value;
                 if (prev?.eventKey !== res.value.eventKey) {
+                    res.value.matches = res.value.matches.sort(matchSort);
                     App.emit('new-event', res.value);
                 }
                 return res.value;
@@ -1161,6 +1163,15 @@ export class App<
      * @type {boolean}
      */
     public isDrawing = false;
+
+    private paused?: Promise<void>;
+
+    public pause(): (() => void) {
+        this.paused = new Promise((res, rej) => {});
+        return () => {
+            if (this.paused) Promise.resolve(this.paused);
+        }
+    }
 
     /**
      * Launch the app

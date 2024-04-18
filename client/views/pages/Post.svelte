@@ -45,6 +45,18 @@ let commentBuilds: {
         comments: true,
         comment: ''
     },
+    groundPicks: {
+        value: false,
+        color: 'info',
+        comments: true,
+        comment: ''
+    },
+    lobbedNotes: {
+        value: false,
+        color: 'info',
+        comments: true,
+        comment: ''
+    },
     tippy: {
         value: false,
         color: 'warning',
@@ -72,12 +84,6 @@ let commentBuilds: {
     problemsDriving: {
         value: false,
         color: 'danger',
-        comments: true,
-        comment: ''
-    },
-    groundPicks: {
-        value: false,
-        color: 'info',
         comments: true,
         comment: ''
     },

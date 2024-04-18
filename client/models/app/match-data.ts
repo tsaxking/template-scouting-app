@@ -205,6 +205,7 @@ export class MatchData {
 
     async moveIndex(i: number) {
         return attemptAsync(async () => {
+            if (this.compLevel === 'pr') this.compLevel = 'qm'; // Default to qual matches
             const eventData = await App.getEventData();
             if (eventData.isErr()) throw eventData.error;
             const { group } = App;
