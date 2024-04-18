@@ -297,6 +297,17 @@ export class Trace {
         };
     }
 
+    static fixZeroIssue(trace: TraceArray): TraceArray {
+        return trace.slice().map((t, i, a) => {
+            if (t[1] === 0 && t[2] === 0) {
+                t[1] = a[i - 1]?.[1] || a[i+1][1];
+                t[2] = a[i - 1]?.[2] || a[i+1][2];
+            }
+
+            return t;
+        });
+    }
+
     static getSection(point: P): 'auto' | 'teleop' | 'endgame' {
         const [i] = point;
         if (i < 65) return 'auto';
@@ -677,14 +688,19 @@ export class Trace {
                             title: 'Average Velocity',
                             labels: ['Velocity'],
                             data: [
-                                Trace.velocity.average(trace.flatMap(p => p.trace))
+                                Trace.velocity.average(
+                                    trace.flatMap(p => p.trace)
+                                )
                             ]
                         },
                         {
                             title: 'Seconds Not Moving',
                             labels: ['Seconds'],
                             data: [
-                                Trace.secondsNotMoving(trace.flatMap(p => p.trace), false)
+                                Trace.secondsNotMoving(
+                                    trace.flatMap(p => p.trace),
+                                    false
+                                )
                             ]
                         }
                     ];
