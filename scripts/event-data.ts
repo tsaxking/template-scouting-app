@@ -4,7 +4,7 @@ import { attemptAsync } from '../shared/check';
 
 export const getEvent = async (eventKey: string) => {
     return attemptAsync(async () => {
-        const eventKeyRegex = /^[0-9]{4}[a-z0-9]{4}$/i;
+        const eventKeyRegex = /^[0-9]{4}[a-z0-9]{3,5}$/i;
         if (!eventKeyRegex.test(eventKey)) {
             console.error('Invalid event key');
             process.exit(1);
