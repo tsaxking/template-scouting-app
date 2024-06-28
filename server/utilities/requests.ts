@@ -9,6 +9,7 @@ import {
     TBATeam
 } from '../../shared/submodules/tatorscout-calculations/tba';
 import { request } from './request';
+import { getJSONSync, saveJSON, saveJSONSync } from './files';
 
 const { SERVER_DOMAIN, SERVER_KEY } = env;
 if (!SERVER_DOMAIN) console.warn('SERVER_DOMAIN not properly set in .env file');
@@ -101,8 +102,18 @@ export class ServerRequest {
     }
 
     public static async getAccounts() {
-        // retrieves all usernames from the server, good for autocomplete on sign in
-        return ServerRequest.post<string[]>('/get-accounts');
+        return attemptAsync(async () => {
+            const exists = getJSONSync('accounts.json');
+            if (exists.isOk()) return exists.value;
+
+            // retrieves all usernames from the server, good for autocomplete on sign in
+            const a = await ServerRequest.post<string[]>('/get-accounts');
+            if (a.isOk()) {
+                saveJSONSync('accounts.json', a.value);
+                return a.value;
+            }
+            else throw a.error;
+        });
     }
 
     public static async signIn(username: string, password: string) {
