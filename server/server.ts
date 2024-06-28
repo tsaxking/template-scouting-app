@@ -69,7 +69,7 @@ app.post('/socket-init', (req, res) => {
 });
 
 app.use('/*', (req, res, next) => {
-    log(`[${req.method}] ${req.pathname}`);
+    log(`[${req.method}] ${req.originalUrl}`);
     res.setHeader('Access-Control-Allow-Origin', '*');
     // res.setHeader('Access-Control-Allow-Credentials', 'true');
     // res.setHeader('Access-Control-Allow-Headers', '*');
@@ -173,7 +173,7 @@ app.get('/*', async (req, res, next) => {
 });
 
 app.get('/test/:page', (req, res, next) => {
-    if (env.ENVIRONMENT !== 'dev') return next();
+    if (!['dev', 'test'].includes(env.ENVIRONMENT as string)) return next();
     const s = res.sendTemplate('entries/test/' + req.params.page);
     if (s.isErr()) {
         res.sendStatus('page:not-found', { page: req.params.page });
