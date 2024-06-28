@@ -357,6 +357,15 @@ app.post<{ year: number }>(
     }
 );
 
+app.post('/get-accounts', async (req, res) => {
+    const accounts = await ServerRequest.getAccounts();
+    if (accounts.isOk()) {
+        res.json(accounts.value);
+    } else {
+        res.status(500).json(accounts.error);
+    }
+});
+
 app.get('/*', (req, res) => {
     if (!res.fulfilled) {
         res.sendStatus('page:not-found', { page: req.pathname });
