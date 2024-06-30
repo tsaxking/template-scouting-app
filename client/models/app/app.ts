@@ -44,6 +44,7 @@ import { socket } from '../../utilities/socket';
 import { Random } from '../../../shared/math';
 import { Tick } from './tick';
 import { MatchData } from './match-data';
+import { TabletState } from '../../../server/structure/cache/tablet';
 
 /**
  * Description placeholder
@@ -251,6 +252,7 @@ export class App<
     public static set events(events: TBAEvent[]) {
         App.$events = events;
         window.localStorage.setItem('events', JSON.stringify(events));
+        App.updateState();
     }
 
     public static get preScouting() {
@@ -260,6 +262,7 @@ export class App<
     public static set preScouting(preScouting: boolean) {
         App.$preScouting = preScouting;
         window.localStorage.setItem('preScouting', preScouting.toString());
+        App.updateState();
     }
 
     public static get scoutName() {
@@ -270,6 +273,7 @@ export class App<
         App.$scoutName = scoutName;
         window.localStorage.setItem('scoutName', scoutName);
         App.emit('change-name', scoutName);
+        App.updateState();
     }
 
     public static get group() {
@@ -538,6 +542,17 @@ export class App<
                 alert('Error getting scout groups');
                 throw res.error;
             }
+        });
+    }
+
+    public static updateState() {
+        return ServerRequest.post('/api/tablet/update', {
+            compLevel: App.matchData.compLevel,
+            groupNumber: App.matchData.group,
+            matchNumber: App.matchData.matchNumber,
+            teamNumber: App.matchData.teamNumber,
+            scoutName: App.scoutName,
+            preScouting: App.preScouting
         });
     }
 
@@ -1891,4 +1906,26 @@ Object.assign(window, {
 
 socket.on('connect', async () => {
     App.uploadFromLocalStorage();
+});
+
+socket.on('change-state', (state: TabletState) => {
+    // update only the private properties as to not trigger updateState on each set
+    const { matchData } = App;
+    matchData.$compLevel = state.compLevel;
+    matchData.$group = state.groupNumber;
+    matchData.$matchNumber = state.matchNumber;
+    matchData.$teamNumber = state.teamNumber;
+    App.$scoutName = state.scoutName;
+    App.$preScouting = state.preScouting;
+
+    App.updateState();
+});
+
+socket.on('submit', () => {
+    // force submit
+    // TODO: I need to figure out how to get the current checks state and comments state before submitting
+});
+
+socket.on('abort', () => {
+    App.abort();
 });
