@@ -1,6 +1,7 @@
 import { attempt, attemptAsync } from '../../../shared/check';
 import { teamsFromMatch } from '../../../shared/submodules/tatorscout-calculations/tba';
 import { TBAMatch } from '../../../shared/tba';
+import { socket } from '../../utilities/socket';
 import { App } from './app';
 
 const filter = (m: TBAMatch): number[] =>
@@ -103,6 +104,8 @@ export class MatchData {
         );
 
         App.emit('select-match', this);
+
+        App.updateState();
     }
 
     async getCurrentMatch() {
@@ -252,3 +255,4 @@ export class MatchData {
         return this.moveIndex(1);
     }
 }
+
