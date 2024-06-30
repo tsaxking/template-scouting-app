@@ -164,7 +164,7 @@ App.on('select-match', () => fns.getMatches(app));
         </tr>
     </thead>
     <tbody>
-        {#each customMatches as match, i}
+        {#each customMatches as match, matchIndex}
             <tr
                 class="
                     cursor-pointer
@@ -173,7 +173,7 @@ App.on('select-match', () => fns.getMatches(app));
                     m =>
                         m.comp_level == currentMatch?.comp_level &&
                         m.match_number == currentMatch?.match_number
-                ) === i
+                ) === matchIndex
                     ? 'table-primary'
                     : ''}
                 "
@@ -181,7 +181,7 @@ App.on('select-match', () => fns.getMatches(app));
                 <td
                     on:click="{() => {
                         currentMatch = match;
-                        fns.select(i);
+                        fns.select(matchIndex);
                     }}"
                 >
                     {match.match_number}
@@ -189,29 +189,29 @@ App.on('select-match', () => fns.getMatches(app));
                 <td
                     on:click="{() => {
                         currentMatch = match;
-                        fns.select(i);
+                        fns.select(matchIndex);
                     }}"
                 >
                     {match.comp_level}
                 </td>
-                {#each match.teams as team, index}
-                    <td on:click="{() => fns.select(i, index)}">
-                        {#if index > 2}
+                {#each match.teams as team, teamIndex}
+                    <td on:click="{() => fns.select(matchIndex, teamIndex)}">
+                        {#if teamIndex > 2}
                             <!-- Blue alliance -->
                             <span
                                 class="text-primary"
-                                class:selected-team="{currentMatchIndex === i &&
+                                class:selected-team="{currentMatchIndex === matchIndex &&
                                     currentTeam === team}"
-                                class:is-group="{match.scoutIndex === index}"
+                                class:is-group="{match.scoutIndex === teamIndex}"
                                 >{team}</span
                             >
                         {:else}
                             <!-- Red alliance -->
                             <span
                                 class="text-danger"
-                                class:selected-team="{currentMatchIndex === i &&
+                                class:selected-team="{currentMatchIndex === matchIndex &&
                                     currentTeam === team}"
-                                class:is-group="{match.scoutIndex === index}"
+                                class:is-group="{match.scoutIndex === teamIndex}"
                                 >{team}</span
                             >
                         {/if}
