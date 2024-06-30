@@ -1,4 +1,4 @@
-import { attempt, attemptAsync } from '../../../shared/check';
+import { attemptAsync } from '../../../shared/check';
 import { teamsFromMatch } from '../../../shared/submodules/tatorscout-calculations/tba';
 import { TBAMatch } from '../../../shared/tba';
 import { App } from './app';
@@ -27,7 +27,7 @@ export class MatchData {
     constructor(
         public $matchNumber: number = 0,
         public $teamNumber: number = 0,
-        public $compLevel: 'pr' | 'qm' | 'qf' | 'sf' | 'f' = 'pr',
+        public $compLevel: 'pr' | 'qm' | 'qf' | 'sf' | 'f' = 'qm',
         public $group: number = -1
     ) {}
 
@@ -71,12 +71,12 @@ export class MatchData {
 
         if (!match) return null;
 
-        // console.log(match, this.teamNumber);
+        const teams = teamsFromMatch(match);
 
-        if (match.alliances.red.team_keys.includes(`frc${this.$teamNumber}`)) {
+        if (teams.slice(0, 4).includes(this.teamNumber)) {
             return 'red';
         }
-        if (match.alliances.blue.team_keys.includes(`frc${this.$teamNumber}`)) {
+        if (teams.slice(4).includes(this.teamNumber)) {
             return 'blue';
         }
         return null;
@@ -168,7 +168,7 @@ export class MatchData {
             if (currentMatch.isErr()) throw currentMatch.error;
 
             if (currentMatch.value) {
-                console.log('Found match', currentMatch.value);
+                // console.log('Found match', currentMatch.value);
                 if (teamNumber) {
                     const teams = teamsFromMatch(currentMatch.value).filter(
                         Boolean
@@ -235,7 +235,6 @@ export class MatchData {
                 this.teamNumber = teams[teamIndex];
             } else {
                 this.teamNumber = eventData.value.assignments.matchAssignments[group][currentIndex];
-                // this.teamNumber = teams[group];
             }
 
             this.matchNumber = match.match_number;

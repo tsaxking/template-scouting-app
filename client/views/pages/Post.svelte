@@ -192,6 +192,7 @@ $: setComment('end', selectedEnd);
 
 const submit = async () => {
     if (
+        // TODO: make this year by year based
         !commentBuilds.groundPicks.value &&
         Trace.yearInfo[2024].mustGroundPick(app.pull())
     ) {
