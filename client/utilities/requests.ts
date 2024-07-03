@@ -809,10 +809,13 @@ export class ServerRequest<T = unknown> {
                     'Content-Type': 'application/json',
                     ...this.options?.headers,
                     // populate metadata
-                    ...Array.from(ServerRequest.metadata.entries()).reduce((acc, cur) => {
-                        acc[cur[0]] = cur[1];
-                        return acc;
-                    }, {} as { [key: string]: string })
+                    ...Array.from(ServerRequest.metadata.entries()).reduce(
+                        (acc, cur) => {
+                            acc[cur[0]] = cur[1];
+                            return acc;
+                        },
+                        {} as { [key: string]: string }
+                    )
                 },
                 body: JSON.stringify(this.body)
             })

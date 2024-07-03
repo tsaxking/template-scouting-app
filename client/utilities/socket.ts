@@ -113,8 +113,8 @@ class Socket {
     }
 
     // private newEvent(event: string, data: any) {
-        // console.log({ event, data });
-        // this.em.emit(event, data);
+    // console.log({ event, data });
+    // this.em.emit(event, data);
     // }
 
     /**
@@ -185,9 +185,12 @@ class Socket {
 
         const init = (id: string) => {
             socket.off('init', init);
-            if (typeof id !== 'string') return console.error('Did not recieve typeof string on socket init');
+            if (typeof id !== 'string')
+                return console.error(
+                    'Did not recieve typeof string on socket init'
+                );
             ServerRequest.metadata.set('socket-id', id);
-        }
+        };
 
         socket.on('init', init);
     }
@@ -232,4 +235,3 @@ Object.assign(window, { socket });
 //     socket.connect();
 //     changed = true;
 // };
-

@@ -16,7 +16,7 @@ type Cache = {
 type SocketEvent = {
     connect: Socket;
     disconnect: Socket;
-}
+};
 
 class SocketSession {
     public rooms: string[] = [];
@@ -87,7 +87,7 @@ export class SocketWrapper {
      */
     constructor(
         public readonly app: App,
-        public readonly io: Server,
+        public readonly io: Server
         // cb?: (socket: Socket) => void
     ) {
         io.on('connection', socket => {
@@ -185,7 +185,10 @@ export class SocketWrapper {
      * @param {(data?: unknown) => void} fn
      * @returns {void) => void}
      */
-    on<K extends keyof SocketEvent>(event: K, fn: (data?: SocketEvent[K]) => void) {
+    on<K extends keyof SocketEvent>(
+        event: K,
+        fn: (data?: SocketEvent[K]) => void
+    ) {
         this.em.on(event, fn);
         // return this.io.on(event, fn);
     }
@@ -198,7 +201,10 @@ export class SocketWrapper {
      * @param {(data?: unknown) => void} fn
      * @returns {void) => void}
      */
-    off<K extends keyof SocketEvent>(event: K, fn: (data?: SocketEvent[K]) => void) {
+    off<K extends keyof SocketEvent>(
+        event: K,
+        fn: (data?: SocketEvent[K]) => void
+    ) {
         this.em.off(event, fn);
         // return this.io.off(event, fn);
     }

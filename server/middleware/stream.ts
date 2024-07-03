@@ -103,7 +103,7 @@ export const fileStream = (opts?: FileStreamOptions): ServerFunction => {
             const filepath = path.resolve(__uploads, savedName);
             const ws = fs.createWriteStream(filepath);
 
-            file.pipe(ws as NodeJS.WritableStream);
+            file.pipe(ws as unknown as NodeJS.WritableStream);
         });
 
         bb.on('close', () => {
@@ -113,7 +113,7 @@ export const fileStream = (opts?: FileStreamOptions): ServerFunction => {
             next();
         });
 
-        req.req.pipe(bb as NodeJS.WritableStream);
+        req.req.pipe(bb as unknown as NodeJS.WritableStream);
     };
 };
 

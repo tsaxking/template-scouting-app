@@ -369,7 +369,7 @@ export class App<sessionInfo = unknown> {
         //         name: Session.sessionName
         //     })
         // );
-        
+
         this.io = new SocketWrapper(
             this as App<unknown>,
             new Server(this.httpServer)
