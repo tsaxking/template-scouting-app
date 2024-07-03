@@ -99,61 +99,63 @@ type D = Date | number | string;
  */
 export const dateString = (format: string) => {
     return (date: D = new Date()) => {
-        if (!(date instanceof Date)) date = new Date(date);
+        const input = date;
+        if (typeof date === 'string') {
+            if (isNaN(Number(date))) {
+                date = new Date(date);
+            } else {
+                date = new Date(Number(date));
+            }
+        }
+        if (typeof date === 'number') date = new Date(date);
+
         const DATE = date as Date;
-        return (
-            format
-                // year
-                .replace(/YYYY/g, DATE.getFullYear().toString())
-                .replace(/YY/g, DATE.getFullYear().toString().slice(-2))
-                // month
-                .replace(/MMM/g, monthsShort[DATE.getMonth()].toString())
-                .replace(
-                    /MM/g,
-                    (DATE.getMonth() + 1).toString().padStart(2, '0')
-                )
-                .replace(/month/gi, months[DATE.getMonth()].toString())
-                // day
-                .replace(/DDD/g, daysShort[DATE.getDay()].toString())
-                .replace(/DD/g, DATE.getDate().toString().padStart(2, '0'))
-                .replace(/day/gi, days[DATE.getDay()].toString())
-                // time
-                .replace(/hh/g, () => {
-                    const hours = DATE.getHours();
-                    if (format.includes('AM') || format.includes('PM')) {
-                        if (hours === 0) return '12';
-                        if (hours > 12) {
-                            return (hours - 12).toString().padStart(2, '0');
-                        }
+        const data = format
+            // year
+            .replace(/YYYY/g, DATE.getFullYear()?.toString())
+            .replace(/YY/g, DATE.getFullYear()?.toString().slice(-2))
+            // month
+            .replace(/MMM/g, monthsShort[DATE.getMonth()]?.toString())
+            .replace(/MM/g, (DATE.getMonth() + 1)?.toString().padStart(2, '0'))
+            .replace(/month/gi, months[DATE.getMonth()]?.toString())
+            // day
+            .replace(/DDD/g, daysShort[DATE.getDay()]?.toString())
+            .replace(/DD/g, DATE.getDate()?.toString().padStart(2, '0'))
+            .replace(/day/gi, days[DATE.getDay()]?.toString())
+            // time
+            .replace(/hh/g, () => {
+                const hours = DATE.getHours();
+                if (format.includes('AM') || format.includes('PM')) {
+                    if (hours === 0) return '12';
+                    if (hours > 12) {
+                        return (hours - 12)?.toString().padStart(2, '0');
                     }
-                    return hours.toString().padStart(2, '0');
-                }) // 24 hour
-                .replace(/mm/g, DATE.getMinutes().toString().padStart(2, '0'))
-                .replace(/ss/g, DATE.getSeconds().toString().padStart(2, '0'))
-                .replace(
-                    /ms/g,
-                    DATE.getMilliseconds().toString().padStart(3, '0')
-                )
-                // time no padding
-                .replace(
-                    /h/g,
-                    DATE.getHours() > 12
-                        ? (DATE.getHours() - 12).toString()
-                        : DATE.getHours().toString()
-                ) // 12 hour
-                .replace(/m/g, DATE.getMinutes().toString())
-                .replace(/s/g, DATE.getSeconds().toString())
-                .replace(/ms/g, DATE.getMilliseconds().toString())
-                // am/pm
-                .replace(/am/g, DATE.getHours() >= 12 ? 'pm' : 'am')
-                .replace(/AM/g, DATE.getHours() >= 12 ? 'PM' : 'AM')
-                .replace(/a.m./g, DATE.getHours() >= 12 ? 'p.m.' : 'a.m.')
-                .replace(/A.M./g, DATE.getHours() >= 12 ? 'P.M.' : 'A.M.')
-                .replace(/pm/g, DATE.getHours() >= 12 ? 'pm' : 'am')
-                .replace(/PM/g, DATE.getHours() >= 12 ? 'PM' : 'AM')
-                .replace(/p.m./g, DATE.getHours() >= 12 ? 'p.m.' : 'a.m.')
-                .replace(/P.M./g, DATE.getHours() >= 12 ? 'P.M.' : 'A.M.')
-        );
+                }
+                return hours?.toString().padStart(2, '0');
+            }) // 24 hour
+            .replace(/mm/g, DATE.getMinutes()?.toString().padStart(2, '0'))
+            .replace(/ss/g, DATE.getSeconds()?.toString().padStart(2, '0'))
+            .replace(/ms/g, DATE.getMilliseconds()?.toString().padStart(3, '0'))
+            // time no padding
+            .replace(
+                /h/g,
+                DATE.getHours() > 12
+                    ? (DATE.getHours() - 12)?.toString()
+                    : DATE.getHours()?.toString()
+            ) // 12 hour
+            .replace(/m/g, DATE.getMinutes()?.toString())
+            .replace(/s/g, DATE.getSeconds()?.toString())
+            .replace(/ms/g, DATE.getMilliseconds()?.toString())
+            // am/pm
+            .replace(/am/g, DATE.getHours() >= 12 ? 'pm' : 'am')
+            .replace(/AM/g, DATE.getHours() >= 12 ? 'PM' : 'AM')
+            .replace(/a.m./g, DATE.getHours() >= 12 ? 'p.m.' : 'a.m.')
+            .replace(/A.M./g, DATE.getHours() >= 12 ? 'P.M.' : 'A.M.')
+            .replace(/pm/g, DATE.getHours() >= 12 ? 'pm' : 'am')
+            .replace(/PM/g, DATE.getHours() >= 12 ? 'PM' : 'AM')
+            .replace(/p.m./g, DATE.getHours() >= 12 ? 'p.m.' : 'a.m.')
+            .replace(/P.M./g, DATE.getHours() >= 12 ? 'P.M.' : 'A.M.');
+        return data;
     };
 };
 
@@ -198,4 +200,34 @@ export const changeTimezone = (to: Timezone) => (date: Date) => {
     const offset = timezoneOffsets[to];
     const utc = date.getTime() + date.getTimezoneOffset() * 60000;
     return new Date(utc + 3600000 * offset);
+};
+
+export const segment = (dates: Date[], segments?: number): Date[] => {
+    dates = dates.slice(); // copy the array
+    dates.sort((a, b) => a.getTime() - b.getTime());
+    const min = dates[0];
+    const max = dates[dates.length - 1];
+    if (!min || !max) return []; // no dates
+    const range = max.getTime() - min.getTime();
+    if (segments) {
+        return Array.from({ length: segments }).map((_, i) => {
+            const start = min.getTime() + (range / segments) * i;
+            return new Date(start);
+        });
+    } else {
+        switch (true) {
+            case range < 1000 * 60 * 60: // less than an hour
+                return segment(dates, 4); // 15 minute segments
+            case range < 1000 * 60 * 60 * 24: // less than a day
+                return segment(dates, 24); // 1 hour segments
+            case range < 1000 * 60 * 60 * 24 * 7: // less than a week
+                return segment(dates, 7); // 1 day segments
+            case range < 1000 * 60 * 60 * 24 * 30: // less than a month
+                return segment(dates, 30); // 1 week segments
+            case range < 1000 * 60 * 60 * 24 * 365: // less than a year
+                return segment(dates, 12); // 1 month segments
+            default:
+                return segment(dates, 5); // 1 year segments
+        }
+    }
 };

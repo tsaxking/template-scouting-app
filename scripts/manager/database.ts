@@ -21,8 +21,9 @@ export const versionInfo = async () => {
         DB.latestVersion()
     ]);
 
-    console.log(`Current: ${current.join('.')}\nLatest: ${latest.join('.')}`);
-    await select('', ['[Back]']);
+    await select(`Current: ${current.join('.')}\nLatest: ${latest.join('.')}`, [
+        '[Back]'
+    ]);
     return main();
 };
 
@@ -72,24 +73,27 @@ export const viewTables = async () => {
         const data = await DB.unsafe.all<any>(`SELECT * FROM ${table}`);
         if (data.isOk()) {
             // using cliffy to display the data
-            const tableData = data.value;
-            const keys = Object.keys(tableData[0] || {});
-            const values = tableData.map(d =>
-                Object.values(d).map(a => {
-                    switch (typeof a) {
-                        case 'bigint':
-                            return a.toString() + 'n';
-                        case 'object':
-                            return JSON.stringify(a);
-                        default:
-                            return a;
-                    }
-                })
-            );
+            // const tableData = data.value;
+            // const keys = Object.keys(tableData[0] || {});
+            // const values = tableData.map(d =>
+            //     Object.values(d).map(a => {
+            //         switch (typeof a) {
+            //             case 'bigint':
+            //                 return a.toString() + 'n';
+            //             case 'object':
+            //                 return JSON.stringify(a);
+            //             default:
+            //                 return a;
+            //         }
+            //     })
+            // );
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            console.table(keys, values as any);
+            console.table(data.value);
 
-            await select('', ['[Back]']);
+            await select('', ['[Back]'], {
+                clear: false,
+                exit: true
+            });
             return main();
         } else {
             return backToMain('Error getting data: ' + data.error.message);
@@ -103,7 +107,10 @@ export const mergeQueries = async () => {
     const allFiles = await readDir(resolve(__root, './server/utilities'));
     if (allFiles.isOk()) {
         const files = allFiles.value.filter(
-            f => fs.statSync(f).isFile() && f.match(/\w+-[0-9]+.ts/)?.length
+            f =>
+                fs
+                    .statSync(resolve(__root, './server/utilities', f))
+                    .isFile() && f.match(/\w+-[0-9]+.ts/)?.length
         );
         if (!files.length) return backToMain('No files to merge');
         const mergables = files.reduce((acc, f) => {
@@ -242,7 +249,7 @@ export const restoreBackup = async () => {
 export const backup = async () => {
     const res = await DB.makeBackup();
     if (res.isOk()) {
-        backToMain('Backup created');
+        backToMain(`Backup created: ${res.value}`);
     } else {
         backToMain('Error creating backup: ' + res.error.message);
     }

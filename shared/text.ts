@@ -110,3 +110,13 @@ export const parseObject = (
     }
     return newObj;
 };
+
+export const cost = (amount: number | string): string => {
+    return +amount >= 0
+        ? `$${fmtNumber((+amount).toFixed(2))}`
+        : `-$${Math.abs(+amount).toFixed(2)}`;
+};
+
+export const fmtNumber = (num: number | string): string => {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+};

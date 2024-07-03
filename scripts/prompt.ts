@@ -90,11 +90,12 @@ type Option<T = unknown> = {
  */
 const _select = async <T = unknown>(
     message: string,
-    options: Option<T>[]
+    options: Option<T>[],
+    clear = true
 ): Promise<T> => {
     const res = await new Promise<T>(res => {
         const run = (selected: number) => {
-            console.clear();
+            if (clear) console.clear();
             console.log(Colors.FgBlue, '?', Colors.Reset, message, '\n');
             for (let i = 0; i < options.length; i++) {
                 const o = options[i];
@@ -111,7 +112,9 @@ const _select = async <T = unknown>(
 
         let selected = 0;
 
-        const stdin = process.stdin;
+        const stdin = process.stdin as unknown as NodeJS.ReadStream & {
+            off: (event: string, fn: (str: string) => void) => void;
+        };
 
         stdin.setRawMode(true);
         stdin.resume();
@@ -166,8 +169,10 @@ export const select = async <T = unknown>(
     options: {
         exit?: boolean;
         return?: boolean;
+        clear?: boolean;
     } = {
-        exit: false
+        exit: false,
+        clear: true
     }
 ): Promise<T> => {
     if (options.return) {
@@ -187,7 +192,8 @@ export const select = async <T = unknown>(
         message,
         data.map(d =>
             typeof d === 'string' ? ({ name: d, value: d } as Option<T>) : d
-        )
+        ),
+        options.clear
     );
 
     if (res === '$$exit$$') {
@@ -241,12 +247,12 @@ export const search = async <T extends string | Option>(
           }
         | T
     )[]
-): Promise<Result<string>> => {
+): Promise<Result<T>> => {
     const s = new FuzzySearch(options, ['name', ''], {
         caseSensitive: false
     });
 
-    const run = async (): Promise<Result<string>> => {
+    const run = async (): Promise<Result<T>> => {
         return attemptAsync(async () => {
             const data = await prompt(
                 `${Colors.FgCyan}? ${Colors.Reset} ${message}`
@@ -254,18 +260,19 @@ export const search = async <T extends string | Option>(
 
             const values = s.search(data || '');
 
-            const res = await select<string>('Select a value', [
+            const res = await select<T>('Select a value', [
                 {
                     name: '[Back to search]',
-                    value: '$$back$$'
+                    value: '$$back$$' as T
                 },
                 {
                     name: '[Exit search]',
-                    value: '$$exit$$'
+                    value: '$$exit$$' as T
                 },
-                ...values.map(v =>
-                    typeof v === 'string' ? v : v.name || v.toString()
-                )
+                ...values.map(v => ({
+                    name: typeof v === 'string' ? v : v.name || v.toString(),
+                    value: typeof v === 'string' ? v : (v.value as T)
+                }))
             ]);
 
             if (res === '$$back$$') {

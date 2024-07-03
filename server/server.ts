@@ -69,7 +69,7 @@ app.post('/socket-init', (req, res) => {
 });
 
 app.use('/*', (req, res, next) => {
-    log(`[${req.method}] ${req.pathname}`);
+    log(`[${req.method}] ${req.originalUrl}`);
     res.setHeader('Access-Control-Allow-Origin', '*');
     // res.setHeader('Access-Control-Allow-Credentials', 'true');
     // res.setHeader('Access-Control-Allow-Headers', '*');
@@ -83,9 +83,9 @@ app.static('/public', path.resolve(__root, './public'));
 app.static('/dist', path.resolve(__root, './dist'));
 app.static('/uploads', path.resolve(__root, './storage/uploads'));
 
-app.post('/socket-url', (req, res) => {
+app.post('/test/get-socket', (req, res) => {
     res.json({
-        url: env.SOCKET_DOMAIN
+        id: req.socket?.id || 'Not found!'
     });
 });
 
@@ -173,7 +173,7 @@ app.get('/*', async (req, res, next) => {
 });
 
 app.get('/test/:page', (req, res, next) => {
-    if (env.ENVIRONMENT !== 'dev') return next();
+    if (!['dev', 'test'].includes(env.ENVIRONMENT as string)) return next();
     const s = res.sendTemplate('entries/test/' + req.params.page);
     if (s.isErr()) {
         res.sendStatus('page:not-found', { page: req.params.page });
@@ -357,6 +357,15 @@ app.post<{ year: number }>(
         }
     }
 );
+
+app.post('/get-accounts', async (req, res) => {
+    const accounts = await ServerRequest.getAccounts();
+    if (accounts.isOk()) {
+        res.json(accounts.value);
+    } else {
+        res.status(500).json(accounts.error);
+    }
+});
 
 app.get('/*', (req, res) => {
     if (!res.fulfilled) {

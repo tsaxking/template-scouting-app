@@ -5,7 +5,7 @@ import { Req } from './req';
 import { Res } from './res';
 import { SocketWrapper } from '../socket';
 import http from 'http';
-import { Server } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import { Session } from '../sessions';
 import session from 'express-session';
 
@@ -183,6 +183,7 @@ export class Route<sessionInfo = unknown> {
 
                 await run(0);
             } catch (e) {
+                console.error(e);
                 response.sendStatus('unknown:error');
             }
         });
@@ -275,6 +276,8 @@ export class Route<sessionInfo = unknown> {
  * @typedef {App}
  */
 export class App<sessionInfo = unknown> {
+    public static readonly SocketServer = SocketWrapper;
+
     /**
      * Creates a header authorization function
      * @date 3/8/2024 - 6:13:51 AM
@@ -346,10 +349,6 @@ export class App<sessionInfo = unknown> {
     ) {
         this.server = express();
         this.httpServer = http.createServer(this.server);
-        this.io = new SocketWrapper(
-            this as App<unknown>,
-            new Server(this.httpServer)
-        );
 
         // s.listen(port, () => {
         //     log(`Server is listening on port ${port}`);
@@ -357,6 +356,7 @@ export class App<sessionInfo = unknown> {
 
         this.server.use(express.json());
         this.server.use(express.urlencoded({ extended: true }));
+
         // this.server.use(
         //     session({
         //         secret: 'hello darkness my old friend',
@@ -369,7 +369,16 @@ export class App<sessionInfo = unknown> {
         //         name: Session.sessionName
         //     })
         // );
+
+        this.io = new SocketWrapper(
+            this as App<unknown>,
+            new Server(this.httpServer)
+        );
+
         this.server.use(async (req, res, next) => {
+            const socketId = req.headers['socket-id'] as string | undefined;
+            const socket = this.io.io.sockets.sockets.get(socketId || '');
+
             const s = await Session.from<sessionInfo>(
                 this as App<unknown>,
                 req,
@@ -378,7 +387,8 @@ export class App<sessionInfo = unknown> {
             const request = new Req<unknown, sessionInfo>(
                 this as App<unknown>,
                 req,
-                s
+                s,
+                socket
             );
             req.request = request;
             req.response = new Res(this as App<unknown>, res, request);
@@ -404,12 +414,17 @@ export class App<sessionInfo = unknown> {
         this.server[method](path, async (req: express.Request, _res, next) => {
             const final = async () => {
                 // console.log('Final');
-                // if (!req.response.fulfilled) return console.log('Not fulfilled');
+                if (!req.response.fulfilled)
+                    return console.log('Not fulfilled');
                 for (const fn of this.finalFunctions) {
-                    await fn(
-                        req.request as Req<unknown, sessionInfo>,
-                        req.response
-                    );
+                    try {
+                        await fn(
+                            req.request as Req<unknown, sessionInfo>,
+                            req.response
+                        );
+                    } catch (error) {
+                        console.error(error);
+                    }
                 }
             };
             try {
@@ -427,6 +442,7 @@ export class App<sessionInfo = unknown> {
                 await run(0);
                 await final();
             } catch (e) {
+                console.error(e);
                 req.response.sendStatus('unknown:error');
             }
         });

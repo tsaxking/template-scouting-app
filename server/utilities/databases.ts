@@ -2,7 +2,7 @@ import env, { __root } from './env';
 import { error, log } from './terminal-logging';
 import { Client } from 'pg';
 import { Queries } from './queries';
-import { exists, readDir, readFile, readFileSync, saveFile } from './files';
+import { exists, readDir, readFile, saveFile, log as csv } from './files';
 import { attemptAsync, Result } from '../../shared/check';
 import {
     capitalize,
@@ -205,6 +205,19 @@ export class DB {
             //     rej('Error connecting to the database');
             // });
             // });
+        });
+    }
+
+    public static async vacuum() {
+        return attemptAsync(async () => {
+            console.log('Vacuum go brrrrrrr');
+            const tables = await DB.getTables();
+            if (tables.isErr()) throw tables.error;
+            return Promise.all(
+                tables.value.map(async table => {
+                    DB.unsafe.run(`VACUUM ${table};`);
+                })
+            );
         });
     }
 
@@ -557,7 +570,11 @@ export class DB {
         return attemptAsync(async () => {
             const backups = await readDir('storage/db/backups');
             if (backups.isOk()) {
-                return backups.value.map(b => b);
+                return backups.value.sort((a, b) => {
+                    const [, aDate] = a.split('_');
+                    const [, bDate] = b.split('_');
+                    return +aDate - +bDate;
+                });
             }
             return [];
         });
@@ -578,9 +595,9 @@ export class DB {
                 DB.getVersion()
             ]);
 
-            if (['0.0.0', '-1.-1.-1'].includes(version.join('.'))) {
-                throw new Error('Database not initialized, no backup created');
-            }
+            // if (['-1.-1.-1'].includes(version.join('.'))) {
+            //     throw new Error('Database not initialized, no backup created');
+            // }
 
             if (tables.isErr()) throw tables.error;
             const backup: {
@@ -836,9 +853,9 @@ export class DB {
      */
     static async updateToVersion(version: Version): Promise<Result<void>> {
         return attemptAsync(async () => {
+            await DB.init();
             const versions = await DB.getUpdates();
             if (versions.isErr()) throw versions.error;
-            await DB.init();
 
             const [major, minor, patch] = version;
 
@@ -1046,13 +1063,15 @@ export class DB {
         query: string,
         args: Parameter[]
     ): Promise<Result<QueryResult<unknown>>> {
+        const start = Date.now();
+
         await DB.connect();
         const run = () =>
             attemptAsync(async () => {
                 const q = DB.parseQuery(query, args);
                 const [sql, newArgs] = q;
 
-                const result = await DB.db.query(sql, newArgs);
+                const result = await DB.db.query(sql, newArgs as unknown[]);
 
                 return {
                     rows: bigIntDecode(DB.parseObj(result.rows) as unknown[]),
@@ -1066,6 +1085,14 @@ export class DB {
         if (res.isErr()) {
             error('Error running query:', query, args, res.error);
         }
+
+        const time = Date.now() - start;
+
+        csv('queries', {
+            date: Date.now(),
+            query: query.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim(),
+            duration: time
+        });
 
         return res;
     }
@@ -1283,6 +1310,9 @@ export const run = () => {
     return attemptAsync(async () => {
         await DB.runAllUpdates();
         await DB.setIntervals();
+
+        DB.vacuum();
+        setInterval(DB.vacuum, 5 * 1000 * 60);
     });
 };
 
