@@ -41,9 +41,7 @@ router.post(
     '/init', 
     (req, res) => {
         const id = req.session.id;
-        const state = State.current;
-        if (!state) throw new Error('State not initialized');
-        state.newTablet(id);
+        State.newTablet(id).unwrap();
         res.status(200).json({
             success: true
         });
@@ -100,3 +98,9 @@ router.post<{ id: string }>(
         res.sendStatus('tablet:submitted');
     }
 );
+
+router.post(
+    '/pull-state',
+    (_req, res) => {
+    res.status(200).json(State.getState().unwrap().map(t => t.safe));
+});

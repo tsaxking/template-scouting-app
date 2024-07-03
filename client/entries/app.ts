@@ -10,4 +10,8 @@ document.body.style.padding = '0px';
 document.body.style.margin = '0px';
 
 import { Settings } from '../models/settings';
+import { ServerRequest } from '../utilities/requests';
 Object.assign(window, { Settings });
+
+// initialize server side tablet state
+ServerRequest.post('/api/tablet/init');
