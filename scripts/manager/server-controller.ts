@@ -10,6 +10,7 @@ import { sleep } from '../../shared/sleep';
 import { Match } from '../../shared/submodules/tatorscout-calculations/trace';
 import fs from 'fs/promises';
 import path from 'path';
+import { getJSON, saveJSON } from '../../server/utilities/files';
 
 const pullEvent = async () => {
     const years = Array.from({ length: new Date().getFullYear() - 2006 })
@@ -66,7 +67,7 @@ const viewServerConnection = async () => {
     }
 };
 
-const submitMatchesFromDB = async () => {
+const submitMatchesFromDb = async () => {
     const data = await DB.all('server-requests/all');
     if (data.isErr()) return backToMain('Error getting failed matches');
     const failed = data.value;
@@ -105,6 +106,24 @@ const submitMatchesFromJson = async () => {
     return backToMain('Uploaded');
 };
 
+const prettifyJson = async () => {
+    const json = await getJSON('event-data');
+    if (json.isErr()) return backToMain('Unable to read event-data.json');
+
+    const res = await saveJSON('event-data', JSON.stringify(json.value, null, 2));
+    if (res.isErr()) return backToMain('Unable to save event-data.json');
+    backToMain('Prettified event-data.json');
+}
+
+const unprettifyJson = async () => {
+    const json = await getJSON('event-data');
+    if (json.isErr()) return backToMain('Unable to read event-data.json');
+
+    const res = await saveJSON('event-data', JSON.stringify(json.value));
+    if (res.isErr()) return backToMain('Unable to save event-data.json');
+    backToMain('Unprettified event-data.json');
+}
+
 export const serverController = [
     {
         icon: '📅',
@@ -118,8 +137,20 @@ export const serverController = [
     },
     {
         icon: '🔁',
-        value: submitMatchesFromDB,
+        value: submitMatchesFromDb,
         description: 'Submit failed matches from the database'
+    },
+    {
+        // flower
+        icon: '🌸',
+        value: prettifyJson,
+        description: 'Prettify event-data.json'
+    },
+    {
+        // wilted flower
+        icon: '🥀',
+        value: unprettifyJson,
+        description: 'Unprettify event-data.json'
     },
     {
         icon: '🔁',

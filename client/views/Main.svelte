@@ -21,7 +21,6 @@ let app: App;
 
 const generate = () =>
     App.matchData.getAlliance().then(a => {
-        console.log('Building app:', a);
         if (a) {
             app = generate2024App(a);
             // reassign app at restart
@@ -72,11 +71,11 @@ $: {
 
 const isFullscreen = () => {
     return (
-        document['fullscreenElement'] ||
-        document['webkitFullscreenElement'] ||
-        document['mozFullScreenElement'] ||
-        document['msFullscreenElement']
-    );
+        document['fullscreenElement'] || // Standard
+        document['webkitFullscreenElement'] || // Chrome, Safari and Opera
+        document['mozFullScreenElement'] || // Firefox
+        document['msFullscreenElement'] // IE/Edge
+     );
 };
 
 let fs: boolean = false;
