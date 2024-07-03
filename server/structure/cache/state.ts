@@ -1,3 +1,4 @@
+import { attempt } from "../../../shared/check";
 import { App } from "../app/app";
 import { Tablet } from "./tablet";
 
@@ -6,6 +7,40 @@ export class State {
     public static getTablet(id: string) {
         return State.current?.tablets.get(id);
     }
+
+    public static getState() {
+        return attempt(() => {
+            const s = State.current;
+            if (!s) throw new Error('State not initialized');
+            return Array.from(s.tablets.values());
+        });
+    }
+
+    public static updateTablet(tablet: Tablet) {
+        return attempt(() => {
+            const s = State.current;
+            if (!s) throw new Error('State not initialized');
+            s.updateTablet(tablet);
+        });
+    }
+
+    public static newTablet(id: string) {
+        return attempt(() => {
+            if (State.getTablet(id)) throw new Error('Tablet already initialized');
+            const s = State.current;
+            if (!s) throw new Error('State not initialized');
+            return s.newTablet(id);
+        });
+    }
+
+    public static removeTablet(id: string) {
+        return attempt(() => {
+            const s = State.current;
+            if (!s) throw new Error('State not initialized');
+            return s.removeTablet(id);
+        });
+    }
+
 
     private static current?: State = undefined;
 
@@ -22,16 +57,12 @@ export class State {
         this.app.io.to('admin').emit(event, data);
     }
 
-    public update() {
-        const tablets = Array.from(this.tablets.values());
-        this.emit('update', tablets);
+    private updateTablet(tablet: Tablet) {
+        // called when the tablet state has changed
+        this.emit('update-tablet', tablet.safe);
     }
 
-    public updateTablet(tablet: Tablet) {
-        this.emit('update-tablet', tablet);
-    }
-
-    public newTablet(id: string) {
+    private newTablet(id: string) {
         const t = new Tablet(
             this.app,
             id,
@@ -46,12 +77,14 @@ export class State {
             this
         );
         this.tablets.set(id, t);
-        this.update();
+        this.emit('new-tablet', t.safe);
         return t;
     }
 
-    public removeTablet(id: string) {
+    private removeTablet(id: string) {
+        const t = this.tablets.get(id);
+        if (!t) return;
         this.tablets.delete(id);
-        this.update();
+        this.emit('delete-tablet', t.safe);
     }
 }

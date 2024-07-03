@@ -29,7 +29,10 @@ export class Tablet extends Cache {
     }
 
     public changeState(state: TabletState) {
-        this.emit('change-state', state);
+        this.emit('change-state', {
+            id: this.id,
+            state
+        });
     }
 
     public forceSubmit() {
@@ -41,6 +44,13 @@ export class Tablet extends Cache {
     }
 
     public push() {
-        this.globalState.updateTablet(this);
+        State.updateTablet(this);
+    }
+
+    get safe() {
+        return {
+            id: this.id,
+            state: this.tabletState
+        }
     }
 }
