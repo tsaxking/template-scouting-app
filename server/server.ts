@@ -24,6 +24,7 @@ import { validate } from './middleware/data-type';
 import { ServerRequest } from './utilities/requests';
 import { TBA } from './utilities/tba/tba';
 import { TBAEvent } from '../shared/tba';
+import { State } from './structure/cache/state';
 
 if (process.argv.includes('--stats')) {
     const measure = () => {
@@ -54,6 +55,8 @@ if (process.argv.includes('--ping')) {
         console.log('Pinged!');
     });
 }
+
+new State(app);
 
 app.post('/env', (req, res) => {
     res.json({

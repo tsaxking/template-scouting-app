@@ -47,7 +47,8 @@ export class State {
     readonly tablets = new Map<string, Tablet>();
 
     constructor(
-        public readonly app: App
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        public readonly app: App<any>
     ) {
         if (State.current) throw new Error('Only 1 state allowed');
         State.current = this;

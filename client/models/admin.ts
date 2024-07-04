@@ -6,7 +6,7 @@ import { socket } from "../utilities/socket";
 
 type TabletEvents = {
     update: TabletState;
-    destroy: undefined;
+    destroy: Tablet;
 }
 
 type GlobalEvents = {
@@ -40,7 +40,7 @@ export class Tablet {
         public state: TabletState
     ) {}
 
-    changeState(state: TabletState) {
+    changeState(state: Partial<TabletState>) {
         return ServerRequest.post('/api/tablet/change-state', {
             ...state,
             id: this.id
@@ -60,7 +60,7 @@ export class Tablet {
     }
 
     destroy() {
-        this.emit('destroy', undefined);
+        this.emit('destroy', this);
     }
 }
 
