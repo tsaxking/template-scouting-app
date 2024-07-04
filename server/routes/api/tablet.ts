@@ -48,6 +48,11 @@ router.post<TabletState>(
 router.post('/init', (req, res) => {
     const id = req.socket?.id || '';
     State.newTablet(id).unwrap();
+    const disconnect = () => {
+        State.removeTablet(id);
+        req.socket?.off('disconnect', disconnect);
+    }
+    req.socket?.on('disconnect', disconnect);
     res.status(200).json({
         success: true
     });
