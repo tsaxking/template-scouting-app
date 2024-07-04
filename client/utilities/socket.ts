@@ -190,6 +190,7 @@ class Socket {
                     'Did not recieve typeof string on socket init'
                 );
             ServerRequest.metadata.set('socket-id', id);
+            this._onInit();
         };
 
         socket.on('init', init);
@@ -206,6 +207,16 @@ class Socket {
         // this.cache.push({ event, data });
         // this.newEvent(event, data);
         this.socket.emit(event, data);
+    }
+
+    private _onInit() {}
+
+    get onInit() {
+        return this._onInit;
+    }
+
+    set onInit(init: () => void) {
+        this._onInit = init;
     }
 }
 
