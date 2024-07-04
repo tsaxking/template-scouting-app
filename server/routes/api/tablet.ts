@@ -1,27 +1,35 @@
-import { validate } from "../../middleware/data-type";
-import { Route } from "../../structure/app/app";
-import { TabletState } from "../../structure/cache/tablet";
-import { State } from "../../structure/cache/state";
+import { validate } from '../../middleware/data-type';
+import { Route } from '../../structure/app/app';
+import { TabletState } from '../../structure/cache/tablet';
+import { State } from '../../structure/cache/state';
 
 export const router = new Route();
 
 router.post<TabletState>(
     '/update',
     validate({
-        'compLevel': ['pr', 'qm', 'qf', 'sf', 'f'],
-        'groupNumber': 'number',
-        'matchNumber': 'number',
-        'scoutName': 'string',
-        'teamNumber': 'number',
-        'preScouting': 'boolean'
+        compLevel: ['pr', 'qm', 'qf', 'sf', 'f'],
+        groupNumber: 'number',
+        matchNumber: 'number',
+        scoutName: 'string',
+        teamNumber: 'number',
+        preScouting: 'boolean'
     }),
     (req, res) => {
         const tablet = State.getTablet(req.session.id);
-        if (!tablet) return res.status(400).json({
-            success: false
-        });
+        if (!tablet)
+            return res.status(400).json({
+                success: false
+            });
 
-        const { compLevel, matchNumber, groupNumber, scoutName, teamNumber, preScouting } = req.body;
+        const {
+            compLevel,
+            matchNumber,
+            groupNumber,
+            scoutName,
+            teamNumber,
+            preScouting
+        } = req.body;
         tablet.tabletState.compLevel = compLevel;
         tablet.tabletState.groupNumber = groupNumber;
         tablet.tabletState.matchNumber = matchNumber;
@@ -37,29 +45,28 @@ router.post<TabletState>(
     }
 );
 
-router.post(
-    '/init', 
-    (req, res) => {
-        const id = req.socket?.id || '';
-        State.newTablet(id).unwrap();
-        res.status(200).json({
-            success: true
-        });
-    }
-);
+router.post('/init', (req, res) => {
+    const id = req.socket?.id || '';
+    State.newTablet(id).unwrap();
+    res.status(200).json({
+        success: true
+    });
+});
 
-router.post<TabletState & {
-    id: string;
-}>(
+router.post<
+    TabletState & {
+        id: string;
+    }
+>(
     '/change-state',
     validate({
-        'compLevel': ['pr', 'qm', 'qf', 'sf', 'f'],
-        'groupNumber': 'number',
-        'matchNumber': 'number',
-        'scoutName': 'string',
-        'teamNumber': 'number',
-        'preScouting': 'boolean',
-        'id': 'string'
+        compLevel: ['pr', 'qm', 'qf', 'sf', 'f'],
+        groupNumber: 'number',
+        matchNumber: 'number',
+        scoutName: 'string',
+        teamNumber: 'number',
+        preScouting: 'boolean',
+        id: 'string'
     }),
     (req, res) => {
         const tablet = State.getTablet(req.body.id);
@@ -89,7 +96,7 @@ router.post<{ id: string }>(
 router.post<{ id: string }>(
     '/submit',
     validate({
-        id: 'string',
+        id: 'string'
     }),
     (req, res) => {
         const tablet = State.getTablet(req.body.id);
@@ -99,8 +106,10 @@ router.post<{ id: string }>(
     }
 );
 
-router.post(
-    '/pull-state',
-    (_req, res) => {
-    res.status(200).json(State.getState().unwrap().map(t => t.safe));
+router.post('/pull-state', (_req, res) => {
+    res.status(200).json(
+        State.getState()
+            .unwrap()
+            .map(t => t.safe)
+    );
 });

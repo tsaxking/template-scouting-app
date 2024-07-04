@@ -1,7 +1,6 @@
-import { attempt } from "../../../shared/check";
-import { App } from "../app/app";
-import { Tablet } from "./tablet";
-
+import { attempt } from '../../../shared/check';
+import { App } from '../app/app';
+import { Tablet } from './tablet';
 
 export class State {
     public static getTablet(id: string) {
@@ -26,7 +25,8 @@ export class State {
 
     public static newTablet(id: string) {
         return attempt(() => {
-            if (State.getTablet(id)) throw new Error('Tablet already initialized');
+            if (State.getTablet(id))
+                throw new Error('Tablet already initialized');
             const s = State.current;
             if (!s) throw new Error('State not initialized');
             return s.newTablet(id);
@@ -40,7 +40,6 @@ export class State {
             return s.removeTablet(id);
         });
     }
-
 
     private static current?: State = undefined;
 

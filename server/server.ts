@@ -41,6 +41,7 @@ const port = +(env.PORT || 3000);
 
 export const app = new App<{
     isTrusted: boolean;
+    isAdmin: boolean;
 }>(port, env.DOMAIN || `http://localhost:${port}`);
 
 if (process.argv.includes('--ping')) {
@@ -187,11 +188,7 @@ app.route('/api', api);
 app.route('/account', account);
 
 app.get('/sign-in', (req, res) => {
-    if (env.SECURITY_PIN && !req.session.customData.isTrusted) {
-        res.sendTemplate('entries/sign-in');
-    } else {
-        res.redirect('/app');
-    }
+    res.sendTemplate('entries/sign-in');
 });
 
 app.post<{
@@ -202,11 +199,14 @@ app.post<{
         pin: 'string'
     }),
     (req, res) => {
-        console.log('pin:', req.body.pin, env.SECURITY_PIN);
         if (req.body.pin === env.SECURITY_PIN) {
             req.session.customData.isTrusted = true;
             req.session.save();
             res.redirect('/app');
+        } else if (req.body.pin === env.ADMIN_PIN) {
+            req.session.customData.isAdmin = true;
+            req.session.save();
+            res.redirect('/dashboard/admin');
         } else {
             res.sendStatus('pin:incorrect');
         }
@@ -223,8 +223,12 @@ app.use('/*', (req, res, next) => {
     }
 });
 
-app.get('/dashboard/admin', Account.allowPermissions('admin'), (_req, res) => {
+app.get('/dashboard/admin', Account.allowPermissions('admin'), (req, res) => {
+    if (req.session.customData.isAdmin) {
     res.sendTemplate('entries/dashboard/admin');
+    } else {
+        res.redirect('/sign-in');
+    }
 });
 
 app.route('/admin', admin);
@@ -338,7 +342,6 @@ app.post<{
     if (data.isOk()) {
         res.json(data.value);
     } else {
-        
         res.status(500).json(data.error);
     }
 });

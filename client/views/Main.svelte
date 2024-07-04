@@ -75,7 +75,7 @@ const isFullscreen = () => {
         document['webkitFullscreenElement'] || // Chrome, Safari and Opera
         document['mozFullScreenElement'] || // Firefox
         document['msFullscreenElement'] // IE/Edge
-     );
+    );
 };
 
 let fs: boolean = false;
