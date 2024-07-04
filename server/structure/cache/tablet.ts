@@ -1,22 +1,22 @@
-import { Cache } from "./cache";
-import { App } from "../app/app";
-import { State } from "./state";
+import { Cache } from './cache';
+import { App } from '../app/app';
+import { State } from './state';
 
 export type TabletState = {
     matchNumber: number;
-    compLevel: 'pr' | 'qm' | 'qf' | 'sf' | 'f' | string;
+    compLevel: 'pr' | 'qm' | 'qf' | 'sf' | 'f';
     teamNumber: number;
     groupNumber: number;
     scoutName: string;
     preScouting: boolean;
-}
+};
 
 export class Tablet extends Cache {
     public latestActivity = Date.now();
 
     constructor(
         public readonly app: App,
-        public readonly id: string, 
+        public readonly id: string,
         public readonly tabletState: TabletState,
         public readonly globalState: State
     ) {
@@ -51,6 +51,6 @@ export class Tablet extends Cache {
         return {
             id: this.id,
             state: this.tabletState
-        }
+        };
     }
 }

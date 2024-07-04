@@ -1181,11 +1181,11 @@ export class App<
 
     private paused?: Promise<void>;
 
-    public pause(): (() => void) {
+    public pause(): () => void {
         this.paused = new Promise((res, rej) => {});
         return () => {
             if (this.paused) Promise.resolve(this.paused);
-        }
+        };
     }
 
     /**
@@ -1921,11 +1921,9 @@ socket.on('change-state', (state: TabletState) => {
     App.updateState();
 });
 
-socket.on('submit', () => {
-    // force submit
-    // TODO: I need to figure out how to get the current checks state and comments state before submitting
-});
-
 socket.on('abort', () => {
     App.abort();
 });
+
+
+// Force submit is done in Post.svelte

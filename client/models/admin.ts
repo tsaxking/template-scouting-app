@@ -1,33 +1,47 @@
-import { TabletState } from "../../server/structure/cache/tablet";
-import { attempt, attemptAsync } from "../../shared/check";
-import { ServerRequest } from "../utilities/requests";
-import { EventEmitter } from "../../shared/event-emitter";
-import { socket } from "../utilities/socket";
+import { attempt, attemptAsync } from '../../shared/check';
+import { ServerRequest } from '../utilities/requests';
+import { EventEmitter } from '../../shared/event-emitter';
+import { socket } from '../utilities/socket';
+
+export type TabletState = {
+    matchNumber: number;
+    compLevel: 'pr' | 'qm' | 'qf' | 'sf' | 'f' | string; // added "string" because svelte doesn't like ts inside of elements
+    teamNumber: number;
+    groupNumber: number;
+    scoutName: string;
+    preScouting: boolean;
+};
 
 type TabletEvents = {
     update: TabletState;
     destroy: Tablet;
-}
+};
 
 type GlobalEvents = {
     'new-tablet': Tablet;
-    'update': Tablet[];
+    update: Tablet[];
     'delete-tablet': Tablet;
-}
+};
 
 type TabletSafe = {
-    state: TabletState,
+    state: TabletState;
     id: string;
-}
+};
 
 export class Tablet {
     public readonly em = new EventEmitter<keyof TabletEvents>();
 
-    on<K extends keyof TabletEvents>(event: K, cb: (data: TabletEvents[K]) => void) {
+    on<K extends keyof TabletEvents>(
+        event: K,
+        cb: (data: TabletEvents[K]) => void
+    ) {
         this.em.on(event, cb);
     }
 
-    off<K extends keyof TabletEvents>(event: K, cb: (data: TabletEvents[K]) => void) {
+    off<K extends keyof TabletEvents>(
+        event: K,
+        cb: (data: TabletEvents[K]) => void
+    ) {
         this.em.off(event, cb);
     }
 
@@ -67,15 +81,24 @@ export class Tablet {
 export class State {
     public static readonly em = new EventEmitter<keyof GlobalEvents>();
 
-    public static on<K extends keyof GlobalEvents>(event: K, cb: (data: GlobalEvents[K]) => void) {
+    public static on<K extends keyof GlobalEvents>(
+        event: K,
+        cb: (data: GlobalEvents[K]) => void
+    ) {
         State.em.on(event, cb);
     }
 
-    public static off<K extends keyof GlobalEvents>(event: K, cb: (data: GlobalEvents[K]) => void) {
+    public static off<K extends keyof GlobalEvents>(
+        event: K,
+        cb: (data: GlobalEvents[K]) => void
+    ) {
         State.em.off(event, cb);
     }
 
-    public static emit<K extends keyof GlobalEvents>(event: K, data: GlobalEvents[K]) {
+    public static emit<K extends keyof GlobalEvents>(
+        event: K,
+        data: GlobalEvents[K]
+    ) {
         State.em.emit(event, data);
     }
 
@@ -86,14 +109,14 @@ export class State {
             State.tablets.forEach(t => t.destroy());
             State.tablets.clear();
 
-            const tablets = (await ServerRequest.post<TabletSafe[]>(
-                '/api/tablet/pull-state')).unwrap();
-            return tablets
-                .map(t => {
-                    const tab = new Tablet(t.id, t.state);
-                    State.tablets.set(tab.id, tab);
-                    return tab;
-                });
+            const tablets = (
+                await ServerRequest.post<TabletSafe[]>('/api/tablet/pull-state')
+            ).unwrap();
+            return tablets.map(t => {
+                const tab = new Tablet(t.id, t.state);
+                State.tablets.set(tab.id, tab);
+                return tab;
+            });
         });
     }
 
@@ -124,10 +147,7 @@ export class State {
     }
 }
 
-socket.on('update-tablet', (data: {
-    state: TabletState;
-    id: string;
-}) => {
+socket.on('update-tablet', (data: { state: TabletState; id: string }) => {
     const { id, state } = data;
     State.updateTablet(id, state);
 });

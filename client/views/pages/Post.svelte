@@ -5,11 +5,12 @@ import type { BootstrapColor } from '../../submodules/colors/color';
 import { capitalize, fromCamelCase } from '../../../shared/text';
 import { Trace } from '../../../shared/submodules/tatorscout-calculations/trace';
 import { choose, confirm, notify } from '../../utilities/notifications';
-import { createEventDispatcher } from 'svelte';
+import { createEventDispatcher, onMount } from 'svelte';
 import { Canvas } from '../../models/canvas/canvas';
 import Summary from '../components/Summary.svelte';
 import { Modal } from '../../utilities/modals';
 import AutoCommenter from '../components/AutoCommenter.svelte';
+import { socket } from '../../utilities/socket';
 
 const d = createEventDispatcher();
 
@@ -294,6 +295,12 @@ const buildComment = (type: 'auto' | 'tele' | 'end') => {
 
     modal.show();
 };
+
+onMount(() => {
+    socket.on('submit', submit);
+    return () => socket.off('submit', submit);
+});
+
 </script>
 
 <div class="container mb-3">
