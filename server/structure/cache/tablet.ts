@@ -4,7 +4,7 @@ import { State } from "./state";
 
 export type TabletState = {
     matchNumber: number;
-    compLevel: 'pr' | 'qm' | 'qf' | 'sf' | 'f';
+    compLevel: 'pr' | 'qm' | 'qf' | 'sf' | 'f' | string;
     teamNumber: number;
     groupNumber: number;
     scoutName: string;

@@ -40,7 +40,7 @@ router.post<TabletState>(
 router.post(
     '/init', 
     (req, res) => {
-        const id = req.session.id;
+        const id = req.socket?.id || '';
         State.newTablet(id).unwrap();
         res.status(200).json({
             success: true

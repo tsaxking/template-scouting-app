@@ -11,7 +11,9 @@ document.body.style.margin = '0px';
 
 import { Settings } from '../models/settings';
 import { ServerRequest } from '../utilities/requests';
+import { socket } from '../utilities/socket';
 Object.assign(window, { Settings });
 
 // initialize server side tablet state
-ServerRequest.post('/api/tablet/init');
+const init = () => ServerRequest.post('/api/tablet/init');
+socket.on('connect', init);

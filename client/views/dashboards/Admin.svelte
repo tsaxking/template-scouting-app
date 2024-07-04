@@ -15,7 +15,8 @@ const groups: PageGroup[] = [
             },
             {
                 name: 'account',
-                icon: 'person'
+                icon: 'person',
+                iconType: 'material'
             }
         ]
     }
@@ -41,5 +42,5 @@ const accountLinks: string[] = [
     {navItems}
     {accountLinks}
 >
-    <Page {active} {domain} title="dashboard">\</Page>
+    <Page {active} {domain} title="dashboard"></Page>
 </Main>
