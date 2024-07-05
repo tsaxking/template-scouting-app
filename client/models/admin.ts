@@ -21,6 +21,7 @@ type GlobalEvents = {
     'new-tablet': Tablet;
     update: Tablet[];
     'delete-tablet': Tablet;
+    'refresh': void;
 };
 
 type TabletSafe = {
@@ -146,23 +147,26 @@ export class State {
             State.tablets.delete(id);
         });
     }
+
+    static refresh() {
+        State.tablets.clear();
+        State.emit('refresh', undefined);
+    }
 }
 
 Object.assign(window, { State });
 
 socket.on('update-tablet', (data: { state: TabletState; id: string }) => {
-    console.log('Recieved tablet update!');
+    console.log('Recieved tablet update!', data.id);
     const { id, state } = data;
     State.updateTablet(id, state);
 });
 
 
-socket.on('new-tablet', (data: { state: TabletState; id: string; }) => {
-    console.log('Recieved new tablet!');
-    const { id, state } = data;
-    State.newTablet(id, state);
+socket.on('new-tablet', () => {
+    State.refresh();
 });
 
-socket.on('delete-tablet', (id: string) => {
-    State.deleteTablet(id);
+socket.on('delete-tablet', () => {
+    State.refresh();
 });

@@ -23,7 +23,7 @@ const deleteTablet = (tablet: Tablet) => {
 };
 const changeTabletState = () => (tablets = tablets.sort(sort));
 
-onMount(() => {
+const init = () => {
     State.pullState().then(s => {
         if (s.isErr()) return console.error(s);
         tablets = s.value.sort(sort);
@@ -41,6 +41,10 @@ onMount(() => {
             accounts = res.value;
         }
     });
+}
+
+onMount(() => {
+    init();
     return () => {
         for (const t of tablets) {
             t.off('destroy', deleteTablet);
@@ -51,6 +55,8 @@ onMount(() => {
         accounts = [];
     };
 });
+
+State.on('refresh', init);
 
 const check = (tablet: Tablet, state: TabletState) => {
     const old = tablet.state;

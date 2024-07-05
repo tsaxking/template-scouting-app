@@ -15,7 +15,8 @@ import { ServerRequest } from '../utilities/requests';
 import { socket } from '../utilities/socket';
 import { App } from '../models/app/app';
 socket.onInit = () => {
-    const id = uuid();
+    const id = window.localStorage.getItem('tablet-id') || uuid();
+    window.localStorage.setItem('tablet-id', id);
     ServerRequest.metadata.set('tablet-id', id);
     const init = async () => {
         await ServerRequest.post('/api/tablet/init');
@@ -27,6 +28,6 @@ socket.onInit = () => {
 }
 Object.assign(window, { Settings });
 
-window.addEventListener('close', () => {
+window.addEventListener('beforeunload', () => {
     ServerRequest.post('/api/tablet/disconnect');
 });

@@ -23,6 +23,8 @@ onMount(() => {
 });
 
 $: fns.save(name);
+
+App.on('change-name', (n) => name = n);
 </script>
 
 <div class="form-floating p-0">
