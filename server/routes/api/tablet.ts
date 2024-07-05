@@ -145,12 +145,8 @@ router.post('/pull-state', auth, (_req, res) => {
     );
 });
 
-router.post<{
-    id: string;
-}>('/disconnect', validate({
-    id: 'string'
-}), (req, res) => {
-    State.removeTablet(req.body.id);
+router.post('/disconnect', (req, res) => {
+    State.removeTablet(req.headers.get('tablet-id') || '');
     res.status(200).json({
         success: true
     });

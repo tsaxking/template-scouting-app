@@ -1928,7 +1928,10 @@ socket.on('change-state', (obj: {
         );
     }
     if (matchData.group !== state.groupNumber) matchData.selectGroup(state.groupNumber);
-    if (App.scoutName !== state.scoutName) App.scoutName = state.scoutName;
+    if (App.scoutName !== state.scoutName) {
+        App.$scoutName = state.scoutName;
+        App.emit('change-name', state.scoutName);
+    }
     if (App.preScouting !== state.preScouting) App.preScouting = state.preScouting;
 });
 

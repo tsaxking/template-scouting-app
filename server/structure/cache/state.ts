@@ -78,7 +78,6 @@ export class State {
             this
         );
         this.tablets.set(id, t);
-        console.log('Emitting new tablet');
         this.emit('new-tablet', t.safe);
         return t;
     }
@@ -87,6 +86,6 @@ export class State {
         const t = this.tablets.get(id);
         if (!t) return;
         this.tablets.delete(id);
-        this.emit('delete-tablet', t.safe);
+        this.emit('delete-tablet', t.id);
     }
 }

@@ -301,7 +301,7 @@ onMount(() => {
     const s = (data: {
         id: string;
     }) => {
-        if (data.id === ServerRequest.metadata.get('tablet-id')) submit;
+        if (data.id === ServerRequest.metadata.get('tablet-id')) submit();
     }
 
     socket.on('submit', s);
