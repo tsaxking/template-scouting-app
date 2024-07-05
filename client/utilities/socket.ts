@@ -179,7 +179,6 @@ class Socket {
 
         this.socket.connect();
 
-
         // const init = (id: string) => {
         //     console.log('init', id);
         //     socket.off('init', init);
@@ -210,8 +209,6 @@ class Socket {
     public onInit() {}
 }
 
-
-
 /**
  * Socket.io client
  * @date 3/8/2024 - 7:27:46 AM
@@ -223,9 +220,7 @@ export const socket = new Socket();
 socket.on('init', (id: string) => {
     // socket.off('init', init);
     if (typeof id !== 'string')
-        return console.error(
-            'Did not recieve typeof string on socket init'
-        );
+        return console.error('Did not recieve typeof string on socket init');
     ServerRequest.metadata.set('socket-id', id);
     socket.onInit();
 });
