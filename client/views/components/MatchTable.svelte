@@ -61,14 +61,14 @@ const fns = {
 
         fns.setCustom(eventData.matches);
 
-        currentMatch = customMatches[matchIndex];
+        const cm = customMatches[matchIndex];
+
+        currentMatch = cm;
+        console.log('currentMatch', cm.match_number, cm.comp_level);
         let team: number | undefined = undefined;
 
-        let g = App.group;
-
-        if (+g === -1) g = 0;
-
-        const useTeamIndex = () => {
+        const useTeamIndex = async () => {
+            console.log('using teamIndex');
             if (teamIndex === undefined)
                 throw new Error(
                     'teamIndex is undefined, this should not happen'
@@ -82,25 +82,43 @@ const fns = {
                     eventData.assignments.matchAssignments.findIndex(
                         a => a[matchIndex] === team
                     );
-                App.matchData.selectGroup(groupIndex);
+                console.log('groupIndex', groupIndex);
+                await App.matchData.selectGroup(groupIndex, matchIndex);
+
+                console.log('selecting match', cm?.match_number, cm?.comp_level);
+
+                await App.matchData.selectMatch(
+                    cm?.match_number || 0,
+                    (cm?.comp_level as 'qm' | 'qf' | 'sf' | 'f' | 'pr') ||
+                        'qm',
+                );
+
                 fns.getMatches(app);
             }
         };
 
         if (typeof teamIndex === 'number' && teamIndex >= 0 && teamIndex < 6) {
             // use teamIndex, and force scout group
-            useTeamIndex();
+            console.log('use teamIndex, and force scout group');
+            return useTeamIndex();
         } else if (App.group !== -1) {
+            // user clicked on a match, but no team
             // use scout group only
+            console.log('use scout group only');
             team =
                 eventData.assignments.matchAssignments[App.group]?.[matchIndex];
         } else {
+            // user clicked on a match, but no team
+            console.log('no teamIndex, no group');
             teamIndex = 0;
-            useTeamIndex();
+            return useTeamIndex();
         }
+
+        console.log('team', team);
 
         if (team !== undefined) {
             currentTeam = team;
+            console.log('currentTeam', currentTeam);
         }
 
         App.matchData.selectMatch(
