@@ -1,6 +1,7 @@
 import { attemptAsync } from '../../../shared/check';
 import { teamsFromMatch } from '../../../shared/submodules/tatorscout-calculations/tba';
 import { TBAMatch } from '../../../shared/tba';
+import { confirm } from '../../utilities/notifications';
 import { socket } from '../../utilities/socket';
 import { App } from './app';
 
@@ -123,8 +124,12 @@ export class MatchData {
         });
     }
 
-    async selectGroup(group: number) {
+    async selectGroup(group: number, doConfirm = true) {
         return attemptAsync(async () => {
+            if (doConfirm && group !== this.group) {
+                const doThis = await confirm("Are you sure you want to change groups?");
+                if (!doThis) return;
+            }
             const eventData = await App.getEventData();
             if (eventData.isErr()) throw eventData.error;
 
