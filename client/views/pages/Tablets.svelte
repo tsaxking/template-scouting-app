@@ -58,8 +58,9 @@ onMount(() => {
 
 State.on('refresh', init);
 
-const check = (tablet: Tablet, state: TabletState) => {
+const check = (tablet: Tablet) => {
     const old = tablet.state;
+    const state = tablet.abstracted;
     return confirm(
         `
 Are you sure you want to submit the following data?
@@ -96,28 +97,8 @@ Prescouting: ${old.preScouting} -> ${state.preScouting}
                             type="number"
                             name="tablet-num-{t.id}"
                             id="tablet-num-{t.id}"
-                            value="{t.state.groupNumber}"
+                            bind:value="{t.abstractedGroup}"
                             class="form-control"
-                            on:change="{async e => {
-                                const num = parseInt(e.currentTarget.value);
-                                if (isNaN(num))
-                                    return (e.currentTarget.value =
-                                        t.state.groupNumber.toString());
-                                if (t.state.groupNumber === num)
-                                    return (e.currentTarget.value =
-                                        t.state.groupNumber.toString());
-
-                                const doSubmit = await check(t, {
-                                    ...t.state,
-                                    groupNumber: num
-                                });
-
-                                if (!doSubmit) return;
-
-                                t.changeState({
-                                    groupNumber: num
-                                });
-                            }}"
                         />
                     </td>
                     <!-- Scout name -->
@@ -128,23 +109,7 @@ Prescouting: ${old.preScouting} -> ${state.preScouting}
                             name="tablet-scout-{t.id}"
                             id="tablet-scout-{t.id}"
                             class="form-control"
-                            value="{t.state.scoutName}"
-                            on:change="{async e => {
-                                const name = e.currentTarget.value;
-                                if (t.state.scoutName === name)
-                                    return (e.currentTarget.value =
-                                        t.state.scoutName);
-
-                                const doSubmit = await check(t, {
-                                    ...t.state,
-                                    scoutName: name
-                                });
-
-                                if (!doSubmit) return;
-                                t.changeState({
-                                    scoutName: name
-                                });
-                            }}"
+                            bind:value="{t.abstracted.scoutName}"
                         />
                         <datalist id="accounts-{t.id}">
                             {#each accounts as account}
@@ -159,26 +124,7 @@ Prescouting: ${old.preScouting} -> ${state.preScouting}
                             name="tablet-match-{t.id}"
                             id="tablet-match-{t.id}"
                             class="form-control"
-                            value="{t.state.matchNumber}"
-                            on:change="{async e => {
-                                const num = parseInt(e.currentTarget.value);
-                                if (isNaN(num))
-                                    return (e.currentTarget.value =
-                                        t.state.matchNumber.toString());
-                                if (t.state.matchNumber === num)
-                                    return (e.currentTarget.value =
-                                        t.state.matchNumber.toString());
-
-                                const doSubmit = await check(t, {
-                                    ...t.state,
-                                    matchNumber: num
-                                });
-
-                                if (!doSubmit) return;
-                                t.changeState({
-                                    matchNumber: num
-                                });
-                            }}"
+                            bind:value="{t.abstracted.matchNumber}"
                         />
                     </td>
                     <!-- Comp Level -->
@@ -187,23 +133,7 @@ Prescouting: ${old.preScouting} -> ${state.preScouting}
                             name="tablet-level-{t.id}"
                             id="tablet-level-{t.id}"
                             class="form-control"
-                            value="{t.state.compLevel}"
-                            on:change="{async e => {
-                                const level = e.currentTarget.value;
-                                if (t.state.compLevel === level)
-                                    return (e.currentTarget.value =
-                                        t.state.compLevel);
-
-                                const doSubmit = await check(t, {
-                                    ...t.state,
-                                    compLevel: level
-                                });
-
-                                if (!doSubmit) return;
-                                t.changeState({
-                                    compLevel: level
-                                });
-                            }}"
+                            bind:value="{t.abstracted.compLevel}"
                         >
                             <option value="pr">Practice</option>
                             <option value="qm">Qualification</option>
@@ -219,51 +149,35 @@ Prescouting: ${old.preScouting} -> ${state.preScouting}
                             name="tablet-team-{t.id}"
                             class="form-control"
                             id="tablet-team-{t.id}"
-                            value="{t.state.teamNumber}"
-                            on:change="{async e => {
-                                const num = parseInt(e.currentTarget.value);
-                                if (isNaN(num))
-                                    return (e.currentTarget.value =
-                                        t.state.teamNumber.toString());
-                                if (t.state.teamNumber === num)
-                                    return (e.currentTarget.value =
-                                        t.state.teamNumber.toString());
-
-                                const doSubmit = await check(t, {
-                                    ...t.state,
-                                    teamNumber: num
-                                });
-
-                                if (!doSubmit) return;
-                                t.changeState({
-                                    teamNumber: num
-                                });
-                            }}"
+                            bind:value="{t.abstracted.teamNumber}"
                         />
                     </td>
                     <!-- PreScouting -->
                     <td>
-                        <input
-                            type="checkbox"
-                            name="tablet-prescouting-{t.id}"
-                            id="tablet-prescouting-{t.id}"
-                            class="form-control"
-                            checked="{t.state.preScouting}"
-                            on:change="{async e => {
-                                const doSubmit = await check(t, {
-                                    ...t.state,
-                                    preScouting: e.currentTarget.checked
-                                });
-
-                                if (!doSubmit) return;
-                                t.changeState({
-                                    preScouting: e.currentTarget.checked
-                                });
-                            }}"
-                        />
+                        <input type="checkbox" class="btn-check" id="btn-check" autocomplete="off" bind:checked="{t.abstracted.preScouting}">
+                        <label class="btn btn-primary" for="btn-check">pre-scout</label>
                     </td>
                     <td>
                         <div role="group" class="btn-group">
+                            <button 
+                                class="btn btn-primary"
+                                on:click="{async () => {
+                                    const doSubmit = await check(t);
+                                    if (!doSubmit) return;
+                                    t.changeState(t.abstracted);
+                                }}"    
+                            >
+                                Emit Changes
+                            </button>
+                            <button
+                                class="btn btn-warning"
+                                on:click="{() => {
+                                    t.reset();
+                                    tablets = tablets; // view update
+                                }}"
+                            >
+                                Reset
+                            </button>
                             <button
                                 class="btn btn-danger"
                                 on:click="{async () => {
@@ -285,7 +199,6 @@ Prescouting: ${old.preScouting} -> ${state.preScouting}
                                     if (!submit) return;
                                     t.submit();
                                 }}"
-                                title="This will force the tablet to submit the match. This is not to be used to change any of the actual data"
                             >
                                 Force Submit
                             </button>

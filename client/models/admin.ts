@@ -50,10 +50,31 @@ export class Tablet {
         this.em.emit(event, data);
     }
 
+    abstracted: TabletState;
+
     constructor(
         public readonly id: string,
         public state: TabletState
-    ) {}
+    ) {
+        this.abstracted = JSON.parse(JSON.stringify(state)); // copy with no dependencies
+    }
+
+    get group() {
+        return this.state.groupNumber + 1;
+    }
+
+    set group(group: number) {
+        this.state.groupNumber = group - 1;
+        this.reset();
+    }
+
+    get abstractedGroup() {
+        return this.abstracted.groupNumber + 1;
+    }
+
+    set abstractedGroup(group: number) {
+        this.abstracted.groupNumber = group - 1;
+    }
 
     changeState(state: Partial<TabletState>) {
         return ServerRequest.post('/api/tablet/change-state', {
@@ -77,6 +98,10 @@ export class Tablet {
 
     destroy() {
         this.emit('destroy', this);
+    }
+
+    reset() {
+        this.abstracted = JSON.parse(JSON.stringify(this.state));
     }
 }
 
@@ -135,6 +160,7 @@ export class State {
             const t = State.tablets.get(id);
             if (!t) throw new Error('Tablet not found');
             t.state = state;
+            t.reset(); // update abstract
             t.emit('update', state);
         });
     }
