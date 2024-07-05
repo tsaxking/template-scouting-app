@@ -73,7 +73,19 @@ Prescouting: ${old.preScouting} -> ${state.preScouting}
 `.trim()
     );
 };
+
+const submitAll = async () => {
+    const doThis = await confirm('Are you sure you want to force submit all tablets?');
+    if (!doThis) return;
+    for (const t of tablets) {
+        t.submit();
+    }
+};
 </script>
+
+<button class="btn btn-primary" on:click="{submitAll}">
+    Force Submit All
+</button>
 
 <div class="table-responsive">
     <table class="table table-striped table-hover">

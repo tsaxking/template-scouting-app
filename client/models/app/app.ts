@@ -1914,12 +1914,10 @@ socket.on('change-state', (obj: {
 }) => {
     const { id, data: state } = obj;
     if (id !== ServerRequest.metadata.get('tablet-id')) return;
-    console.log('Received state change!');
     // update only the private properties as to not trigger updateState on each set
     const { matchData } = App;
 
     if (matchData.compLevel !== state.compLevel) matchData.compLevel = state.compLevel;
-    if (matchData.matchNumber !== state.matchNumber) matchData.selectMatch(state.matchNumber, state.compLevel);
     if (matchData.teamNumber !== state.teamNumber) {
         matchData.selectMatch(
             state.matchNumber,
@@ -1927,11 +1925,12 @@ socket.on('change-state', (obj: {
             state.teamNumber
         );
     }
-    if (matchData.group !== state.groupNumber) matchData.selectGroup(state.groupNumber, false);
+    if (matchData.group !== state.groupNumber) matchData.selectGroup(state.groupNumber, App.matchData.matchNumber, false);
     if (App.scoutName !== state.scoutName) {
         App.$scoutName = state.scoutName;
         App.emit('change-name', state.scoutName);
     }
+    if (matchData.matchNumber !== state.matchNumber) matchData.selectMatch(state.matchNumber, state.compLevel);
     if (App.preScouting !== state.preScouting) App.preScouting = state.preScouting;
 });
 
