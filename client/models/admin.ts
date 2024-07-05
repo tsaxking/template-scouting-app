@@ -56,6 +56,7 @@ export class Tablet {
 
     changeState(state: Partial<TabletState>) {
         return ServerRequest.post('/api/tablet/change-state', {
+            ...this.state,
             ...state,
             id: this.id
         });
@@ -147,7 +148,21 @@ export class State {
     }
 }
 
+Object.assign(window, { State });
+
 socket.on('update-tablet', (data: { state: TabletState; id: string }) => {
+    console.log('Recieved tablet update!');
     const { id, state } = data;
     State.updateTablet(id, state);
+});
+
+
+socket.on('new-tablet', (data: { state: TabletState; id: string; }) => {
+    console.log('Recieved new tablet!');
+    const { id, state } = data;
+    State.newTablet(id, state);
+});
+
+socket.on('delete-tablet', (id: string) => {
+    State.deleteTablet(id);
 });

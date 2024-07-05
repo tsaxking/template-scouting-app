@@ -48,7 +48,7 @@ class Socket {
      * @readonly
      * @type {*}
      */
-    private readonly socket = io();
+    public readonly socket = io();
 
     // private async ping() {
     //     return attemptAsync(async () => {
@@ -179,21 +179,19 @@ class Socket {
 
         this.socket.connect();
 
-        this.socket.on('disconnect', () => {
-            this.socket.io.connect();
-        });
 
-        const init = (id: string) => {
-            socket.off('init', init);
-            if (typeof id !== 'string')
-                return console.error(
-                    'Did not recieve typeof string on socket init'
-                );
-            ServerRequest.metadata.set('socket-id', id);
-            this._onInit();
-        };
+        // const init = (id: string) => {
+        //     console.log('init', id);
+        //     socket.off('init', init);
+        //     if (typeof id !== 'string')
+        //         return console.error(
+        //             'Did not recieve typeof string on socket init'
+        //         );
+        //     ServerRequest.metadata.set('socket-id', id);
+        //     this.onInit();
+        // };
 
-        socket.on('init', init);
+        // this.on('init', init);
     }
 
     /**
@@ -211,14 +209,16 @@ class Socket {
 
     private _onInit() {}
 
-    get onInit() {
+    public get onInit() {
         return this._onInit;
     }
 
-    set onInit(init: () => void) {
+    public set onInit(init: () => void) {
         this._onInit = init;
     }
 }
+
+
 
 /**
  * Socket.io client
@@ -227,6 +227,20 @@ class Socket {
  * @type {Socket}
  */
 export const socket = new Socket();
+
+socket.on('init', (id: string) => {
+    // socket.off('init', init);
+    if (typeof id !== 'string')
+        return console.error(
+            'Did not recieve typeof string on socket init'
+        );
+    ServerRequest.metadata.set('socket-id', id);
+    socket.onInit();
+});
+
+socket.on('disconnect', () => {
+    socket.socket.io.connect();
+});
 
 Object.assign(window, { socket });
 

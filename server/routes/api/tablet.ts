@@ -2,8 +2,16 @@ import { validate } from '../../middleware/data-type';
 import { Route } from '../../structure/app/app';
 import { TabletState } from '../../structure/cache/tablet';
 import { State } from '../../structure/cache/state';
+import { Req } from '../../structure/app/req';
+import { Res } from '../../structure/app/res';
+import { NextFunction } from 'express';
 
 export const router = new Route();
+
+const auth = (req: Req<any, any>, res: Res, next: NextFunction) => {
+    if (req.session.customData.isAdmin) return next();
+    return res.redirect('/sign-in');
+}
 
 router.post<TabletState>(
     '/update',
@@ -16,10 +24,11 @@ router.post<TabletState>(
         preScouting: 'boolean'
     }),
     (req, res) => {
-        const tablet = State.getTablet(req.session.id);
+        const tablet = State.getTablet(req.headers.get('tablet-id') || '');
         if (!tablet)
             return res.status(400).json({
-                success: false
+                success: false,
+                error: 'Could not find tablet :('
             });
 
         const {
@@ -30,14 +39,24 @@ router.post<TabletState>(
             teamNumber,
             preScouting
         } = req.body;
-        tablet.tabletState.compLevel = compLevel;
-        tablet.tabletState.groupNumber = groupNumber;
-        tablet.tabletState.matchNumber = matchNumber;
-        tablet.tabletState.scoutName = scoutName;
-        tablet.tabletState.teamNumber = teamNumber;
-        tablet.tabletState.preScouting = preScouting;
 
-        tablet.push();
+        if (
+            tablet.tabletState.compLevel !== compLevel ||
+            tablet.tabletState.groupNumber !== groupNumber ||
+            tablet.tabletState.matchNumber !== matchNumber ||
+            tablet.tabletState.scoutName !== scoutName ||
+            tablet.tabletState.teamNumber !== teamNumber ||
+            tablet.tabletState.preScouting !== preScouting
+        ) {
+            console.log('State change!');
+            tablet.tabletState.compLevel = compLevel;
+            tablet.tabletState.groupNumber = groupNumber;
+            tablet.tabletState.matchNumber = matchNumber;
+            tablet.tabletState.scoutName = scoutName;
+            tablet.tabletState.teamNumber = teamNumber;
+            tablet.tabletState.preScouting = preScouting;
+            tablet.push();
+        }
 
         res.status(200).json({
             success: true
@@ -45,12 +64,16 @@ router.post<TabletState>(
     }
 );
 
-router.post('/init', (req, res) => {
-    const id = req.socket?.id || '';
-    State.newTablet(id).unwrap();
+router.post('/init',  (req, res) => {
+    const id = req.headers.get('tablet-id') || '';
+    const result = State.newTablet(id);
+    if (result.isErr()) {
+        return res.status(400).json({
+            success: false
+        });
+    }
     const disconnect = () => {
         State.removeTablet(id);
-        req.socket?.off('disconnect', disconnect);
     }
     req.socket?.on('disconnect', disconnect);
     res.status(200).json({
@@ -64,6 +87,7 @@ router.post<
     }
 >(
     '/change-state',
+    auth,
     validate({
         compLevel: ['pr', 'qm', 'qf', 'sf', 'f'],
         groupNumber: 'number',
@@ -85,6 +109,7 @@ router.post<
 
 router.post<{ id: string }>(
     '/abort',
+    auth,
     validate({
         id: 'string'
     }),
@@ -100,6 +125,7 @@ router.post<{ id: string }>(
 
 router.post<{ id: string }>(
     '/submit',
+    auth,
     validate({
         id: 'string'
     }),
@@ -111,10 +137,21 @@ router.post<{ id: string }>(
     }
 );
 
-router.post('/pull-state', (_req, res) => {
+router.post('/pull-state', auth, (_req, res) => {
     res.status(200).json(
         State.getState()
             .unwrap()
             .map(t => t.safe)
     );
+});
+
+router.post<{
+    id: string;
+}>('/disconnect', validate({
+    id: 'string'
+}), (req, res) => {
+    State.removeTablet(req.body.id);
+    res.status(200).json({
+        success: true
+    });
 });

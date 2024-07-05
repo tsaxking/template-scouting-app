@@ -27,7 +27,7 @@ let currentTeam: number | undefined = undefined;
 let matchAssignments: number[] = [];
 
 App.on('new-event', async () => {
-    console.log('new event');
+    // console.log('new event');
     await fns.getMatches(app);
     await fns.setCustom(matches);
 });
