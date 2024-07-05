@@ -1927,7 +1927,7 @@ socket.on('change-state', (obj: {
             state.teamNumber
         );
     }
-    if (matchData.group !== state.groupNumber) matchData.selectGroup(state.groupNumber);
+    if (matchData.group !== state.groupNumber) matchData.selectGroup(state.groupNumber, false);
     if (App.scoutName !== state.scoutName) {
         App.$scoutName = state.scoutName;
         App.emit('change-name', state.scoutName);
