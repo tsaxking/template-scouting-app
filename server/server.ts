@@ -191,6 +191,11 @@ app.get('/sign-in', (req, res) => {
     res.sendTemplate('entries/sign-in');
 });
 
+app.use('/*', (req, _res, next) => {
+    console.log('Custom data:', req.session.customData);
+    next();
+});
+
 app.post<{
     pin: string;
 }>(
@@ -199,6 +204,7 @@ app.post<{
         pin: 'string'
     }),
     (req, res) => {
+        console.log('Pin:', req.body.pin);
         if (req.body.pin === env.SECURITY_PIN) {
             req.session.customData.isTrusted = true;
             req.session.save();
@@ -207,6 +213,7 @@ app.post<{
             req.session.customData.isAdmin = true;
             req.session.save();
             res.redirect('/dashboard/admin');
+            req.socket?.join('admin');
         } else {
             res.sendStatus('pin:incorrect');
         }
@@ -214,7 +221,6 @@ app.post<{
 );
 
 app.use('/*', (req, res, next) => {
-    console.log('isTrusted:', req.session.customData);
     if (env.SECURITY_PIN && !req.session.customData.isTrusted) {
         console.log('redirecting to sign-in');
         res.redirect('/sign-in');
@@ -223,9 +229,9 @@ app.use('/*', (req, res, next) => {
     }
 });
 
-app.get('/dashboard/admin', Account.allowPermissions('admin'), (req, res) => {
+app.get('/dashboard/admin', (req, res) => {
     if (req.session.customData.isAdmin) {
-    res.sendTemplate('entries/dashboard/admin');
+        res.sendTemplate('entries/dashboard/admin');
     } else {
         res.redirect('/sign-in');
     }

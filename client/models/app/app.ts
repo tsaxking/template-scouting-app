@@ -1908,21 +1908,32 @@ socket.on('connect', async () => {
     App.uploadFromLocalStorage();
 });
 
-socket.on('change-state', (state: TabletState) => {
+socket.on('change-state', (obj: {
+    id: string;
+    data: TabletState
+}) => {
+    const { id, data: state } = obj;
+    if (id !== ServerRequest.metadata.get('tablet-id')) return;
+    console.log('Received state change!');
     // update only the private properties as to not trigger updateState on each set
     const { matchData } = App;
-    matchData.$compLevel = state.compLevel;
-    matchData.$group = state.groupNumber;
-    matchData.$matchNumber = state.matchNumber;
-    matchData.$teamNumber = state.teamNumber;
-    App.$scoutName = state.scoutName;
-    App.$preScouting = state.preScouting;
 
-    App.updateState();
+    if (matchData.compLevel !== state.compLevel) matchData.compLevel = state.compLevel;
+    if (matchData.matchNumber !== state.matchNumber) matchData.selectMatch(state.matchNumber, state.compLevel);
+    if (matchData.teamNumber !== state.teamNumber) {
+        matchData.selectMatch(
+            state.matchNumber,
+            state.compLevel,
+            state.teamNumber
+        );
+    }
+    if (matchData.group !== state.groupNumber) matchData.selectGroup(state.groupNumber);
+    if (App.scoutName !== state.scoutName) App.scoutName = state.scoutName;
+    if (App.preScouting !== state.preScouting) App.preScouting = state.preScouting;
 });
 
-socket.on('abort', () => {
-    App.abort();
+socket.on('abort', ({ id }: { id: string; }) => {
+    if (id === ServerRequest.metadata.get('tablet-id')) App.abort();
 });
 
 

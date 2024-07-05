@@ -17,6 +17,7 @@ export class State {
 
     public static updateTablet(tablet: Tablet) {
         return attempt(() => {
+            console.log('updateTablet static');
             const s = State.current;
             if (!s) throw new Error('State not initialized');
             s.updateTablet(tablet);
@@ -54,7 +55,7 @@ export class State {
     }
 
     private emit(event: string, data: unknown) {
-        this.app.io.to('admin').emit(event, data);
+        this.app.io.emit(event, data);
     }
 
     private updateTablet(tablet: Tablet) {
@@ -77,6 +78,7 @@ export class State {
             this
         );
         this.tablets.set(id, t);
+        console.log('Emitting new tablet');
         this.emit('new-tablet', t.safe);
         return t;
     }

@@ -24,15 +24,16 @@ export class Tablet extends Cache {
     }
 
     private emit(event: string, data: unknown) {
-        this.app.io.to(this.id).emit(event, data);
+        this.app.io.emit(event, {
+            id: this.id,
+            data
+        });
         this.latestActivity = Date.now();
     }
 
     public changeState(state: TabletState) {
-        this.emit('change-state', {
-            id: this.id,
-            state
-        });
+        console.log('emitting change of state to tablet');
+        this.emit('change-state', state);
     }
 
     public forceSubmit() {

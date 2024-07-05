@@ -11,6 +11,7 @@ import Summary from '../components/Summary.svelte';
 import { Modal } from '../../utilities/modals';
 import AutoCommenter from '../components/AutoCommenter.svelte';
 import { socket } from '../../utilities/socket';
+import { ServerRequest } from '../../utilities/requests';
 
 const d = createEventDispatcher();
 
@@ -297,8 +298,14 @@ const buildComment = (type: 'auto' | 'tele' | 'end') => {
 };
 
 onMount(() => {
-    socket.on('submit', submit);
-    return () => socket.off('submit', submit);
+    const s = (data: {
+        id: string;
+    }) => {
+        if (data.id === ServerRequest.metadata.get('tablet-id')) submit;
+    }
+
+    socket.on('submit', s);
+    return () => socket.off('submit', s);
 });
 
 </script>

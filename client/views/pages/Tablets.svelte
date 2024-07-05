@@ -3,7 +3,7 @@ import { Tablet, State } from '../../models/admin';
 import { onMount } from 'svelte';
 import { ServerRequest } from '../../utilities/requests';
 import { confirm } from '../../utilities/notifications';
-import { TabletState } from '../../models/admin';
+import type { TabletState } from '../../models/admin';
 
 let tablets: Tablet[] = [];
 let accounts: string[] = [];
