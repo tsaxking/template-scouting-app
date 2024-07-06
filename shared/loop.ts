@@ -33,6 +33,10 @@ export class Loop<
         this.emitter.emit('stop');
     };
 
+    get active() {
+        return this._running;
+    }
+
     constructor(
         public readonly fn: (tick: number) => void,
         public interval: number
