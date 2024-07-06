@@ -50,7 +50,9 @@ export class Loop<
             if (!this._running) return;
             this.fn(i);
             i++;
-            await sleep(this.interval - (Date.now() - globalStart) % this.interval);
+            await sleep(
+                this.interval - ((Date.now() - globalStart) % this.interval)
+            );
             loop();
         };
 
