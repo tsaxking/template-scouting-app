@@ -719,7 +719,9 @@ export class App<
             this.cover.style.display = 'block';
             this.cover.innerHTML = `
                 <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 2em;">
-                    Click to Start
+                    Match ${App.matchData.compLevel}${App.matchData.matchNumber} is ready, please take this time to locate where your robot (${App.matchData.teamNumber}) is on the field.
+                    <br>
+                    Click anywhere to start
                 </div>
             `;
             target.appendChild(this.cover);
