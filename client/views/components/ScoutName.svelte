@@ -36,7 +36,7 @@ $: fns.save(name);
     <label for="scout-name-input">Scout Name</label>
     <datalist id="accounts">
         {#each accounts as account}
-            <option value="{account}" />
+            <option value="{account}"></option>
         {/each}
     </datalist>
 </div>

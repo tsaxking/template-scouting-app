@@ -110,10 +110,13 @@ const prettifyJson = async () => {
     const json = await getJSON('event-data');
     if (json.isErr()) return backToMain('Unable to read event-data.json');
 
-    const res = await saveJSON('event-data', JSON.stringify(json.value, null, 2));
+    const res = await saveJSON(
+        'event-data',
+        JSON.stringify(json.value, null, 2)
+    );
     if (res.isErr()) return backToMain('Unable to save event-data.json');
     backToMain('Prettified event-data.json');
-}
+};
 
 const unprettifyJson = async () => {
     const json = await getJSON('event-data');
@@ -122,7 +125,7 @@ const unprettifyJson = async () => {
     const res = await saveJSON('event-data', JSON.stringify(json.value));
     if (res.isErr()) return backToMain('Unable to save event-data.json');
     backToMain('Unprettified event-data.json');
-}
+};
 
 export const serverController = [
     {

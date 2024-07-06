@@ -28,7 +28,7 @@ let success: PostDataMap = {
         value: false,
         comments: false,
         comment: ''
-    },
+    }
 };
 
 let primary: PostDataMap = {
@@ -46,7 +46,7 @@ let primary: PostDataMap = {
         value: false,
         comments: true,
         comment: ''
-    },
+    }
 };
 
 let warning: PostDataMap = {
@@ -64,7 +64,7 @@ let warning: PostDataMap = {
         value: false,
         comments: true,
         comment: ''
-    },
+    }
 };
 
 let danger: PostDataMap = {
@@ -95,7 +95,7 @@ let all: PostDataMap = {
     ...success,
     ...primary,
     ...warning,
-    ...danger,
+    ...danger
 };
 
 let c: Canvas;
@@ -106,7 +106,7 @@ const setCheckView = () => {
     primary = primary;
     warning = warning;
     danger = danger;
-}
+};
 
 const resetChecks = () => {
     for (const key in all) {
@@ -115,7 +115,7 @@ const resetChecks = () => {
     }
 
     setCheckView();
-}
+};
 
 const open = async (active: string) => {
     if (active !== 'Post') return;
@@ -169,7 +169,7 @@ $: commentsSections = Object.entries({
     ...success,
     ...primary,
     ...warning,
-    ...danger,
+    ...danger
 })
     .filter(([_, data]) => data.comments && data.value)
     .map(([key]) => key);
@@ -226,7 +226,7 @@ const submit = async () => {
             ...success,
             ...primary,
             ...warning,
-            ...danger,
+            ...danger
         })
             .map(([key, value]) => (value.value ? key : null))
             .filter(Boolean),
@@ -235,7 +235,7 @@ const submit = async () => {
                 ...success,
                 ...primary,
                 ...warning,
-                ...danger,
+                ...danger
             }).reduce(
                 (acc, [key, value]) => {
                     if (value.value && value.comment.length > 0) {
@@ -314,26 +314,10 @@ const buildComment = (type: 'auto' | 'tele' | 'end') => {
 </script>
 
 <div class="container mb-3">
-    <ChecksRow 
-        bind:checks="{primary}"
-        name="Info"
-        color="primary"
-    />
-    <ChecksRow 
-        bind:checks="{success}"
-        name="Good"
-        color="success"
-    />
-    <ChecksRow 
-        bind:checks="{warning}"
-        name="Bad"
-        color="warning"
-    />
-    <ChecksRow 
-        bind:checks="{danger}"
-        name="Ugly"
-        color="danger"
-    />
+    <ChecksRow bind:checks="{primary}" name="Info" color="primary" />
+    <ChecksRow bind:checks="{success}" name="Good" color="success" />
+    <ChecksRow bind:checks="{warning}" name="Bad" color="warning" />
+    <ChecksRow bind:checks="{danger}" name="Ugly" color="danger" />
     {#if commentsSections.length > 0}
         <div class="row mb-3">
             <div class="container">
