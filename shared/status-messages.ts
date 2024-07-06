@@ -507,6 +507,18 @@ export const messages: {
         code: 401,
         instructions: ''
     },
+    'pin:incorrect': {
+        message: 'Pin was incorrect',
+        color: 'danger',
+        code: 400,
+        instructions: ''
+    },
+    'pre-scouting:not-allowed': {
+        message: 'Prescouting is not allowed at this time',
+        color: 'danger',
+        code: 400,
+        instructions: ''
+    },
     'profanity:detected': {
         message: 'Profanity detected',
         color: 'danger',
@@ -602,6 +614,19 @@ export const messages: {
             'There was an unknown error. If this persists, please contact an administrator/developer.',
         color: 'danger',
         code: 500,
+        instructions: ''
+    },
+    'server-request:match-error': {
+        message:
+            'Your match submission failed, it has been saved onto the event server, but it did not submit to the tatorscout.org server. You may have lost internet access',
+        color: 'warning',
+        code: 404,
+        instructions: ''
+    },
+    'server-request:match-submitted': {
+        message: 'Your match has been submitted to the tatorscout.org server!',
+        color: 'success',
+        code: 200,
         instructions: ''
     },
     'session:rate-limited': {
@@ -738,6 +763,8 @@ export type StatusId =
     | 'permissions:not-found'
     | 'permissions:removed'
     | 'permissions:unauthorized'
+    | 'pin:incorrect'
+    | 'pre-scouting:not-allowed'
     | 'profanity:detected'
     | 'role:not-found'
     | 'roles:added'
@@ -751,6 +778,8 @@ export type StatusId =
     | 'roles:removed'
     | 'roles:removed-permission'
     | 'roles:updated'
+    | 'server-request:match-error'
+    | 'server-request:match-submitted'
     | 'server:invalid-data'
     | 'server:not-implemented'
     | 'server:unknown-server-error'
@@ -846,6 +875,8 @@ export type PermissionsStatusId =
     | 'removed'
     | 'unauthorized';
 
+export type PinStatusId = 'incorrect';
+
 export type ProfanityStatusId = 'detected';
 
 export type RoleStatusId = 'not-found';
@@ -868,6 +899,8 @@ export type ServerStatusId =
     | 'not-implemented'
     | 'unknown-server-error';
 
+export type ServerRequestStatusId = 'match-error' | 'match-submitted';
+
 export type SessionStatusId = 'rate-limited';
 
 export type SkillsStatusId =
@@ -882,3 +915,5 @@ export type SpamStatusId = 'detected';
 export type TestStatusId = 'fail' | 'success';
 
 export type UnknownStatusId = 'error';
+
+export type PreScoutingStatusId = 'not-allowed';

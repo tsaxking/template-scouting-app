@@ -42,6 +42,22 @@ export class SVG extends Drawable<SVG> {
         this.center[1] = y;
     }
 
+    get width() {
+        return this.$img.width;
+    }
+
+    set width(width: number) {
+        this.$img.width = width;
+    }
+
+    get height() {
+        return this.$img.height;
+    }
+
+    set height(height: number) {
+        this.$img.height = height;
+    }
+
     set color(color: string) {
         if (!this.properties.text) this.properties.text = {};
         this.properties.text!.color = color;
