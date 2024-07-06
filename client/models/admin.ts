@@ -2,6 +2,7 @@ import { attempt, attemptAsync } from '../../shared/check';
 import { ServerRequest } from '../utilities/requests';
 import { EventEmitter } from '../../shared/event-emitter';
 import { socket } from '../utilities/socket';
+import { Loop } from '../../shared/loop';
 
 export type TabletState = {
     matchNumber: number;
@@ -196,3 +197,5 @@ socket.on('new-tablet', () => {
 socket.on('delete-tablet', () => {
     State.refresh();
 });
+
+new Loop(State.refresh, 1000 * 60).start();
