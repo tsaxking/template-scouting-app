@@ -23,6 +23,8 @@ onMount(() => {
 });
 
 $: fns.save(name);
+
+App.on('change-name', (n) => name = n);
 </script>
 
 <div class="form-floating p-0">
@@ -36,7 +38,7 @@ $: fns.save(name);
     <label for="scout-name-input">Scout Name</label>
     <datalist id="accounts">
         {#each accounts as account}
-            <option value="{account}" />
+            <option value="{account}"></option>
         {/each}
     </datalist>
 </div>

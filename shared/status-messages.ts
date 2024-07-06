@@ -671,6 +671,30 @@ export const messages: {
         code: 400,
         instructions: 'Please try again.'
     },
+    'tablet:aborted': {
+        message: 'Tablet Aborted',
+        color: 'success',
+        code: 200,
+        instructions: ''
+    },
+    'tablet:not-found': {
+        message: 'Tablet was not found',
+        color: 'danger',
+        code: 404,
+        instructions: ''
+    },
+    'tablet:state-updated': {
+        message: 'Tablet state updated',
+        color: 'success',
+        code: 200,
+        instructions: ''
+    },
+    'tablet:submitted': {
+        message: 'Tablet match submitted',
+        color: 'success',
+        code: 200,
+        instructions: ''
+    },
     'test:fail': {
         message: 'This test failed',
         color: 'danger',
@@ -790,6 +814,10 @@ export type StatusId =
     | 'skills:not-found'
     | 'skills:removed'
     | 'spam:detected'
+    | 'tablet:aborted'
+    | 'tablet:not-found'
+    | 'tablet:state-updated'
+    | 'tablet:submitted'
     | 'test:fail'
     | 'test:success'
     | 'unknown:error';
@@ -877,6 +905,8 @@ export type PermissionsStatusId =
 
 export type PinStatusId = 'incorrect';
 
+export type PreScoutingStatusId = 'not-allowed';
+
 export type ProfanityStatusId = 'detected';
 
 export type RoleStatusId = 'not-found';
@@ -916,4 +946,8 @@ export type TestStatusId = 'fail' | 'success';
 
 export type UnknownStatusId = 'error';
 
-export type PreScoutingStatusId = 'not-allowed';
+export type TabletStatusId =
+    | 'not-found'
+    | 'aborted'
+    | 'submitted'
+    | 'state-updated';

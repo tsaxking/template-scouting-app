@@ -111,8 +111,7 @@ export class ServerRequest {
             if (a.isOk()) {
                 saveJSONSync('accounts.json', a.value);
                 return a.value;
-            }
-            else throw a.error;
+            } else throw a.error;
         });
     }
 

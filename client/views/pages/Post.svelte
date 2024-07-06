@@ -5,11 +5,13 @@ import type { BootstrapColor } from '../../submodules/colors/color';
 import { capitalize, fromCamelCase } from '../../../shared/text';
 import { Trace } from '../../../shared/submodules/tatorscout-calculations/trace';
 import { choose, confirm, notify } from '../../utilities/notifications';
-import { createEventDispatcher } from 'svelte';
+import { createEventDispatcher, onMount } from 'svelte';
 import { Canvas } from '../../models/canvas/canvas';
 import Summary from '../components/Summary.svelte';
 import { Modal } from '../../utilities/modals';
 import AutoCommenter from '../components/AutoCommenter.svelte';
+import { socket } from '../../utilities/socket';
+import { ServerRequest } from '../../utilities/requests';
 
 const d = createEventDispatcher();
 
@@ -294,6 +296,18 @@ const buildComment = (type: 'auto' | 'tele' | 'end') => {
 
     modal.show();
 };
+
+onMount(() => {
+    const s = (data: {
+        id: string;
+    }) => {
+        if (data.id === ServerRequest.metadata.get('tablet-id')) submit();
+    }
+
+    socket.on('submit', s);
+    return () => socket.off('submit', s);
+});
+
 </script>
 
 <div class="container mb-3">

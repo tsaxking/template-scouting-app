@@ -1,6 +1,9 @@
 import { attemptAsync } from '../../../shared/check';
+import { sleep } from '../../../shared/sleep';
 import { teamsFromMatch } from '../../../shared/submodules/tatorscout-calculations/tba';
 import { TBAMatch } from '../../../shared/tba';
+import { confirm } from '../../utilities/notifications';
+import { socket } from '../../utilities/socket';
 import { App } from './app';
 
 const filter = (m: TBAMatch): number[] =>
@@ -92,6 +95,7 @@ export class MatchData {
     }
 
     private save() {
+        console.log('saving');
         window.localStorage.setItem(
             'matchData',
             JSON.stringify({
@@ -103,6 +107,8 @@ export class MatchData {
         );
 
         App.emit('select-match', this);
+
+        App.updateState();
     }
 
     async getCurrentMatch() {
@@ -120,27 +126,43 @@ export class MatchData {
         });
     }
 
-    async selectGroup(group: number) {
+    async selectGroup(group: number, matchIndex?: number, doConfirm = true) {
         return attemptAsync(async () => {
+            console.log('App.matchData.selectGroup');
             const eventData = await App.getEventData();
             if (eventData.isErr()) throw eventData.error;
 
-            const match = eventData.value.matches.find(
+            const match = matchIndex ?
+                eventData.value.matches[matchIndex] :
+                eventData.value.matches.find(
                 m =>
                     m.match_number === this.matchNumber &&
                     m.comp_level === this.compLevel
             );
 
+            console.log('match', match);
+
             if (!match) throw new Error('Match not found');
 
-            const index = eventData.value.matches.indexOf(match);
-            if (group >= 6) throw new Error('Group not found');
-            this.group = group;
+            const changeGroup = async (num: number) => {
+                console.log('changeGroup', num);
+                const index = matchIndex || eventData.value.matches.indexOf(match);
+                if (num >= 6) throw new Error('Group not found');
+    
+                this.teamNumber =
+                    eventData.value.assignments.matchAssignments[num][index];
 
-            this.teamNumber =
-                eventData.value.assignments.matchAssignments[group][index];
+                console.log('this.teamNumber', this.teamNumber);
 
-            this.save();
+                this.group = num;
+            }
+
+            if (doConfirm && group !== this.group) {
+                const doThis = await confirm("Are you sure you want to change groups?");
+                console.log('doThis', doThis);
+                if (!doThis) return changeGroup(this.group);
+            }
+            changeGroup(group);
         });
     }
 
@@ -150,6 +172,7 @@ export class MatchData {
         teamNumber?: number
     ) {
         return attemptAsync(async () => {
+            console.log('selectMatch', matchNumber, compLevel, teamNumber);
             if (compLevel === 'pr') {
                 this.compLevel = 'pr';
                 this.matchNumber = matchNumber;
@@ -168,18 +191,22 @@ export class MatchData {
             if (currentMatch.isErr()) throw currentMatch.error;
 
             if (currentMatch.value) {
-                // console.log('Found match', currentMatch.value);
+                console.log('Found match', currentMatch.value);
                 if (teamNumber) {
+                    console.log('teamNumber', teamNumber);
                     const teams = teamsFromMatch(currentMatch.value).filter(
                         Boolean
                     );
                     if (teams.includes(teamNumber)) {
+                        console.log('includes');
                         this.teamNumber = teamNumber;
                     } else {
+                        console.log('does not include', teams[0]);
                         this.teamNumber = teams[0];
                     }
                     this.matchNumber = matchNumber;
                     this.compLevel = compLevel;
+                    console.log('changing state', this.teamNumber, this.matchNumber);
                 } else {
                     const teams = teamsFromMatch(currentMatch.value).filter(
                         Boolean
@@ -187,13 +214,18 @@ export class MatchData {
                     this.matchNumber = matchNumber;
                     this.compLevel = compLevel;
 
+                    console.log('changingState', this.matchNumber, this.compLevel);
+
                     const m = await this.getCurrentMatch();
                     if (m.isErr()) throw m.error;
                     if (!m.value) throw new Error('Match not found');
                     const newTeams = teamsFromMatch(m.value).filter(Boolean);
+                    console.log('newTeams', newTeams);
                     let index = teams.indexOf(currentTeam);
                     if (index === -1) index = 0;
+                    console.log('index', index);
                     this.teamNumber = newTeams[index];
+                    console.log('this.teamNumber', this.teamNumber);
                 }
             }
 
@@ -234,7 +266,10 @@ export class MatchData {
                 const teamIndex = prevTeams.indexOf(this.teamNumber) || 0;
                 this.teamNumber = teams[teamIndex];
             } else {
-                this.teamNumber = eventData.value.assignments.matchAssignments[group][currentIndex];
+                this.teamNumber =
+                    eventData.value.assignments.matchAssignments[group][
+                        currentIndex
+                    ];
             }
 
             this.matchNumber = match.match_number;

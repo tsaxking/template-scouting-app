@@ -44,6 +44,7 @@ import { socket } from '../../utilities/socket';
 import { Random } from '../../../shared/math';
 import { Tick } from './tick';
 import { MatchData } from './match-data';
+import { TabletState } from '../../../server/structure/cache/tablet';
 
 /**
  * Description placeholder
@@ -251,6 +252,7 @@ export class App<
     public static set events(events: TBAEvent[]) {
         App.$events = events;
         window.localStorage.setItem('events', JSON.stringify(events));
+        App.updateState();
     }
 
     public static get preScouting() {
@@ -260,6 +262,7 @@ export class App<
     public static set preScouting(preScouting: boolean) {
         App.$preScouting = preScouting;
         window.localStorage.setItem('preScouting', preScouting.toString());
+        App.updateState();
     }
 
     public static get scoutName() {
@@ -270,6 +273,7 @@ export class App<
         App.$scoutName = scoutName;
         window.localStorage.setItem('scoutName', scoutName);
         App.emit('change-name', scoutName);
+        App.updateState();
     }
 
     public static get group() {
@@ -538,6 +542,17 @@ export class App<
                 alert('Error getting scout groups');
                 throw res.error;
             }
+        });
+    }
+
+    public static updateState() {
+        return ServerRequest.post('/api/tablet/update', {
+            compLevel: App.matchData.compLevel,
+            groupNumber: App.matchData.group,
+            matchNumber: App.matchData.matchNumber,
+            teamNumber: App.matchData.teamNumber,
+            scoutName: App.scoutName,
+            preScouting: App.preScouting
         });
     }
 
@@ -1166,11 +1181,11 @@ export class App<
 
     private paused?: Promise<void>;
 
-    public pause(): (() => void) {
+    public pause(): () => void {
         this.paused = new Promise((res, rej) => {});
         return () => {
             if (this.paused) Promise.resolve(this.paused);
-        }
+        };
     }
 
     /**
@@ -1892,3 +1907,36 @@ Object.assign(window, {
 socket.on('connect', async () => {
     App.uploadFromLocalStorage();
 });
+
+socket.on('change-state', (obj: {
+    id: string;
+    data: TabletState
+}) => {
+    const { id, data: state } = obj;
+    if (id !== ServerRequest.metadata.get('tablet-id')) return;
+    // update only the private properties as to not trigger updateState on each set
+    const { matchData } = App;
+
+    if (matchData.compLevel !== state.compLevel) matchData.compLevel = state.compLevel;
+    if (matchData.teamNumber !== state.teamNumber) {
+        matchData.selectMatch(
+            state.matchNumber,
+            state.compLevel,
+            state.teamNumber
+        );
+    }
+    if (matchData.group !== state.groupNumber) matchData.selectGroup(state.groupNumber, App.matchData.matchNumber, false);
+    if (App.scoutName !== state.scoutName) {
+        App.$scoutName = state.scoutName;
+        App.emit('change-name', state.scoutName);
+    }
+    if (matchData.matchNumber !== state.matchNumber) matchData.selectMatch(state.matchNumber, state.compLevel);
+    if (App.preScouting !== state.preScouting) App.preScouting = state.preScouting;
+});
+
+socket.on('abort', ({ id }: { id: string; }) => {
+    if (id === ServerRequest.metadata.get('tablet-id')) App.abort();
+});
+
+
+// Force submit is done in Post.svelte
