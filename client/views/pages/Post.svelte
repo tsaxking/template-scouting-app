@@ -1,6 +1,5 @@
 <script lang="ts">
 import { App } from '../../models/app/app';
-import Checkboxes from '../components/app/Checkboxes.svelte';
 import type { BootstrapColor } from '../../submodules/colors/color';
 import { capitalize, fromCamelCase } from '../../../shared/text';
 import { Trace } from '../../../shared/submodules/tatorscout-calculations/trace';
@@ -10,6 +9,8 @@ import { Canvas } from '../../models/canvas/canvas';
 import Summary from '../components/Summary.svelte';
 import { Modal } from '../../utilities/modals';
 import AutoCommenter from '../components/AutoCommenter.svelte';
+import type { PostDataMap } from '../../utilities/general-types';
+import ChecksRow from '../components/app/ChecksRow.svelte';
 
 const d = createEventDispatcher();
 
@@ -17,109 +18,116 @@ export let app: App;
 export let active: string;
 let canvas: HTMLCanvasElement;
 
-type PostData = {
-    value: boolean;
-    color: BootstrapColor;
-    comments: boolean;
-    comment: string;
-};
-
-let commentBuilds: {
-    [key: string]: PostData;
-} = {
+let success: PostDataMap = {
     autoMobility: {
         value: false,
-        color: 'success',
         comments: false,
         comment: ''
     },
     parked: {
         value: false,
-        color: 'success',
         comments: false,
         comment: ''
     },
+};
+
+let primary: PostDataMap = {
     playedDefense: {
         value: false,
-        color: 'primary',
         comments: true,
         comment: ''
     },
     groundPicks: {
         value: false,
-        color: 'info',
         comments: true,
         comment: ''
     },
     lobbedNotes: {
         value: false,
-        color: 'info',
         comments: true,
         comment: ''
     },
+};
+
+let warning: PostDataMap = {
     tippy: {
         value: false,
-        color: 'warning',
         comments: true,
         comment: ''
     },
     easilyDefended: {
         value: false,
-        color: 'warning',
-        comments: true,
-        comment: ''
-    },
-    robotDied: {
-        value: false,
-        color: 'danger',
         comments: true,
         comment: ''
     },
     slow: {
         value: false,
-        color: 'warning',
+        comments: true,
+        comment: ''
+    },
+};
+
+let danger: PostDataMap = {
+    robotDied: {
+        value: false,
         comments: true,
         comment: ''
     },
     problemsDriving: {
         value: false,
-        color: 'danger',
         comments: true,
         comment: ''
     },
     penalized: {
         value: false,
-        color: 'danger',
         comments: true,
         comment: ''
     },
     spectator: {
         value: false,
-        color: 'danger',
         comments: true,
         comment: ''
     }
 };
 
-Object.assign(window, { commentBuilds });
+// this does not need to use $ because all dependencies are kept.
+let all: PostDataMap = {
+    ...success,
+    ...primary,
+    ...warning,
+    ...danger,
+};
 
 let c: Canvas;
 let stop = () => {};
+
+const setCheckView = () => {
+    success = success;
+    primary = primary;
+    warning = warning;
+    danger = danger;
+}
+
+const resetChecks = () => {
+    for (const key in all) {
+        all[key].value = false;
+        all[key].comment = '';
+    }
+
+    setCheckView();
+}
 
 const open = async (active: string) => {
     if (active !== 'Post') return;
     stop();
 
-    for (const key in commentBuilds) {
-        commentBuilds[key].value = false;
-        commentBuilds[key].comment = '';
-    }
+    resetChecks();
 
     const traceArray = app.pull();
 
     const averageVelocity = Trace.velocity.average(traceArray);
     if (averageVelocity < 5) {
-        commentBuilds.slow.value = true;
+        warning.slow.value = true;
     }
 
     if (!c) {
@@ -149,18 +157,20 @@ const open = async (active: string) => {
     // + 1 because the robot starts with a note
     app.parsed.groundPicks = Trace.yearInfo[2024].mustGroundPick(traceArray);
 
-    commentBuilds.autoMobility.value = !!app.parsed.mobility;
-    commentBuilds.parked.value = !!app.parsed.parked;
-    commentBuilds.groundPicks.value = app.parsed.groundPicks;
-
-    // reset the view
-    commentBuilds = commentBuilds;
+    success.autoMobility.value = !!app.parsed.mobility;
+    success.parked.value = !!app.parsed.parked;
+    primary.groundPicks.value = app.parsed.groundPicks;
 };
 
 let commentsSections: string[] = [];
 $: open(active);
 
-$: commentsSections = Object.entries(commentBuilds)
+$: commentsSections = Object.entries({
+    ...success,
+    ...primary,
+    ...warning,
+    ...danger,
+})
     .filter(([_, data]) => data.comments && data.value)
     .map(([key]) => key);
 
@@ -193,7 +203,7 @@ $: setComment('end', selectedEnd);
 const submit = async () => {
     if (
         // TODO: make this year by year based
-        !commentBuilds.groundPicks.value &&
+        !success.groundPicks.value &&
         Trace.yearInfo[2024].mustGroundPick(app.pull())
     ) {
         const doSubmit = await confirm(
@@ -212,11 +222,21 @@ const submit = async () => {
     }
 
     await app.submit({
-        checks: Object.entries(commentBuilds)
+        checks: Object.entries({
+            ...success,
+            ...primary,
+            ...warning,
+            ...danger,
+        })
             .map(([key, value]) => (value.value ? key : null))
             .filter(Boolean),
         comments: {
-            ...Object.entries(commentBuilds).reduce(
+            ...Object.entries({
+                ...success,
+                ...primary,
+                ...warning,
+                ...danger,
+            }).reduce(
                 (acc, [key, value]) => {
                     if (value.value && value.comment.length > 0) {
                         acc[key] = value.comment;
@@ -234,10 +254,7 @@ const submit = async () => {
     await App.matchData.next();
     d('submit');
 
-    for (const key in commentBuilds) {
-        commentBuilds[key].value = false;
-        commentBuilds[key].comment = '';
-    }
+    resetChecks();
 
     // these will reset the comments
     selectedAuto = [];
@@ -297,16 +314,26 @@ const buildComment = (type: 'auto' | 'tele' | 'end') => {
 </script>
 
 <div class="container mb-3">
-    <div class="row d-flex justify-content-center w-100 p-0 mb-3">
-        <Checkboxes
-            bind:data="{commentBuilds}"
-            on:change="{e => {
-                const { key, value } = e.detail;
-                commentBuilds[key].value = value;
-                commentBuilds = commentBuilds;
-            }}"
-        />
-    </div>
+    <ChecksRow 
+        bind:checks="{primary}"
+        name="Info"
+        color="primary"
+    />
+    <ChecksRow 
+        bind:checks="{success}"
+        name="Good"
+        color="success"
+    />
+    <ChecksRow 
+        bind:checks="{warning}"
+        name="Bad"
+        color="warning"
+    />
+    <ChecksRow 
+        bind:checks="{danger}"
+        name="Ugly"
+        color="danger"
+    />
     {#if commentsSections.length > 0}
         <div class="row mb-3">
             <div class="container">
@@ -324,9 +351,9 @@ const buildComment = (type: 'auto' | 'tele' | 'end') => {
                             rows="3"
                             id="textarea-{i}"
                             on:input="{event => {
-                                commentBuilds[section].comment =
+                                all[section].comment =
                                     event.currentTarget.value;
-                                commentBuilds = commentBuilds;
+                                setCheckView();
                             }}"
                         ></textarea>
                     </div>
