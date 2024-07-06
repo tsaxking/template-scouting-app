@@ -18,6 +18,7 @@ type M = TBAMatch & {
 };
 
 export let matches: TBAMatch[] = [];
+export let app: App;
 
 let customMatches: M[] = [];
 let currentMatch: M | undefined = undefined;
@@ -136,8 +137,6 @@ const fns = {
         currentTeam = matchAssignments?.[+currentMatchIndex] || -1;
     }
 };
-
-export let app: App;
 
 $: {
     fns.getMatches(app);

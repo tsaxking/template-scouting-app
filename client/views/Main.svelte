@@ -80,9 +80,12 @@ const isFullscreen = () => {
 
 let fs: boolean = false;
 
-generate();
 let tabs = ['Pre', 'App', 'Post', 'Upload'];
 let active = '--$Pre';
+$: {
+    // reset app when switching to Pre
+    // if (active === '--$Pre') generate();
+}
 const domain = 'http://localhost:3000';
 
 // if reload, warn
