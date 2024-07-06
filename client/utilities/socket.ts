@@ -179,7 +179,6 @@ class Socket {
 
         this.socket.connect();
 
-
         // const init = (id: string) => {
         //     console.log('init', id);
         //     socket.off('init', init);
@@ -207,15 +206,7 @@ class Socket {
         this.socket.emit(event, data);
     }
 
-    private _onInit() {}
-
-    public get onInit() {
-        return this._onInit;
-    }
-
-    public set onInit(init: () => void) {
-        this._onInit = init;
-    }
+    public onInit() {}
 }
 
 
@@ -231,9 +222,7 @@ export const socket = new Socket();
 socket.on('init', (id: string) => {
     // socket.off('init', init);
     if (typeof id !== 'string')
-        return console.error(
-            'Did not recieve typeof string on socket init'
-        );
+        return console.error('Did not recieve typeof string on socket init');
     ServerRequest.metadata.set('socket-id', id);
     socket.onInit();
 });
