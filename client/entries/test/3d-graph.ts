@@ -26,7 +26,9 @@ document.body.classList.add('no-scroll');
 const c = new Canvas(canvas.getContext('2d')!);
 
 // c.background.color = Color.fromName('gray');
-c.background.properties.fill.color = 'gray';
+c.background.properties.fill = {
+    color: 'rgba(255, 255, 255, 1)'
+};
 
 const cubePoints = [
     [0, 0, 0],
@@ -43,10 +45,10 @@ const translateMatrix = [0.25, 0.25, 0.25] as Point3D;
 
 const circles = cubePoints.map(p => {
     const c = new Circle(p, 0.01);
-    c.properties.fill.color = `rgb(${p[0] * 255}, ${p[1] * 255}, ${
-        p[2] * 255
-    })`;
-    c.properties.line.color = 'rgba(0, 0, 0, 0)';
+    c.properties.fill = {
+        color: `rgb(${p[0] * 255}, ${p[1] * 255}, ${p[2] * 255})`
+    };
+    c.properties.line = { color: 'black' };
     c.center = scale(c.center as Point3D, scaleMatrix);
     c.center = translate(c.center as Point3D, translateMatrix);
     return c;
