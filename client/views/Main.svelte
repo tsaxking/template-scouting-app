@@ -62,7 +62,7 @@ const exitFullscreen = () => {
 };
 
 $: {
-    if (active === 'App') {
+    if (active === '--$App') {
         fullscreen();
     } else {
         exitFullscreen();
@@ -82,7 +82,7 @@ let fs: boolean = false;
 
 generate();
 let tabs = ['Pre', 'App', 'Post', 'Upload'];
-let active = 'Pre';
+let active = '--$Pre';
 const domain = 'http://localhost:3000';
 
 // if reload, warn
@@ -92,23 +92,23 @@ window.onbeforeunload = function () {
 </script>
 
 <main>
-    <NavTabs {tabs} {active} on:change="{e => (active = e.detail)}" />
+    <NavTabs {tabs} {active} on:change="{e => (active = "--$" + e.detail)}" />
 
-    <Page {active} {domain} title="Pre"
-        ><Pre on:play="{() => (active = 'App')}" {app}></Pre></Page
+    <Page {active} {domain} title="--$Pre"
+        ><Pre on:play="{() => (active = '--$App')}" {app}></Pre></Page
     >
-    <Page {active} {domain} title="App"><AppView {app}></AppView></Page>
-    <Page {active} {domain} title="Post"
+    <Page {active} {domain} title="--$App"><AppView {app}></AppView></Page>
+    <Page {active} {domain} title="--$Post"
         ><Post
             {app}
             {active}
             on:submit="{async () => {
-                active = 'Pre';
+                active = '--$Pre';
                 app = generate2024App(await App.matchData.getAlliance());
             }}"
         ></Post></Page
     >
-    <Page {active} {domain} title="Upload"><Upload /></Page>
+    <Page {active} {domain} title="--$Upload"><Upload /></Page>
 
     <!-- <button
         class="btn btn-outline-primary position-fixed top-0 end-0 me-3"
