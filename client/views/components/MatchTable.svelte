@@ -200,19 +200,19 @@ App.on('select-match', () => fns.getMatches(app));
                             <!-- Blue alliance -->
                             <span
                                 class="text-primary"
-                                class:selected-team="{currentMatchIndex === matchIndex &&
-                                    currentTeam === team}"
-                                class:is-group="{match.scoutIndex === teamIndex}"
-                                >{team}</span
+                                class:selected-team="{currentMatchIndex ===
+                                    matchIndex && currentTeam === team}"
+                                class:is-group="{match.scoutIndex ===
+                                    teamIndex}">{team}</span
                             >
                         {:else}
                             <!-- Red alliance -->
                             <span
                                 class="text-danger"
-                                class:selected-team="{currentMatchIndex === matchIndex &&
-                                    currentTeam === team}"
-                                class:is-group="{match.scoutIndex === teamIndex}"
-                                >{team}</span
+                                class:selected-team="{currentMatchIndex ===
+                                    matchIndex && currentTeam === team}"
+                                class:is-group="{match.scoutIndex ===
+                                    teamIndex}">{team}</span
                             >
                         {/if}
                     </td>

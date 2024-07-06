@@ -268,15 +268,15 @@ export class ButtonCircle<actions = Action> extends Drawable<ButtonCircle> {
             const size = b.circle.radius * 2 * ICON_SIZE;
 
             if (b.icon instanceof SVG) {
-                if (!b.icon.$properties.text) b.icon.$properties.text = {};
-                b.icon.$properties.text!.height = size;
-                b.icon.$properties.text!.width = size;
+                if (!b.icon.properties.text) b.icon.properties.text = {};
+                b.icon.properties.text!.height = size;
+                b.icon.properties.text!.width = size;
             }
             if (b.icon instanceof Icon) {
                 b.icon.size = size;
             }
 
-            b.circle.$properties.fill = {
+            b.circle.properties.fill = {
                 color: b.color.setAlpha(fade).toString('rgba')
             };
             ctx.save();

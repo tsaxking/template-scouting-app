@@ -75,7 +75,7 @@ const isFullscreen = () => {
         document['webkitFullscreenElement'] || // Chrome, Safari and Opera
         document['mozFullScreenElement'] || // Firefox
         document['msFullscreenElement'] // IE/Edge
-     );
+    );
 };
 
 let fs: boolean = false;
@@ -92,7 +92,7 @@ window.onbeforeunload = function () {
 </script>
 
 <main>
-    <NavTabs {tabs} {active} on:change="{e => (active = "--$" + e.detail)}" />
+    <NavTabs {tabs} {active} on:change="{e => (active = '--$' + e.detail)}" />
 
     <Page {active} {domain} title="--$Pre"
         ><Pre on:play="{() => (active = '--$App')}" {app}></Pre></Page

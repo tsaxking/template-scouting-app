@@ -628,7 +628,7 @@ export class App<
             height: 1
         });
 
-        this.path.$properties.line = {
+        this.path.properties.line = {
             color: Color.fromName('black').toString('rgba'),
             width: 1
         };
@@ -873,7 +873,7 @@ export class App<
 
         // flip x and y axis based on field orientation
         // const { background } = this;
-        // background.$properties
+        // background.properties
     }
 
     // █ █ ▄▀▄ █▀▄ █ ▄▀▄ ██▄ █   ██▀ ▄▀▀
@@ -1040,9 +1040,9 @@ export class App<
     setBorder(points: Point2D[], color: Color) {
         if (this.border) throw new Error('Border already set');
         const b = new Border(points);
-        b.$properties.doDraw = () =>
+        b.properties.doDraw = () =>
             this.currentLocation ? b.isIn(this.currentLocation) : false;
-        b.$properties.fill = {
+        b.properties.fill = {
             color: color.toString('rgba')
         };
 
@@ -1167,11 +1167,11 @@ export class App<
 
     private paused?: Promise<void>;
 
-    public pause(): (() => void) {
+    public pause(): () => void {
         this.paused = new Promise((res, rej) => {});
         return () => {
             if (this.paused) Promise.resolve(this.paused);
-        }
+        };
     }
 
     /**
@@ -1791,16 +1791,16 @@ export class App<
                 if (action) {
                     const size = 0.03;
                     const cir = new Circle([x, y], size);
-                    cir.$properties.fill = {
+                    cir.properties.fill = {
                         color: color
                     };
                     const a = this.icons[action]?.clone();
                     if (a instanceof SVG) {
                         a.center = [x, y];
-                        if (!a.$properties.text) a.$properties.text = {};
-                        a.$properties.text!.height = size;
-                        a.$properties.text!.width = size;
-                        a.$properties.text!.color =
+                        if (!a.properties.text) a.properties.text = {};
+                        a.properties.text!.height = size;
+                        a.properties.text!.width = size;
+                        a.properties.text!.color =
                             Color.fromBootstrap('light').toString('rgba');
                     }
                     if (a instanceof Icon) {
@@ -1826,7 +1826,7 @@ export class App<
                         [a[i - 1][1], a[i - 1][2]],
                         [x, y]
                     ]);
-                    p.$properties.line = {
+                    p.properties.line = {
                         color: color,
                         width: 1
                     };
