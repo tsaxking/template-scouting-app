@@ -335,7 +335,6 @@ app.post<{
     if (data.isOk()) {
         res.json(data.value);
     } else {
-        
         res.status(500).json(data.error);
     }
 });

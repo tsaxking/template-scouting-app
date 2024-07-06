@@ -31,11 +31,11 @@ const onChange = () => {
 </label>
 
 <style>
-    .label {
-        box-sizing: border-box;
-        height: 100% !important;
-        width: 100px !important;
-        text-align: center;
-        vertical-align: middle;
-    }
+.label {
+    box-sizing: border-box;
+    height: 100% !important;
+    width: 100px !important;
+    text-align: center;
+    vertical-align: middle;
+}
 </style>

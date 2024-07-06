@@ -110,8 +110,8 @@ export const generate2024App = (
 
     // app.border = new Border(border as [number, number][]);
 
-    // app.border.$properties.doDraw = isIn;
-    // app.border.$properties.fill = {
+    // app.border.properties.doDraw = isIn;
+    // app.border.properties.fill = {
     //     color: Color.fromName('black').setAlpha(0.5).toString('rgba'),
     // }
     const blueButtonClasses = ['btn', 'btn-primary', 'btn-lg'];
