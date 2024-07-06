@@ -20,12 +20,22 @@ const onChange = () => {
 
 <input
     type="checkbox"
-    class="btn-check"
+    class="btn-check btn-small"
     autocomplete="off"
     {id}
     bind:checked="{value}"
     on:change="{onChange}"
 />
-<label class="btn btn-outline-{color}" for="{id}">
+<label class="btn btn-outline-{color} label" for="{id}">
     {capitalize(fromCamelCase(name))}
 </label>
+
+<style>
+    .label {
+        box-sizing: border-box;
+        height: 100% !important;
+        width: 100px !important;
+        text-align: center;
+        vertical-align: middle;
+    }
+</style>
