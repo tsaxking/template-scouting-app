@@ -35,14 +35,12 @@ export type PageObj = {
     iconType: 'material' | 'fontawesome' | 'bootstrap';
 };
 
-
 export type PostData = {
     value: boolean;
     comments: boolean;
     comment: string;
 };
 
-
 export type PostDataMap = {
     [key: string]: PostData;
-}
+};

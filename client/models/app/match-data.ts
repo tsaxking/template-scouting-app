@@ -234,7 +234,10 @@ export class MatchData {
                 const teamIndex = prevTeams.indexOf(this.teamNumber) || 0;
                 this.teamNumber = teams[teamIndex];
             } else {
-                this.teamNumber = eventData.value.assignments.matchAssignments[group][currentIndex];
+                this.teamNumber =
+                    eventData.value.assignments.matchAssignments[group][
+                        currentIndex
+                    ];
             }
 
             this.matchNumber = match.match_number;
