@@ -34,7 +34,7 @@ export class Loop<
     };
 
     constructor(
-        public readonly fn: () => void,
+        public readonly fn: (tick: number) => void,
         public interval: number
     ) {}
 
@@ -43,15 +43,14 @@ export class Loop<
         this._running = true;
         this.emitter.emit('start');
 
+        const globalStart = Date.now();
+        let i = 0;
+
         const loop = async () => {
             if (!this._running) return;
-            const start = Date.now();
-            this.fn();
-            const end = Date.now();
-            const diff = end - start;
-            const wait = Math.max(0, this.interval - diff);
-            // console.log(wait);
-            await sleep(wait);
+            this.fn(i);
+            i++;
+            await sleep(this.interval - (Date.now() - globalStart) % this.interval);
             loop();
         };
 
