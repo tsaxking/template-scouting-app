@@ -44,6 +44,7 @@ import { socket } from '../../utilities/socket';
 import { Random } from '../../../shared/math';
 import { Tick } from './tick';
 import { MatchData } from './match-data';
+import { Loop } from '../../../shared/loop';
 
 /**
  * Description placeholder
@@ -1188,6 +1189,36 @@ export class App<
         this.currentTime = this.startTime;
         let active = true;
 
+        let i = 0;
+        const loop = new Loop(() => {
+            const now = Date.now();
+            const { section } = this;
+            this.currentTick = this.ticks[i];
+            if (this.section !== section) this.emit('section', this.section || undefined);
+
+            if (!this.currentTick) this.emit('end');
+            if (!active) this.emit('stopped');
+            this.currentTime = now - this.startTime;
+            this.emit('tick', this.currentTick);
+            if (this.currentLocation) this.currentTick.point = this.currentLocation;
+
+            if (i % 4 === 0) this.emit('second', this.currentTick.second);
+
+            try {
+                const s = Date.now();
+                cb?.(this.currentTick);
+                if (Date.now() - s > 250) console.warn('Callback took too long');
+            } catch (error) {
+                this.$emitter.emit('error', error);
+                return this.stop();
+            }
+
+            App.save(this as App<any, any, any>);
+            i++;
+        }, App.tickDuration);
+
+        this.on('stop', () => loop.stop());
+
         // reset active flag on stop
         const stop = () => (active = false);
         this.off('stop');
@@ -1195,54 +1226,55 @@ export class App<
 
         // adaptive loop to be as close to 250ms as possible
         // MAIN EVENT LOOP
-        const run = async (t: Tick | undefined, i: number) => {
-            // console.log(t);
-            const start = Date.now();
+        // const run = async (t: Tick | undefined, i: number) => {
+        //     // console.log(t);
+        //     const start = Date.now();
 
-            const { section } = this;
-            this.currentTick = t;
-            if (this.section !== section) {
-                this.emit('section', this.section ?? undefined);
-            }
+        //     const { section } = this;
+        //     this.currentTick = t;
+        //     if (this.section !== section) {
+        //         this.emit('section', this.section ?? undefined);
+        //     }
 
-            if (!t) return this.emit('end');
-            if (!active) return this.emit('stopped');
-            this.emit('tick', t);
-            this.currentTime = start - this.startTime;
-            if (this.currentLocation) t.point = this.currentLocation;
+        //     if (!t) return this.emit('end');
+        //     if (!active) return this.emit('stopped');
+        //     this.emit('tick', t);
+        //     this.currentTime = start - this.startTime;
+        //     if (this.currentLocation) t.point = this.currentLocation;
 
-            if (i % 4 === 0) {
-                this.emit('second', t.second);
-            }
+        //     if (i % 4 === 0) {
+        //         this.emit('second', t.second);
+        //     }
 
-            try {
-                const s = Date.now();
-                cb?.(t);
-                if (Date.now() - s > 250) {
-                    console.warn('Callback took too long');
-                }
-            } catch (error) {
-                this.$emitter.emit('error', error);
-                return this.stop();
-            }
+        //     try {
+        //         const s = Date.now();
+        //         cb?.(t);
+        //         if (Date.now() - s > 250) {
+        //             console.warn('Callback took too long');
+        //         }
+        //     } catch (error) {
+        //         this.$emitter.emit('error', error);
+        //         return this.stop();
+        //     }
 
-            const end = Date.now();
-            const duration = end - start;
-            const delay = App.tickDuration - duration;
+        //     const end = Date.now();
+        //     const duration = end - start;
+        //     const delay = App.tickDuration - duration;
 
-            // there could be a major delay if the callback takes too long, so we need to account for that
-            setTimeout(
-                () => run(this.currentTick?.next(), i++),
-                // I don't understand why I need to multiply this by 2, but evidently I need to???
-                Math.max(0, delay) // * 2,
-            );
-            App.save(this as App<any, any, any>);
-        };
+        //     // there could be a major delay if the callback takes too long, so we need to account for that
+        //     setTimeout(
+        //         () => run(this.currentTick?.next(), i++),
+        //         // I don't understand why I need to multiply this by 2, but evidently I need to???
+        //         Math.max(0, delay) // * 2,
+        //     );
+        //     App.save(this as App<any, any, any>);
+        // };
 
         const start = (e: MouseEvent | TouchEvent) => {
             const [x, y] = this.canvas.getXY(e);
             cover.style.display = 'none';
-            run(this.currentTick || this.ticks[0], 0);
+            // run(this.currentTick || this.ticks[0], 0);
+            loop.start();
             const newEvent = new Event('mousedown');
             Object.defineProperties(newEvent, {
                 clientX: { value: x },
