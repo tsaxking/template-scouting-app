@@ -50,10 +50,11 @@ export class Loop<
             const end = Date.now();
             const diff = end - start;
             const wait = Math.max(0, this.interval - diff);
+            console.log(wait);
             await sleep(wait);
-            requestAnimationFrame(loop);
+            loop();
         };
 
-        requestAnimationFrame(loop);
+        loop();
     }
 }
