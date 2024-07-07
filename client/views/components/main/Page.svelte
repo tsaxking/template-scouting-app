@@ -15,9 +15,9 @@ export let active: string;
             <hr class="dropdown-divider" />
         {/if}
         <slot />
-        <p class="text-muted text-center">
+        <!-- <p class="text-muted text-center">
             &copy; {year}
             {domain} | All Rights Reserved
-        </p>
+        </p> -->
     </div>
 {/if}
