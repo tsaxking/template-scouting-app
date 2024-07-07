@@ -300,8 +300,8 @@ export class Trace {
     static fixZeroIssue(trace: TraceArray): TraceArray {
         return trace.slice().map((t, i, a) => {
             if (t[1] === 0 && t[2] === 0) {
-                t[1] = a[i - 1]?.[1] || a[i+1][1];
-                t[2] = a[i - 1]?.[2] || a[i+1][2];
+                t[1] = a[i - 1]?.[1] || a[i + 1][1];
+                t[2] = a[i - 1]?.[2] || a[i + 1][2];
             }
 
             return t;
@@ -652,8 +652,8 @@ export class Trace {
                         {
                             title: 'Auto Points',
                             labels: [
-                                'Speaker', 
-                                // 'Amp', 
+                                'Speaker',
+                                // 'Amp',
                                 'Mobility'
                             ],
                             data: [
