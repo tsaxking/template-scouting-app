@@ -10,7 +10,7 @@ import { $Math } from '../../math';
  * @export
  * @typedef {Action2024}
  */
-export type Action2024 = 'spk' | 'amp' | 'src' | 'trp' | 'clb' | 'nte';
+export type Action2024 = 'spk' | 'amp' | 'src' | 'trp' | 'clb' | 'nte' | 'lob';
 /**
  * Description placeholder
  * @date 1/25/2024 - 4:58:49 PM
@@ -677,14 +677,19 @@ export class Trace {
                             title: 'Average Velocity',
                             labels: ['Velocity'],
                             data: [
-                                Trace.velocity.average(trace.flatMap(p => p.trace))
+                                Trace.velocity.average(
+                                    trace.flatMap(p => p.trace)
+                                )
                             ]
                         },
                         {
                             title: 'Seconds Not Moving',
                             labels: ['Seconds'],
                             data: [
-                                Trace.secondsNotMoving(trace.flatMap(p => p.trace), false)
+                                Trace.secondsNotMoving(
+                                    trace.flatMap(p => p.trace),
+                                    false
+                                )
                             ]
                         }
                     ];
