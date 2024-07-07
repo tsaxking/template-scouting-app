@@ -10,7 +10,7 @@ import { $Math } from '../../math';
  * @export
  * @typedef {Action2024}
  */
-export type Action2024 = 'spk' | 'amp' | 'src' | 'trp' | 'clb' | 'nte';
+export type Action2024 = 'spk' | 'amp' | 'src' | 'trp' | 'clb' | 'nte' | 'lob';
 /**
  * Description placeholder
  * @date 1/25/2024 - 4:58:49 PM
