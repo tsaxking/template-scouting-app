@@ -297,6 +297,17 @@ export class Trace {
         };
     }
 
+    static fixZeroIssue(trace: TraceArray): TraceArray {
+        return trace.slice().map((t, i, a) => {
+            if (t[1] === 0 && t[2] === 0) {
+                t[1] = a[i - 1]?.[1] || a[i+1][1];
+                t[2] = a[i - 1]?.[2] || a[i+1][2];
+            }
+
+            return t;
+        });
+    }
+
     static getSection(point: P): 'auto' | 'teleop' | 'endgame' {
         const [i] = point;
         if (i < 65) return 'auto';
@@ -640,10 +651,14 @@ export class Trace {
                     return [
                         {
                             title: 'Auto Points',
-                            labels: ['Speaker', 'Amp', 'Mobility'],
+                            labels: [
+                                'Speaker', 
+                                // 'Amp', 
+                                'Mobility'
+                            ],
                             data: [
                                 traceData.map(t => t.auto.spk),
-                                traceData.map(t => t.auto.amp),
+                                // traceData.map(t => t.auto.amp),
                                 traceData.map(t => t.auto.mobility)
                             ].map($Math.average)
                         },
