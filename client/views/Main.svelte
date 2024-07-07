@@ -30,6 +30,8 @@ const generate = () =>
         app.on('restart', generate);
     });
 
+generate();
+
 App.on('select-match', generate);
 
 const fullscreen = () => {
@@ -82,10 +84,7 @@ let fs: boolean = false;
 
 let tabs = ['Pre', 'App', 'Post', 'Upload'];
 let active = '--$Pre';
-$: {
-    // reset app when switching to Pre
-    // if (active === '--$Pre') generate();
-}
+$: window.localStorage.setItem('page', active); // for use outside of svelte
 const domain = 'http://localhost:3000';
 
 // if reload, warn

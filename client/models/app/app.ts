@@ -633,7 +633,7 @@ export class App<
             width: 1
         };
 
-        this.canvas.add(this.background, this.path);
+        // this.canvas.add(this.background, this.path);
 
         this.clicking = false;
 
@@ -709,22 +709,31 @@ export class App<
             target.style.width = '100%';
             this.setView();
 
-            this.cover.style.position = 'absolute';
-            this.cover.style.width = '100%';
-            this.cover.style.height = '100%';
-            this.cover.style.zIndex = '1000';
-            this.cover.style.backgroundColor = Color.fromBootstrap('dark')
-                .setAlpha(0.75)
-                .toString('rgba');
-            this.cover.style.display = 'block';
-            this.cover.innerHTML = `
-                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 2em;">
-                    Match ${App.matchData.compLevel}${App.matchData.matchNumber} is ready, please take this time to locate where your robot (${App.matchData.teamNumber}) is on the field.
-                    <br>
-                    Click anywhere to start
-                </div>
-            `;
-            target.appendChild(this.cover);
+            if (!this.currentTick) {
+                this.cover.style.position = 'absolute';
+                this.cover.style.width = '100%';
+                this.cover.style.height = '100%';
+                this.cover.style.zIndex = '1000';
+                this.cover.style.backgroundColor = Color.fromBootstrap('dark')
+                    .setAlpha(0.75)
+                    .toString('rgba');
+                this.cover.style.display = 'block';
+                this.cover.classList.add('no-select');
+                this.cover.innerHTML = `
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 2em;">
+                        <h4>
+                            Match <span class="text-primary">${App.matchData.compLevel}${App.matchData.matchNumber}</span> is ready, please take this time to locate where your robot (<span class="text-primary">${App.matchData.teamNumber}</span>) is on the field.
+                            <br>
+                            <br>
+                            Click anywhere to start
+                            <br>
+                            <br>
+                            <small>If there is an error with the team/match/comp level, it's recommended you change it after the match is over so you don't miss anything.</small>
+                        </h4>
+                    </div>
+                `;
+                target.appendChild(this.cover);
+            }
 
             this.cancel.classList.add('btn', 'btn-secondary');
             this.cancel.style.position = 'absolute';
@@ -1185,11 +1194,11 @@ export class App<
      * @returns {void) => void}
      */
     public launch(cb?: (tick: Tick) => void) {
+        this.off('stop');
         const { cover } = this;
         this.build();
         this.startTime = Date.now();
         this.currentTime = this.startTime;
-        let active = true;
 
         let i = 0;
         const loop = new Loop(() => {
@@ -1199,7 +1208,7 @@ export class App<
             if (this.section !== section) this.emit('section', this.section || undefined);
 
             if (!this.currentTick) this.emit('end');
-            if (!active) this.emit('stopped');
+            if (!loop.active) this.emit('stopped');
             this.currentTime = now - this.startTime;
             this.emit('tick', this.currentTick);
             if (this.currentLocation) this.currentTick.point = this.currentLocation;
@@ -1219,12 +1228,10 @@ export class App<
             i++;
         }, App.tickDuration);
 
-        this.on('stop', () => loop.stop());
-
-        // reset active flag on stop
-        const stop = () => (active = false);
-        this.off('stop');
-        this.on('stop', stop);
+        this.on('stop', () => {
+            loop.stop();
+            this.currentTick = undefined;
+        });
 
         // adaptive loop to be as close to 250ms as possible
         // MAIN EVENT LOOP
@@ -1536,11 +1543,6 @@ export class App<
      * @returns {Function} Stops the app
      */
     public async build(): Promise<undefined | (() => void)> {
-        if (this.built) {
-            console.error('App already built');
-            return;
-        }
-
         const { target } = this;
 
         if (!target) {
@@ -1549,7 +1551,12 @@ export class App<
         }
 
         this.cover.style.display = 'block';
-        this.canvas.add(this.buttonCircle);
+        this.canvas.clearDrawables();
+        this.canvas.add(
+            this.background, 
+            this.path, 
+            this.buttonCircle
+        );
 
         let quitView = false;
 
@@ -1571,6 +1578,7 @@ export class App<
                 (_, i) =>
                     new Tick<a>(i * App.tickDuration, i, this as App<any, any>)
             );
+        this.canvasEl.parentElement?.removeChild(this.canvasEl); // if app was previously build
         target.appendChild(this.canvasEl);
         target.append(this.cover);
 
