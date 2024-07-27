@@ -41,7 +41,10 @@ class Socket {
 
     // private readonly em = new EventEmitter();
 
-    private readonly listeners = new Map<string, ((data: unknown) => unknown)[]>();
+    private readonly listeners = new Map<
+        string,
+        ((data: unknown) => unknown)[]
+    >();
 
     /**
      * Socket.io client
