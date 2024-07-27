@@ -99,10 +99,10 @@ export default class Account {
             if (['test', 'dev'].includes(env.ENVIRONMENT || '')) {
                 if (!username) return next();
                 if (req.session.accountId) return next();
-    
+
                 const account = await Account.fromUsername(username);
                 if (!account) return next();
-    
+
                 req.session.signIn(account);
             }
             next();
