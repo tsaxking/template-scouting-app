@@ -208,11 +208,10 @@ const main = async () => {
             });
 
             if (expect) {
-                if(!(await expect(res.data))) {
+                if (!(await expect(res.data))) {
                     throw new Error('Test failed, expected value not returned');
                 }
             }
-
 
             log(str, res.status, res.statusText);
         } catch (e) {
