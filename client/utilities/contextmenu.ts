@@ -20,19 +20,19 @@ const rightClickContextMenu = (e: MouseEvent, el: HTMLDivElement) => {
     e.preventDefault();
     const browser = {
         h: window.innerHeight,
-        w: window.innerWidth,
+        w: window.innerWidth
     };
 
     const pos = {
         x: e.clientX,
-        y: e.clientY,
+        y: e.clientY
     };
 
     const { width, height } = el.getBoundingClientRect();
 
     return {
         x: pos.x + width > browser.w ? pos.x - width : pos.x,
-        y: pos.y + height > browser.h ? pos.y - height : pos.y,
+        y: pos.y + height > browser.h ? pos.y - height : pos.y
     };
 };
 
@@ -55,12 +55,7 @@ export const contextmenu = (
     body.classList.add('card-body', 'p-0', 'border-0', 'rounded');
     el.appendChild(body);
     const list = create('ul');
-    list.classList.add(
-        'list-group',
-        'list-group-flush',
-        'border-0',
-        'p-0'
-    );
+    list.classList.add('list-group', 'list-group-flush', 'border-0', 'p-0');
     body.appendChild(list);
     for (const o of options) {
         const li = create('li');
@@ -125,5 +120,5 @@ export const contextmenu = (
 
     return () => {
         target.removeEventListener('contextmenu', fn);
-    }
+    };
 };
