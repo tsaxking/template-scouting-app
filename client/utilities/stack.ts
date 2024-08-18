@@ -1,11 +1,10 @@
-import { Keyboard } from "./keybinds";
+import { Keyboard } from './keybinds';
 
 type State = {
     name: string;
     undo: () => void;
     redo: () => void;
-}
-
+};
 
 export class Stack {
     public static current?: Stack;
@@ -28,9 +27,7 @@ export class Stack {
         Stack.current = stack;
     }
 
-    constructor(public readonly name: string) {
-
-    }
+    constructor(public readonly name: string) {}
 
     private _items: State[] = [];
     private index = -1;
