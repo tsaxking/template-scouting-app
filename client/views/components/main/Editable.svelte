@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte";
-        import { Stack } from "../utils/event-stack";
+        import { Stack } from "../../../utilities/stack";
     
         export let value: string | number;
         export let classes = '';
