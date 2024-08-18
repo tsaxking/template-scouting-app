@@ -52,7 +52,11 @@ let loading = false;
     {navItems}
     {accountLinks}
 >
-    <Page {active} {domain} bind:loading={loading} title="dashboard"><Dashboard></Dashboard></Page>
-    <Page {active} {domain} bind:loading={loading} title="accounts"><Accounts></Accounts></Page>
-    <Page {active} {domain} bind:loading={loading} title="roles"><Roles></Roles></Page>
+    <Page {active} {domain} bind:loading title="dashboard"
+        ><Dashboard></Dashboard></Page
+    >
+    <Page {active} {domain} bind:loading title="accounts"
+        ><Accounts></Accounts></Page
+    >
+    <Page {active} {domain} bind:loading title="roles"><Roles></Roles></Page>
 </Main>
