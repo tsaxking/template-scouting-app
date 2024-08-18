@@ -496,12 +496,14 @@ export class Session<T = unknown> {
      * @readonly
      * @type {(Account | null)}
      */
-    async getAccount(): Promise<Account | undefined> {
-        if (this.$account) return this.$account;
-        if (!this.accountId) return;
-        const a = await Account.fromId(this.accountId);
-        this.$account = a;
-        return a;
+    async getAccount() {
+        return attemptAsync(async () => {
+            if (this.$account) return this.$account;
+            if (!this.accountId) return;
+            const a = (await Account.fromId(this.accountId)).unwrap();
+            this.$account = a;
+            return a;
+        });
     }
 
     /**
