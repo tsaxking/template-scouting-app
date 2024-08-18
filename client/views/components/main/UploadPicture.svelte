@@ -14,33 +14,31 @@ const dispatch = createEventDispatcher();
 
 $: dispatch('change', pictures);
 
-const fns = {
-    onInput: async (e: Event) => {
-        const { files } = input;
-        if (files) {
-            pictures = [
-                ...(multiple ? pictures : []),
-                ...(await Promise.all(
-                    Array.from(files).map(
-                        f =>
-                            new Promise<Picture>((res, rej) => {
-                                const reader = new FileReader();
-                                reader.onload = async () =>
-                                    res({
-                                        url: reader.result as string,
-                                        file: f
-                                    });
-                                reader.onerror = rej;
-                                reader.readAsDataURL(f);
-                            })
-                    )
-                ))
-            ];
-        }
-    },
-    remove: (p: Picture) => {
-        pictures = pictures.filter(p2 => p2 !== p);
+const onInput = async (e: Event) => {
+    const { files } = input;
+    if (files) {
+        pictures = [
+            ...(multiple ? pictures : []),
+            ...(await Promise.all(
+                Array.from(files).map(
+                    f =>
+                        new Promise<Picture>((res, rej) => {
+                            const reader = new FileReader();
+                            reader.onload = async () =>
+                                res({
+                                    url: reader.result as string,
+                                    file: f
+                                });
+                            reader.onerror = rej;
+                            reader.readAsDataURL(f);
+                        })
+                )
+            ))
+        ];
     }
+};
+const remove = (p: Picture) => {
+    pictures = pictures.filter(p2 => p2 !== p);
 };
 </script>
 
@@ -53,7 +51,7 @@ const fns = {
             class="form-control"
             {multiple}
             bind:this="{input}"
-            on:change="{fns.onInput}"
+            on:change="{onInput}"
             accept=".png,.PNG,.jpg,.JPG,.jpeg,.JPEG"
         />
     </div>
@@ -68,7 +66,7 @@ const fns = {
                     </p>
                     <i
                         class="material-icons text-danger cursor-pointer p-0 m-0"
-                        on:click="{() => fns.remove(picture)}"
+                        on:click="{() => remove(picture)}"
                     >
                         close
                     </i>
