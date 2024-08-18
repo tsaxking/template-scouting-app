@@ -1,12 +1,24 @@
 <script lang="ts">
 import { capitalize, fromSnakeCase } from '../../../../shared/text';
+import { fade } from 'svelte/transition';
 export let title: string;
 let year: number = new Date().getFullYear();
 export let domain: string;
 export let active: string;
+export let loading: boolean = false;
 </script>
 
 {#if active === title}
+{#if loading}
+    <div class="loading" transition:fade>
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p>Loading teams</p>
+        </div>
+    </div>
+{:else}
     <div class="container-fluid p-3">
         {#if !title.startsWith('--$')}
             <h1 class="no-select p-5">
@@ -20,4 +32,5 @@ export let active: string;
             {domain} | All Rights Reserved
         </p>
     </div>
+    {/if}
 {/if}
