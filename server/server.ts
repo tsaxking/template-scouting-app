@@ -209,7 +209,7 @@ app.post<{
             req.session.customData.isTrusted = true;
             req.session.save();
             res.redirect('/app');
-        } else if (req.body.pin === env.ADMIN_PIN) {
+        } else if (env.ADMIN_PIN && req.body.pin === env.ADMIN_PIN) {
             req.session.customData.isAdmin = true;
             req.session.save();
             res.redirect('/dashboard/admin');
