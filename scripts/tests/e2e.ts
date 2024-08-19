@@ -52,7 +52,7 @@ const buildDatabase = () => {
 
         const pcs = spawn('sh', ['./db-init.sh'], {
             stdio: 'inherit',
-            cwd: path.resolve(__dirname, '../../')
+            cwd: path.resolve(__dirname, '../')
         });
 
         pcs.on('exit', code => {
