@@ -7,6 +7,12 @@ on:
           description: 'GitHub Token'
           required: true
   push:
+    branches:
+      - '*'
+      - '!main'
+      - '!master'
+      - '!deploy'
+      - '!gh-pages'
 
 permissions:
     contents: read
