@@ -166,7 +166,7 @@ export const attempt = <T = unknown, E = Error>(
     try {
         return new Ok(fn());
     } catch (e) {
-        console.error('[check.ts]', e);
+        // console.error('[check.ts]', e);
         if (parseError) {
             const err = attempt(
                 () => parseError(e as Error),
