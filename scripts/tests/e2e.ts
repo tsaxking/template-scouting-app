@@ -41,7 +41,7 @@ const saveEnv = (envPath: string, env: Env) => {
     fs.writeFileSync(envPath, envStr);
 };
 
-const buildDatabase = () => {
+const buildDatabase = () => attemptAsync(() => {
     return new Promise<void>((res, rej) => {
         setTimeout(
             () => {
@@ -63,7 +63,7 @@ const buildDatabase = () => {
             }
         });
     });
-};
+});
 
 const resetDB = (env: Env) => {
     const emitter = new EventEmitter<'error' | 'stop' | 'done'>();
@@ -200,7 +200,13 @@ const main = async () => {
 
     saveEnv(path.resolve(__dirname, '../../.env'), env);
 
-    await buildDatabase();
+    log('Building database...');
+    const dbRes = await buildDatabase();
+    if (dbRes.isErr()) {
+        err(dbRes.error);
+        process.exit(1);
+    }
+    log('Database built successfully');
 
     const em = resetDB(env);
     em.on('error', () => {
@@ -208,7 +214,13 @@ const main = async () => {
     });
 
     log('Building client');
-    (await bundle()).unwrap();
+    const res = await bundle();
+    if (res.isErr()) {
+        err(res.error);
+        process.exit(1);
+    }
+
+    log('Client built successfully');
 
     log('Starting server');
     await server.start();

@@ -90,47 +90,48 @@ const readDir = async (dirPath: string): Promise<string[]> => {
     ).flat(Infinity) as string[];
 };
 
-export const bundle = () => attemptAsync(async () => 
-    Promise.all([
-        readDir(__entries),
-        esbuild.build({
-            entryPoints: ['client/entries/**/*.ts'],
-            bundle: true,
-            minify: env.MINIFY === 'y',
-            metafile: true,
-            outdir: './dist',
-            mainFields: ['svelte', 'browser', 'module', 'main'],
-            conditions: ['svelte', 'browser'],
-            plugins: [
-                sveltePlugin({
-                    preprocess: [
-                        typescript({
-                            tsconfigRaw: {
-                                compilerOptions: {}
-                            }
-                        })
-                    ]
-                }),
-                sassPlugin({
-                    filter: /\.s[ac]ss$/
-                })
-            ],
-            logLevel: 'info',
-            loader: {
-                '.png': 'dataurl',
-                '.woff': 'dataurl',
-                '.woff2': 'dataurl',
-                '.eot': 'dataurl',
-                '.ttf': 'dataurl',
-                '.svg': 'dataurl'
-            },
-            tsconfig: path.resolve(__dirname, '../tsconfig.json')
-        })
-    ])
-);
+export const bundle = () =>
+    attemptAsync(async () =>
+        Promise.all([
+            readDir(__entries),
+            esbuild.build({
+                entryPoints: ['client/entries/**/*.ts'],
+                bundle: true,
+                minify: env.MINIFY === 'y',
+                metafile: true,
+                outdir: './dist',
+                mainFields: ['svelte', 'browser', 'module', 'main'],
+                conditions: ['svelte', 'browser'],
+                plugins: [
+                    sveltePlugin({
+                        preprocess: [
+                            typescript({
+                                tsconfigRaw: {
+                                    compilerOptions: {}
+                                }
+                            })
+                        ]
+                    }),
+                    sassPlugin({
+                        filter: /\.s[ac]ss$/
+                    })
+                ],
+                logLevel: 'info',
+                loader: {
+                    '.png': 'dataurl',
+                    '.woff': 'dataurl',
+                    '.woff2': 'dataurl',
+                    '.eot': 'dataurl',
+                    '.ttf': 'dataurl',
+                    '.svg': 'dataurl'
+                },
+                tsconfig: path.resolve(__dirname, '../tsconfig.json')
+            })
+        ])
+    );
 
 if (require.main === module) {
-    bundle().then((res) => {
+    bundle().then(res => {
         if (res.isErr()) throw res.error;
         log('Built client');
         process.exit(0);
