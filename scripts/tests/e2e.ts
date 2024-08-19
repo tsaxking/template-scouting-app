@@ -49,9 +49,9 @@ const buildDatabase = () => {
             rej('Database took too long to build');
         }, 1000 * 60 * 5);
 
-        const pcs = spawn('sh', ['./db-init.sh', args.includes('github') ? 'github' : ''], {
+        const pcs = spawn('sh', ['../db-init.sh', args.includes('github') ? 'github' : ''], {
             stdio: 'inherit',
-            cwd: path.resolve(__dirname, '..')
+            cwd: __dirname
         });
 
         pcs.on('exit', code => {
