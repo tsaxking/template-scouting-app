@@ -31,7 +31,7 @@ jobs:
       - name: Run
         run: |
           echo "Installing dependencies..."
-          npm       
+          npm i
           echo "Building client..."
           npm run build
   e2e-tests:
@@ -76,7 +76,7 @@ jobs:
       - name: Run
         run: |
           echo "Installing dependencies..."
-          npm       
+          npm i
           echo "Running backend tests..."
           npm run test:e2e
   backend-tests:
@@ -96,7 +96,7 @@ jobs:
       - name: Run
         run: |
           echo "Installing dependencies..."
-          npm       
+          npm i
           echo "Running backend tests..."
           npm run test:backend
   linter:
@@ -116,7 +116,7 @@ jobs:
       - name: Run
         run: |
           echo "Installing dependencies..."
-          npm       
+          npm i
           echo "Running linter..."
           npm run lint
   formatter:
@@ -136,7 +136,7 @@ jobs:
       - name: Run
         run: |
           echo "Installing dependencies..."
-          npm       
+          npm i
           echo "Running formatter..."
           npm run fmt
 
