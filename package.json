@@ -2,6 +2,7 @@
     "scripts": {
         "start": "nodemon ./server/server.ts",
         "manager": "ts-node -P tsconfig.json ./scripts/manager.ts",
+        "fix-readme": "ts-node ./scripts/fix-readme.ts",
         "build:watch": "nodemon ./scripts/esbuild.ts",
         "build": "ts-node ./scripts/esbuild.ts",
         "test:backend": "ts-node ./scripts/tests/all-tests.ts",
@@ -47,7 +48,7 @@
         "svelte-preprocess-esbuild": "^3.0.1",
         "svelte-recaptcha-v2": "^0.0.2",
         "tslib": "^2.6.2",
-        "typescript": "^5.3.3"
+        "typescript": "^5.5.4"
     },
     "dependencies": {
         "@beyowi/svelte-recaptcha-v2": "^0.0.4",

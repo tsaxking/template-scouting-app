@@ -1,11 +1,11 @@
 name: Build
 
-on: 
+on:
   workflow_call:
     secrets:
       GH_TOKEN:
-          description: 'GitHub Token'
-          required: true
+        description: 'GitHub Token'
+        required: true
   push:
     branches:
       - '*'
@@ -15,10 +15,8 @@ on:
       - '!gh-pages'
 
 permissions:
-    contents: read
+  contents: read
 
-concurrency:
-  group: 'build'
 jobs:
   build:
     runs-on: ubuntu-latest

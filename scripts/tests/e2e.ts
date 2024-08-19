@@ -6,8 +6,6 @@ import { bundle } from '../esbuild';
 import axios from 'axios';
 import { EventEmitter } from '../../shared/event-emitter';
 
-const args = process.argv.slice(2);
-
 type Env = {
     [key: string]: string;
 };
@@ -43,26 +41,30 @@ const saveEnv = (envPath: string, env: Env) => {
     fs.writeFileSync(envPath, envStr);
 };
 
-const buildDatabase = () => {
-    return new Promise<void>((res, rej) => {
-        setTimeout(() => {
-            rej('Database took too long to build');
-        }, 1000 * 60 * 5);
+const buildDatabase = () =>
+    attemptAsync(() => {
+        return new Promise<void>((res, rej) => {
+            setTimeout(
+                () => {
+                    rej('Database took too long to build');
+                },
+                1000 * 60 * 5
+            );
 
-        const pcs = spawn('sh', ['../db-init.sh', args.includes('github') ? 'github' : ''], {
-            stdio: 'inherit',
-            cwd: __dirname
-        });
+            const pcs = spawn('sh', ['./db-init.sh'], {
+                stdio: 'inherit',
+                cwd: path.resolve(__dirname, '../')
+            });
 
-        pcs.on('exit', code => {
-            if (code === 0) {
-                res();
-            } else {
-                rej(code);
-            }
+            pcs.on('exit', code => {
+                if (code === 0) {
+                    res();
+                } else {
+                    rej(code);
+                }
+            });
         });
     });
-};
 
 const resetDB = (env: Env) => {
     const emitter = new EventEmitter<'error' | 'stop' | 'done'>();
@@ -199,7 +201,13 @@ const main = async () => {
 
     saveEnv(path.resolve(__dirname, '../../.env'), env);
 
-    await buildDatabase();
+    log('Building database...');
+    const dbRes = await buildDatabase();
+    if (dbRes.isErr()) {
+        err(dbRes.error);
+        process.exit(1);
+    }
+    log('Database built successfully');
 
     const em = resetDB(env);
     em.on('error', () => {
@@ -207,7 +215,13 @@ const main = async () => {
     });
 
     log('Building client');
-    await bundle(false);
+    const res = await bundle();
+    if (res.isErr()) {
+        err(res.error);
+        process.exit(1);
+    }
+
+    log('Client built successfully');
 
     log('Starting server');
     await server.start();
