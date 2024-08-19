@@ -5,7 +5,6 @@ import { getOpenPage } from '../../utilities/page';
 import type { PageGroup } from '../../utilities/general-types';
 import Dashboard from '../pages/Dashboard.svelte';
 import Accounts from '../pages/Accounts.svelte';
-import Roles from '../pages/Roles.svelte';
 
 const groups: PageGroup[] = [
     {
@@ -53,5 +52,4 @@ let loading = false;
     <Page {active} {domain} bind:loading title="accounts"
         ><Accounts></Accounts></Page
     >
-    <Page {active} {domain} bind:loading title="roles"><Roles></Roles></Page>
 </Main>
