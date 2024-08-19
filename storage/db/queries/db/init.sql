@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS AccountRoles (
 );
 
 CREATE TABLE IF NOT EXISTS Permissions (
-    permission TEXT NOT NULL, -- changed to primary key in 1-3-0
+    permission TEXT NOT NULL,
     description TEXT
 );
 
@@ -101,4 +101,12 @@ INSERT INTO Version (
     1,
     0,
     0
+);
+
+CREATE TABLE IF NOT EXISTS ServerRequests (
+    id TEXT PRIMARY KEY,
+    url TEXT NOT NULL,
+    body TEXT NOT NULL,
+    response TEXT,
+    date BIGINT NOT NULL
 );

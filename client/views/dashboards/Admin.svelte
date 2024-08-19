@@ -1,11 +1,11 @@
 <script lang="ts">
 import Main from '../components/main/Main.svelte';
 import Page from '../components/main/Page.svelte';
+import { getOpenPage } from '../../utilities/page';
+import type { PageGroup } from '../../utilities/general-types';
 import Dashboard from '../pages/Dashboard.svelte';
 import Accounts from '../pages/Accounts.svelte';
 import Roles from '../pages/Roles.svelte';
-import type { PageGroup } from '../../utilities/general-types';
-import { getOpenPage } from '../../utilities/page';
 
 const groups: PageGroup[] = [
     {
@@ -17,20 +17,15 @@ const groups: PageGroup[] = [
                 iconType: 'material'
             },
             {
-                name: 'accounts',
+                name: 'account',
                 icon: 'person',
-                iconType: 'material'
-            },
-            {
-                name: 'roles',
-                icon: 'admin_panel_settings',
-                iconType: 'material'
+                iconType: 'material',
             }
         ]
     }
 ];
 
-let active: string = getOpenPage() || 'dashboard';
+let active: string = getOpenPage();
 const domain = '';
 
 const navItems: string[] = [];
