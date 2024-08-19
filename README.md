@@ -1,12 +1,4 @@
-[![Build](https://github.com/tsaxking/webpack-template/actions/workflows/build.yml/badge.svg)](https://github.com/tsaxking/webpack-template/actions/workflows/build.yml)
-
-[![Backend](https://github.com/tsaxking/webpack-template/actions/workflows/build.yml/badge.svg)](https://github.com/tsaxking/webpack-template/actions/workflows/backend.yml)
-
-[![e2e](https://github.com/tsaxking/webpack-template/actions/workflows/build.yml/badge.svg)](https://github.com/tsaxking/webpack-template/actions/workflows/e2e.yml)
-
-[![Formatter](https://github.com/tsaxking/webpack-template/actions/workflows/build.yml/badge.svg)](https://github.com/tsaxking/webpack-template/actions/workflows/formatter.yml)
-
-[![Linter](https://github.com/tsaxking/webpack-template/actions/workflows/build.yml/badge.svg)](https://github.com/tsaxking/webpack-template/actions/workflows/linter.yml)
+[![Build](https://github.com/tsaxking/webpack-template/actions/workflows/build.yml/badge.svg)](https://github.com/tsaxking/webpack-template/actions/workflows/build.yml) | [![Backend](https://github.com/tsaxking/webpack-template/actions/workflows/backend.yml/badge.svg)](https://github.com/tsaxking/webpack-template/actions/workflows/backend.yml) | [![e2e](https://github.com/tsaxking/webpack-template/actions/workflows/e2e.yml/badge.svg)](https://github.com/tsaxking/webpack-template/actions/workflows/e2e.yml) | [![Formatter](https://github.com/tsaxking/webpack-template/actions/workflows/formatter.yml/badge.svg)](https://github.com/tsaxking/webpack-template/actions/workflows/formatter.yml) | [![Linter](https://github.com/tsaxking/webpack-template/actions/workflows/linter.yml/badge.svg)](https://github.com/tsaxking/webpack-template/actions/workflows/linter.yml)
 
 # Full-Stack Web Development Starter
 
