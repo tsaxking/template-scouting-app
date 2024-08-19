@@ -51,7 +51,7 @@ const matchJSONError = (e: Error): JSONError => {
  * @returns {FileError}
  */
 const matchFileError = (e: Error): FileError => {
-    console.log(e);
+    // console.log(e);
     return (
         matchInstance<Error, FileError>(
             e,

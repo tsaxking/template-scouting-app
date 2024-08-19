@@ -34,9 +34,9 @@ jobs:
           token: ${{ secrets.GH_TOKEN }}
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v4.0.3
         with:
-          node-version: v20.4
+          node-version: v20.16
 
       - name: Build .env
         run: |
