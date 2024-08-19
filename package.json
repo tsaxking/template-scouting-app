@@ -4,8 +4,10 @@
         "manager": "ts-node -P tsconfig.json ./scripts/manager.ts",
         "build:watch": "nodemon ./scripts/esbuild.ts",
         "build": "ts-node ./scripts/esbuild.ts",
-        "test": "ts-node ./scripts/tests/all-tests.ts",
-        "test:full": "ts-node ./scripts/tests/full.ts",
+        "test:backend": "ts-node ./scripts/tests/all-tests.ts",
+        "test:e2e": "ts-node ./scripts/tests/e2e.ts",
+        "lint": "eslint **/*.ts --fix",
+        "fmt": "prettier . --write",
         "init": "ts-node ./scripts/init.ts",
         "dev": "concurrently --kill-others \"npm run start\" \"npm run build:watch\""
     },
