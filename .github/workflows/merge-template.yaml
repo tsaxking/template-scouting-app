@@ -39,10 +39,18 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE }}
 
-      - name: 'Correcting Readme Badges'
+      - name: 'Setup Node.js'
+        uses: 'actions/setup-node@v2'
+        with:
+          node-version: '20.4'
+
+      - name: 'Installing dependencies'
         run: |
-          # Search for all "tsaxking/webpack-template" in readme.md and replace with the current repository
-          sed -i "s/tsaxking\/webpack-template/${{ matrix.templates }}/g" README.md
+          npm i
+
+      - name: 'Converting Readme'
+        run: |
+          npm run fix-readme ${{ matrix.templates }}
 
       - name: Send pull-request
         run: |

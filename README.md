@@ -1,4 +1,4 @@
-[![Build](./actions/workflows/build.yml/badge.svg)](./webpack-template/actions/workflows/build.yml) [![Backend](./actions/workflows/backend.yml/badge.svg)](./actions/workflows/backend.yml) [![e2e](./actions/workflows/e2e.yml/badge.svg)](./actions/workflows/e2e.yml) [![Formatter](./actions/workflows/formatter.yml/badge.svg)](./actions/workflows/formatter.yml) [![Linter](./actions/workflows/linter.yml/badge.svg)](./actions/workflows/linter.yml)
+[![Build](https://github.com/tsaxking/webpack-template/actions/workflows/build.yml/badge.svg)](https://github.com/tsaxking/webpack-template/actions/workflows/build.yml) [![Backend](https://github.com/tsaxking/webpack-template/actions/workflows/backend.yml/badge.svg)](https://github.com/tsaxking/webpack-template/actions/workflows/backend.yml) [![e2e](https://github.com/tsaxking/webpack-template/actions/workflows/e2e.yml/badge.svg)](https://github.com/tsaxking/webpack-template/actions/workflows/e2e.yml) [![Formatter](https://github.com/tsaxking/webpack-template/actions/workflows/formatter.yml/badge.svg)](https://github.com/tsaxking/webpack-template/actions/workflows/formatter.yml) [![Linter](https://github.com/tsaxking/webpack-template/actions/workflows/linter.yml/badge.svg)](https://github.com/tsaxking/webpack-template/actions/workflows/linter.yml)
 
 # Full-Stack Web Development Starter
 
@@ -10,20 +10,20 @@ This includes a GitHub action to deploy documentation to GitHub Pages, and a Git
 
 ## Table of Contents
 
-- [Full-Stack Web Development Starter](#full-stack-web-development-starter)
-  - [Table of Contents](#table-of-contents)
-  - [Installation](#installation)
-  - [Manage](#manage)
-  - [Back End](#back-end)
-  - [Front End](#front-end)
-  - [Contributing](#contributing)
-  - [Contact](#contact)
+-   [Full-Stack Web Development Starter](#full-stack-web-development-starter)
+    -   [Table of Contents](#table-of-contents)
+    -   [Installation](#installation)
+    -   [Manage](#manage)
+    -   [Back End](#back-end)
+    -   [Front End](#front-end)
+    -   [Contributing](#contributing)
+    -   [Contact](#contact)
 
 ## Installation
 
 ```bash
 # fork the repository
-git clone ..git
+git clone https://github.com/tsaxking/webpack-template.git
 cd webpack-template
 
 # Initialize the project, this installs the dependencies and sets up the project
