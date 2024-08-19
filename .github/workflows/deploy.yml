@@ -56,6 +56,11 @@ jobs:
               exit 0
             fi
 
+            echo "Setting up identity"
+            # Setup the committers identity.
+            git config --global user.email "taylorking206@u.boisestate.edu"
+            git config --global user.name "Webpack Bot"
+
             echo "Pushing changes to deploy branch..."
 
             echo "Good, we're on main. Pushing to deploy..."
