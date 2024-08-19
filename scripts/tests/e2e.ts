@@ -51,7 +51,7 @@ const buildDatabase = () =>
                 1000 * 60 * 5
             );
 
-            const pcs = spawn('sh', ['./db-init.sh'], {
+            const pcs = spawn('sh', ['./db-init.sh', '--force-reset'], {
                 stdio: 'inherit',
                 cwd: path.resolve(__dirname, '../')
             });
@@ -65,22 +65,6 @@ const buildDatabase = () =>
             });
         });
     });
-
-const resetDB = (env: Env) => {
-    const emitter = new EventEmitter<'error' | 'stop' | 'done'>();
-
-    const pcs = spawn('ts-node', ['./scripts/reset-db.ts'], {
-        stdio: 'inherit',
-        cwd: path.resolve(__dirname, '../..'),
-        env
-    });
-
-    pcs.on('exit', () => emitter.emit('done'));
-    pcs.on('error', e => emitter.emit('error', e));
-    emitter.on('stop', () => pcs.kill());
-
-    return emitter;
-};
 
 class Server {
     public status: 'on' | 'off' = 'off';
@@ -179,7 +163,6 @@ const main = async () => {
         );
         fs.unlinkSync(path.resolve(__dirname, '../../._env'));
         server.stop();
-        em.emit('stop');
     });
 
     log('Reading env');
@@ -208,11 +191,6 @@ const main = async () => {
         process.exit(1);
     }
     log('Database built successfully');
-
-    const em = resetDB(env);
-    em.on('error', () => {
-        process.exit(1);
-    });
 
     log('Building client');
     const res = await bundle();

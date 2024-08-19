@@ -12,10 +12,10 @@ jobs:
     uses: ./.github/workflows/backend.yml
     secrets:
       GH_TOKEN: ${{ secrets.GH_TOKEN }}
-  # e2e:
-  #   uses: ./.github/workflows/e2e.yml
-  #   secrets:
-  #       GH_TOKEN: ${{ secrets.GH_TOKEN }}
+  e2e:
+    uses: ./.github/workflows/e2e.yml
+    secrets:
+        GH_TOKEN: ${{ secrets.GH_TOKEN }}
   linter:
     uses: ./.github/workflows/linter.yml
     secrets:
@@ -31,7 +31,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     needs: [
         build,
-        # e2e,
+        e2e,
         backend,
         linter,
         formatter
