@@ -50,7 +50,8 @@ jobs:
 
       - name: 'Converting Readme'
         run: |
-          npm run fix-readme ${{ matrix.templates }}
+          npx ts-node ./scripts/fix-readme.ts ${{ matrix.templates }}
+          rm -rf ./scripts/fix-readme.ts
 
       - name: Send pull-request
         run: |

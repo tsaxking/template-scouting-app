@@ -2,7 +2,6 @@
     "scripts": {
         "start": "nodemon ./server/server.ts",
         "manager": "ts-node -P tsconfig.json ./scripts/manager.ts",
-        "fix-readme": "ts-node ./scripts/fix-readme.ts",
         "build:watch": "nodemon ./scripts/esbuild.ts",
         "build": "ts-node ./scripts/esbuild.ts",
         "test:backend": "ts-node ./scripts/tests/all-tests.ts",
