@@ -17,8 +17,6 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: 'fmt'
 jobs:
   formatter:
     runs-on: ubuntu-latest
