@@ -45,7 +45,7 @@ const buildDatabase = () => {
     return new Promise<void>((res, rej) => {
         setTimeout(() => {
             rej('Database took too long to build');
-        }, 10000);
+        }, 1000 * 60 * 5);
 
         const pcs = spawn('sh', ['./db-init.sh'], {
             stdio: 'inherit',
