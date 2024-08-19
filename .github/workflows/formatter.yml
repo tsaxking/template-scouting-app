@@ -13,7 +13,6 @@ permissions:
 
 concurrency:
   group: 'fmt'
-  cancel-in-progress: true
 jobs:
     formatter:
         runs-on: ubuntu-latest

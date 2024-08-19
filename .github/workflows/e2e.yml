@@ -13,7 +13,6 @@ permissions:
 
 concurrency:
   group: 'e2e'
-  cancel-in-progress: true
 jobs:
     e2e-tests:
         runs-on: ubuntu-latest

@@ -13,7 +13,6 @@ permissions:
 
 concurrency:
   group: 'backend'
-  cancel-in-progress: true
 jobs:
     backend:
         runs-on: ubuntu-latest
