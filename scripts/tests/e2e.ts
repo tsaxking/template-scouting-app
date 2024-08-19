@@ -132,22 +132,37 @@ class Server {
 
 type Test = {
     url: string;
-    method: 'GET' | 'POST' | 'PUT' | 'DELETE';
+    method: Method;
     body: unknown;
     expect?: (response: unknown) => boolean | Promise<boolean>;
 };
 
 const tests: Test[] = [];
 
-export const runTest = (
+type Method = 'GET' | 'POST' | 'PUT' | 'DELETE';
+
+export const runTest = <T extends Method>(
     url: string,
-    method: 'GET' | 'POST' | 'PUT' | 'DELETE',
-    body: unknown
+    method: Method,
+    body?: unknown
 ) => {
     tests.push({ url, method, body });
 };
 
 import './server-tests';
+import { attemptAsync } from '../../shared/check';
+
+const request = async (url: string, method: Method, body: unknown) => {
+    return attemptAsync(async () => {
+        const res = await axios<unknown>({
+            method,
+            url,
+            data: body
+        });
+
+        return res;
+    });
+};
 
 const main = async () => {
     const server = new Server();
@@ -195,29 +210,31 @@ const main = async () => {
     log('Starting server');
     await server.start();
 
-    // run tests
-    for (let i = 0; i < tests.length; i++) {
-        const { url, method, body, expect } = tests[i];
-        const str = `${Colors.BgGreen}Test ${i + 1}: ${method} ${url}${Colors.Reset}`;
+    await Promise.all(
+        tests.map(async (t, i) => {
+            const { url, method, body, expect } = t;
+            const okStr = `${Colors.BgGreen}Test ${i + 1}: ${method} ${url}${Colors.Reset}`;
+            const errStr = `${Colors.BgRed}Test ${i + 1}: ${method} ${url}${Colors.Reset}`;
 
-        try {
-            const res = await axios({
-                method,
-                url: env.DOMAIN + url,
-                data: body
-            });
+            try {
+                const res = await (
+                    await request(env.DOMAIN + url, method, body)
+                ).unwrap();
 
-            if (expect) {
-                if (!(await expect(res.data))) {
-                    throw new Error('Test failed, expected value not returned');
+                if (expect) {
+                    if (!(await expect(res.data))) {
+                        throw new Error(
+                            'Test failed, expected value not returned'
+                        );
+                    }
                 }
-            }
 
-            log(str, res.status, res.statusText);
-        } catch (e) {
-            err(str, e);
-        }
-    }
+                log(okStr, res.status, res.statusText);
+            } catch (e) {
+                err(errStr, e);
+            }
+        })
+    );
 
     process.exit(0);
 };

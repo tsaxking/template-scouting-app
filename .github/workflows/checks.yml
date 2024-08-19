@@ -1,107 +1,193 @@
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-
-# This workflow will install Deno then run `deno lint` and `deno test`.
-# For more information see: https://github.com/denoland/setup-deno
-
 name: Checks
 
 on:
-    push:
-        branches: ['main']
-    pull_request:
-        branches: ['main']
+  push:
+    branches: ['main']
+  pull_request:
+    branches: ['main']
 
 permissions:
-    contents: read
+  contents: read
+
+concurrency:
+  group: 'checks'
+  cancel-in-progress: true
 
 jobs:
-    test:
-        runs-on: ubuntu-latest
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Retrieve git dependencies
+        uses: actions/checkout@v3
+        with:
+          submodules: 'true'
+          token: ${{ secrets.GH_TOKEN }}
 
-        steps:
-            - name: Retrieve git dependencies
-              uses: actions/checkout@v3
-              with:
-                  submodules: 'true'
-                  token: ${{ secrets.GH_TOKEN }}
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: v20.4
 
-            - name: Setup Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: v20.8
+      - name: Run
+        run: |
+          echo "Installing dependencies..."
+          npm       
+          echo "Building client..."
+          npm run build
+  e2e-tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:latest
+        ports:
+          - 5432:5432
 
-            - name: Run
-              run: |
-                  if git log -1 --pretty=%B | grep -q "AUTOMATED"; then
-                    echo "Changes were automated, exiting"
-                    exit 0
-                  fi
-                  if git log -1 --pretty=%B | grep -q "Chore"; then
-                    echo "Changes were automated, exiting"
-                    exit 0
-                  fi
-                  echo "Rename package.json and package-lock.json to .package.json and .package-lock.json so that they are not picked up by npm install"
+    steps:
+      - name: Retrieve git dependencies
+        uses: actions/checkout@v3
+        with:
+          submodules: 'true'
+          token: ${{ secrets.GH_TOKEN }}
 
-                  cp package.json .package.json
-                  cp package-lock.json .package-lock.json
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: v20.4
 
-                  echo "Installing all dependencies"
-                  npm i
-                  npm i --save-dev --force prettier-plugin-svelte prettier @typescript-eslint/parser @typescript-eslint/eslint-plugin@5.33.0 eslint typescript prettier-plugin-svelte svelte
+      - name: Build .env
+        run: |
+          echo "PORT=3000" >> .env
+          echo "SOCKET_PORT=3001" >> .env
+          echo "ENVIRONMENT=test" >> .env
+          echo "DOMAIN=http://localhost:3000" >> .env
+          echo "SOCKET_DOMAIN=http://localhost:3001" >> .env
+          echo "TITLE=Test Server" >> .env
+          echo "DATABASE_NAME=testdb" >> .env
+          echo "DATABASE_USER=testuser" >> .env
+          echo "DATABASE_PASSWORD=password" >> .env
+          echo "DATABASE_HOST=localhost" >> .env
+          echo "DATABASE_PORT=5432" >> .env
+          echo "SEND_STATUS_EMAILS=false" >> .env
+          echo "MINIFY=y" >> .env
+          echo "BACKUP_DAYS=7" >> .env
+          echo "BACKUP_INTERVAL=24" >> .env
+          echo "AUTO_SIGN_IN=tsaxking" >> .env
 
-                  echo "Installing all local dependencies"
-                  npm i -g eslint prettier svelte
+      - name: Run
+        run: |
+          echo "Installing dependencies..."
+          npm       
+          echo "Running backend tests..."
+          npm run test:e2e
+  backend-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Retrieve git dependencies
+        uses: actions/checkout@v3
+        with:
+          submodules: 'true'
+          token: ${{ secrets.GH_TOKEN }}
 
-                  echo "Running tests"
-                  sh ./scripts/fmt-lint-check.sh
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: v20.4
 
-                  echo "Restoring dependencies"
-                  echo "Restore package.json and package-lock.json to their original names"
-                  rm package.json package-lock.json
+      - name: Run
+        run: |
+          echo "Installing dependencies..."
+          npm       
+          echo "Running backend tests..."
+          npm run test:backend
+  linter:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Retrieve git dependencies
+        uses: actions/checkout@v3
+        with:
+          submodules: 'true'
+          token: ${{ secrets.GH_TOKEN }}
 
-                  mv .package.json package.json
-                  mv .package-lock.json package-lock.json
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: v20.4
 
-                  echo "Committing changes"
-                  git config --global user.name "github-actions[bot]"
-                  git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      - name: Run
+        run: |
+          echo "Installing dependencies..."
+          npm       
+          echo "Running linter..."
+          npm run lint
+  formatter:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Retrieve git dependencies
+        uses: actions/checkout@v3
+        with:
+          submodules: 'true'
+          token: ${{ secrets.GH_TOKEN }}
 
-                  echo "Adding changes..."
-                  git add .
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: v20.4
 
-                  echo "Committing changes..."
-                  git commit --allow-empty  -m "AUTOMATED: Format, lint, and check"
+      - name: Run
+        run: |
+          echo "Installing dependencies..."
+          npm       
+          echo "Running formatter..."
+          npm run fmt
 
-                  echo "Pushing changes..."
-                  git push
 
-                  echo "Pushing changes to deploy branch..."
-                  echo "testing if on branch 'main'"
-                  if [ "$(git rev-parse --abbrev-ref HEAD)" != "main" ]; then
-                    echo "not on branch 'main', exiting"
-                    exit 0
-                  fi
-                  if git log -1 --pretty=%B | grep -q "Chore"; then
-                    echo "Changes were automated, exiting"
-                    exit 0
-                  fi
 
-                  echo "Good, we're on main. Pushing to deploy..."
-                  echo "Deleting old deploy branch"
-                  git branch -D deploy || true
-                  git push origin --delete deploy || true
 
-                  echo "Creating new deploy branch"
-                  git checkout --orphan deploy
-                  git reset --hard
-                  git commit --allow-empty -m "Initializing deploy branch"
 
-                  echo "Merging main into deploy"
-                  git merge main --strategy-option=theirs --allow-unrelated-histories -m "Merging main into gh-pages"
-                  git pull origin main --allow-unrelated-histories
-                  git add .
-                  git commit --allow-empty -m "Merging main into deploy"
-                  git push origin deploy
+  if-successful:
+    runs-on: ubuntu-latest
+    needs: [
+      build, 
+      e2e-tests, 
+      backend-tests, 
+      linter, 
+      formatter,
+    ]
+    steps:
+      - name: Retrieve git dependencies
+        uses: actions/checkout@v3
+        with:
+            submodules: 'true'
+            token: ${{ secrets.GH_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+            node-version: v20.8
+
+      - name: Push to Deploy
+        run: |
+            echo "testing if on branch 'main'"
+            if [ "$(git rev-parse --abbrev-ref HEAD)" != "main" ]; then
+              echo "not on branch 'main', exiting"
+              exit 0
+            fi
+
+            echo "Pushing changes to deploy branch..."
+
+            echo "Good, we're on main. Pushing to deploy..."
+            echo "Deleting old deploy branch"
+            git branch -D deploy || true
+            git push origin --delete deploy || true
+
+            echo "Creating new deploy branch"
+            git checkout --orphan deploy
+            git reset --hard
+            git commit --allow-empty -m "Initializing deploy branch"
+
+            echo "Merging main into deploy"
+            git merge main --strategy-option=theirs --allow-unrelated-histories -m "Merging main into gh-pages"
+            git pull origin main --allow-unrelated-histories
+            git add .
+            git commit --allow-empty -m "Merging main into deploy"
+            git push origin deploy
