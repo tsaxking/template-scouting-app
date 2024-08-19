@@ -39,6 +39,11 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE }}
 
+      - name: 'Correcting Readme Badges'
+        run: |
+          # Search for all "tsaxking/webpack-template" in readme.md and replace with the current repository
+          sed -i "s/tsaxking\/webpack-template/${{ matrix.templates }}/g" README.md
+
       - name: Send pull-request
         run: |
           echo "Creating variables"
