@@ -41,29 +41,30 @@ const saveEnv = (envPath: string, env: Env) => {
     fs.writeFileSync(envPath, envStr);
 };
 
-const buildDatabase = () => attemptAsync(() => {
-    return new Promise<void>((res, rej) => {
-        setTimeout(
-            () => {
-                rej('Database took too long to build');
-            },
-            1000 * 60 * 5
-        );
+const buildDatabase = () =>
+    attemptAsync(() => {
+        return new Promise<void>((res, rej) => {
+            setTimeout(
+                () => {
+                    rej('Database took too long to build');
+                },
+                1000 * 60 * 5
+            );
 
-        const pcs = spawn('sh', ['./db-init.sh'], {
-            stdio: 'inherit',
-            cwd: path.resolve(__dirname, '../')
-        });
+            const pcs = spawn('sh', ['./db-init.sh'], {
+                stdio: 'inherit',
+                cwd: path.resolve(__dirname, '../')
+            });
 
-        pcs.on('exit', code => {
-            if (code === 0) {
-                res();
-            } else {
-                rej(code);
-            }
+            pcs.on('exit', code => {
+                if (code === 0) {
+                    res();
+                } else {
+                    rej(code);
+                }
+            });
         });
     });
-});
 
 const resetDB = (env: Env) => {
     const emitter = new EventEmitter<'error' | 'stop' | 'done'>();

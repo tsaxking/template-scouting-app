@@ -131,6 +131,7 @@ export const bundle = () =>
     );
 
 if (require.main === module) {
+    log('Building client (main)');
     bundle().then(res => {
         if (res.isErr()) throw res.error;
         log('Built client');
