@@ -8,7 +8,7 @@ permissions:
     contents: read
 
 concurrency:
-  group: 'checks'
+  group: 'fmt'
   cancel-in-progress: true
 jobs:
     formatter:

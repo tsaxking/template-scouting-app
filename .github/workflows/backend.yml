@@ -8,7 +8,7 @@ permissions:
     contents: read
 
 concurrency:
-  group: 'checks'
+  group: 'backend'
   cancel-in-progress: true
 jobs:
     backend:
