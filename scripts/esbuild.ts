@@ -6,7 +6,7 @@ import fs from 'fs';
 import path from 'path';
 import env, { __entries, __root, __templates } from '../server/utilities/env';
 import { getTemplate, saveTemplate } from '../server/utilities/files';
-import { attempt } from '../shared/check';
+import { attempt, attemptAsync } from '../shared/check';
 import { sassPlugin } from 'esbuild-sass-plugin';
 import { Colors } from '../server/utilities/colors';
 
@@ -90,7 +90,7 @@ const readDir = async (dirPath: string): Promise<string[]> => {
     ).flat(Infinity) as string[];
 };
 
-export const bundle = (kill: boolean) =>
+export const bundle = () => attemptAsync(async () => 
     Promise.all([
         readDir(__entries),
         esbuild.build({
@@ -127,18 +127,12 @@ export const bundle = (kill: boolean) =>
             tsconfig: path.resolve(__dirname, '../tsconfig.json')
         })
     ])
-        .then(() => {
-            if (kill) {
-                process.exit(0);
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            if (kill) {
-                process.exit(1);
-            }
-        });
+);
 
 if (require.main === module) {
-    bundle(true);
+    bundle().then((res) => {
+        if (res.isErr()) throw res.error;
+        log('Built client');
+        process.exit(0);
+    });
 }

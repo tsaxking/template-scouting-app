@@ -208,7 +208,7 @@ const main = async () => {
     });
 
     log('Building client');
-    await bundle(false);
+    (await bundle()).unwrap();
 
     log('Starting server');
     await server.start();
