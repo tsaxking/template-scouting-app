@@ -11,7 +11,7 @@ jobs:
   # e2e:
   #   uses: ./.github/workflows/e2e.yml
   linter:
-    uses: ./.github/workflows/lint.yml
+    uses: ./.github/workflows/linter.yml
   formatter:
     uses: ./.github/workflows/formatter.yml
 
