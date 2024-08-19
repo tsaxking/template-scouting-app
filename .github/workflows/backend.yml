@@ -1,6 +1,8 @@
 name: Backend
 
-on: workflow_call
+on: 
+    workflow_call:
+    push:
 
 permissions:
     contents: read
