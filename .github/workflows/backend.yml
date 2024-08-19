@@ -2,6 +2,10 @@ name: Backend
 
 on: 
     workflow_call:
+      secrets:
+        GH_TOKEN:
+            description: 'GitHub Token'
+            required: true
     push:
 
 permissions:

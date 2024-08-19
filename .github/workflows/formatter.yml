@@ -1,8 +1,12 @@
 name: Formatter
 
 on: 
-    workflow_call:
-    push:
+  workflow_call:
+    secrets:
+      GH_TOKEN:
+          description: 'GitHub Token'
+          required: true
+  push:
 
 permissions:
     contents: read

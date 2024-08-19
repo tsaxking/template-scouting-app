@@ -6,14 +6,24 @@ on:
 jobs:
   build:
     uses: ./.github/workflows/build.yml
+    secrets:
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
   backend:
     uses: ./.github/workflows/backend.yml
+    secrets:
+        GH_TOKEN: ${{ secrets.GH_TOKEN }}
   # e2e:
   #   uses: ./.github/workflows/e2e.yml
+  #   secrets:
+    #       GH_TOKEN: ${{ secrets.GH_TOKEN }}
   linter:
     uses: ./.github/workflows/linter.yml
+    secrets:
+        GH_TOKEN: ${{ secrets.GH_TOKEN }}
   formatter:
     uses: ./.github/workflows/formatter.yml
+    secrets:
+        GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
   deploy:
     runs-on: ubuntu-latest
