@@ -6,6 +6,8 @@ import { bundle } from '../esbuild';
 import axios from 'axios';
 import { EventEmitter } from '../../shared/event-emitter';
 
+const args = process.argv.slice(2);
+
 type Env = {
     [key: string]: string;
 };
@@ -47,7 +49,7 @@ const buildDatabase = () => {
             rej('Database took too long to build');
         }, 1000 * 60 * 5);
 
-        const pcs = spawn('sh', ['./db-init.sh'], {
+        const pcs = spawn('sh', ['./db-init.sh', args.includes('github') ? 'github' : ''], {
             stdio: 'inherit',
             cwd: path.resolve(__dirname, '..')
         });

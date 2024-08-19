@@ -46,8 +46,21 @@ fi
 echo "Starting postgresql service."
 sudo systemctl start postgresql
 
-# Run psql as the postgres user
 echo "Creating user and database."
+# If this is github actions
+if $1 == "github"; then
+    echo "Currently in github actions, taking a different approach..."
+    sudo su - postgres -c "psql -c \"CREATE ROLE admin WITH NOLOGIN;\""
+    sudo su - postgres -c "psql -c \"CREATE ROLE $DATABASE_USER WITH LOGIN;\""
+    sudo su - postgres -c "psql -c \"ALTER ROLE $DATABASE_USER WITH PASSWORD '$DATABASE_PASSWORD';\""
+    sudo su - postgres -c "psql -c \"GRANT admin TO $DATABASE_USER;\""
+    sudo su - postgres -c "psql -c \"CREATE DATABASE $DATABASE_NAME with OWNER $DATABASE_USER;\""
+
+    sudo service postgresql restart
+    exit 0
+fi
+
+# Run psql as the postgres user
 sudo -u postgres psql <<EOF
 
 CREATE ROLE "admin" WITH NOLOGIN;
