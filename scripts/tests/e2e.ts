@@ -73,9 +73,12 @@ class Server {
     start() {
         return new Promise<void>((res, rej) => {
             if (this.status === 'on') return rej('Server is already running');
-            setTimeout(() => {
-                rej('Server took too long to start');
-            }, 1000 * 60 * 5);
+            setTimeout(
+                () => {
+                    rej('Server took too long to start');
+                },
+                1000 * 60 * 5
+            );
 
             const log = (...data: unknown[]) =>
                 console.log(Colors.FgYellow, '[Server]', Colors.Reset, ...data);

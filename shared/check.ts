@@ -59,7 +59,7 @@ export class Ok<T = unknown> {
      * @param {string} message
      * @returns {T}
      */
-    expect(message: string): T {
+    expect(_message: string): T {
         // console.warn(
         //     'Warning: Expecting Ok result, this is not recommended for anything other than testing.'
         // );
