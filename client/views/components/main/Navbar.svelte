@@ -7,11 +7,13 @@ import { Account } from '../../../models/account';
 import { Modal } from '../../../utilities/modals';
 import Settings from '../../pages/Settings.svelte';
 import { AccountNotification } from '../../../models/account-notifications';
+import AccountNotifications from './AccountNotifications.svelte';
 
 export let active: string = '';
 
 let account: Account = Account.guest;
 let notifications: AccountNotification[] = [];
+let showNotifications = false;
 
 export let accountLinks: (string | null)[] = [];
 
@@ -107,7 +109,9 @@ onMount(() => {
                 <span class="material-icons">person</span>
             {/if}
         </a>
-        <a href="#">
+        <a href="#" on:click={() => {
+            showNotifications = !showNotifications;
+        }}>
             <i class="material-icons">
                 notifications
             </i>
@@ -160,3 +164,5 @@ onMount(() => {
         </button>
     </div>
 </nav>
+
+<AccountNotifications {notifications} bind:show={showNotifications} />
