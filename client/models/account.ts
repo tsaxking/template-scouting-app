@@ -6,6 +6,8 @@ import { attemptAsync, Result } from '../../shared/check';
 import { ServerRequest } from '../utilities/requests';
 import { Role } from './roles';
 import { socket } from '../utilities/socket';
+import { AccountNotifications } from '../../server/utilities/tables';
+import { AccountNotification } from './account-notifications';
 
 /**
  * All account events
@@ -505,6 +507,13 @@ export class Account extends Cache<AccountEvents> {
             }
 
             throw res.error;
+        });
+    }
+
+    public async getNotifications() {
+        return attemptAsync(async () => {
+            const data = (await ServerRequest.post<AccountNotifications[]>('/account-notifications/get')).unwrap();
+            return data.map(AccountNotification.retrieve);
         });
     }
 }

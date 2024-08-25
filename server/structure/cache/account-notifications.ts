@@ -36,6 +36,14 @@ export class AccountNotification extends Cache {
         });
     }
 
+    public static fromId(id: string) {
+        return attemptAsync(async () => {
+            const an = (await DB.get('account-notifications/from-id', { id })).unwrap();
+            if (!an) return undefined;
+            return new AccountNotification(an);
+        });
+    }
+
     public readonly id: string;
     public readonly accountId: string;
     public type: string;
@@ -55,21 +63,11 @@ export class AccountNotification extends Cache {
         this.message = obj.message;
     }
 
-    public markRead() {
+    public markRead(read: boolean) {
         return attemptAsync(async () => {
             await DB.run('account-notifications/mark-read', {
                 id: this.id,
-                read: true
-            });
-            this.read = true;
-        });
-    }
-
-    public markUnread() {
-        return attemptAsync(async () => {
-            await DB.run('account-notifications/mark-read', {
-                id: this.id,
-                read: false
+                read
             });
         });
     }

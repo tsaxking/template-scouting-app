@@ -398,3 +398,7 @@ export type Insert_account_notifications_new = {
     read: boolean;
     message: string;
 };
+
+export type Select_account_notifications_from_id = {
+    id: string;
+};
