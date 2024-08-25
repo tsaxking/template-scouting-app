@@ -109,13 +109,9 @@ export const createAccount = async () => {
         false
     );
 
-    const a = (await Account.create(
-        username,
-        password,
-        email,
-        firstName,
-        lastName
-    )).unwrap();
+    const a = (
+        await Account.create(username, password, email, firstName, lastName)
+    ).unwrap();
 
     if (a.status === 'created') {
         backToMain(`Account ${username} created`);

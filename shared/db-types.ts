@@ -16,6 +16,7 @@ export type Account = {
     created: number;
     phoneNumber?: string;
     picture?: string;
+    customData: string;
 };
 
 export type AccountSafe = {
