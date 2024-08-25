@@ -60,5 +60,5 @@ jobs:
           exit 0
           echo "Installing dependencies..."
           npm i
-          echo "Running backend tests..."
+          echo "Running e2e tests..."
           npm run test:e2e
