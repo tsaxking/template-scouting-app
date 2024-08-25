@@ -19,6 +19,7 @@ import { Permission } from '../../shared/permissions';
 import { attemptAsync } from '../../shared/check';
 import { RolePermission } from '../../shared/db-types';
 import Role from './roles';
+import { AccountNotification } from './cache/account-notifications';
 
 /**
  * Properties that can be changed dynamically
@@ -1285,5 +1286,9 @@ export default class Account<
             phoneNumber: data.phoneNumber || this.phoneNumber,
             customData: JSON.stringify(data.customData || this.customData)
         });
+    }
+
+    public getNotifications() {
+        return AccountNotification.fromAccount(this.id);
     }
 }

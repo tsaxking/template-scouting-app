@@ -76,6 +76,16 @@ export type AccountSettings = {
     settings: string;
 };
 
+export type AccountNotifications = {
+    id: string;
+    accountId: string;
+    type: string;
+    data: string; // JSON
+    created: number;
+    read: boolean;
+    message: string;
+}
+
 export type Select_permissions_all = undefined;
 
 export type Select_roles_from_name = {
@@ -365,3 +375,26 @@ export type Insert_db_change_version = {
 };
 
 export type Delete_db_delete_version = undefined;
+
+export type Select_account_notifications_from_account = {
+    accountId: string;
+};
+
+export type Delete_account_notifications_delete = {
+    id: string;
+};
+
+export type Update_account_notifications_mark_read = {
+    id: string;
+    read: boolean;
+};
+
+export type Insert_account_notifications_new = {
+    id: string;
+    accountId: string;
+    type: string;
+    data: string; // JSON
+    created: number;
+    read: boolean;
+    message: string;
+};
