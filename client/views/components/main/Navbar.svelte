@@ -1,20 +1,19 @@
 <script lang="ts">
+import { onMount } from 'svelte';
 import { capitalize, fromSnakeCase } from '../../../../shared/text';
 export let title: string;
 export let navItems: string[] = [];
 import { Account } from '../../../models/account';
 import { Modal } from '../../../utilities/modals';
 import Settings from '../../pages/Settings.svelte';
+import { AccountNotification } from '../../../models/account-notifications';
 
 export let active: string = '';
 
 let account: Account = Account.guest;
+let notifications: AccountNotification[] = [];
 
 export let accountLinks: (string | null)[] = [];
-
-Account.getAccount().then(a => {
-    if (a) account = a;
-});
 
 const openSettings = () => {
     const m = new Modal();
@@ -30,6 +29,21 @@ const openSettings = () => {
     m.setBody(body);
     m.show();
 };
+
+const initAccount = async () => {
+    const a = await Account.getAccount();
+    if (a.isOk() && a.value) {
+        account = a.value;
+        const n = await a.value.getNotifications();
+        if (n.isOk()) {
+            notifications = n.value;
+        }
+    }
+}
+
+onMount(() => {
+    initAccount();
+});
 </script>
 
 <nav
@@ -92,6 +106,12 @@ const openSettings = () => {
             {:else}
                 <span class="material-icons">person</span>
             {/if}
+        </a>
+        <a href="#">
+            <i class="material-icons">
+                notifications
+            </i>
+            <span class="badge bg-danger">{notifications.length}</span>
         </a>
         <ul
             class="dropdown-menu dropdown-menu-end p-0"
