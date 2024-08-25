@@ -7,6 +7,7 @@ import { validate } from '../../server/middleware/data-type';
 import { Req } from '../../server/structure/app/req';
 import { Res } from '../../server/structure/app/res';
 import { deepEqual } from 'assert';
+import { check, isValid, parseJSON } from '../../shared/check';
 
 const assertEquals = (a: unknown, b: unknown) => {
     try {
@@ -159,13 +160,91 @@ export const runTests = async () =>
                 } as unknown as Res,
                 fail
             );
-        })
+        }),
 
-        // if (!process.argv.includes('lite')) {
-        //     test('Database tests', async () => {
-        //         const { DB } = await import('../../server/utilities/databases');
-        //     });
-        // }
+        test('Runtime Type Checker', async () => {
+            const run = (data: unknown, type: isValid, expect: boolean) => {
+                const result = check(data, type);
+                if (result !== expect) {
+                    console.log('Failed:', data, type, expect);
+                }
+                return result;
+            };
+
+            const passes = [
+                run({ a: 1 }, { a: 'number' }, true),
+                run({ a: '1' }, { a: 'string' }, true),
+                run({ a: [1, 2, 3] }, { a: ['number'] }, true),
+                run({ a: ['1', '2', '3'] }, { a: ['string'] }, true),
+                run({ a: { b: 1 } }, { a: { b: 'number' } }, true),
+                run({ a: { b: '1' } }, { a: { b: 'string' } }, true),
+                run({ a: { b: [1, 2, 3] } }, { a: { b: ['number'] } }, true),
+                run(
+                    { a: { b: ['1', '2', '3'] } },
+                    { a: { b: ['string'] } },
+                    true
+                ),
+                run({ a: '1' }, { a: ['string', 'number'] }, true),
+                run({ a: 1 }, { a: ['string', 'number'] }, true),
+
+                run({ a: true, b: false }, { a: 'boolean', b: 'boolean' }, true)
+            ];
+            const fails = [
+                run({ a: 1 }, { a: 'string' }, false),
+                run({ a: '1' }, { a: 'number' }, false),
+                run({ a: [1, 2, 3] }, { a: ['string'] }, false),
+                run({ a: ['1', '2', '3'] }, { a: ['number'] }, false),
+                run({ a: { b: 1 } }, { a: { b: 'string' } }, false),
+                run({ a: { b: '1' } }, { a: { b: 'number' } }, false),
+                run({ a: { b: [1, 2, 3] } }, { a: { b: ['string'] } }, false),
+                run(
+                    { a: { b: ['1', '2', '3'] } },
+                    { a: { b: ['number'] } },
+                    false
+                ),
+                run({ a: '1' }, { a: ['number'] }, false),
+                run({ a: 1 }, { a: ['string'] }, false),
+
+                run({ a: true, b: false }, { a: 'boolean', b: 'string' }, false)
+            ];
+
+            if (passes.every(v => v) && fails.every(v => !v)) {
+                return assertEquals(true, true);
+            }
+
+            throw new Error('Failed');
+        }),
+
+        test('JSON parsing', async () => {
+            const obj = {
+                a: 1,
+                b: '2',
+                c: [1, 2, 3],
+                d: { e: 'f' }
+            };
+
+            const str = JSON.stringify(obj);
+
+            const parsed = parseJSON(str, {
+                a: 'number',
+                b: 'string',
+                c: ['number'],
+                d: { e: 'string' }
+            });
+
+            const failed = parseJSON(str, {
+                a: 'string',
+                b: 'number',
+                c: ['string'],
+                d: { e: 'number' }
+            });
+
+            if (parsed.isOk() && failed.isErr()) {
+                return assertEquals(true, true);
+            }
+
+            throw new Error('Failed');
+        })
     ]);
 
 if (require.main === module)

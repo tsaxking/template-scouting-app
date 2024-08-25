@@ -54,7 +54,9 @@ type DiscordLink = {
  * @class Account
  * @typedef {Account}
  */
-export default class Account<CustomData = Record<string, unknown>> {
+export default class Account<
+    CustomData extends Record<string, unknown> = Record<string, unknown>
+> {
     /**
      * Creates a middleware function ensuring that id or username is in the req.body
      * @date 1/9/2024 - 12:53:20 PM
@@ -148,12 +150,14 @@ export default class Account<CustomData = Record<string, unknown>> {
      * @param {string} id
      * @returns {(Account|null)}
      */
-    static async fromId(id: string): Promise<Account | undefined> {
+    static async fromId<AccountCustomData extends Record<string, unknown>>(
+        id: string
+    ): Promise<Account<AccountCustomData> | undefined> {
         const res = await DB.get('account/from-id', {
             id
         });
         if (res.isOk()) {
-            if (res.value) return new Account(res.value);
+            if (res.value) return new Account<AccountCustomData>(res.value);
             else return undefined;
         }
         return undefined;
@@ -167,7 +171,9 @@ export default class Account<CustomData = Record<string, unknown>> {
      * @param {string} username
      * @returns {(Account|null)}
      */
-    static async fromUsername(username: string): Promise<Account | undefined> {
+    static async fromUsername<
+        AccountCustomData extends Record<string, unknown>
+    >(username: string): Promise<Account<AccountCustomData> | undefined> {
         const res = await DB.get('account/from-username', {
             username: username.toLowerCase()
         });
@@ -185,7 +191,9 @@ export default class Account<CustomData = Record<string, unknown>> {
      * @param {string} email
      * @returns {(Account|null)}
      */
-    static async fromEmail(email: string): Promise<Account | undefined> {
+    static async fromEmail<AccountCustomData extends Record<string, unknown>>(
+        email: string
+    ): Promise<Account<AccountCustomData> | undefined> {
         const res = await DB.get('account/from-email', {
             email: email.toLowerCase()
         });
@@ -202,14 +210,14 @@ export default class Account<CustomData = Record<string, unknown>> {
      * @param {string} key
      * @returns {(Account|null)}
      */
-    static async fromVerificationKey(
-        key: string
-    ): Promise<Account | undefined> {
+    static async fromVerificationKey<
+        AccountCustomData extends Record<string, unknown>
+    >(key: string): Promise<Account<AccountCustomData> | undefined> {
         const res = await DB.get('account/from-verification-key', {
             verification: key
         });
         if (res.isOk()) {
-            if (res.value) return new Account(res.value);
+            if (res.value) return new Account<AccountCustomData>(res.value);
         }
     }
 
@@ -221,9 +229,9 @@ export default class Account<CustomData = Record<string, unknown>> {
      * @param {string} key
      * @returns {(Account|null)}
      */
-    static async fromPasswordChangeKey(
-        key: string
-    ): Promise<Account | undefined> {
+    static async fromPasswordChangeKey<
+        AccountCustomData extends Record<string, unknown>
+    >(key: string): Promise<Account<AccountCustomData> | undefined> {
         const res = await DB.get('account/from-password-change', {
             passwordChange: key
         });
@@ -312,7 +320,9 @@ export default class Account<CustomData = Record<string, unknown>> {
      * @static
      * @returns {Account[]}
      */
-    static async getAll(): Promise<Account[]> {
+    static async getAll<
+        AccountCustomData extends Record<string, unknown>
+    >(): Promise<Account<AccountCustomData>[]> {
         const res = await DB.all('account/all');
         if (res.isOk()) {
             return res.value.map((a: AccountObject) => new Account(a));
