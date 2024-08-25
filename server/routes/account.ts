@@ -627,12 +627,9 @@ router.post<{
     }
 );
 
-router.post(
-    '/get-notifications',
-    async (req, res) => {
-        const account = await req.session.getAccount();
-        if (!account) return res.sendStatus('account:not-logged-in');
-        const notifs = (await account.getNotifications()).unwrap();
-        res.json(notifs);
-    }
-)
+router.post('/get-notifications', async (req, res) => {
+    const account = (await req.session.getAccount()).unwrap();
+    if (!account) return res.sendStatus('account:not-logged-in');
+    const notifs = (await account.getNotifications()).unwrap();
+    res.json(notifs);
+});

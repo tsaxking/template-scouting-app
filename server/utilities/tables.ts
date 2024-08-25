@@ -84,7 +84,7 @@ export type AccountNotifications = {
     created: number;
     read: boolean;
     message: string;
-}
+};
 
 export type Select_permissions_all = undefined;
 

@@ -1,24 +1,27 @@
-import { Cache } from "./cache";
-import { AccountNotifications as AN } from "../../utilities/tables";
-import { attemptAsync } from "../../../shared/check";
-import { DB } from "../../utilities/databases";
-import { uuid } from "../../utilities/uuid";
-
+import { Cache } from './cache';
+import { AccountNotifications as AN } from '../../utilities/tables';
+import { attemptAsync } from '../../../shared/check';
+import { DB } from '../../utilities/databases';
+import { uuid } from '../../utilities/uuid';
 
 export class AccountNotification extends Cache {
     public static all() {
         return attemptAsync(async () => {
             return (await DB.all('account-notifications/all'))
-            .unwrap()
-            .map(a => new AccountNotification(a));
+                .unwrap()
+                .map(a => new AccountNotification(a));
         });
     }
 
     public static fromAccount(accountId: string) {
         return attemptAsync(async () => {
-            return (await DB.all('account-notifications/from-account', { accountId }))
-            .unwrap()
-            .map(a => new AccountNotification(a));
+            return (
+                await DB.all('account-notifications/from-account', {
+                    accountId
+                })
+            )
+                .unwrap()
+                .map(a => new AccountNotification(a));
         });
     }
 
@@ -54,14 +57,20 @@ export class AccountNotification extends Cache {
 
     public markRead() {
         return attemptAsync(async () => {
-            await DB.run('account-notifications/mark-read', { id: this.id, read: true });
+            await DB.run('account-notifications/mark-read', {
+                id: this.id,
+                read: true
+            });
             this.read = true;
         });
     }
 
     public markUnread() {
         return attemptAsync(async () => {
-            await DB.run('account-notifications/mark-read', { id: this.id, read: false });
+            await DB.run('account-notifications/mark-read', {
+                id: this.id,
+                read: false
+            });
         });
     }
 
