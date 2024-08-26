@@ -84,6 +84,7 @@ export type AccountNotifications = {
     created: number;
     read: boolean;
     message: string;
+    title: string;
 };
 
 export type Select_permissions_all = undefined;
@@ -397,6 +398,7 @@ export type Insert_account_notifications_new = {
     created: number;
     read: boolean;
     message: string;
+    title: string;
 };
 
 export type Select_account_notifications_from_id = {

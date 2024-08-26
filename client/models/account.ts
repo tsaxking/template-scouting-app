@@ -92,7 +92,7 @@ export class Account extends Cache<AccountEvents> {
             if (Account.current) return Account.current;
             const res = await ServerRequest.post<AccountSafe>(
                 '/account/get-account'
-            )
+            );
             if (res.isOk()) {
                 if (!res.value.id) return;
                 Account.current = new Account(res.value);
@@ -516,7 +516,11 @@ export class Account extends Cache<AccountEvents> {
 
     public async getNotifications() {
         return attemptAsync(async () => {
-            const data = (await ServerRequest.post<AccountNotifications[]>('/account-notifications/get')).unwrap();
+            const data = (
+                await ServerRequest.post<AccountNotifications[]>(
+                    '/account-notifications/get'
+                )
+            ).unwrap();
             return data.map(AccountNotification.retrieve);
         });
     }

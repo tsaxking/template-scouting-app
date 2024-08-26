@@ -1,32 +1,41 @@
-import { AccountNotifications as AN } from "../../server/utilities/tables";
-import { Cache } from "./cache";
-import { EventEmitter } from "../../shared/event-emitter";
-import { socket } from "../utilities/socket";
-import { ServerRequest } from "../utilities/requests";
+import { AccountNotifications as AN } from '../../server/utilities/tables';
+import { Cache } from './cache';
+import { EventEmitter } from '../../shared/event-emitter';
+import { socket } from '../utilities/socket';
+import { ServerRequest } from '../utilities/requests';
 
 type AN_Updates = {
-    'read': boolean;
-    'delete': boolean;
-}
+    read: boolean;
+    delete: boolean;
+};
 
 type AN_GlobalUpdates = {
     new: AccountNotification;
     delete: AccountNotification;
     read: AccountNotification;
-}
+};
 
 export class AccountNotification extends Cache<AN_Updates> {
     private static readonly emitter = new EventEmitter<AN_GlobalUpdates>();
 
-    public static on = AccountNotification.emitter.on.bind(AccountNotification.emitter);
-    public static off = AccountNotification.emitter.off.bind(AccountNotification.emitter);
-    public static emit = AccountNotification.emitter.emit.bind(AccountNotification.emitter);
-    public static once = AccountNotification.emitter.once.bind(AccountNotification.emitter);
+    public static on = AccountNotification.emitter.on.bind(
+        AccountNotification.emitter
+    );
+    public static off = AccountNotification.emitter.off.bind(
+        AccountNotification.emitter
+    );
+    public static emit = AccountNotification.emitter.emit.bind(
+        AccountNotification.emitter
+    );
+    public static once = AccountNotification.emitter.once.bind(
+        AccountNotification.emitter
+    );
 
     public static readonly cache = new Map<string, AccountNotification>();
 
     public static retrieve(data: AN) {
-        if (AccountNotification.cache.has(data.id)) return AccountNotification.cache.get(data.id)!;
+        if (AccountNotification.cache.has(data.id))
+            return AccountNotification.cache.get(data.id)!;
         return new AccountNotification(data);
     }
 
@@ -37,6 +46,7 @@ export class AccountNotification extends Cache<AN_Updates> {
     public readonly created: number;
     public read: boolean;
     public message: string;
+    public title: string;
 
     constructor(obj: AN) {
         super();
@@ -47,6 +57,7 @@ export class AccountNotification extends Cache<AN_Updates> {
         this.created = +obj.created;
         this.read = obj.read;
         this.message = obj.message;
+        this.title = obj.title;
 
         AccountNotification.cache.set(this.id, this);
     }
@@ -54,13 +65,13 @@ export class AccountNotification extends Cache<AN_Updates> {
     public markRead(read: boolean) {
         return ServerRequest.post('/account-notifications/mark-read', {
             read,
-            id: this.id,
+            id: this.id
         });
     }
 
     public delete() {
         return ServerRequest.post('/account-notifications/delete', {
-            id: this.id,
+            id: this.id
         });
     }
 }

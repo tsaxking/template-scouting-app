@@ -159,7 +159,10 @@ export type Queries = {
         unknown
     ];
     'account-notifications/new': [[Insert_account_notifications_new], unknown];
-    'account-notifications/from-id': [[Select_account_notifications_from_id], AccountNotifications];
+    'account-notifications/from-id': [
+        [Select_account_notifications_from_id],
+        AccountNotifications
+    ];
     'db/get-version': [[Select_db_get_version], Version];
     'db/change-version': [[Insert_db_change_version], unknown];
     'db/delete-version': [[Delete_db_delete_version], unknown];

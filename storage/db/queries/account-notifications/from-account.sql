@@ -1,1 +1,1 @@
-SELECT * FROM AccountNotifications WHERE accoutId = :accountId;
+SELECT * FROM AccountNotifications WHERE accountId = :accountId;

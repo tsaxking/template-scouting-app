@@ -14,6 +14,9 @@ export let active: string = '';
 let account: Account = Account.guest;
 let notifications: AccountNotification[] = [];
 let showNotifications = false;
+let unread: number;
+
+$: unread = notifications.filter(n => !n.read).length;
 
 export let accountLinks: (string | null)[] = [];
 
@@ -41,7 +44,7 @@ const initAccount = async () => {
             notifications = n.value;
         }
     }
-}
+};
 
 onMount(() => {
     initAccount();
@@ -89,7 +92,7 @@ onMount(() => {
         </div>
     </div>
 
-    <div class="d-inline-flex p-0">
+    <div class="d-inline-flex p-0 align-items-center">
         <a
             class="nav-link dropdown-toggle me-3"
             href="#navbarDropdown"
@@ -109,14 +112,23 @@ onMount(() => {
                 <span class="material-icons">person</span>
             {/if}
         </a>
-        <a href="#" on:click={() => {
-            showNotifications = !showNotifications;
-        }}>
-            <i class="material-icons">
-                notifications
-            </i>
-            <span class="badge bg-danger">{notifications.length}</span>
-        </a>
+        <button
+            type="button"
+            class="btn btn-primary position-relative p-2 me-5"
+            data-bs-toggle="offcanvas"
+            data-bs-target="#notifications-offcanvas"
+            aria-controls="notifications-offcanvas"
+            on:click="{() => {
+                showNotifications = !showNotifications;
+            }}"
+        >
+            <i class="material-icons"> notifications </i>
+            {#if !!unread}
+            <span class="badge bg-danger position-absolute top-0 start-100 translate-middle rounded-pill">
+                {unread}
+            </span>
+            {/if}
+        </button>
         <ul
             class="dropdown-menu dropdown-menu-end p-0"
             aria-labelledby="navbarDropdown"
@@ -165,4 +177,4 @@ onMount(() => {
     </div>
 </nav>
 
-<AccountNotifications {notifications} bind:show={showNotifications} />
+<AccountNotifications {notifications} />

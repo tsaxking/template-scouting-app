@@ -5,6 +5,25 @@ import { DB } from '../../utilities/databases';
 import { uuid } from '../../utilities/uuid';
 
 export class AccountNotification extends Cache {
+    public static random() { // only used in tests
+        return attemptAsync(async () => {
+            return Array.from({
+                length: 10
+            }).map((_, i) => (
+                new AccountNotification({
+                    id: uuid(),
+                    accountId: uuid(),
+                    type: 'type',
+                    data: '{}',
+                    created: Date.now(),
+                    read: Math.random() > 0.5,
+                    message: `message ${i}`,
+                    title: `title ${i}`
+                })
+            ));
+        });
+    }
+
     public static all() {
         return attemptAsync(async () => {
             return (await DB.all('account-notifications/all'))
@@ -38,7 +57,9 @@ export class AccountNotification extends Cache {
 
     public static fromId(id: string) {
         return attemptAsync(async () => {
-            const an = (await DB.get('account-notifications/from-id', { id })).unwrap();
+            const an = (
+                await DB.get('account-notifications/from-id', { id })
+            ).unwrap();
             if (!an) return undefined;
             return new AccountNotification(an);
         });
@@ -51,6 +72,7 @@ export class AccountNotification extends Cache {
     public readonly created: number;
     public read: boolean;
     public message: string;
+    public title: string;
 
     constructor(obj: AN) {
         super();
@@ -61,6 +83,7 @@ export class AccountNotification extends Cache {
         this.created = obj.created;
         this.read = obj.read;
         this.message = obj.message;
+        this.title = obj.title;
     }
 
     public markRead(read: boolean) {

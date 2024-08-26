@@ -4,6 +4,7 @@ INSERT INTO AccountNotifications (
     type,
     data,
     message,
+    title,
     created
 ) VALUES (
     :id,
@@ -11,5 +12,6 @@ INSERT INTO AccountNotifications (
     :type,
     :data,
     :message,
+    :title,
     :created
 );

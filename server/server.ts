@@ -8,6 +8,7 @@ import { router as admin } from './routes/admin';
 import { router as account } from './routes/account';
 import { router as api } from './routes/api';
 import { router as role } from './routes/roles';
+import { router as notifications } from './routes/account-notifications';
 import { FileUpload } from './middleware/stream';
 import { ReqBody } from './structure/app/req';
 import { parseCookie } from '../shared/cookie';
@@ -170,6 +171,7 @@ app.get('/test/:page', (req, res, next) => {
 app.route('/api', api);
 app.route('/account', account);
 app.route('/roles', role);
+app.route('/account-notifications', notifications);
 
 app.use('/*', Account.autoSignIn(env.AUTO_SIGN_IN));
 
