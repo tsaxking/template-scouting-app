@@ -119,6 +119,8 @@ router.post<{
             { username },
             req.session.prevUrl || '/home'
         );
+
+        req.socket?.join(account.id); // join the account's room
     }
 );
 

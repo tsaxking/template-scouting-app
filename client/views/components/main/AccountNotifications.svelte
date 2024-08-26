@@ -1,6 +1,5 @@
 <script lang="ts">
 import { onMount } from 'svelte';
-import { date } from '../../../../shared/clock';
 import { AccountNotification } from '../../../models/account-notifications';
 import Notification from './Notification.svelte';
 
@@ -22,10 +21,18 @@ onMount(() => {
     AccountNotification.on('new', newNotif);
     AccountNotification.on('read', update);
     AccountNotification.on('delete', deleteNotif);
+
+    return () => {
+        AccountNotification.off('new', newNotif);
+        AccountNotification.off('read', update);
+        AccountNotification.off('delete', deleteNotif);
+    };
 });
 </script>
 
-<div class="offcanvas offcanvas-end" id="notifications-offcanvas">
+<div class="offcanvas offcanvas-end" id="notifications-offcanvas" style="
+    z-index: 1050;
+">
     <div class="offcanvas-header">
         <h5 class="offcanvas-title">Notifications</h5>
     </div>

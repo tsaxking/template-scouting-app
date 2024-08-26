@@ -614,4 +614,9 @@ export class Session<
     emit(event: string, args: unknown) {
         this.app.io.to(this.id).emit(event, args);
     }
+
+    emitToAccount(event: string, args: unknown) {
+        if (!this.accountId) return;
+        this.app.io.to(this.accountId).emit(event, args);
+    }
 }

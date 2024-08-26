@@ -88,7 +88,7 @@ socket.on('account-notifications:delete', (data: AN) => {
     }
 });
 
-socket.on('account-notifications:read', (data: AN) => {
+socket.on('account-notifications:mark-read', (data: AN) => {
     const notif = AccountNotification.cache.get(data.id);
     if (notif) {
         notif.read = data.read;
