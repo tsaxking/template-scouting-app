@@ -124,9 +124,11 @@ onMount(() => {
         >
             <i class="material-icons"> notifications </i>
             {#if !!unread}
-            <span class="badge bg-danger position-absolute top-0 start-100 translate-middle rounded-pill">
-                {unread}
-            </span>
+                <span
+                    class="badge bg-danger position-absolute top-0 start-100 translate-middle rounded-pill"
+                >
+                    {unread}
+                </span>
             {/if}
         </button>
         <ul

@@ -285,7 +285,7 @@ export const runTests = async () =>
             assertEquals(a, 'test');
             assertEquals(b, 'default');
             assertEquals(c, 'test');
-        }),
+        })
     ]);
 
 if (require.main === module)
