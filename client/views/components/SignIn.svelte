@@ -31,9 +31,9 @@
     });
   };
 
-const isValid = (username: string, password: string) => {
+  const isValid = (username: string, password: string) => {
     return isUsernameValid(username) && password.length > 3;
-};
+  };
 
   const isUsernameValid = (username: string): boolean => {
     if (username.includes('@')) {

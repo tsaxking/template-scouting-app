@@ -328,7 +328,7 @@ app.post<{
         const data = await ServerRequest.getEventData(key);
         // console.log(data);
         if (data.isOk()) return res.json(data.value);
-        else return res.status(500).json(data.error);
+        return res.status(500).json(data.error);
     }
 
     const data = getJSONSync(name);

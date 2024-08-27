@@ -16,7 +16,7 @@ export const comments: {
             'Drove around aimlessly',
             'fast and maneuverable',
             'gets fouls hitting bots in protected zones',
-            "gets in partner's way",
+            'gets in partner\'s way',
             'hits opponents very hard',
             'Mostly played defense',
             'Very slow'
@@ -42,7 +42,7 @@ export const comments: {
             'Note jammed in bot',
             'Often misses floor pick',
             'Only shoots from subwoofer',
-            "Steals from opponents' source",
+            'Steals from opponents\' source',
             'Takes a long time to set up shot',
             'Very fast floor pick'
         ],

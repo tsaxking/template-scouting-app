@@ -36,7 +36,7 @@ export type TBAEventSimple = {
     year: number;
 };
 
-export type TBAMatch = {
+export type TBAMatch<T = unknown> = {
     key: string;
     comp_level: string;
     set_number: number;
@@ -58,8 +58,8 @@ export type TBAMatch = {
     predicted_time: number;
     post_result_time: number;
     score_breakdown: {
-        red: any;
-        blue: any;
+        red: T;
+        blue: T;
     };
     videos: {
         key: string;
@@ -67,7 +67,7 @@ export type TBAMatch = {
     }[];
 };
 
-export type TBAMatchSimple = {
+export type TBAMatchSimple<T = unknown> = {
     key: string;
     comp_level: string;
     set_number: number;
@@ -89,8 +89,8 @@ export type TBAMatchSimple = {
     predicted_time: number;
     post_result_time: number;
     score_breakdown: {
-        red: any;
-        blue: any;
+        red: T;
+        blue: T;
     };
     videos: {
         key: string;
