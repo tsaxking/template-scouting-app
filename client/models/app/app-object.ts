@@ -348,9 +348,8 @@ export class Iterator<actions = string> extends AppObject<number> {
         this.toChange(state => {
             if (typeof state === 'undefined') {
                 return 0;
-            } else {
-                return state + 1;
             }
+            return state + 1;
         });
 
         if (defaultState !== undefined) {

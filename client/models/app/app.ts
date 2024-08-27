@@ -509,11 +509,10 @@ export class App<
                 matches.map(async m => {
                     const d = await ServerRequest.post('/submit', m);
                     if (d.isOk()) return 'success';
-                    else {
-                        if (d.error.message.includes('invalid'))
-                            return 'data parse error';
-                        else return 'server error';
-                    }
+
+                    if (d.error.message.includes('invalid'))
+                        return 'data parse error';
+                    return 'server error';
                 })
             );
         });
@@ -535,10 +534,9 @@ export class App<
                     App.emit('new-event', res.value);
                 }
                 return res.value;
-            } else {
-                alert('Error getting scout groups');
-                throw res.error;
             }
+            alert('Error getting scout groups');
+            throw res.error;
         });
     }
 
@@ -1205,20 +1203,23 @@ export class App<
             const now = Date.now();
             const { section } = this;
             this.currentTick = this.ticks[i];
-            if (this.section !== section) this.emit('section', this.section || undefined);
+            if (this.section !== section)
+                this.emit('section', this.section || undefined);
 
             if (!this.currentTick) this.emit('end');
             if (!loop.active) this.emit('stopped');
             this.currentTime = now - this.startTime;
             this.emit('tick', this.currentTick);
-            if (this.currentLocation) this.currentTick.point = this.currentLocation;
+            if (this.currentLocation)
+                this.currentTick.point = this.currentLocation;
 
             if (i % 4 === 0) this.emit('second', this.currentTick.second);
 
             try {
                 const s = Date.now();
                 cb?.(this.currentTick);
-                if (Date.now() - s > 250) console.warn('Callback took too long');
+                if (Date.now() - s > 250)
+                    console.warn('Callback took too long');
             } catch (error) {
                 this.$emitter.emit('error', error);
                 return this.stop();
@@ -1552,11 +1553,7 @@ export class App<
 
         this.cover.style.display = 'block';
         this.canvas.clearDrawables();
-        this.canvas.add(
-            this.background, 
-            this.path, 
-            this.buttonCircle
-        );
+        this.canvas.add(this.background, this.path, this.buttonCircle);
 
         let quitView = false;
 
@@ -1841,9 +1838,8 @@ export class App<
                         width: 1
                     };
                     return p;
-                } else {
-                    return null;
                 }
+                return null;
             });
 
             // default filter
@@ -1908,9 +1904,8 @@ export class App<
             if (value === 'success') {
                 App.deleteFromLocalStorage(id);
                 return value;
-            } else {
-                App.updateLocalStorage(id, value);
             }
+            App.updateLocalStorage(id, value);
         }
     }
 
