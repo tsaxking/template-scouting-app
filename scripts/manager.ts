@@ -129,7 +129,7 @@ export const selectBootstrapColor = async (
         });
 
         if (data.isOk()) return data.value;
-        else return runSelect();
+        return runSelect();
     };
 
     return runSelect();
@@ -191,7 +191,7 @@ export const selectFile = async (
         if (data) {
             if (data.isDirectory) {
                 return run(`${dir}/${data.name}`);
-            } else {
+            } 
                 if (test && !test(`${dir}/${data.name}`)) {
                     console.log('Invalid file, please select another');
                     return run(dir);
@@ -203,7 +203,7 @@ export const selectFile = async (
                 }
 
                 return resolve(`${dir}/${data.name}`);
-            }
+            
         }
 
         return null;
@@ -213,9 +213,9 @@ export const selectFile = async (
         const res = await run(resolve(dir));
         if (res) {
             return relative(__root, res);
-        } else {
+        } 
             throw new Error('no-dir');
-        }
+        
     });
 
     if (data.isOk()) console.log(data.value);
@@ -283,7 +283,7 @@ export const selectDir = async (
         if (data) {
             if (data.isDirectory) {
                 return run(`${dir}/${data.name}`);
-            } else {
+            } 
                 // if they reached this point, they selected the current directory
                 if (!rootTest(dir)) {
                     console.log(
@@ -293,7 +293,7 @@ export const selectDir = async (
                 }
 
                 return resolve(dir);
-            }
+            
         }
 
         return null;
@@ -303,9 +303,9 @@ export const selectDir = async (
         const res = await run(resolve(dir));
         if (res) {
             return relative(__root, res);
-        } else {
+        } 
             throw new Error('no-dir');
-        }
+        
     });
 
     if (data.isOk()) console.log(data.value);
@@ -435,9 +435,9 @@ export const main = async () => {
 
                     if (res) {
                         return res();
-                    } else {
+                    } 
                         backToMain('No tasks selected');
-                    }
+                    
                 }
             }
         ];

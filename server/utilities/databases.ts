@@ -2,7 +2,7 @@ import env, { __root } from './env';
 import { error, log } from './terminal-logging';
 import { Client } from 'pg';
 import { Queries } from './queries';
-import { exists, readDir, readFile, saveFile, log as csv } from './files';
+import { exists, readDir, readFile, saveFile, log as csv, removeFile } from './files';
 import { attemptAsync, Result } from '../../shared/check';
 import {
     capitalize,
@@ -15,7 +15,6 @@ import {
 import { bigIntDecode, bigIntEncode } from '../../shared/objects';
 import { daysTimeout, sleepUntil } from '../../shared/sleep';
 import { runTask } from './run-task';
-import { removeFile } from './files';
 import fs from 'fs';
 import path from 'path';
 import { SimpleEventEmitter } from '../../shared/event-emitter';
@@ -330,9 +329,9 @@ export class DB {
 
             if (res.isOk()) {
                 return res.value.map(r => r.rolname);
-            } else {
+            } 
                 throw res.error;
-            }
+            
         });
     }
 
@@ -542,7 +541,7 @@ export class DB {
 
                     DB.setVersion(version);
                     return true;
-                } else {
+                } 
                     console.log(
                         'Error updating database to version',
                         version,
@@ -550,7 +549,7 @@ export class DB {
                     );
                     await DB.restoreBackup(b.value);
                     throw res.error;
-                }
+                
             } else {
                 console.log('Error reading update query', updateQuery.error);
                 throw updateQuery.error;
@@ -621,10 +620,10 @@ export class DB {
             if (res.isOk()) {
                 console.log('Backup created:', name);
                 return name;
-            } else {
+            } 
                 console.log('Error creating backup', res.error);
                 throw res.error;
-            }
+            
         });
     }
 
@@ -656,10 +655,10 @@ export class DB {
             if (res.every(r => r.isOk())) {
                 console.log('Database reset');
                 return b.value;
-            } else {
+            } 
                 console.log('Error(s) resetting database', res);
                 throw new Error('Error(s) resetting database');
-            }
+            
         });
     }
 
@@ -1169,8 +1168,8 @@ export class DB {
      * @returns {unknown}
      */
     public static async disconnect() {
-        await Promise.all(DB.stack); // wait for all queries to end
-        DB.stack = [];
+        // await Promise.all(DB.stack); // wait for all queries to end
+        // DB.stack = [];
         log('Closing database...');
         return DB.db.end();
     }
@@ -1323,7 +1322,7 @@ DB.connect()
         DB.em.emit('connect');
 
         const close = async () => {
-            await Promise.all(DB.stack);
+            // await Promise.all(DB.stack);
             await DB.disconnect();
             process.exit(0);
         };

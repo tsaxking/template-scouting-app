@@ -95,12 +95,12 @@ export const viewTables = async () => {
                 exit: true
             });
             return main();
-        } else {
+        } 
             return backToMain('Error getting data: ' + data.error.message);
-        }
-    } else {
+        
+    } 
         backToMain('Error getting tables: ' + tables.error.message);
-    }
+    
 };
 
 export const mergeQueries = async () => {
@@ -184,9 +184,9 @@ export const reset = async () => {
             );
         }
         return backToMain('Database reset and updated to latest version.');
-    } else {
+    } 
         return backToMain('Reset cancelled');
-    }
+    
 };
 
 export const runUpdates = async () => {

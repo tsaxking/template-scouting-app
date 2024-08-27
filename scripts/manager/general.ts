@@ -101,12 +101,12 @@ const blacklist = async () => {
                     created: Date.now()
                 });
                 return backToMain('Account blacklisted');
-            } else {
+            } 
                 return backToMain('Blacklist cancelled');
-            }
-        } else {
+            
+        } 
             return backToMain('No account selected');
-        }
+        
     } else if (accountOrIp === 'IP') {
         const fromNew = await select<'new' | 'session'>(
             'Is this a new IP or is currently attached to a session?',
@@ -130,13 +130,13 @@ const blacklist = async () => {
                         created: Date.now()
                     });
                     return backToMain('IP blacklisted');
-                } else {
+                } 
                     return backToMain('Blacklist cancelled');
-                }
-            } else {
+                
+            } 
                 return backToMain('Invalid IP');
-            }
-        } else {
+            
+        } 
             const sessions = await DB.all('sessions/all');
             if (sessions.isErr()) return backToMain('Error fetching sessions');
 
@@ -167,11 +167,11 @@ const blacklist = async () => {
                         created: Date.now()
                     });
                     return backToMain('IP blacklisted');
-                } else {
+                } 
                     return backToMain('Blacklist cancelled');
-                }
+                
             }
-        }
+        
     } else if (accountOrIp === 'Remove') {
         const blacklists = await DB.all('blacklist/all');
         if (blacklists.isErr()) return backToMain('Error fetching blacklists');
@@ -201,12 +201,12 @@ const blacklist = async () => {
                 }
                 if (ip) DB.run('blacklist/delete-by-ip', { ip });
                 return backToMain('Blacklist removed');
-            } else {
+            } 
                 return backToMain('Remove cancelled');
-            }
-        } else {
+            
+        } 
             return backToMain('No blacklist selected');
-        }
+        
     } else {
         return backToMain('No option selected');
     }
@@ -232,9 +232,9 @@ const clearLogs = async () => {
         if (!confirmed) return backToMain('Clear cancelled');
         fs.writeFileSync(logToClear.value, '');
         return backToMain('Log cleared');
-    } else {
+    } 
         return backToMain('No log selected');
-    }
+    
 };
 
 export const general = [

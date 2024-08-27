@@ -213,7 +213,7 @@ export const segment = (dates: Date[], segments?: number): Date[] => {
             const start = min.getTime() + (range / segments) * i;
             return new Date(start);
         });
-    } else {
+    } 
         switch (true) {
             case range < 1000 * 60 * 60: // less than an hour
                 return segment(dates, 4); // 15 minute segments
@@ -228,5 +228,5 @@ export const segment = (dates: Date[], segments?: number): Date[] => {
             default:
                 return segment(dates, 5); // 1 year segments
         }
-    }
+    
 };

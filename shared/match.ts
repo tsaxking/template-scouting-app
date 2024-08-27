@@ -32,9 +32,9 @@ class MatchStatement<T, R> {
 
             if (this.defaultCase) {
                 return this.defaultCase(this.value);
-            } else {
+            } 
                 throw new Error('No match found');
-            }
+            
         });
     }
 }
@@ -76,9 +76,9 @@ class MatchInstanceStatement<T, R> {
 
             if (this.defaultCase) {
                 return this.defaultCase(this.value);
-            } else {
+            } 
                 throw new Error('No match found');
-            }
+            
         });
     }
 }

@@ -123,13 +123,13 @@ export class Session<
                 req,
                 res
             );
-        } else {
+        } 
             return Session.newSession<SessionCustomData, AccountCustomData>(
                 app,
                 req,
                 res
             );
-        }
+        
     }
 
     /**
@@ -589,7 +589,7 @@ export class Session<
                 requests: this.requests,
                 customData: JSON.stringify(this.customData || {})
             });
-        } else {
+        } 
             return DB.run('sessions/new', {
                 id: this.id,
                 ip: this.ip || '',
@@ -601,7 +601,7 @@ export class Session<
                 created: this.created,
                 customData: JSON.stringify(this.customData || {})
             });
-        }
+        
     }
 
     /**

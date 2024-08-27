@@ -123,8 +123,7 @@ export type ServerFunction<
     req: Req<T, S, A>,
     res: Res,
     next: Next
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-) => any | Promise<any>;
+) => unknown;
 /**
  * Final function that is called at the end of a request
  * @date 10/12/2023 - 2:49:37 PM
@@ -136,7 +135,7 @@ export type FinalFunction<
     T = unknown,
     S extends Record<string, unknown> = Record<string, unknown>,
     A extends Record<string, unknown> = Record<string, unknown>
-> = (req: Req<T, S, A>, res: Res) => any;
+> = (req: Req<T, S, A>, res: Res) => unknown;
 
 declare module 'express-serve-static-core' {
     interface Request {
@@ -460,7 +459,7 @@ export class App<
                     return console.log('Not fulfilled');
                 for (const fn of this.finalFunctions) {
                     try {
-                        await fn(
+                        fn(
                             req.request as Req<
                                 unknown,
                                 SessionCustomData,

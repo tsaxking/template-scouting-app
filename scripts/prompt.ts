@@ -278,7 +278,7 @@ export const search = async <T extends string | Option>(
             if (res === '$$back$$') {
                 const res = await run();
                 if (res.isOk()) return res.value;
-                else throw res.error;
+                throw res.error;
             }
 
             if (res === '$$exit$$') {
