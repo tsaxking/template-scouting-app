@@ -17,7 +17,15 @@
     document.querySelectorAll(`#${id} button.close-modal`).forEach(m => {
       jQuery(m).modal('hide');
     });
-  });
+});
+
+jQuery(`#${id}`).on('shown.bs.modal', () => {
+    dispatch('show');
+});
+
+document.querySelectorAll(`#${id} button.close-modal`).forEach(m => {
+    jQuery(m).modal('hide');
+});
 </script>
 
 <div

@@ -48,12 +48,14 @@ export const notify = <T extends 'toast' | 'alert'>(
         target.hide();
     };
 
+    const doShow = window.localStorage.getItem('page') !== '--$App';
+
     if (type === 'toast') {
         const toast = new Toast(title, data.message, data.color);
 
         setAnimation(toast);
 
-        toast.show();
+        if (doShow) toast.show();
 
         return toast;
     }
