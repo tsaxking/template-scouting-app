@@ -76,6 +76,7 @@ jobs:
           git pull origin main --allow-unrelated-histories
 
           echo "formatting and linting"
+          npm i
           npm run fmt
           npm run lint
 
