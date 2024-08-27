@@ -69,8 +69,7 @@
     </button>
     <a
       class="ps-3 pt-2 navbar-brand fw-bold no-select h-100 align-middle text-light"
-      href="/home"
-    >{title}</a
+      href="/home">{title}</a
     >
 
     <div

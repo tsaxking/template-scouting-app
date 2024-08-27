@@ -56,14 +56,13 @@ export const notify = <T extends 'toast' | 'alert'>(
         toast.show();
 
         return toast;
-    } 
-        const alert = new Alert(title, data.message, data.color);
+    }
+    const alert = new Alert(title, data.message, data.color);
 
-        setAnimation(alert);
+    setAnimation(alert);
 
-        alert.show();
-        return alert;
-    
+    alert.show();
+    return alert;
 };
 
 /**

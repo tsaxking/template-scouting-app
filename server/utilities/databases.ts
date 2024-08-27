@@ -2,7 +2,14 @@ import env, { __root } from './env';
 import { error, log } from './terminal-logging';
 import { Client } from 'pg';
 import { Queries } from './queries';
-import { exists, readDir, readFile, saveFile, log as csv, removeFile } from './files';
+import {
+    exists,
+    readDir,
+    readFile,
+    saveFile,
+    log as csv,
+    removeFile
+} from './files';
 import { attemptAsync, Result } from '../../shared/check';
 import {
     capitalize,
@@ -329,9 +336,8 @@ export class DB {
 
             if (res.isOk()) {
                 return res.value.map(r => r.rolname);
-            } 
-                throw res.error;
-            
+            }
+            throw res.error;
         });
     }
 
@@ -541,15 +547,14 @@ export class DB {
 
                     DB.setVersion(version);
                     return true;
-                } 
-                    console.log(
-                        'Error updating database to version',
-                        version,
-                        res.error
-                    );
-                    await DB.restoreBackup(b.value);
-                    throw res.error;
-                
+                }
+                console.log(
+                    'Error updating database to version',
+                    version,
+                    res.error
+                );
+                await DB.restoreBackup(b.value);
+                throw res.error;
             } else {
                 console.log('Error reading update query', updateQuery.error);
                 throw updateQuery.error;
@@ -620,10 +625,9 @@ export class DB {
             if (res.isOk()) {
                 console.log('Backup created:', name);
                 return name;
-            } 
-                console.log('Error creating backup', res.error);
-                throw res.error;
-            
+            }
+            console.log('Error creating backup', res.error);
+            throw res.error;
         });
     }
 
@@ -655,10 +659,9 @@ export class DB {
             if (res.every(r => r.isOk())) {
                 console.log('Database reset');
                 return b.value;
-            } 
-                console.log('Error(s) resetting database', res);
-                throw new Error('Error(s) resetting database');
-            
+            }
+            console.log('Error(s) resetting database', res);
+            throw new Error('Error(s) resetting database');
         });
     }
 

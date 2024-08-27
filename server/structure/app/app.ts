@@ -119,11 +119,7 @@ export type ServerFunction<
     T = unknown,
     S extends Record<string, unknown> = Record<string, unknown>,
     A extends Record<string, unknown> = Record<string, unknown>
-> = (
-    req: Req<T, S, A>,
-    res: Res,
-    next: Next
-) => unknown;
+> = (req: Req<T, S, A>, res: Res, next: Next) => unknown;
 /**
  * Final function that is called at the end of a request
  * @date 10/12/2023 - 2:49:37 PM

@@ -310,10 +310,9 @@ export default class Account<
                 )
             ) {
                 return next();
-            } 
-                const s = Status.from('permissions:unauthorized', req);
-                return s.send(res);
-            
+            }
+            const s = Status.from('permissions:unauthorized', req);
+            return s.send(res);
         };
     }
 
@@ -332,9 +331,8 @@ export default class Account<
 
         if (!account) {
             return res.sendStatus('account:not-logged-in');
-        } 
-            next();
-        
+        }
+        next();
     }
 
     /**

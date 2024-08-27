@@ -545,9 +545,8 @@ router.post<{
                             }))
                         )
                     );
-                } 
-                    return res.json([]);
-                
+                }
+                return res.json([]);
             }
 
             return res.sendStatus('account:cannot-edit-other-account');
@@ -577,9 +576,8 @@ router.post<{
                     ?.getPermissions();
                 if (permissions) {
                     return res.json(permissions);
-                } 
-                    return res.json([]);
-                
+                }
+                return res.json([]);
             }
 
             return res.sendStatus('account:cannot-edit-other-account');

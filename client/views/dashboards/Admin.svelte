@@ -56,16 +56,12 @@
     {active}
     {domain}
     title="dashboard"
-    bind:loading
-  ><Dashboard /></Page
-  >
+    bind:loading><Dashboard /></Page>
   <Page
     {active}
     {domain}
     title="accounts"
-    bind:loading
-  ><Accounts /></Page
-  >
+    bind:loading><Accounts /></Page>
   <Page
     {active}
     {domain}

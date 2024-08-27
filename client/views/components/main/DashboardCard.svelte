@@ -59,7 +59,7 @@
   <div class="col-xl-4 col-md-6 p-3">
     <div
       class="dashboard-card"
-      class:expanded={expanded}>
+      class:expanded>
       <div class="card h-100 w-100">
         <div class="card-header">
           <div class="d-flex justify-content-between">
@@ -95,7 +95,7 @@
         </div>
         <div
           class="card-body no-scroll-x"
-          class:scroll-y={scroll}>
+          class:scroll-y="{scroll}">
           <slot />
         </div>
       </div>

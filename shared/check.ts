@@ -293,10 +293,9 @@ export const check = (data: unknown, type: isValid): boolean => {
             if (isArray(data)) {
                 // data is an array, type is an array. Check if all elements match any of the types
                 return data.every(d => type.some(t => runCheck(d, t)));
-            } 
-                if (type.length === 1) return false; // data is supposed to be an array
-                return type.some(t => runCheck(data, t)); // data is not an array, type is supposed to be an "or" type
-            
+            }
+            if (type.length === 1) return false; // data is supposed to be an array
+            return type.some(t => runCheck(data, t)); // data is not an array, type is supposed to be an "or" type
         }
 
         if (isObject(data) && isObject(type)) {
@@ -374,14 +373,22 @@ export const parseJSON = <T extends Primitive | O | A>(
     return build(JSON.parse(data), obj);
 };
 
-
-type ReturnType<T> = T extends 'string' ? string
-                    : T extends 'number' ? number
-                    : T extends 'boolean' ? boolean
-                    : T extends 'object' ? object
-                    : T extends 'array' ? unknown[]
-                    : T extends 'null' ? null
-                    : T extends 'undefined' ? undefined
-                    : T extends O ? { [K in keyof T]: ReturnType<T[K]> }
-                    : T extends A ? ReturnType<T[0]>[]
+type ReturnType<T> = T extends 'string'
+    ? string
+    : T extends 'number'
+      ? number
+      : T extends 'boolean'
+        ? boolean
+        : T extends 'object'
+          ? object
+          : T extends 'array'
+            ? unknown[]
+            : T extends 'null'
+              ? null
+              : T extends 'undefined'
+                ? undefined
+                : T extends O
+                  ? { [K in keyof T]: ReturnType<T[K]> }
+                  : T extends A
+                    ? ReturnType<T[0]>[]
                     : never;

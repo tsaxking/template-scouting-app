@@ -3,7 +3,6 @@
   import { Loop } from '../../../../shared/loop';
   import { writable } from 'svelte/store';
 
-
   let w = writable([]);
   $w.length;
 

@@ -191,19 +191,18 @@ export const selectFile = async (
         if (data) {
             if (data.isDirectory) {
                 return run(`${dir}/${data.name}`);
-            } 
-                if (test && !test(`${dir}/${data.name}`)) {
-                    console.log('Invalid file, please select another');
-                    return run(dir);
-                }
+            }
+            if (test && !test(`${dir}/${data.name}`)) {
+                console.log('Invalid file, please select another');
+                return run(dir);
+            }
 
-                if (!rootTest(`${dir}/${data.name}`)) {
-                    console.log(`Invalid file, the file must be in ${root}`);
-                    return run(dir);
-                }
+            if (!rootTest(`${dir}/${data.name}`)) {
+                console.log(`Invalid file, the file must be in ${root}`);
+                return run(dir);
+            }
 
-                return resolve(`${dir}/${data.name}`);
-            
+            return resolve(`${dir}/${data.name}`);
         }
 
         return null;
@@ -213,9 +212,8 @@ export const selectFile = async (
         const res = await run(resolve(dir));
         if (res) {
             return relative(__root, res);
-        } 
-            throw new Error('no-dir');
-        
+        }
+        throw new Error('no-dir');
     });
 
     if (data.isOk()) console.log(data.value);
@@ -283,17 +281,16 @@ export const selectDir = async (
         if (data) {
             if (data.isDirectory) {
                 return run(`${dir}/${data.name}`);
-            } 
-                // if they reached this point, they selected the current directory
-                if (!rootTest(dir)) {
-                    console.log(
-                        `Invalid directory, the directory must be in ${root}`
-                    );
-                    return run(dir);
-                }
+            }
+            // if they reached this point, they selected the current directory
+            if (!rootTest(dir)) {
+                console.log(
+                    `Invalid directory, the directory must be in ${root}`
+                );
+                return run(dir);
+            }
 
-                return resolve(dir);
-            
+            return resolve(dir);
         }
 
         return null;
@@ -303,9 +300,8 @@ export const selectDir = async (
         const res = await run(resolve(dir));
         if (res) {
             return relative(__root, res);
-        } 
-            throw new Error('no-dir');
-        
+        }
+        throw new Error('no-dir');
     });
 
     if (data.isOk()) console.log(data.value);
@@ -435,9 +431,8 @@ export const main = async () => {
 
                     if (res) {
                         return res();
-                    } 
-                        backToMain('No tasks selected');
-                    
+                    }
+                    backToMain('No tasks selected');
                 }
             }
         ];

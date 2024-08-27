@@ -12,7 +12,7 @@
     <li class="nav-item">
       <a
         class="nav-link"
-        class:active={tab === active}
+        class:active="{tab === active}"
         href="javascript:void(0)"
         on:click="{() => dispatch('change', tab)}">{tab}</a
       >

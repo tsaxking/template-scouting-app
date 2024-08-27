@@ -5,7 +5,7 @@
 
 <div
   class="btn-group btn-group-{size}"
-  class:btn-group-vertical={vertical}
+  class:btn-group-vertical="{vertical}"
   aria-label="Basic example"
   role="group"
 >

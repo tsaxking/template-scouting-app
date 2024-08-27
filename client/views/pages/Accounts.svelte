@@ -31,18 +31,16 @@
             a.getRoles(true).then(r => {
               if (r.isOk()) {
                 return r.value;
-              } 
+              }
               // console.error('Failed to get roles: ', r.error);
               return [];
-                        
             }),
             a.getPermissions(true).then(p => {
               if (p.isOk()) {
                 return p.value;
-              } 
+              }
               // console.error('Failed to get permissions: ', p.error);
               return [];
-                        
             })
           ]);
 
@@ -82,7 +80,6 @@
     jQuery(div.querySelectorAll('[data-toggle="tooltip"]')).tooltip();
   // jQuery(div).dataTable();
   };
-
 
   onMount(set);
 

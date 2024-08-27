@@ -1,38 +1,32 @@
 module.exports = {
-    extends: [
-        'eslint:recommended', 
-        'plugin:@typescript-eslint/recommended'
-    ],
+    extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended'],
     parser: '@typescript-eslint/parser',
     parserOptions: {
-      project: './tsconfig.json',
-      extraFileExtensions: ['.svelte'] // This is a required setting in `@typescript-eslint/parser` v4.24.0.
+        project: './tsconfig.json',
+        extraFileExtensions: ['.svelte'] // This is a required setting in `@typescript-eslint/parser` v4.24.0.
     },
     overrides: [
-      {
-        files: ['*.svelte'],
-        parser: 'svelte-eslint-parser',
-        // Parse the `<script>` in `.svelte` as TypeScript by adding the following configuration.
-        parserOptions: {
-          parser: '@typescript-eslint/parser'
+        {
+            files: ['*.svelte'],
+            parser: 'svelte-eslint-parser',
+            // Parse the `<script>` in `.svelte` as TypeScript by adding the following configuration.
+            parserOptions: {
+                parser: '@typescript-eslint/parser'
+            },
+            rules: {
+                'no-self-assign': 'off',
+                'no-duplicate-imports': 'off',
+                'no-undef': 'off'
+            }
         },
-        rules: {
-            'no-self-assign': 'off',
-            'no-duplicate-imports': 'off',
-            'no-undef': 'off'
+        {
+            files: ['*.ts'],
+            rules: {
+                'no-undef': 'off'
+            }
         }
-      },
-      {
-        files: ['*.ts'],
-        rules: {
-            'no-undef': 'off',
-        }
-      }
     ],
-    plugins: [
-        '@typescript-eslint',
-        'svelte'
-    ],
+    plugins: ['@typescript-eslint', 'svelte'],
     root: true,
 
     // rules
@@ -42,82 +36,79 @@ module.exports = {
             'warn',
             { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }
         ],
-        "semi": ["error", "always"],
-        "quotes": ["warn", "single"],   
-        "array-callback-return": "error",
-        "constructor-super": "error",
-        "for-direction": "error",
-        "getter-return": "error",
-        "no-array-constructor": "error",
-        "no-async-promise-executor": "error",
-        "no-await-in-loop": "warn",
-        "no-class-assign": "error",
-        "no-compare-neg-zero": "error",
-        "no-cond-assign": "error",
-        "no-const-assign": "error",
-        "no-constant-binary-expression": "error",
-        "no-constant-condition": "error",
-        "no-constructor-return": "error",
-        "no-control-regex": "error",
-        "no-debugger": "error",
-        "no-dupe-args": "error",
-        "no-dupe-class-members": "error",
-        "no-dupe-else-if": "error",
-        "no-dupe-keys": "error",
-        "no-duplicate-case": "error",
-        "no-duplicate-imports": 'warn',
-        "no-empty-character-class": "error",
-        "no-empty-pattern": "error",
-        "no-ex-assign": "error",
-        "no-fallthrough": "error",
-        "no-func-assign": "error",
-        "no-inner-declarations": "error",
-        "no-invalid-regexp": "error",
-        "no-irregular-whitespace": "warn",
-        "no-loss-of-precision": "error",
-        "no-misleading-character-class": "error",
-        "no-new-native-nonconstructor": "error",
-        "no-new-symbol": "error",
-        "no-obj-calls": "error",
+        semi: ['error', 'always'],
+        quotes: ['warn', 'single'],
+        'array-callback-return': 'error',
+        'constructor-super': 'error',
+        'for-direction': 'error',
+        'getter-return': 'error',
+        'no-array-constructor': 'error',
+        'no-async-promise-executor': 'error',
+        'no-await-in-loop': 'warn',
+        'no-class-assign': 'error',
+        'no-compare-neg-zero': 'error',
+        'no-cond-assign': 'error',
+        'no-const-assign': 'error',
+        'no-constant-binary-expression': 'error',
+        'no-constant-condition': 'error',
+        'no-constructor-return': 'error',
+        'no-control-regex': 'error',
+        'no-debugger': 'error',
+        'no-dupe-args': 'error',
+        'no-dupe-class-members': 'error',
+        'no-dupe-else-if': 'error',
+        'no-dupe-keys': 'error',
+        'no-duplicate-case': 'error',
+        'no-duplicate-imports': 'warn',
+        'no-empty-character-class': 'error',
+        'no-empty-pattern': 'error',
+        'no-ex-assign': 'error',
+        'no-fallthrough': 'error',
+        'no-func-assign': 'error',
+        'no-inner-declarations': 'error',
+        'no-invalid-regexp': 'error',
+        'no-irregular-whitespace': 'warn',
+        'no-loss-of-precision': 'error',
+        'no-misleading-character-class': 'error',
+        'no-new-native-nonconstructor': 'error',
+        'no-new-symbol': 'error',
+        'no-obj-calls': 'error',
         // "no-promise-executor-return": "error",
-        "no-prototype-builtins": "error",
-        "no-self-assign": 'error',
-        "no-self-compare": "error",
-        "no-setter-return": "error",
-        "no-sparse-arrays": "warn",
-        "no-template-curly-in-string": "warn",
-        "no-this-before-super": "error",
-        "no-undef": "error",
-        "no-unexpected-multiline": "error",
-        "no-unmodified-loop-condition": "error",
-        "no-unreachable": "warn",
-        "no-unreachable-loop": "warn",
-        "no-unsafe-finally": "error",
-        "no-unsafe-negation": "error",
-        "no-unsafe-optional-chaining": "error",
-        "no-unused-private-class-members": "warn",
+        'no-prototype-builtins': 'error',
+        'no-self-assign': 'error',
+        'no-self-compare': 'error',
+        'no-setter-return': 'error',
+        'no-sparse-arrays': 'warn',
+        'no-template-curly-in-string': 'warn',
+        'no-this-before-super': 'error',
+        'no-undef': 'error',
+        'no-unexpected-multiline': 'error',
+        'no-unmodified-loop-condition': 'error',
+        'no-unreachable': 'warn',
+        'no-unreachable-loop': 'warn',
+        'no-unsafe-finally': 'error',
+        'no-unsafe-negation': 'error',
+        'no-unsafe-optional-chaining': 'error',
+        'no-unused-private-class-members': 'warn',
         // 'no-use-before-define': [
         //     'error'
         // ],
-        "no-useless-backreference": "error",
-        "require-atomic-updates": "warn",
-        "use-isnan": "error",
-        "valid-typeof": "error",
+        'no-useless-backreference': 'error',
+        'require-atomic-updates': 'warn',
+        'use-isnan': 'error',
+        'valid-typeof': 'error',
 
         // "accessor-pairs": "error",
-        "arrow-body-style": "off",
-        "camelcase": 'warn',
-        "no-var": "error",
-        "no-with": "error",
-        "no-console": "off",
+        'arrow-body-style': 'off',
+        camelcase: 'warn',
+        'no-var': 'error',
+        'no-with': 'error',
+        'no-console': 'off',
 
         // typescript
-        "@typescript-eslint/no-explicit-any": "error",
+        '@typescript-eslint/no-explicit-any': 'error',
 
-        "no-else-return": "warn",
-
-
-
+        'no-else-return': 'warn',
 
         // svelte
         'svelte/infinite-reactive-loop': 'error',
@@ -138,7 +129,7 @@ module.exports = {
         'svelte/valid-compile': 'warn',
         'svelte/no-at-html-tags': 'error',
         'svelte/no-target-blank': 'warn',
-        'svelte/block-lang': ['error', { 'script': 'ts' }],
+        'svelte/block-lang': ['error', { script: 'ts' }],
         'svelte/button-has-type': 'warn',
         'svelte/no-at-debug-tags': 'error',
         'svelte/no-ignored-unsubscribe': 'error',
@@ -163,8 +154,8 @@ module.exports = {
         'svelte/max-attributes-per-line': [
             'warn',
             {
-                'multiline': 1,
-                'singleline': 1
+                multiline: 1,
+                singleline: 1
             }
         ],
         'svelte/mustache-spacing': 'warn',
@@ -175,9 +166,8 @@ module.exports = {
         'svelte/prefer-style-directive': 'warn',
         'svelte/shorthand-attribute': 'warn',
         'svelte/sort-attributes': 'warn',
-        'svelte/spaced-html-comment': 'warn',
+        'svelte/spaced-html-comment': 'warn'
     },
-
 
     ignorePatterns: ['node_modules/', 'dist/', '**/*.js', '**/submodules/'],
     env: {

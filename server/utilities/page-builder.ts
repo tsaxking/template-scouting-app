@@ -94,8 +94,6 @@ export const homeBuilder = async (url: string) => {
     });
 };
 
-
-
 /**
  * Middleware that builds the page if it exists
  * @date 10/12/2023 - 3:25:12 PM

@@ -14,7 +14,6 @@
   export let groups: PageGroup[] = [];
   export let active: string;
 
-
   const d = createEventDispatcher();
 
   const openPage = (page: string) => {
@@ -28,7 +27,6 @@
     window.history.pushState({}, '', url.href);
     d('openPage', page);
   };
-
 
   $: openPage(active);
 </script>
