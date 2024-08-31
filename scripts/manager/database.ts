@@ -245,8 +245,12 @@ export const restoreBackup = async () => {
         return backToMain('Error reading backups: ' + backups.error);
     }
 
+    const latest = await Backup.latest();
+    let latestBackup = '';
+    if(latest.isOk()) latestBackup = latest.value?.serialize() || '';
+
     const backup = await search(
-        'Search for a backup to restore',
+        `Search for a backup to restore (${latestBackup})`,
         backups.value.map(b => ({
             name: b,
             value: b

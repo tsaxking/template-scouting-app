@@ -508,17 +508,19 @@ export class Backup extends Version {
                 .unwrap()
                 .map(b => b.replace('.json', ''));
 
-            console.log({ backups });
-
             return backups
                 .map(Backup.from)
                 .filter(b => b.isOk())
-                .map(b =>
-                    console.log(JSON.stringify(b.unwrap())) === undefined
-                        ? b.unwrap()
-                        : b.unwrap()
-                )
+                .map(b =>b.unwrap())
                 .filter(b => b.gitBranch === version.gitBranch);
+        });
+    }
+
+    static async latest() {
+        return attemptAsync(async () => {
+            const backups = (await Backup.getBackups()).unwrap();
+            if (!backups.length) return undefined;
+            return backups.pop();
         });
     }
 
