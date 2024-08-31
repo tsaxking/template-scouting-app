@@ -287,7 +287,8 @@ export class Version {
                     );
 
                     const script = `storage/db/scripts/versions/${version.serialize(
-                        '-', true
+                        '-',
+                        true
                     )}`;
                     // see if update script exists
                     const scriptExists = exists(script);
@@ -415,7 +416,8 @@ export class Version {
 
     public static from(str: string, deilimiter: string) {
         return attempt(() => {
-            const [major, minor, patch, gitBranch, gitCommit] = str.split(deilimiter);
+            const [major, minor, patch, gitBranch, gitCommit] =
+                str.split(deilimiter);
             if (isNaN(Number(major)))
                 throw new Error('Major version is not a number');
             if (isNaN(Number(minor)))
@@ -455,7 +457,6 @@ export class Version {
         this.gitBranch = v.gitBranch.replaceAll('-', '');
         this.gitCommit = v.gitCommit;
     }
-
 
     serialize(delimiter: string, min = false) {
         if (min) {
@@ -503,14 +504,20 @@ export class Backup extends Version {
 
             console.log('Getting backups for version', version.serialize('.'));
 
-            const backups = (await readDir('storage/db/backups')).unwrap().map(b => b.replace('.json', ''));
+            const backups = (await readDir('storage/db/backups'))
+                .unwrap()
+                .map(b => b.replace('.json', ''));
 
             console.log({ backups });
 
             return backups
                 .map(Backup.from)
                 .filter(b => b.isOk())
-                .map(b => console.log(JSON.stringify(b.unwrap())) === undefined ? b.unwrap() : b.unwrap())
+                .map(b =>
+                    console.log(JSON.stringify(b.unwrap())) === undefined
+                        ? b.unwrap()
+                        : b.unwrap()
+                )
                 .filter(b => b.gitBranch === version.gitBranch);
         });
     }
@@ -732,7 +739,7 @@ export class DB {
      * @returns {unknown}
      */
     static async connect() {
-            return attemptAsync(async () => {
+        return attemptAsync(async () => {
             return DB.db.connect();
         });
     }
@@ -1328,7 +1335,6 @@ export const run = () => {
     return attemptAsync(async () => {
         (await Version.init()).unwrap();
 
-
         const [branch, commit, version] = await Promise.all([
             gitBranch(),
             gitCommit(),
@@ -1337,7 +1343,7 @@ export const run = () => {
 
         const b = branch.unwrap();
         const c = commit.unwrap();
-        
+
         console.log('Current branch:', b);
         console.log('Current commit:', c);
 
