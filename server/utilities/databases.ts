@@ -1346,9 +1346,6 @@ export const run = () => {
         const b = branch.unwrap();
         const c = commit.unwrap();
 
-        console.log('Current branch:', b);
-        console.log('Current commit:', c);
-
         let v: Version;
         if (version.isErr()) {
             // there is likely an issue with gitBranch and gitCommit
@@ -1377,24 +1374,19 @@ export const run = () => {
                 )
             ).unwrap();
 
-        console.log('Database current version:', v.serialize('.'));
         if (b !== v.gitBranch) {
-            console.log('Database branch does not match current branch');
-            const confirmed = await confirm(
+            const confirmed = process.argv.includes('branch-reset') || await confirm(
                 `Database branch does not match current branch
 Current git branch: ${b}
 Database git branch: ${v.gitBranch}
 Do you want to reset the database and update to the current branch?`
             );
             if (confirmed) {
-                await Version.reset();
-                await Version.runAllUpdates();
+                (await Version.reset()).unwrap();
+                (await Version.runAllUpdates()).unwrap();
                 await setVersion();
 
                 const backups = (await Backup.getBackups()).unwrap().reverse();
-
-                console.log('Backups:', backups);
-
                 const [b] = backups;
 
                 if (b) {
@@ -1407,11 +1399,12 @@ Do you want to reset the database and update to the current branch?`
                 }
             } else {
                 await setVersion();
-                await Version.runAllUpdates();
+                (await Version.runAllUpdates()).unwrap();
+                (await Backup.makeBackup()).unwrap();
             }
         } else {
             await setVersion();
-            await Version.runAllUpdates();
+            (await Version.runAllUpdates()).unwrap();
         }
 
         await DB.setIntervals();
