@@ -71,7 +71,7 @@ const {
 //             Colors.Reset,
 //     );
 //     if (!confirmed) {
-//         console.log('Exiting...');
+//         log('Exiting...');
 //         process.exit(0);
 //     }
 // }
@@ -140,7 +140,7 @@ export class Version {
     static async hasVersion(v: Version) {
         return attemptAsync(async () => {
             const current = (await Version.current()).unwrap();
-            return current.greaterThan(v);
+            return current.greaterThan(v, true);
         });
     }
 
@@ -189,7 +189,15 @@ export class Version {
      */
     public static current() {
         return attemptAsync(async () => {
-            const v = (await DB.get('db/get-version')).unwrap();
+            const res = await DB.get('db/get-version');
+            if (res.isErr()) return new Version({
+                major: 0,
+                minor: 0,
+                patch: 0,
+                gitBranch: '',
+                gitCommit: ''
+            });
+            const v = res.value;
             if (!v) throw new Error('Database version not found');
             return new Version(v);
         });
@@ -214,11 +222,12 @@ export class Version {
      */
     static async updateToVersion(version: Version): Promise<Result<void>> {
         return attemptAsync(async () => {
-            await Version.init();
+            (await Version.init()).unwrap();
             const versions = (await Version.getVersions()).unwrap();
-
             for (const v of versions) {
-                if (version.greaterThan(v)) {
+                // log('Checking version', v, 'against', version, version.greaterThan(version));
+                if (version.greaterThan(v, true)) {
+                    log('Running update for version', v);
                     (await Version.runUpdate(v)).unwrap();
                 }
             }
@@ -237,7 +246,7 @@ export class Version {
         return attemptAsync(async () => {
             const v = await Version.current();
             if (v.isOk() && v.value.greaterThan(Version.zero)) {
-                return console.log('Database already initialized');
+                return log('Database already initialized');
             }
 
             const initQuery = await readFile('storage/db/queries/db/init.sql');
@@ -245,14 +254,14 @@ export class Version {
             if (initQuery.isOk()) {
                 const res = await DB.unsafe.run(initQuery.value);
                 if (res.isOk()) {
-                    console.log('Database initialized');
-                    (await Version.addGitCols()).unwrap();
+                    log('Database initialized');
+                    (await Version.addGitCols());
                 } else {
-                    console.log('Error initializing database', res.error);
+                    log('Error initializing database', res.error);
                     throw res.error;
                 }
             } else {
-                console.log('Error reading init query', initQuery.error);
+                log('Error reading init query', initQuery.error);
                 throw initQuery.error;
             }
         });
@@ -270,7 +279,7 @@ export class Version {
      */
     static async runUpdate(version: Version): Promise<Result<boolean>> {
         return attemptAsync(async () => {
-            console.log('Updating database to version', version.serialize('.'));
+            log('Updating database to version', version.serialize('.'));
             const updateQuery = await readFile(
                 `storage/db/queries/db/versions/${version.serialize('-', true)}.sql`
             );
@@ -281,7 +290,7 @@ export class Version {
 
                 const res = await DB.unsafe.run(updateQuery.value);
                 if (res.isOk()) {
-                    console.log(
+                    log(
                         'Database updated to version',
                         version.serialize('.', true)
                     );
@@ -294,7 +303,7 @@ export class Version {
                     const scriptExists = exists(script);
 
                     if (scriptExists) {
-                        console.log(
+                        log(
                             'Running update script',
                             version.serialize('.', true)
                         );
@@ -304,7 +313,7 @@ export class Version {
                             version.serialize('.', true) + '.ts'
                         ]);
                         if (scriptRes.isErr()) {
-                            console.log(
+                            error(
                                 'Error running update script',
                                 version.serialize('.', true),
                                 scriptRes.error
@@ -313,13 +322,13 @@ export class Version {
                             throw scriptRes.error;
                         }
 
-                        console.log('Update script ran successfully');
+                        log('Update script ran successfully');
                     }
 
                     (await Version.set(version)).unwrap();
                     return true;
                 }
-                console.log(
+                error(
                     'Error updating database to version',
                     version,
                     res.error
@@ -327,7 +336,7 @@ export class Version {
                 await Backup.restoreBackup(b.value);
                 throw res.error;
             } else {
-                console.log('Error reading update query', updateQuery.error);
+                error('Error reading update query', updateQuery.error);
                 throw updateQuery.error;
             }
         });
@@ -359,7 +368,7 @@ export class Version {
                 )
             ).unwrap();
 
-            console.log('Database reset');
+            log('Database reset');
             return b.value;
         });
     }
@@ -376,25 +385,27 @@ export class Version {
         return attemptAsync(async () => {
             (await Version.init()).unwrap();
             const versions = (await Version.getVersions()).unwrap();
-            console.log('VERSIONS:', versions);
 
             for (const version of versions) {
-                console.log("Version:", version.serialize('.'));
-                const has = (await Version.hasVersion(version));
+                log('Version:', version.serialize('.'));
+                const has = await Version.hasVersion(version);
                 if (has.isErr()) {
-                    console.log('Error checking version', has.error);
+                    log('Error checking version', has.error);
                     break;
                 }
                 if (has.value) {
-                    console.log(
+                    log(
                         'Database already has updated to or version',
                         version.serialize('.')
                     );
                 } else {
-                    console.log('Running version update:', version.serialize('.'));
+                    log(
+                        'Running version update:',
+                        version.serialize('.')
+                    );
                     const res = await Version.runUpdate(version);
                     if (res.isErr()) {
-                        console.log(
+                        log(
                             'There was an error updating the database, it may be corrupted. Please restore from backup, edit the update file, then try again.'
                         );
                         break;
@@ -415,7 +426,7 @@ export class Version {
      */
     public static set(v: Version) {
         return attemptAsync(async () => {
-            console.log('Setting version to', v.serialize('.'));
+            log('Setting version to', v.serialize('.'));
 
             (await DB.run('db/delete-version')).unwrap();
             return (await DB.run('db/change-version', v)).unwrap();
@@ -424,6 +435,7 @@ export class Version {
 
     public static from(str: string, deilimiter: string) {
         return attempt(() => {
+            str = str.replaceAll('.json', '');
             const [major, minor, patch, gitBranch, gitCommit] =
                 str.split(deilimiter);
             if (isNaN(Number(major)))
@@ -462,8 +474,8 @@ export class Version {
         this.major = v.major;
         this.minor = v.minor;
         this.patch = v.patch;
-        this.gitBranch = v.gitBranch.replaceAll('-', '');
-        this.gitCommit = v.gitCommit;
+        this.gitBranch = (v.gitBranch || '').replaceAll('-', '');
+        this.gitCommit = v.gitCommit || '';
     }
 
     serialize(delimiter: string, min = false) {
@@ -479,20 +491,44 @@ export class Version {
         ].join(delimiter);
     }
 
-    greaterThan(v: Version) {
-        return (
-            v.major < this.major ||
-            (v.major === this.major && v.minor < this.minor) ||
-            (v.major === this.major &&
-                v.minor === this.minor &&
-                v.patch < this.patch)
-        );
+    greaterThan(v: Version, equalTo = false) {
+        log(this, v);
+        if (this.major > v.major) {
+            // log('this.major > v.major');
+            return true;
+        } else {
+            // log('this.major <= v.major');
+        }
+
+        if (this.major === v.major) {
+            if (this.minor > v.minor) {
+                // log('this.minor > v.minor');
+                return true;
+            } else {
+                // log('this.minor <= v.minor');
+            }
+
+            if (this.minor === v.minor) {
+                if (this.patch > v.patch) {
+                    // log('this.patch > v.patch');
+                    return true;
+                } else if (this.patch === v.patch && equalTo) {
+                    // log('this.patch === v.patch');
+                    return true;
+                }
+            }
+        } else {
+            // log('this.major <= v.major');
+        }
+
+        return false;
     }
 }
 
 export class Backup extends Version {
     public static from(str: string) {
         return attempt(() => {
+            str = str.replaceAll('.json', '');
             const [v, date] = str.split('_');
             return new Backup(Version.from(v, '-').unwrap(), Number(date));
         });
@@ -510,7 +546,7 @@ export class Backup extends Version {
         return attemptAsync(async () => {
             const version = (await Version.current()).unwrap();
 
-            console.log('Getting backups for version', version.serialize('.'));
+            log('Getting backups for version', version.serialize('.'));
 
             const backups = (await readDir('storage/db/backups'))
                 .unwrap()
@@ -573,10 +609,10 @@ export class Backup extends Version {
 
             const res = await saveFile('storage/db/backups/' + name, str);
             if (res.isOk()) {
-                console.log('Backup created:', name);
+                log('Backup created:', name);
                 return b;
             }
-            console.log('Error creating backup', res.error);
+            log('Error creating backup', res.error);
             throw res.error;
         });
     }
@@ -595,39 +631,44 @@ export class Backup extends Version {
         return attemptAsync(async () => {
             const currentVersion = (await Version.current()).unwrap();
             if (currentVersion.gitBranch !== backup.gitBranch) {
-                throw new Error(
+                const confirmed = await confirm('Are you sure you want to restore backup from a different branch?');
+                if (!confirmed) throw new Error(
                     'Cannot restore backup from a different branch'
                 );
             }
-            const backupRes = (await Backup.makeBackup()).unwrap();
+            const currentBackup = (await Backup.makeBackup()).unwrap();
 
             const resetRes = await Version.reset();
             if (resetRes.isErr()) {
-                console.log('Error resetting database', resetRes.error);
-                console.log(
+                log('Error resetting database', resetRes.error);
+                log(
                     'Reinitializing database, and restoring its current version...'
                 );
 
                 const updateRes = await Version.updateToVersion(currentVersion);
                 if (updateRes.isErr()) throw updateRes.error;
-                const restoreRes = await this.restoreBackup(backupRes);
+                const restoreRes = await Backup.restoreBackup(currentBackup);
                 if (restoreRes.isErr()) throw restoreRes.error;
                 throw resetRes.error;
             }
 
             const updateRes = await Version.updateToVersion(backup);
             if (updateRes.isErr()) throw updateRes.error;
-            console.log('Update successful');
+            log('Update successful');
 
             const versionNow = (await Version.current()).unwrap();
-            console.log('Version after updates:', versionNow.serialize('.'));
+            log('Version after updates:', versionNow.serialize('.'));
 
             const ts = (await DB.getTables()).unwrap();
-            console.log('Tables after updates:', ts);
+            log('Tables after updates:', ts);
+
+            console.log('Filename:', backup.serialize());
 
             const file = (
-                await readFile(`storage/db/backups/${backup.serialize()}`)
+                await readFile(`storage/db/backups/${backup.serialize()}.json`)
             ).unwrap();
+
+            log('Retrieved file:', file.length);
 
             const data = bigIntDecode(JSON.parse(file)) as {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -636,7 +677,7 @@ export class Backup extends Version {
 
             const tables = Object.keys(data);
 
-            console.log('Inserting...', tables);
+            log('Inserting...', tables);
             const res = await Promise.all(
                 tables.map(async table => {
                     const res = await attemptAsync(async () => {
@@ -653,7 +694,7 @@ export class Backup extends Version {
                                 const res = await DB.unsafe.run(q, r);
 
                                 if (res.isErr()) {
-                                    console.error(
+                                    error(
                                         'Error inserting data into',
                                         table,
                                         res.error,
@@ -669,7 +710,7 @@ export class Backup extends Version {
 
                     if (res.isErr()) throw res.error;
                     if (res.value?.some(r => r.isErr())) {
-                        console.error('Error inserting data');
+                        error('Error inserting data');
                         throw new Error('Error inserting data');
                     }
                     return res;
@@ -677,9 +718,9 @@ export class Backup extends Version {
             );
 
             if (res.every(r => r.isOk())) {
-                console.log('Database restored');
+                log('Database restored');
             } else {
-                // console.log('Error(s) restoring database', res);
+                // log('Error(s) restoring database', res);
                 throw new Error('Error(s) restoring database');
             }
         });
@@ -699,8 +740,9 @@ export class Backup extends Version {
         return `${super.serialize('-')}_${this.date}`;
     }
 
-    greaterThan(b: Backup) {
-        return this.date > b.date;
+    greaterThan(b: Backup, equalTo = false) {
+        if (super.greaterThan(b), equalTo) return true;
+        return equalTo ? this.date >= b.date : this.date > b.date;
     }
 }
 
@@ -772,7 +814,7 @@ export class DB {
 
     public static async vacuum() {
         return attemptAsync(async () => {
-            console.log('Vacuum go brrrrrrr');
+            log('Vacuum go brrrrrrr');
             const tables = await DB.getTables();
             if (tables.isErr()) throw tables.error;
             return Promise.all(
@@ -809,7 +851,7 @@ export class DB {
             str.replace(
                 /[A-Z]*[a-z]+((\d)|([A-Z0-9][a-z0-9]+))*([A-Z])?/g,
                 word => {
-                    // console.log(toSnakeCase(fromCamelCase(word)));
+                    // log(toSnakeCase(fromCamelCase(word)));
                     let w = toSnakeCase(fromCamelCase(word));
                     if (w.startsWith('_')) {
                         w = w.slice(1);
@@ -837,7 +879,7 @@ export class DB {
 
         // get every :variable in the query
         const matches = query.match(/:\w+/g);
-        // console.log(matches);
+        // log(matches);
         const newArgs: Parameter[] = [];
         if (matches) {
             // for each match, replace it with a $n
@@ -908,14 +950,14 @@ export class DB {
     static async setIntervals() {
         const { BACKUP_INTERVAL, BACKUP_DAYS } = env;
         if (!BACKUP_INTERVAL || !BACKUP_DAYS) {
-            console.log(
+            log(
                 'BACKUP_INTERVAL or BACKUP_DAYS not set, skipping backup intervals'
             );
             return;
         }
         const now = Date.now();
 
-        console.log(
+        log(
             'Setting backup intervals to create every',
             BACKUP_INTERVAL,
             'hours, and delete after',
@@ -928,7 +970,7 @@ export class DB {
             const backups = await Backup.getBackups();
             if (backups.isErr()) throw new Error('Could not find backups');
 
-            console.log(
+            log(
                 'Setting backup intervals to delete every',
                 BACKUP_DAYS,
                 'days'
@@ -936,7 +978,7 @@ export class DB {
 
             const setDelete = (backup: Backup, days: number) => {
                 daysTimeout(() => {
-                    console.log('Deleting backup:', backup);
+                    log('Deleting backup:', backup);
                     removeFile(`storage/db/backups/${backup.serialize()}`);
                 }, days);
             };
@@ -944,12 +986,12 @@ export class DB {
             // creates a backup every BACKUP_INTERVAL hours
             setInterval(
                 async () => {
-                    console.log('Creating automated database backup...');
+                    log('Creating automated database backup...');
                     const res = await Backup.makeBackup();
                     if (res.isOk()) {
                         setDelete(res.value, +BACKUP_DAYS);
                     } else {
-                        console.log('Error creating backup', res.error);
+                        log('Error creating backup', res.error);
                     }
                 },
                 +BACKUP_INTERVAL * 60 * 60 * 1000
@@ -963,7 +1005,7 @@ export class DB {
                 );
 
                 if (deleteDate < now) {
-                    console.log('Deleting backup:', b);
+                    log('Deleting backup:', b);
                     await removeFile(`storage/db/backups/${b}`);
                 } else {
                     setDelete(b, +BACKUP_DAYS);
@@ -983,7 +1025,7 @@ export class DB {
     static async setClearBackups() {
         return attemptAsync(async () => {
             if (!env.BACKUP_DAYS) {
-                console.log('No backup days set, skipping backup clearing');
+                log('No backup days set, skipping backup clearing');
                 return;
             }
             const backups = await Backup.getBackups();
@@ -998,13 +1040,13 @@ export class DB {
                 );
 
                 if (deleteDate < Date.now()) {
-                    console.log('Deleting backup:', b);
+                    log('Deleting backup:', b);
                     await removeFile(`storage/db/backups/${b}`);
                 }
 
                 // delete after 30 days
                 sleepUntil(() => {
-                    console.log('Deleting backup:', b);
+                    log('Deleting backup:', b);
                     removeFile(`storage/db/backups/${b}`);
                 }, new Date(deleteDate));
             }
@@ -1227,7 +1269,7 @@ export class DB {
         return attemptAsync(async () => {
             const q = await DB.pipeSafe(type, ...args);
             if (q.isErr()) {
-                console.error(q.error);
+                error(q.error);
                 throw q.error;
             }
             return q.value.rows?.[0] as Queries[T][1];
@@ -1251,7 +1293,7 @@ export class DB {
         return attemptAsync(async () => {
             const q = await DB.pipeSafe(type, ...args);
             if (q.isErr()) {
-                console.error(q.error);
+                error(q.error);
                 throw q.error;
             }
             return q.value.rows[0];
@@ -1275,7 +1317,7 @@ export class DB {
         return attemptAsync(async () => {
             const q = await DB.pipeSafe(type, ...args);
             if (q.isErr()) {
-                console.error(q.error);
+                error(q.error);
                 throw q.error;
             }
             return q.value.rows;
@@ -1300,7 +1342,7 @@ export class DB {
                 return attemptAsync(async () => {
                     const r = await DB.pipeUnsafe(query, ...args);
                     if (r.isErr()) {
-                        console.error(r.error);
+                        error(r.error);
                         throw r.error;
                     }
                 });
@@ -1312,7 +1354,7 @@ export class DB {
                 return attemptAsync(async () => {
                     const r = await DB.pipeUnsafe(query, ...args);
                     if (r.isErr()) {
-                        console.error(r.error);
+                        error(r.error);
                         throw r.error;
                     }
                     return r.value.rows[0] as type;
@@ -1325,7 +1367,7 @@ export class DB {
                 return attemptAsync(async () => {
                     const r = await DB.pipeUnsafe(query, ...args);
                     if (r.isErr()) {
-                        console.error(r.error);
+                        error(r.error);
                         throw r.error;
                     }
                     return r.value.rows as type[];
@@ -1371,7 +1413,7 @@ export const run = () => {
             v = (await Version.current()).unwrap();
         } else v = version.value;
 
-        const setVersion = async () =>
+        const setBranch = async () =>
             (
                 await Version.set(
                     new Version({
@@ -1382,7 +1424,7 @@ export const run = () => {
                 )
             ).unwrap();
 
-        if (b !== v.gitBranch) {
+        if (v.gitBranch !== '' && b !== v.gitBranch) {
             const confirmed =
                 process.argv.includes('branch-reset') ||
                 (await confirm(
@@ -1394,7 +1436,7 @@ Do you want to reset the database and update to the current branch?`
             if (confirmed) {
                 await Version.reset();
                 await Version.runAllUpdates();
-                await setVersion();
+                await setBranch();
 
                 const backups = (await Backup.getBackups()).unwrap().reverse();
                 const [b] = backups;
@@ -1404,17 +1446,18 @@ Do you want to reset the database and update to the current branch?`
                         `Do you want to restore the latest backup? ${b.serialize()}`
                     );
                     if (confirmed) await Backup.restoreBackup(b);
+                    await Version.runAllUpdates();
                 } else {
                     throw new Error('Backups not found');
                 }
             } else {
                 await Version.runAllUpdates();
                 await Backup.makeBackup();
-                await setVersion();
+                await setBranch();
             }
         } else {
             await Version.runAllUpdates();
-            await setVersion();
+            await setBranch();
         }
 
         await DB.setIntervals();
@@ -1426,7 +1469,7 @@ Do you want to reset the database and update to the current branch?`
 
 DB.connect()
     .then(async () => {
-        console.log('Connected to the database');
+        log('Connected to the database');
         (await run()).unwrap();
         DB.em.emit('connect');
 
@@ -1440,6 +1483,6 @@ DB.connect()
         process.on('SIGTERM', close);
     })
     .catch(e => {
-        console.error('Error connecting to the database', e);
+        error('Error connecting to the database', e);
         process.exit(1);
     });

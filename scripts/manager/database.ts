@@ -76,7 +76,7 @@ export const newVersion = async () => {
     if (doScript) {
         saveFileSync(
             `storage/db/scripts/versions/1-${minor}-${patch}.ts`,
-            `// New version 1.${minor}.${patch}\n\nDeno.exit(0) // Please do not remove this`
+            `// New version 1.${minor}.${patch}\n\nprocess.exit(0) // Please do not remove this`
         );
     }
 
@@ -247,7 +247,7 @@ export const restoreBackup = async () => {
 
     const latest = await Backup.latest();
     let latestBackup = '';
-    if(latest.isOk()) latestBackup = latest.value?.serialize() || '';
+    if (latest.isOk()) latestBackup = latest.value?.serialize() || '';
 
     const backup = await search(
         `Search for a backup to restore (${latestBackup})`,
@@ -256,6 +256,9 @@ export const restoreBackup = async () => {
             value: b
         }))
     );
+
+    // console.log({ backup });
+    // process.exit();
 
     if (backup.isErr()) {
         return backToMain('Error selecting backup: ' + backup.error);
@@ -267,17 +270,19 @@ export const restoreBackup = async () => {
     }
 
     const res = await Backup.restoreBackup(b.value);
+    console.log({ res });
     if (res.isOk()) {
         backToMain('Backup restored');
     } else {
-        backToMain('Error restoring backup: ' + res.error.message);
+        // console.error(res.error);
+        backToMain('Error restoring backup: ' + res.error);
     }
 };
 
 export const backup = async () => {
     const res = await Backup.makeBackup();
     if (res.isOk()) {
-        backToMain(`Backup created: ${res.value}`);
+        backToMain(`Backup created: ${res.value.serialize()}`);
     } else {
         backToMain('Error creating backup: ' + res.error.message);
     }
