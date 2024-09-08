@@ -11,7 +11,8 @@
         "fmt": "prettier . --write",
         "init": "ts-node ./scripts/init.ts",
         "dev": "concurrently --kill-others \"npm run start\" \"npm run build:watch\"",
-        "backup": "ts-node ./scripts/backup-db.ts"
+        "backup": "ts-node ./scripts/backup-db.ts",
+        "restore": "ts-node ./scripts/restore-db.ts"
     },
     "devDependencies": {
         "@popperjs/core": "^2.11.8",
