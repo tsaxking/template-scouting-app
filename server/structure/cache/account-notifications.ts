@@ -1,10 +1,10 @@
-import { Cache } from './cache';
+import { Data } from './cache';
 import { AccountNotifications as AN } from '../../utilities/tables';
 import { attemptAsync } from '../../../shared/check';
 import { DB } from '../../utilities/databases';
 import { uuid } from '../../utilities/uuid';
 
-export class AccountNotification extends Cache {
+export class AccountNotification extends Data {
     public static random() {
         // only used in tests
         return attemptAsync(async () => {

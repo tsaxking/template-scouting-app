@@ -1491,3 +1491,8 @@ DB.connect()
         error('Error connecting to the database', e);
         process.exit(1);
     });
+
+
+    const s = DB.get('sessions/get', {
+        id: '1',
+    });
