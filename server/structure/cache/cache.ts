@@ -276,7 +276,9 @@ Transaction.listen('/build', async (req, res, next) => {
 Transaction.cols.amount.type;
 
 
-Data.query()
+Data.query() 
+    // the issue here is that the columns are initialized in the query builder, not when it is created
+    // Instead of Data.query().select... it should be Data.select()... etc.
     .select({
         id: Transaction.cols.id,
     })
