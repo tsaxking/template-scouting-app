@@ -28,6 +28,7 @@ import { SimpleEventEmitter } from '../../shared/event-emitter';
 import { gitBranch, gitCommit } from './git';
 import { Version as V } from './tables';
 import { confirm } from '../../scripts/prompt';
+import cliProgress from 'cli-progress';
 
 /**
  * The name of the main database
@@ -676,11 +677,20 @@ export class Backup extends Version {
 
             const tables = Object.keys(data);
 
+            const multibar = new cliProgress.MultiBar({
+                clearOnComplete: false,
+                hideCursor: true,
+                format: '{bar} | {percentage}% | {value}/{total} | {table}'
+            }, cliProgress.Presets.shades_classic);
+
             log('Inserting...', tables);
             const res = await Promise.all(
                 tables.map(async table => {
                     const res = await attemptAsync(async () => {
                         const rows = data[table];
+                        const bar = multibar.create(rows.length, 0, { table });
+                        let current = 0;
+
                         const cols = Object.keys(rows[0] || {});
                         if (!cols.length) return; // no data to insert
 
@@ -702,6 +712,10 @@ export class Backup extends Version {
                                     );
                                 }
 
+                                current++;
+
+                                bar.update(current, { filename: table });
+
                                 return res;
                             })
                         );
@@ -715,6 +729,8 @@ export class Backup extends Version {
                     return res;
                 })
             );
+
+            multibar.stop();
 
             if (res.every(r => r.isOk())) {
                 log('Database restored');
@@ -742,6 +758,15 @@ export class Backup extends Version {
     greaterThan(b: Backup, equalTo = false) {
         if ((super.greaterThan(b), equalTo)) return true;
         return equalTo ? this.date >= b.date : this.date > b.date;
+    }
+
+    
+    open() {
+        return attemptAsync(async () => {
+            const res = await readFile(`storage/db/backups/${this.serialize()}.json`);
+            if (res.isErr()) throw res.error;
+            return JSON.parse(res.value);
+        });
     }
 }
 
@@ -895,6 +920,7 @@ export class DB {
 
         return [deCamelCase(query), copied];
     }
+
 
     /**
      * Postgres doesn't like capitalized table names, so we convert them to snake case.

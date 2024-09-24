@@ -144,3 +144,6 @@ dist
 # Duplicate packages
 .package.json
 .package-lock.json
+
+backup.iv
+.backup
