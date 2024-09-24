@@ -11,7 +11,7 @@ import {
     translate
 } from '../../../shared/submodules/calculations/src/linear-algebra/matrix-calculations';
 import { Color } from '../../submodules/colors/color';
-import { Spline } from '../../../shared/submodules/calculations/src/linear-algebra/spline';
+import { BezzierSpline as Spline } from '../../../shared/submodules/calculations/src/linear-algebra/spline';
 
 const canvas = document.createElement('canvas');
 document.body.appendChild(canvas);
