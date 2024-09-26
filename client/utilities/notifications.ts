@@ -58,14 +58,14 @@ export const notify = <T extends 'toast' | 'alert'>(
         if (doShow) toast.show();
 
         return toast;
-    } else {
-        const alert = new Alert(title, data.message, data.color);
-
-        setAnimation(alert);
-
-        if (doShow) alert.show();
-        return alert;
     }
+    const alert = new Alert(title, data.message, data.color);
+
+    setAnimation(alert);
+
+    if (doShow) alert.show();
+    return alert;
+
     // const alert = new Alert(title, data.message, data.color);
 
     // setAnimation(alert);

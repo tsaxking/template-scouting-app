@@ -1,32 +1,34 @@
 <script lang="ts">
-import { Random } from '../../../../shared/math';
-import { createEventDispatcher } from 'svelte';
-import { capitalize, fromCamelCase } from '../../../../shared/text';
-import type { BootstrapColor } from '../../../submodules/colors/color';
-export let value: boolean = false;
-export let name: string;
-export let color: BootstrapColor;
+    import { Random } from '../../../../shared/math';
+    import { createEventDispatcher } from 'svelte';
+    import { capitalize, fromCamelCase } from '../../../../shared/text';
+    import type { BootstrapColor } from '../../../submodules/colors/color';
+    export let value: boolean = false;
+    export let name: string;
+    export let color: BootstrapColor;
 
-let id = Random.uuid({
-    charset: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
-});
+    let id = Random.uuid({
+        charset: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    });
 
-const dispatch = createEventDispatcher();
+    const dispatch = createEventDispatcher();
 
-const onChange = () => {
-    dispatch('change', value);
-};
+    const onChange = () => {
+        dispatch('change', value);
+    };
 </script>
 
 <input
-    type="checkbox"
+    {id}
     class="btn-check btn-small"
     autocomplete="off"
-    {id}
+    type="checkbox"
     bind:checked="{value}"
     on:change="{onChange}"
 />
-<label class="btn btn-outline-{color} label" for="{id}">
+<label
+    class="btn btn-outline-{color} label"
+    for="{id}">
     {capitalize(fromCamelCase(name))}
 </label>
 

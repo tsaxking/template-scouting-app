@@ -1,12 +1,12 @@
 <script lang="ts">
-import { createEventDispatcher } from 'svelte';
+    import { createEventDispatcher } from 'svelte';
 
-const dispatch = createEventDispatcher();
+    const dispatch = createEventDispatcher();
 
-export let tabs: string[] = [];
-export let active: string = '';
+    export let tabs: string[] = [];
+    export let active: string = '';
 
-const colors: string[] = ['secondary', 'success', 'secondary', 'warning'];
+    const colors: string[] = ['secondary', 'success', 'secondary', 'warning'];
 </script>
 
 <ul class="nav nav-tabs nav-pills nav-fill">
