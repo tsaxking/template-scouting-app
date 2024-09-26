@@ -1,67 +1,67 @@
 <script lang="ts">
-import { App } from '../../../models/app/app';
-import type { Section, Tick } from '../../../models/app/app';
-import type { BootstrapColor } from '../../../submodules/colors/color';
-export let app: App;
+    import { App } from '../../../models/app/app';
+    import type { Section, Tick } from '../../../models/app/app';
+    import type { BootstrapColor } from '../../../submodules/colors/color';
+    export let app: App;
 
-let currentSection: Section = 'auto';
+    let currentSection: Section = 'auto';
 
-const sections: {
-    [key in Section]: [BootstrapColor, BootstrapColor];
-} = {
-    auto: ['success', 'light'],
-    teleop: ['primary', 'light'],
-    endgame: ['warning', 'dark'],
-    end: ['danger', 'light']
-};
+    const sections: {
+        [key in Section]: [BootstrapColor, BootstrapColor];
+    } = {
+        auto: ['success', 'light'],
+        teleop: ['primary', 'light'],
+        endgame: ['warning', 'dark'],
+        end: ['danger', 'light']
+    };
 
-let time = 0;
+    let time = 0;
 
-let prev: App;
-let matchNumber: number = 0;
-let teamNumber: number = 0;
-let compLevel: string = '';
+    let prev: App;
+    let matchNumber: number = 0;
+    let teamNumber: number = 0;
+    let compLevel: string = '';
 
-const section = (s: Section) => {
-    currentSection = s;
-};
-const tick = (t: Tick) => {
-    time = t.second;
-};
-const end = () => {
-    currentSection = 'end';
-};
+    const section = (s: Section) => {
+        currentSection = s;
+    };
+    const tick = (t: Tick) => {
+        time = t.second;
+    };
+    const end = () => {
+        currentSection = 'end';
+    };
 
-$: {
-    if (app) {
-        if (prev) {
-            prev.off('section', section);
-            prev.off('tick', tick);
-            prev.off('end', end);
+    $: {
+        if (app) {
+            if (prev) {
+                prev.off('section', section);
+                prev.off('tick', tick);
+                prev.off('end', end);
+            }
+
+            app.on('section', section);
+            app.on('tick', tick);
+            app.on('end', end);
+
+            prev = app;
+
+            matchNumber = App.matchData.matchNumber;
+            teamNumber = App.matchData.teamNumber;
+            compLevel = App.matchData.compLevel;
         }
-
-        app.on('section', section);
-        app.on('tick', tick);
-        app.on('end', end);
-
-        prev = app;
-
-        matchNumber = App.matchData.matchNumber;
-        teamNumber = App.matchData.teamNumber;
-        compLevel = App.matchData.compLevel;
     }
-}
 
-const setSection = (section: string) => {
-    currentSection = section as Section;
-    app.changeSection(section as Section);
-};
+    const setSection = (section: string) => {
+        currentSection = section as Section;
+        app.changeSection(section as Section);
+    };
 
-const formatTime = (time: number) => {
-    const minutes = Math.floor(time / 60);
-    const seconds = time % 60;
-    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-};
+    const formatTime = (time: number) => {
+        const minutes = Math.floor(time / 60);
+        const seconds = time % 60;
+        return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+    };
 </script>
 
 <div class="timer position-absolute bg-dark rounded">
@@ -83,15 +83,14 @@ const formatTime = (time: number) => {
             <div class="position-relative">
                 <div class="progress position-relative w-100">
                     <div
+                        style:width="{(time / 150) * 100}%"
                         class="progress-bar progress-bar-striped bg-{color}"
-                        role="progressbar"
-                        style="width: {(time / 150) * 100}%"
-                        aria-valuenow="{time}"
-                        aria-valuemin="0"
                         aria-valuemax="150"
-                    ></div>
-                    <div
-                        class="position-absolute w-100 text-center text-{text}"
+                        aria-valuemin="0"
+                        aria-valuenow="{time}"
+                        role="progressbar"
+                    />
+                    <div class="position-absolute w-100 text-center text-{text}"
                     >
                         {formatTime(time)}
                     </div>

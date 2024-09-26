@@ -22,22 +22,24 @@ const groups: PageGroup[] = [
 let active = 'dashboard';
 const domain = '';
 
-const navItems: string[] = [];
+    const navItems: string[] = [];
 
-const accountLinks: string[] = [
+    const accountLinks: string[] = [
     // 'account',
     // 'contact',
     // null
-];
+    ];
+
+    let loading = false;
 </script>
 
 <Main
-    title="Team Tators"
+    {accountLinks}
     {groups}
+    {navItems}
+    title="Team Tators"
     bind:active
     on:openPage="{e => (active = e.detail)}"
-    {navItems}
-    {accountLinks}
 >
     <Page {active} {domain} title="dashboard">
         <Tablets />

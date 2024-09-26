@@ -1,7 +1,7 @@
 <script lang="ts">
-import { ServerRequest } from '../../utilities/requests';
+    import { ServerRequest } from '../../utilities/requests';
 
-let form: HTMLFormElement;
+    let form: HTMLFormElement;
 </script>
 
 <main>
@@ -11,9 +11,9 @@ let form: HTMLFormElement;
         </div>
         <div class="row">
             <form
+                bind:this="{form}"
                 action="/sign-in"
                 method="POST"
-                bind:this="{form}"
                 on:submit|preventDefault="{() => {
                     ServerRequest.post('/sign-in', {
                         pin: form.pin.value
@@ -29,15 +29,17 @@ let form: HTMLFormElement;
                 <div class="form-group">
                     <label for="pin">Pin</label>
                     <input
-                        type="password"
-                        class="form-control"
                         id="pin"
                         name="pin"
+                        class="form-control"
                         required
+                        type="password"
                     />
                 </div>
 
-                <button type="submit" class="btn btn-primary">Submit</button>
+                <button
+                    class="btn btn-primary"
+                    type="submit">Submit</button>
             </form>
         </div>
     </div>

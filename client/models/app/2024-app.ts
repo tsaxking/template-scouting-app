@@ -42,7 +42,8 @@ export const generate2024App = (
         src: new Img('/public/pictures/icons/src.png'),
         clb: new Img('/public/pictures/icons/clb.png'),
         trp: new Img('/public/pictures/icons/trp.png'),
-        nte: new Img('/public/pictures/icons/note.png')
+        nte: new Img('/public/pictures/icons/note.png'),
+        lob: new Img('/public/pictures/icons/lob.png')
     };
 
     const images: {
@@ -53,7 +54,8 @@ export const generate2024App = (
         src: new Image(60, 60),
         clb: new Image(60, 60),
         trp: new Image(60, 60),
-        nte: new Image(60, 60)
+        nte: new Image(60, 60),
+        lob: new Image(60, 60)
     };
 
     for (const key in images) {
@@ -110,8 +112,8 @@ export const generate2024App = (
 
     // app.border = new Border(border as [number, number][]);
 
-    // app.border.$properties.doDraw = isIn;
-    // app.border.$properties.fill = {
+    // app.border.properties.doDraw = isIn;
+    // app.border.properties.fill = {
     //     color: Color.fromName('black').setAlpha(0.5).toString('rgba'),
     // }
     const blueButtonClasses = ['btn', 'btn-primary', 'btn-lg'];

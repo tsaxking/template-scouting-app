@@ -8,10 +8,10 @@ import { router as admin } from './routes/admin';
 import { router as account } from './routes/account';
 import { router as api } from './routes/api';
 import { router as role } from './routes/roles';
+import { router as notifications } from './routes/account-notifications';
 import { FileUpload } from './middleware/stream';
 import { ReqBody } from './structure/app/req';
 import { parseCookie } from '../shared/cookie';
-import { stdin } from './utilities/stdin';
 import path from 'path';
 import { DB } from './utilities/databases';
 import { Session } from './structure/sessions';
@@ -186,6 +186,8 @@ app.get('/test/:page', (req, res, next) => {
 
 app.route('/api', api);
 app.route('/account', account);
+// app.route('/roles', role);
+// app.route('/account-notifications', notifications);
 
 app.get('/sign-in', (req, res) => {
     res.sendTemplate('entries/sign-in');
@@ -341,7 +343,7 @@ app.post<{
         const data = await ServerRequest.getEventData(key);
         // console.log(data);
         if (data.isOk()) return res.json(data.value);
-        else return res.status(500).json(data.error);
+        return res.status(500).json(data.error);
     }
 
     const data = getJSONSync(name);

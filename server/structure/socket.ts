@@ -4,6 +4,7 @@ import { Server, Socket } from 'socket.io';
 import { parseCookie } from '../../shared/cookie';
 import { validate } from '../middleware/data-type';
 import { uuid } from '../utilities/uuid';
+import env from '../utilities/env';
 
 type Cache = {
     event: string;
@@ -71,7 +72,7 @@ export class SocketWrapper {
      * @readonly
      * @type {*}
      */
-    private readonly em = new EventEmitter<keyof SocketEvent>();
+    private readonly em = new EventEmitter<SocketEvent>();
 
     // public cache: Cache[] = [];
 
@@ -91,7 +92,13 @@ export class SocketWrapper {
         // cb?: (socket: Socket) => void
     ) {
         io.on('connection', socket => {
-            console.log('connected');
+            // if (socket.recovered) console.log('recovered connection');
+            if (env.ENVIRONMENT === 'dev') {
+                if (performance.now() < 10000) {
+                    console.log('server recently started, reloading client...');
+                    return socket.emit('reload');
+                }
+            }
             this.em.emit('connect', socket);
 
             socket.emit('init', socket.id);
@@ -106,7 +113,7 @@ export class SocketWrapper {
             }
 
             socket.on('disconnect', () => {
-                console.log('disconnected');
+                // console.log('disconnected');
                 this.em.emit('disconnect', socket);
             });
         });

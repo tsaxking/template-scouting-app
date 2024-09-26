@@ -45,10 +45,8 @@ const translateMatrix = [0.25, 0.25, 0.25] as Point3D;
 
 const circles = cubePoints.map(p => {
     const c = new Circle(p, 0.01);
-    c.properties.fill = {
-        color: `rgb(${p[0] * 255}, ${p[1] * 255}, ${p[2] * 255})`
-    };
-    c.properties.line = { color: 'black' };
+    c.properties.fill.color = `rgb(${p[0] * 255}, ${p[1] * 255}, ${p[2] * 255})`;
+    c.properties.line.color = 'rgba(0, 0, 0, 0)';
     c.center = scale(c.center as Point3D, scaleMatrix);
     c.center = translate(c.center as Point3D, translateMatrix);
     return c;
@@ -71,7 +69,7 @@ const edges = [
     [3, 7]
 ];
 
-const spline = new Spline(
+const spline = new Spline([
     new Point(...translate(scale([0, 0, 0], scaleMatrix), translateMatrix)),
     new Point(...translate(scale([1, 0.5, 0], scaleMatrix), translateMatrix)),
     new Point(...translate(scale([1, 0.5, 0], scaleMatrix), translateMatrix)),
@@ -80,7 +78,7 @@ const spline = new Spline(
         ...translate(scale([0.75, 0.25, 0.75], scaleMatrix), translateMatrix)
     ),
     new Point(...translate(scale([0, 1, 0], scaleMatrix), translateMatrix))
-);
+]);
 
 const splinePoints = spline.generatePoints(100);
 
@@ -92,7 +90,7 @@ c.animate(() => {
     }
 
     for (const [p1, p2] of edges) {
-        c.$ctx.save();
+        c.ctx.save();
 
         const fromColor = new Color(
             ...(circles[p1].center as Point3D)
@@ -102,29 +100,29 @@ c.animate(() => {
         );
 
         // linear fade
-        const gradient = c.$ctx.createLinearGradient(
-            circles[p1].x * c.$ctx.canvas.width,
-            circles[p1].y * c.$ctx.canvas.height,
-            circles[p2].x * c.$ctx.canvas.width,
-            circles[p2].y * c.$ctx.canvas.height
+        const gradient = c.ctx.createLinearGradient(
+            circles[p1].x * c.ctx.canvas.width,
+            circles[p1].y * c.ctx.canvas.height,
+            circles[p2].x * c.ctx.canvas.width,
+            circles[p2].y * c.ctx.canvas.height
         );
 
         gradient.addColorStop(0, fromColor);
         gradient.addColorStop(1, toColor);
 
-        c.$ctx.strokeStyle = gradient;
+        c.ctx.strokeStyle = gradient;
 
-        c.$ctx.beginPath();
-        c.$ctx.moveTo(
-            circles[p1].x * c.$ctx.canvas.width,
-            circles[p1].y * c.$ctx.canvas.height
+        c.ctx.beginPath();
+        c.ctx.moveTo(
+            circles[p1].x * c.ctx.canvas.width,
+            circles[p1].y * c.ctx.canvas.height
         );
-        c.$ctx.lineTo(
-            circles[p2].x * c.$ctx.canvas.width,
-            circles[p2].y * c.$ctx.canvas.height
+        c.ctx.lineTo(
+            circles[p2].x * c.ctx.canvas.width,
+            circles[p2].y * c.ctx.canvas.height
         );
-        c.$ctx.stroke();
-        c.$ctx.restore();
+        c.ctx.stroke();
+        c.ctx.restore();
     }
 
     for (const p of splinePoints) {
@@ -133,19 +131,19 @@ c.animate(() => {
         p.y = a[1];
         p.z = a[2];
         const color = new Color(
-            ...(p.array.map(n => n * 255) as Point3D)
+            ...(p.array.map((n: number) => n * 255) as Point3D)
         ).toString('rgba');
 
-        c.$ctx.fillStyle = color;
-        c.$ctx.beginPath();
-        c.$ctx.arc(
-            p.x * c.$ctx.canvas.width,
-            p.y * c.$ctx.canvas.height,
+        c.ctx.fillStyle = color;
+        c.ctx.beginPath();
+        c.ctx.arc(
+            p.x * c.ctx.canvas.width,
+            p.y * c.ctx.canvas.height,
             5,
             0,
             2 * Math.PI
         );
-        c.$ctx.fill();
+        c.ctx.fill();
     }
 });
 

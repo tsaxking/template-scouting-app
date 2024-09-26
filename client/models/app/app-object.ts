@@ -87,7 +87,7 @@ type Events<O> = {
  * @template [T=unknown]
  */
 export class AppObject<T = unknown, actions = string> {
-    public readonly em = new EventEmitter<keyof Events<this>>();
+    public readonly em = new EventEmitter<Events<this>>();
 
     public on<K extends keyof Events<this>>(
         event: K,
@@ -348,9 +348,8 @@ export class Iterator<actions = string> extends AppObject<number> {
         this.toChange(state => {
             if (typeof state === 'undefined') {
                 return 0;
-            } else {
-                return state + 1;
             }
+            return state + 1;
         });
 
         if (defaultState !== undefined) {
