@@ -14,10 +14,10 @@
     let i: HTMLInputElement;
     let recaptcha = false;
 
-const submit = () => {
-    if (i.value || !recaptcha) {
-        return;
-    }
+    const submit = () => {
+        if (i.value || !recaptcha) {
+            return;
+        }
 
         if (!valid) {
             console.log('Is not valid');
@@ -29,9 +29,9 @@ const submit = () => {
         });
     };
 
-const isValid = (username: string, password: string) => {
-    return isUsernameValid(username) && password.length > 3;
-};
+    const isValid = (username: string, password: string) => {
+        return isUsernameValid(username) && password.length > 3;
+    };
 
     const isUsernameValid = (username: string): boolean => {
         if (username.includes('@')) {
@@ -75,16 +75,18 @@ const isValid = (username: string, password: string) => {
             <form on:submit|preventDefault="{submit}">
                 <div class="mb-3 form-floating">
                     <input
-                        class="form-control"
-                        type="text"
-                        name="username"
                         id="username"
-                        bind:value="{username}"
+                        name="username"
+                        class="form-control"
                         placeholder="Username or Email"
+                        type="text"
+                        bind:value="{username}"
                         on:input="{onInput}"
                     />
-                    <label class="form-label" for="username"
-                        >Username or Email</label
+                    <label
+                        class="form-label"
+                        for="username"
+                    >Username or Email</label
                     >
                 </div>
                 <form on:submit|preventDefault="{submit}">
