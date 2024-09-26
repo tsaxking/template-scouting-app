@@ -583,7 +583,7 @@ router.post<{
             return res.sendStatus('account:cannot-edit-other-account');
         }
 
-        res.json(await account.getPermissions());
+        res.json((await account.getPermissions()).unwrap());
     }
 );
 
