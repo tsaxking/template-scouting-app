@@ -11,8 +11,7 @@
     {#each tabs as tab}
         <li class="nav-item">
             <a
-                class="nav-link"
-                class:active="{tab === active}"
+                class="nav-link {tab === active ? 'active bg-primary' : ''}"
                 href="javascript:void(0)"
                 on:click="{() => dispatch('change', tab)}">{tab}</a
             >

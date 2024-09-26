@@ -14,12 +14,10 @@
     let i: HTMLInputElement;
     let recaptcha = false;
 
-    const submit = () => {
-        // if (i.value || !recaptcha) {
-    //     return;
-    // }
-
-        if (i.value) return;
+const submit = () => {
+    if (i.value || !recaptcha) {
+        return;
+    }
 
         if (!valid) {
             console.log('Is not valid');
@@ -31,9 +29,9 @@
         });
     };
 
-    const isValid = (username: string, password: string) => {
-        return isUsernameValid(username) && password.length > 8;
-    };
+const isValid = (username: string, password: string) => {
+    return isUsernameValid(username) && password.length > 3;
+};
 
     const isUsernameValid = (username: string): boolean => {
         if (username.includes('@')) {
@@ -66,21 +64,27 @@
     };
 </script>
 
-<main>
-    <div class="container pt-5">
-        <div class="row">
-            <div class="col-md-6">
-                <div class="row mb-3">
-                    <h1>
-                        {title}: Sign in
-                    </h1>
-                </div>
-
-                <div class="row mb-3">
-                    <a
-                        class="link-primary nav-link"
-                        href="/account/sign-up"
-                    >Sign Up</a
+<div class="container pt-5">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="row mb-3">
+                <h1>
+                    {title}: Sign in
+                </h1>
+            </div>
+            <form on:submit|preventDefault="{submit}">
+                <div class="mb-3 form-floating">
+                    <input
+                        class="form-control"
+                        type="text"
+                        name="username"
+                        id="username"
+                        bind:value="{username}"
+                        placeholder="Username or Email"
+                        on:input="{onInput}"
+                    />
+                    <label class="form-label" for="username"
+                        >Username or Email</label
                     >
                 </div>
                 <form on:submit|preventDefault="{submit}">
@@ -169,7 +173,7 @@
                         }}"
                     /> -->
                 </form>
-            </div>
+            </form>
         </div>
     </div>
-</main>
+</div>

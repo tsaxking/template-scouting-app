@@ -75,6 +75,17 @@ import { Update_sessions_sign_out } from './tables';
 import { Insert_db_change_version } from './tables';
 import { Delete_db_delete_version } from './tables';
 
+import { ServerRequests } from './tables';
+import { Insert_server_requests_new } from './tables';
+import { Delete_server_requests_delete } from './tables';
+import { Update_server_requests_update } from './tables';
+import { Select_server_requests_get } from './tables';
+import { Select_server_requests_all } from './tables';
+import { TBARequests } from './tables';
+import { Update_db_versions______ } from './tables';
+import { Select_tba_from_url } from './tables';
+import { Insert_tba_new } from './tables';
+
 export type Queries = {
     'permissions/all': [[Select_permissions_all], Permissions];
     'permissions/from-role': [[{ roleId: string }], Permissions];
@@ -217,5 +228,65 @@ export type Queries = {
                 accountId: string;
             }
         ]
+    ];
+    'server-requests/all': [
+        [],
+        {
+            id: string;
+            url: string;
+            body: string;
+            response: string | undefined;
+            date: number;
+        }
+    ];
+    'server-requests/new': [
+        [
+            {
+                id: string;
+                url: string;
+                body: string;
+                date: number;
+            }
+        ],
+        {
+            id: string;
+            url: string;
+            body: string;
+            date: number;
+            response: string | undefined;
+        }
+    ];
+    'server-requests/update': [
+        [
+            {
+                id: string;
+                response: string;
+            }
+        ],
+        unknown
+    ];
+    'tba/from-url': [
+        [
+            {
+                url: string;
+            }
+        ],
+        {
+            url: string;
+            response: string | undefined;
+            updated: number;
+            update: 0 | 1;
+        }
+    ];
+    'tba/new': [
+        [
+            {
+                url: string;
+                response: string;
+                updated: number;
+                update: 0 | 1;
+            }
+        ],
+        unknown
     ];
 };
