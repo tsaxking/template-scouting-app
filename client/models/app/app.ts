@@ -44,7 +44,7 @@ import { socket } from '../../utilities/socket';
 import { Random } from '../../../shared/math';
 import { Tick } from './tick';
 import { MatchData } from './match-data';
-import { TabletState } from '../../../server/structure/cache/tablet';
+import { Loop } from '../../../shared/loop';
 
 /**
  * Description placeholder
@@ -99,7 +99,7 @@ const SAVED_MATCH_VERSION = 0;
  * @typedef {AppEvents}
  */
 type AppEvents = {
-    section: Section;
+    section: Section | undefined;
     error: Error;
     stop: void;
     end: void;
@@ -204,7 +204,7 @@ export class App<
         return b;
     }
 
-    private static readonly emitter = new EventEmitter<keyof GlobalEvents>();
+    private static readonly emitter = new EventEmitter<GlobalEvents>();
 
     public static on<E extends keyof GlobalEvents>(
         event: E,
@@ -512,11 +512,10 @@ export class App<
                 matches.map(async m => {
                     const d = await ServerRequest.post('/submit', m);
                     if (d.isOk()) return 'success';
-                    else {
-                        if (d.error.message.includes('invalid'))
-                            return 'data parse error';
-                        else return 'server error';
-                    }
+
+                    if (d.error.message.includes('invalid'))
+                        return 'data parse error';
+                    return 'server error';
                 })
             );
         });
@@ -538,10 +537,9 @@ export class App<
                     App.emit('new-event', res.value);
                 }
                 return res.value;
-            } else {
-                alert('Error getting scout groups');
-                throw res.error;
             }
+            alert('Error getting scout groups');
+            throw res.error;
         });
     }
 
@@ -633,7 +631,7 @@ export class App<
             App.current.destroy();
         }
         App.current = this;
-        this.canvas.$ctx.canvas.style.position = 'absolute';
+        this.canvas.ctx.canvas.style.position = 'absolute';
 
         this.background = new Img(`/public/pictures/${this.year}field.png`, {
             x: 0,
@@ -642,12 +640,12 @@ export class App<
             height: 1
         });
 
-        this.path.$properties.line = {
+        this.path.properties.line = {
             color: Color.fromName('black').toString('rgba'),
             width: 1
         };
 
-        this.canvas.add(this.background, this.path);
+        // this.canvas.add(this.background, this.path);
 
         this.clicking = false;
 
@@ -723,20 +721,31 @@ export class App<
             target.style.width = '100%';
             this.setView();
 
-            this.cover.style.position = 'absolute';
-            this.cover.style.width = '100%';
-            this.cover.style.height = '100%';
-            this.cover.style.zIndex = '1000';
-            this.cover.style.backgroundColor = Color.fromBootstrap('dark')
-                .setAlpha(0.75)
-                .toString('rgba');
-            this.cover.style.display = 'block';
-            this.cover.innerHTML = `
-                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 2em;">
-                    Click to Start
-                </div>
-            `;
-            target.appendChild(this.cover);
+            if (!this.currentTick) {
+                this.cover.style.position = 'absolute';
+                this.cover.style.width = '100%';
+                this.cover.style.height = '100%';
+                this.cover.style.zIndex = '1000';
+                this.cover.style.backgroundColor = Color.fromBootstrap('dark')
+                    .setAlpha(0.75)
+                    .toString('rgba');
+                this.cover.style.display = 'block';
+                this.cover.classList.add('no-select');
+                this.cover.innerHTML = `
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 2em;">
+                        <h4>
+                            Match <span class="text-primary">${App.matchData.compLevel}${App.matchData.matchNumber}</span> is ready, please take this time to locate where your robot (<span class="text-primary">${App.matchData.teamNumber}</span>) is on the field.
+                            <br>
+                            <br>
+                            Click anywhere to start
+                            <br>
+                            <br>
+                            <small>If there is an error with the team/match/comp level, it's recommended you change it after the match is over so you don't miss anything.</small>
+                        </h4>
+                    </div>
+                `;
+                target.appendChild(this.cover);
+            }
 
             this.cancel.classList.add('btn', 'btn-secondary');
             this.cancel.style.position = 'absolute';
@@ -750,7 +759,7 @@ export class App<
                 );
                 if (!confirmed) return;
                 App.abort();
-                this.emit('restart');
+                this.emit('restart', undefined);
             };
             target.appendChild(this.cancel);
         }
@@ -827,12 +836,12 @@ export class App<
 
         if (target.clientWidth > target.clientHeight * 2) {
             const xOffset = (target.clientWidth - target.clientHeight * 2) / 2;
-            this.canvas.$ctx.canvas.width = target.clientHeight * 2;
-            this.canvas.$ctx.canvas.height = target.clientHeight;
+            this.canvas.ctx.canvas.width = target.clientHeight * 2;
+            this.canvas.ctx.canvas.height = target.clientHeight;
             this.height = target.clientHeight;
             this.width = target.clientHeight * 2;
-            this.canvas.$ctx.canvas.style.top = '0px';
-            this.canvas.$ctx.canvas.style.left = `${xOffset}px`;
+            this.canvas.ctx.canvas.style.top = '0px';
+            this.canvas.ctx.canvas.style.left = `${xOffset}px`;
             this.xOffset = xOffset;
             this.yOffset = 0;
 
@@ -856,12 +865,12 @@ export class App<
             }
         } else {
             const yOffset = (target.clientHeight - target.clientWidth / 2) / 2;
-            this.canvas.$ctx.canvas.width = target.clientWidth;
-            this.canvas.$ctx.canvas.height = target.clientWidth / 2;
+            this.canvas.ctx.canvas.width = target.clientWidth;
+            this.canvas.ctx.canvas.height = target.clientWidth / 2;
             this.height = target.clientWidth / 2;
             this.width = target.clientWidth;
-            this.canvas.$ctx.canvas.style.top = `${yOffset}px`;
-            this.canvas.$ctx.canvas.style.left = '0px';
+            this.canvas.ctx.canvas.style.top = `${yOffset}px`;
+            this.canvas.ctx.canvas.style.left = '0px';
             this.xOffset = 0;
             this.yOffset = yOffset;
 
@@ -887,7 +896,7 @@ export class App<
 
         // flip x and y axis based on field orientation
         // const { background } = this;
-        // background.$properties
+        // background.properties
     }
 
     // █ █ ▄▀▄ █▀▄ █ ▄▀▄ ██▄ █   ██▀ ▄▀▀
@@ -1054,9 +1063,9 @@ export class App<
     setBorder(points: Point2D[], color: Color) {
         if (this.border) throw new Error('Border already set');
         const b = new Border(points);
-        b.$properties.doDraw = () =>
+        b.properties.doDraw = () =>
             this.currentLocation ? b.isIn(this.currentLocation) : false;
-        b.$properties.fill = {
+        b.properties.fill = {
             color: color.toString('rgba')
         };
 
@@ -1156,9 +1165,7 @@ export class App<
      * @readonly
      * @type {EventEmitter<keyof AppEvents>}
      */
-    private readonly $emitter: EventEmitter<keyof AppEvents> = new EventEmitter<
-        keyof AppEvents
-    >();
+    private readonly emitter = new EventEmitter<AppEvents>();
 
     /**
      * All the ticks of the match
@@ -1197,67 +1204,99 @@ export class App<
      * @returns {void) => void}
      */
     public launch(cb?: (tick: Tick) => void) {
+        this.off('stop');
         const { cover } = this;
         this.build();
         this.startTime = Date.now();
         this.currentTime = this.startTime;
-        let active = true;
 
-        // reset active flag on stop
-        const stop = () => (active = false);
-        this.off('stop');
-        this.on('stop', stop);
-
-        // adaptive loop to be as close to 250ms as possible
-        // MAIN EVENT LOOP
-        const run = async (t: Tick | undefined, i: number) => {
-            // console.log(t);
-            const start = Date.now();
-
+        let i = 0;
+        const loop = new Loop(() => {
+            const now = Date.now();
             const { section } = this;
-            this.currentTick = t;
-            if (this.section !== section) {
-                this.emit('section', this.section ?? undefined);
-            }
+            this.currentTick = this.ticks[i];
+            if (this.section !== section)
+                this.emit('section', this.section || undefined);
 
-            if (!t) return this.emit('end');
-            if (!active) return this.emit('stopped');
-            this.emit('tick', t);
-            this.currentTime = start - this.startTime;
-            if (this.currentLocation) t.point = this.currentLocation;
+            if (!this.currentTick) this.emit('end', undefined);
+            if (!loop.active) this.emit('stopped', undefined);
+            this.currentTime = now - this.startTime;
+            this.emit('tick', this.currentTick);
+            if (this.currentLocation)
+                this.currentTick.point = this.currentLocation;
 
-            if (i % 4 === 0) {
-                this.emit('second', t.second);
-            }
+            if (i % 4 === 0) this.emit('second', this.currentTick.second);
 
             try {
                 const s = Date.now();
-                cb?.(t);
-                if (Date.now() - s > 250) {
+                cb?.(this.currentTick);
+                if (Date.now() - s > 250)
                     console.warn('Callback took too long');
-                }
             } catch (error) {
-                this.$emitter.emit('error', error);
+                this.emitter.emit('error', error as Error);
                 return this.stop();
             }
 
-            const end = Date.now();
-            const duration = end - start;
-            const delay = App.tickDuration - duration;
-
-            // there could be a major delay if the callback takes too long, so we need to account for that
-            setTimeout(
-                () => run(this.currentTick?.next(), i++),
-                // I don't understand why I need to multiply this by 2, but evidently I need to???
-                Math.max(0, delay) // * 2,
-            );
             App.save(this as App<any, any, any>);
-        };
+            i++;
+        }, App.tickDuration);
+
+        this.on('stop', () => {
+            loop.stop();
+            this.currentTick = undefined;
+        });
+
+        // adaptive loop to be as close to 250ms as possible
+        // MAIN EVENT LOOP
+        // const run = async (t: Tick | undefined, i: number) => {
+        //     // console.log(t);
+        //     const start = Date.now();
+
+        //     const { section } = this;
+        //     this.currentTick = t;
+        //     if (this.section !== section) {
+        //         this.emit('section', this.section ?? undefined);
+        //     }
+
+        //     if (!t) return this.emit('end');
+        //     if (!active) return this.emit('stopped');
+        //     this.emit('tick', t);
+        //     this.currentTime = start - this.startTime;
+        //     if (this.currentLocation) t.point = this.currentLocation;
+
+        //     if (i % 4 === 0) {
+        //         this.emit('second', t.second);
+        //     }
+
+        //     try {
+        //         const s = Date.now();
+        //         cb?.(t);
+        //         if (Date.now() - s > 250) {
+        //             console.warn('Callback took too long');
+        //         }
+        //     } catch (error) {
+        //         this.$emitter.emit('error', error);
+        //         return this.stop();
+        //     }
+
+        //     const end = Date.now();
+        //     const duration = end - start;
+        //     const delay = App.tickDuration - duration;
+
+        //     // there could be a major delay if the callback takes too long, so we need to account for that
+        //     setTimeout(
+        //         () => run(this.currentTick?.next(), i++),
+        //         // I don't understand why I need to multiply this by 2, but evidently I need to???
+        //         Math.max(0, delay) // * 2,
+        //     );
+        //     App.save(this as App<any, any, any>);
+        // };
 
         const start = (e: MouseEvent | TouchEvent) => {
             const [x, y] = this.canvas.getXY(e);
             cover.style.display = 'none';
-            run(this.currentTick || this.ticks[0], 0);
+            // run(this.currentTick || this.ticks[0], 0);
+            loop.start();
             const newEvent = new Event('mousedown');
             Object.defineProperties(newEvent, {
                 clientX: { value: x },
@@ -1360,55 +1399,13 @@ export class App<
      * @public
      */
     public stop() {
-        this.emit('stop');
+        this.emit('stop', undefined);
     }
 
-    /**
-     * Add an event listener
-     * @date 1/9/2024 - 3:08:19 AM
-     *
-     * @public
-     * @template {keyof AppEvents} K
-     * @param {K} event
-     * @param {(data: AppEvents[K]) => void} cb
-     * @returns {void) => void}
-     */
-    public on<K extends keyof AppEvents>(
-        event: K,
-        cb: (data: AppEvents[K]) => void
-    ) {
-        this.$emitter.on(event, cb);
-    }
-
-    /**
-     * Remove an event listener
-     * @date 1/9/2024 - 3:08:19 AM
-     *
-     * @public
-     * @template {keyof AppEvents} K
-     * @param {K} event
-     * @param {?(data: AppEvents[K]) => void} [cb]
-     * @returns {void) => void}
-     */
-    public off<K extends keyof AppEvents>(
-        event: K,
-        cb?: (data: AppEvents[K]) => void
-    ) {
-        this.$emitter.off(event, cb);
-    }
-
-    /**
-     * Emit an event
-     * @date 1/9/2024 - 3:08:19 AM
-     *
-     * @public
-     * @template {keyof AppEvents} K
-     * @param {K} event
-     * @param {?AppEvents[K]} [data]
-     */
-    public emit<K extends keyof AppEvents>(event: K, data?: AppEvents[K]) {
-        this.$emitter.emit(event, data);
-    }
+    emit = this.emitter.emit.bind(this.emitter);
+    on = this.emitter.on.bind(this.emitter);
+    off = this.emitter.off.bind(this.emitter);
+    once = this.emitter.once.bind(this.emitter);
 
     /**
      * The time left in the match
@@ -1517,11 +1514,6 @@ export class App<
      * @returns {Function} Stops the app
      */
     public async build(): Promise<undefined | (() => void)> {
-        if (this.built) {
-            console.error('App already built');
-            return;
-        }
-
         const { target } = this;
 
         if (!target) {
@@ -1530,7 +1522,8 @@ export class App<
         }
 
         this.cover.style.display = 'block';
-        this.canvas.add(this.buttonCircle);
+        this.canvas.clearDrawables();
+        this.canvas.add(this.background, this.path, this.buttonCircle);
 
         let quitView = false;
 
@@ -1552,6 +1545,7 @@ export class App<
                 (_, i) =>
                     new Tick<a>(i * App.tickDuration, i, this as App<any, any>)
             );
+        this.canvasEl.parentElement?.removeChild(this.canvasEl); // if app was previously build
         target.appendChild(this.canvasEl);
         target.append(this.cover);
 
@@ -1577,7 +1571,7 @@ export class App<
             this.built = false;
             stopAnimation();
             quitView = true;
-            this.emit('stop');
+            this.emit('stop', undefined);
         };
 
         this.on('stop', stopAnimation);
@@ -1675,7 +1669,7 @@ export class App<
      * @returns {*}
      */
     public clickPoints() {
-        const em = new EventEmitter<'point'>();
+        const em = new EventEmitter<{ point: Point2D }>();
 
         this.canvasEl.addEventListener('click', e => {
             const [p] = this.canvas.getXY(e);
@@ -1734,9 +1728,8 @@ export class App<
         canvas.clearDrawables();
         // canvas.adaptable = true;
         canvas.ratio = 2;
-        canvas.width = canvas.$ctx.canvas.parentElement?.clientWidth || 0;
-        canvas.height =
-            (canvas.$ctx.canvas.parentElement?.clientWidth || 0) / 2;
+        canvas.width = canvas.ctx.canvas.parentElement?.clientWidth || 0;
+        canvas.height = (canvas.ctx.canvas.parentElement?.clientWidth || 0) / 2;
 
         return attemptAsync(async () => {
             const img = new Img(`/public/pictures/${this.year}field.png`);
@@ -1774,16 +1767,16 @@ export class App<
                 if (action) {
                     const size = 0.03;
                     const cir = new Circle([x, y], size);
-                    cir.$properties.fill = {
+                    cir.properties.fill = {
                         color: color
                     };
                     const a = this.icons[action]?.clone();
                     if (a instanceof SVG) {
                         a.center = [x, y];
-                        if (!a.$properties.text) a.$properties.text = {};
-                        a.$properties.text!.height = size;
-                        a.$properties.text!.width = size;
-                        a.$properties.text!.color =
+                        if (!a.properties.text) a.properties.text = {};
+                        a.properties.text!.height = size;
+                        a.properties.text!.width = size;
+                        a.properties.text!.color =
                             Color.fromBootstrap('light').toString('rgba');
                     }
                     if (a instanceof Icon) {
@@ -1809,14 +1802,13 @@ export class App<
                         [a[i - 1][1], a[i - 1][2]],
                         [x, y]
                     ]);
-                    p.$properties.line = {
+                    p.properties.line = {
                         color: color,
                         width: 1
                     };
                     return p;
-                } else {
-                    return null;
                 }
+                return null;
             });
 
             // default filter
@@ -1881,15 +1873,14 @@ export class App<
             if (value === 'success') {
                 App.deleteFromLocalStorage(id);
                 return value;
-            } else {
-                App.updateLocalStorage(id, value);
             }
+            App.updateLocalStorage(id, value);
         }
     }
 
     // TODO: Destroy without reloading
     destroy() {
-        this.canvas.$animating = false;
+        this.canvas.animating = false;
         this.canvas.clearDrawables();
     }
 

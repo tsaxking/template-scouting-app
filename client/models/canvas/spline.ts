@@ -1,5 +1,5 @@
 import { Drawable } from './drawable';
-import { Spline as S } from '../../../shared/submodules/calculations/src/linear-algebra/spline';
+import { SplineInterface as S } from '../../../shared/submodules/calculations/src/linear-algebra/spline';
 
 type SplineOptions = {
     frames: number;
@@ -19,8 +19,8 @@ export class Spline extends Drawable<Spline> {
 
     draw(ctx: CanvasRenderingContext2D) {
         const { width, height } = ctx.canvas;
-        ctx.fillStyle = this.$properties.fill?.color || 'black';
-        ctx.strokeStyle = this.$properties.line?.color || 'black';
+        ctx.fillStyle = this.properties.fill?.color || 'black';
+        ctx.strokeStyle = this.properties.line?.color || 'black';
 
         ctx.beginPath();
         let { x, y } = this.spline.ft(0);

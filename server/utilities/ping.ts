@@ -22,18 +22,18 @@ type Events = {
  */
 export const startPinger = (interval = 10) => {
     let status = 'disconnected';
-    const pinger = new EventEmitter<keyof Events>();
+    const pinger = new EventEmitter<Events>();
 
     const ping = async () => {
         const result = await ServerRequest.ping();
         if (result.isOk()) {
             if (status === 'disconnected') {
-                pinger.emit('connect');
+                pinger.emit('connect', undefined);
             }
             status = 'connected';
         } else {
             if (status === 'connected') {
-                pinger.emit('disconnect');
+                pinger.emit('disconnect', undefined);
             }
             status = 'disconnected';
         }

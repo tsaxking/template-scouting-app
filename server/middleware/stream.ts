@@ -135,7 +135,7 @@ type StreamEvents = {
  *
  * @typedef {EM}
  */
-type _EM = EventEmitter<keyof StreamEvents>;
+type _EM = EventEmitter<StreamEvents>;
 
 /**
  * Stream event middleware options

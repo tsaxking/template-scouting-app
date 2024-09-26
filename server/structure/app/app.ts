@@ -5,9 +5,8 @@ import { Req } from './req';
 import { Res } from './res';
 import { SocketWrapper } from '../socket';
 import http from 'http';
-import { Server, Socket } from 'socket.io';
+import { Server } from 'socket.io';
 import { Session } from '../sessions';
-import session from 'express-session';
 
 /**
  * All file types that can be sent (can be expanded)
@@ -115,12 +114,11 @@ export type Next = () => void;
  * @export
  * @typedef {ServerFunction}
  */
-export type ServerFunction<T = unknown, S = unknown> = (
-    req: Req<T, S>,
-    res: Res,
-    next: Next
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-) => any | Promise<any>;
+export type ServerFunction<
+    T = unknown,
+    S extends Record<string, unknown> = Record<string, unknown>,
+    A extends Record<string, unknown> = Record<string, unknown>
+> = (req: Req<T, S, A>, res: Res, next: Next) => unknown;
 /**
  * Final function that is called at the end of a request
  * @date 10/12/2023 - 2:49:37 PM
@@ -128,7 +126,11 @@ export type ServerFunction<T = unknown, S = unknown> = (
  * @export
  * @typedef {FinalFunction}
  */
-export type FinalFunction<T, S> = (req: Req<T, S>, res: Res) => any;
+export type FinalFunction<
+    T = unknown,
+    S extends Record<string, unknown> = Record<string, unknown>,
+    A extends Record<string, unknown> = Record<string, unknown>
+> = (req: Req<T, S, A>, res: Res) => unknown;
 
 declare module 'express-serve-static-core' {
     interface Request {
@@ -145,7 +147,10 @@ declare module 'express-serve-static-core' {
  * @class Route
  * @typedef {Route}
  */
-export class Route<sessionInfo = unknown> {
+export class Route<
+    SessionCustomData extends Record<string, unknown> = Record<string, unknown>,
+    AccountCustomData extends Record<string, unknown> = Record<string, unknown>
+> {
     /**
      * Express router
      * @date 3/8/2024 - 6:13:51 AM
@@ -168,7 +173,7 @@ export class Route<sessionInfo = unknown> {
     private addListener<T>(
         method: RequestMethod,
         path: string,
-        ...fn: ServerFunction<T, sessionInfo>[]
+        ...fn: ServerFunction<T, SessionCustomData, AccountCustomData>[]
     ) {
         this.router[method](path, async (req: express.Request, _res, next) => {
             const { request, response } = req;
@@ -176,8 +181,10 @@ export class Route<sessionInfo = unknown> {
             try {
                 const run = async (i: number) => {
                     if (i >= fn.length) return next();
-                    await fn[i](request as Req<T, sessionInfo>, response, () =>
-                        run(i + 1)
+                    await fn[i](
+                        request as Req<T, SessionCustomData, AccountCustomData>,
+                        response,
+                        () => run(i + 1)
                     );
                 };
 
@@ -198,7 +205,10 @@ export class Route<sessionInfo = unknown> {
      * @param {string} path
      * @param {...ServerFunction<T>[]} fn
      */
-    public get<T>(path: string, ...fn: ServerFunction<T, sessionInfo>[]) {
+    public get<T>(
+        path: string,
+        ...fn: ServerFunction<T, SessionCustomData, AccountCustomData>[]
+    ) {
         this.addListener(RequestMethod.GET, path, ...fn);
     }
 
@@ -211,7 +221,10 @@ export class Route<sessionInfo = unknown> {
      * @param {string} path
      * @param {...ServerFunction<T>[]} fn
      */
-    public post<T>(path: string, ...fn: ServerFunction<T, sessionInfo>[]) {
+    public post<T>(
+        path: string,
+        ...fn: ServerFunction<T, SessionCustomData, AccountCustomData>[]
+    ) {
         this.addListener(RequestMethod.POST, path, ...fn);
     }
 
@@ -224,7 +237,10 @@ export class Route<sessionInfo = unknown> {
      * @param {string} path
      * @param {...ServerFunction<T>[]} fn
      */
-    public put<T>(path: string, ...fn: ServerFunction<T, sessionInfo>[]) {
+    public put<T>(
+        path: string,
+        ...fn: ServerFunction<T, SessionCustomData, AccountCustomData>[]
+    ) {
         this.addListener(RequestMethod.PUT, path, ...fn);
     }
 
@@ -237,7 +253,10 @@ export class Route<sessionInfo = unknown> {
      * @param {string} path
      * @param {...ServerFunction<T>[]} fn
      */
-    public delete<T>(path: string, ...fn: ServerFunction<T, sessionInfo>[]) {
+    public delete<T>(
+        path: string,
+        ...fn: ServerFunction<T, SessionCustomData, AccountCustomData>[]
+    ) {
         this.addListener(RequestMethod.DELETE, path, ...fn);
     }
 
@@ -250,7 +269,10 @@ export class Route<sessionInfo = unknown> {
      * @param {string} path
      * @param {...ServerFunction<T>[]} fn
      */
-    public use<T>(path: string, ...fn: ServerFunction<T, sessionInfo>[]) {
+    public use<T>(
+        path: string,
+        ...fn: ServerFunction<T, SessionCustomData, AccountCustomData>[]
+    ) {
         this.addListener(RequestMethod.USE, path, ...fn);
     }
 
@@ -262,7 +284,10 @@ export class Route<sessionInfo = unknown> {
      * @param {string} path
      * @param {Route} route
      */
-    public route(path: string, route: Route<sessionInfo>) {
+    public route(
+        path: string,
+        route: Route<SessionCustomData, AccountCustomData>
+    ) {
         this.router.use(path, route.router);
     }
 }
@@ -275,7 +300,10 @@ export class Route<sessionInfo = unknown> {
  * @class App
  * @typedef {App}
  */
-export class App<sessionInfo = unknown> {
+export class App<
+    SessionCustomData extends Record<string, unknown> = Record<string, unknown>,
+    AccountCustomData extends Record<string, unknown> = Record<string, unknown>
+> {
     public static readonly SocketServer = SocketWrapper;
 
     /**
@@ -324,7 +352,11 @@ export class App<sessionInfo = unknown> {
      * @readonly
      * @type {FinalFunction<unknown>[]}
      */
-    public readonly finalFunctions: FinalFunction<unknown, sessionInfo>[] = [];
+    public readonly finalFunctions: FinalFunction<
+        unknown,
+        SessionCustomData,
+        AccountCustomData
+    >[] = [];
     /**
      * HTTP server
      * @date 3/8/2024 - 6:13:50 AM
@@ -371,27 +403,31 @@ export class App<sessionInfo = unknown> {
         // );
 
         this.io = new SocketWrapper(
-            this as App<unknown>,
-            new Server(this.httpServer)
+            this as App,
+            new Server(this.httpServer, {
+                connectionStateRecovery: {
+                    maxDisconnectionDuration: 1000 * 60 * 5
+                }
+            })
         );
 
         this.server.use(async (req, res, next) => {
             const socketId = req.headers['socket-id'] as string | undefined;
             const socket = this.io.io.sockets.sockets.get(socketId || '');
 
-            const s = await Session.from<sessionInfo>(
-                this as App<unknown>,
+            const s = await Session.from<SessionCustomData, AccountCustomData>(
+                this as App,
                 req,
                 res
             );
-            const request = new Req<unknown, sessionInfo>(
-                this as App<unknown>,
+            const request = new Req<unknown, SessionCustomData>(
+                this as App,
                 req,
                 s,
                 socket
             );
             req.request = request;
-            req.response = new Res(this as App<unknown>, res, request);
+            req.response = new Res(this as App, res, request);
             next();
         });
     }
@@ -409,7 +445,7 @@ export class App<sessionInfo = unknown> {
     private addListener<T>(
         method: RequestMethod,
         path: string,
-        ...fn: ServerFunction<T, sessionInfo>[]
+        ...fn: ServerFunction<T, SessionCustomData, AccountCustomData>[]
     ) {
         this.server[method](path, async (req: express.Request, _res, next) => {
             const final = async () => {
@@ -418,8 +454,12 @@ export class App<sessionInfo = unknown> {
                     return console.log('Not fulfilled');
                 for (const fn of this.finalFunctions) {
                     try {
-                        await fn(
-                            req.request as Req<unknown, sessionInfo>,
+                        fn(
+                            req.request as Req<
+                                unknown,
+                                SessionCustomData,
+                                AccountCustomData
+                            >,
                             req.response
                         );
                     } catch (error) {
@@ -432,7 +472,11 @@ export class App<sessionInfo = unknown> {
                     // console.log('Running:', i);
                     if (i >= fn.length) return next();
                     await fn[i](
-                        req.request as Req<T, sessionInfo>,
+                        req.request as Req<
+                            T,
+                            SessionCustomData,
+                            AccountCustomData
+                        >,
                         req.response,
                         () => run(i + 1)
                     );
@@ -457,7 +501,10 @@ export class App<sessionInfo = unknown> {
      * @param {string} path
      * @param {...ServerFunction<T>[]} fn
      */
-    public get<T>(path: string, ...fn: ServerFunction<T, sessionInfo>[]) {
+    public get<T>(
+        path: string,
+        ...fn: ServerFunction<T, SessionCustomData, AccountCustomData>[]
+    ) {
         this.addListener<T>(RequestMethod.GET, path, ...fn);
     }
 
@@ -470,7 +517,10 @@ export class App<sessionInfo = unknown> {
      * @param {string} path
      * @param {...ServerFunction<T>[]} fn
      */
-    public post<T>(path: string, ...fn: ServerFunction<T, sessionInfo>[]) {
+    public post<T>(
+        path: string,
+        ...fn: ServerFunction<T, SessionCustomData>[]
+    ) {
         this.addListener<T>(RequestMethod.POST, path, ...fn);
     }
 
@@ -483,7 +533,10 @@ export class App<sessionInfo = unknown> {
      * @param {string} path
      * @param {...ServerFunction<T>[]} fn
      */
-    public put<T>(path: string, ...fn: ServerFunction<T, sessionInfo>[]) {
+    public put<T>(
+        path: string,
+        ...fn: ServerFunction<T, SessionCustomData, AccountCustomData>[]
+    ) {
         this.addListener<T>(RequestMethod.PUT, path, ...fn);
     }
 
@@ -496,7 +549,10 @@ export class App<sessionInfo = unknown> {
      * @param {string} path
      * @param {...ServerFunction<T>[]} fn
      */
-    public delete<T>(path: string, ...fn: ServerFunction<T, sessionInfo>[]) {
+    public delete<T>(
+        path: string,
+        ...fn: ServerFunction<T, SessionCustomData, AccountCustomData>[]
+    ) {
         this.addListener<T>(RequestMethod.DELETE, path, ...fn);
     }
 
@@ -509,7 +565,10 @@ export class App<sessionInfo = unknown> {
      * @param {string} path
      * @param {...ServerFunction<T>[]} fn
      */
-    public use<T>(path: string, ...fn: ServerFunction<T, sessionInfo>[]) {
+    public use<T>(
+        path: string,
+        ...fn: ServerFunction<T, SessionCustomData, AccountCustomData>[]
+    ) {
         this.addListener<T>(RequestMethod.USE, path, ...fn);
     }
 
@@ -521,7 +580,10 @@ export class App<sessionInfo = unknown> {
      * @param {string} path
      * @param {Route} route
      */
-    public route(path: string, route: Route<sessionInfo> | Route<unknown>) {
+    public route(
+        path: string,
+        route: Route<SessionCustomData, AccountCustomData> | Route
+    ) {
         this.server.use(path, route.router);
     }
 
@@ -545,8 +607,12 @@ export class App<sessionInfo = unknown> {
      * @template T
      * @param {FinalFunction<T>} fn
      */
-    public final<T>(fn: FinalFunction<T, sessionInfo>) {
-        this.finalFunctions.push(fn as FinalFunction<unknown, sessionInfo>);
+    public final<T>(
+        fn: FinalFunction<T, SessionCustomData, AccountCustomData>
+    ) {
+        this.finalFunctions.push(
+            fn as FinalFunction<unknown, SessionCustomData, AccountCustomData>
+        );
     }
 
     /**

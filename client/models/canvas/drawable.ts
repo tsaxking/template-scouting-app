@@ -67,33 +67,25 @@ type DrawableEvents = {
  * @template [T=unknown]
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export class Drawable<T = any> {
+export class Drawable<T = any> extends EventEmitter<DrawableEvents> {
     public readonly id = Math.random();
 
-    public $canvas?: Canvas;
+    public canvas?: Canvas;
 
-    public get $Math() {
+    public get Math() {
         console.warn('Math not implemented on ' + this.constructor.name);
         return {};
     }
 
     constructor() {
+        super();
         this.show();
 
-        this.$emitter.on('draw', () => {
-            this.$drawn = true;
+        this.on('draw', () => {
+            this.drawn = true;
         });
     }
 
-    /**
-     * Event emitter
-     * @date 1/25/2024 - 1:25:32 PM
-     *
-     * @public
-     * @readonly
-     * @type {*}
-     */
-    public readonly $emitter = new EventEmitter<keyof DrawableEvents>();
     /**
      * Draw the drawable
      * @date 1/25/2024 - 1:25:32 PM
@@ -101,7 +93,7 @@ export class Drawable<T = any> {
      * @public
      * @type {boolean}
      */
-    public $doDraw = true;
+    public doDraw = true;
     /**
      * If the drawable has been drawn
      * @date 1/25/2024 - 1:25:32 PM
@@ -109,7 +101,7 @@ export class Drawable<T = any> {
      * @public
      * @type {boolean}
      */
-    public $drawn = false;
+    public drawn = false;
     /**
      * If the drawable is fading in or out
      * @date 1/25/2024 - 1:25:32 PM
@@ -117,7 +109,7 @@ export class Drawable<T = any> {
      * @public
      * @type {(-1 | 0 | 1)}
      */
-    public $fadeDirection: -1 | 0 | 1 = 0; // -1 = fade out, 0 = no fade, 1 = fade in
+    public fadeDirection: -1 | 0 | 1 = 0; // -1 = fade out, 0 = no fade, 1 = fade in
     /**
      * The number of frames to fade in or out
      * @date 1/25/2024 - 1:25:32 PM
@@ -125,7 +117,7 @@ export class Drawable<T = any> {
      * @public
      * @type {number}
      */
-    public $fadeFrames = 1;
+    public fadeFrames = 1;
     /**
      * The current frame of the fade
      * @date 1/25/2024 - 1:25:32 PM
@@ -133,7 +125,7 @@ export class Drawable<T = any> {
      * @public
      * @type {number}
      */
-    public $currentFadeFrame = 1;
+    public currentFadeFrame = 1;
     /**
      * All properties of the drawable
      * @date 1/25/2024 - 1:25:32 PM
@@ -142,7 +134,7 @@ export class Drawable<T = any> {
      * @readonly
      * @type {Partial<ShapeProperties<T>>}
      */
-    public readonly $$properties: ShapeProperties<T> = {
+    public readonly properties: ShapeProperties<T> = {
         fill: {},
         line: {},
         text: {},
@@ -152,78 +144,6 @@ export class Drawable<T = any> {
             y: false
         }
     };
-
-    private $warned = false;
-
-    get $properties() {
-        if (!this.$warned) {
-            console.warn(
-                'Drawable.$properties will be deprecated in the future, use Drawable.properties instead'
-            );
-        }
-        this.$warned = true;
-        return this.$$properties;
-    }
-
-    /**
-     * Add a listener to the given event
-     * @date 1/25/2024 - 1:25:32 PM
-     *
-     * @template {keyof DrawableEvents} K
-     * @param {K} event
-     * @param {(data: DrawableEvents[K]) => void} listener
-     * @returns {void) => void}
-     */
-    on<K extends keyof DrawableEvents>(
-        event: K,
-        listener: (data: DrawableEvents[K]) => void
-    ) {
-        this.$emitter.on(event, listener);
-    }
-
-    /**
-     * Remove a listener from the given event
-     * @date 1/25/2024 - 1:25:32 PM
-     *
-     * @template {keyof DrawableEvents} K
-     * @param {K} event
-     * @param {(data: DrawableEvents[K]) => void} listener
-     * @returns {void) => void}
-     */
-    off<K extends keyof DrawableEvents>(
-        event: K,
-        listener: (data: DrawableEvents[K]) => void
-    ) {
-        this.$emitter.off(event, listener);
-    }
-
-    /**
-     * Add a listener to the given event that will only be called once
-     * @date 1/25/2024 - 1:25:32 PM
-     *
-     * @template {keyof DrawableEvents} K
-     * @param {K} event
-     * @param {(data: DrawableEvents[K]) => void} listener
-     * @returns {void) => void}
-     */
-    once<K extends keyof DrawableEvents>(
-        event: K,
-        listener: (data: DrawableEvents[K]) => void
-    ) {
-        this.$emitter.once(event, listener);
-    }
-
-    /**
-     * Emit the given event with the given data
-     * @date 1/25/2024 - 1:25:32 PM
-     *
-     * @template {keyof DrawableEvents} K
-     * @param {K} event
-     * @param {DrawableEvents[K]} data
-     */
-    emit<K extends keyof DrawableEvents>(event: K, data: DrawableEvents[K]) {
-        this.$emitter.emit(event, data);
-    }
 
     /**
      * Draw the drawable (must be implemented by child)
@@ -252,9 +172,9 @@ export class Drawable<T = any> {
      * @date 1/25/2024 - 1:25:32 PM
      */
     hide() {
-        this.$doDraw = false;
-        this.$fadeDirection = -1;
-        this.$currentFadeFrame = this.$fadeFrames;
+        this.doDraw = false;
+        this.fadeDirection = -1;
+        this.currentFadeFrame = this.fadeFrames;
     }
 
     /**
@@ -262,9 +182,9 @@ export class Drawable<T = any> {
      * @date 1/25/2024 - 1:25:32 PM
      */
     show() {
-        this.$doDraw = true;
-        this.$fadeDirection = 1;
-        this.$currentFadeFrame = this.$fadeFrames;
+        this.doDraw = true;
+        this.fadeDirection = 1;
+        this.currentFadeFrame = this.fadeFrames;
     }
 
     /**
@@ -274,9 +194,9 @@ export class Drawable<T = any> {
      * @param {number} frames
      */
     fade(frames: number) {
-        this.$fadeFrames = frames;
-        this.$currentFadeFrame = 1;
-        this.$fadeDirection = 1;
+        this.fadeFrames = frames;
+        this.currentFadeFrame = 1;
+        this.fadeDirection = 1;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -299,43 +219,35 @@ export class Drawable<T = any> {
         return [px, py];
     }
 
-    get properties() {
-        return this.$properties;
-    }
-
-    set properties(properties: Partial<ShapeProperties<T>>) {
-        Object.assign(this.$properties, properties);
-    }
-
     get fill() {
-        return this.$properties.fill || {};
+        return this.properties.fill || {};
     }
 
     set fill(fill: Partial<FillProperties<T>>) {
-        this.$properties.fill = fill;
+        this.properties.fill = fill;
     }
 
     get line() {
-        return this.$properties.line || {};
+        return this.properties.line || {};
     }
 
     set line(line: Partial<LineProperties<T>>) {
-        this.$properties.line = line;
+        this.properties.line = line;
     }
 
     get text() {
-        return this.$properties.text || {};
+        return this.properties.text || {};
     }
 
     set text(text: Partial<TextProperties<T>>) {
-        this.$properties.text = text;
+        this.properties.text = text;
     }
 
     set mirror(mirror: { x?: boolean; y?: boolean }) {
-        this.$properties.mirror = mirror;
+        this.properties.mirror = mirror;
     }
 
     get mirror() {
-        return this.$properties.mirror || {};
+        return this.properties.mirror || {};
     }
 }

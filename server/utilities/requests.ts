@@ -29,17 +29,16 @@ export class ServerRequest {
                 });
             }
 
-            const data = await request(
-                SERVER_DOMAIN + '/api/event-server' + url,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'x-auth-key': SERVER_KEY as string
-                    },
-                    data: str
-                }
-            );
+            const data = await request<{
+                status?: number;
+            }>(SERVER_DOMAIN + '/api/event-server' + url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-auth-key': SERVER_KEY as string
+                },
+                data: str
+            });
 
             if (data.isErr()) throw data.error;
 
@@ -60,9 +59,8 @@ export class ServerRequest {
                 }
 
                 return data.value as T;
-            } else {
-                throw new Error('No data');
             }
+            throw new Error('No data');
         });
     }
 
@@ -81,9 +79,8 @@ export class ServerRequest {
             if (result.isOk()) {
                 if (result.value.success) {
                     return;
-                } else {
-                    throw new Error(result.value.error);
                 }
+                throw new Error(result.value.error);
             } else {
                 throw result.error;
             }
@@ -111,7 +108,8 @@ export class ServerRequest {
             if (a.isOk()) {
                 saveJSONSync('accounts.json', a.value);
                 return a.value;
-            } else throw a.error;
+            }
+            throw a.error;
         });
     }
 

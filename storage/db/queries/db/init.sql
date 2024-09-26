@@ -14,7 +14,10 @@ CREATE TABLE IF NOT EXISTS Accounts (
     passwordChangeDate BIGINT,
     phoneNumber TEXT,
     created BIGINT NOT NULL
+    -- added customData in 1-5-0
 );
+
+-- Added AccountNotifications in 1-6-0
 
 
 CREATE TABLE IF NOT EXISTS Members (
