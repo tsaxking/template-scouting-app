@@ -189,7 +189,7 @@ router.post<{
                         },
                         'Account',
                         capitalize(status.split('-').join(' ')),
-                        JSON.stringify(req),
+                        JSON.stringify(req.body),
                         req
                     )
                 );
