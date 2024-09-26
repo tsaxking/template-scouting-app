@@ -132,13 +132,13 @@ export class MatchData {
             const eventData = await App.getEventData();
             if (eventData.isErr()) throw eventData.error;
 
-            const match = matchIndex ?
-                eventData.value.matches[matchIndex] :
-                eventData.value.matches.find(
-                m =>
-                    m.match_number === this.matchNumber &&
-                    m.comp_level === this.compLevel
-            );
+            const match = matchIndex
+                ? eventData.value.matches[matchIndex]
+                : eventData.value.matches.find(
+                      m =>
+                          m.match_number === this.matchNumber &&
+                          m.comp_level === this.compLevel
+                  );
 
             console.log('match', match);
 
@@ -146,19 +146,22 @@ export class MatchData {
 
             const changeGroup = async (num: number) => {
                 console.log('changeGroup', num);
-                const index = matchIndex || eventData.value.matches.indexOf(match);
+                const index =
+                    matchIndex || eventData.value.matches.indexOf(match);
                 if (num >= 6) throw new Error('Group not found');
-    
+
                 this.teamNumber =
                     eventData.value.assignments.matchAssignments[num][index];
 
                 console.log('this.teamNumber', this.teamNumber);
 
                 this.group = num;
-            }
+            };
 
             if (doConfirm && group !== this.group) {
-                const doThis = await confirm("Are you sure you want to change groups?");
+                const doThis = await confirm(
+                    'Are you sure you want to change groups?'
+                );
                 console.log('doThis', doThis);
                 if (!doThis) return changeGroup(this.group);
             }
@@ -206,7 +209,11 @@ export class MatchData {
                     }
                     this.matchNumber = matchNumber;
                     this.compLevel = compLevel;
-                    console.log('changing state', this.teamNumber, this.matchNumber);
+                    console.log(
+                        'changing state',
+                        this.teamNumber,
+                        this.matchNumber
+                    );
                 } else {
                     const teams = teamsFromMatch(currentMatch.value).filter(
                         Boolean
@@ -214,7 +221,11 @@ export class MatchData {
                     this.matchNumber = matchNumber;
                     this.compLevel = compLevel;
 
-                    console.log('changingState', this.matchNumber, this.compLevel);
+                    console.log(
+                        'changingState',
+                        this.matchNumber,
+                        this.compLevel
+                    );
 
                     const m = await this.getCurrentMatch();
                     if (m.isErr()) throw m.error;

@@ -22,7 +22,7 @@ type GlobalEvents = {
     'new-tablet': Tablet;
     update: Tablet[];
     'delete-tablet': Tablet;
-    'refresh': void;
+    refresh: void;
 };
 
 type TabletSafe = {
@@ -31,25 +31,12 @@ type TabletSafe = {
 };
 
 export class Tablet {
-    public readonly em = new EventEmitter<keyof TabletEvents>();
+    public readonly em = new EventEmitter<TabletEvents>();
 
-    on<K extends keyof TabletEvents>(
-        event: K,
-        cb: (data: TabletEvents[K]) => void
-    ) {
-        this.em.on(event, cb);
-    }
-
-    off<K extends keyof TabletEvents>(
-        event: K,
-        cb: (data: TabletEvents[K]) => void
-    ) {
-        this.em.off(event, cb);
-    }
-
-    emit<K extends keyof TabletEvents>(event: K, data: TabletEvents[K]) {
-        this.em.emit(event, data);
-    }
+    on = this.em.on.bind(this.em);
+    off = this.em.off.bind(this.em);
+    emit = this.em.emit.bind(this.em);
+    once = this.em.once.bind(this.em);
 
     abstracted: TabletState;
 
@@ -57,7 +44,7 @@ export class Tablet {
         public readonly id: string,
         public state: TabletState
     ) {
-        this.abstracted = JSON.parse(JSON.stringify(state)); // copy with no dependencies
+        this.abstracted = JSON.parse(JSON.stringify(state)) as TabletState; // copy with no dependencies
     }
 
     get group() {
@@ -102,33 +89,17 @@ export class Tablet {
     }
 
     reset() {
-        this.abstracted = JSON.parse(JSON.stringify(this.state));
+        this.abstracted = JSON.parse(JSON.stringify(this.state)) as TabletState;
     }
 }
 
 export class State {
-    public static readonly em = new EventEmitter<keyof GlobalEvents>();
+    public static readonly em = new EventEmitter<GlobalEvents>();
 
-    public static on<K extends keyof GlobalEvents>(
-        event: K,
-        cb: (data: GlobalEvents[K]) => void
-    ) {
-        State.em.on(event, cb);
-    }
-
-    public static off<K extends keyof GlobalEvents>(
-        event: K,
-        cb: (data: GlobalEvents[K]) => void
-    ) {
-        State.em.off(event, cb);
-    }
-
-    public static emit<K extends keyof GlobalEvents>(
-        event: K,
-        data: GlobalEvents[K]
-    ) {
-        State.em.emit(event, data);
-    }
+    static on = State.em.on.bind(State.em);
+    static off = State.em.off.bind(State.em);
+    static emit = State.em.emit.bind(State.em);
+    static once = State.em.once.bind(State.em);
 
     static readonly tablets = new Map<string, Tablet>();
 
@@ -188,7 +159,6 @@ socket.on('update-tablet', (data: { state: TabletState; id: string }) => {
     const { id, state } = data;
     State.updateTablet(id, state);
 });
-
 
 socket.on('new-tablet', () => {
     State.refresh();

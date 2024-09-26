@@ -36,7 +36,7 @@
     <label for="scout-name-input">Scout Name</label>
     <datalist id="accounts">
         {#each accounts as account}
-            <option value="{account}"></option>
+            <option value="{account}" />
         {/each}
     </datalist>
 </div>

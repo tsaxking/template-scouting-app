@@ -8,10 +8,10 @@ import { NextFunction } from 'express';
 
 export const router = new Route();
 
-const auth = (req: Req<any, any>, res: Res, next: NextFunction) => {
+const auth = (req: Req, res: Res, next: NextFunction) => {
     if (req.session.customData.isAdmin) return next();
     return res.redirect('/sign-in');
-}
+};
 
 router.post<TabletState>(
     '/update',
@@ -64,7 +64,7 @@ router.post<TabletState>(
     }
 );
 
-router.post('/init',  (req, res) => {
+router.post('/init', (req, res) => {
     const id = req.headers.get('tablet-id') || '';
     const result = State.newTablet(id);
     if (result.isErr()) {
@@ -74,7 +74,7 @@ router.post('/init',  (req, res) => {
     }
     const disconnect = () => {
         State.removeTablet(id);
-    }
+    };
     req.socket?.on('disconnect', disconnect);
     res.status(200).json({
         success: true

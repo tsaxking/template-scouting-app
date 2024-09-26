@@ -4,12 +4,11 @@
  * @description This contains the main class for the app, which is responsible for running the match and keeping track of the state of the robot over time. The data is collected every 250ms, and the app will run for 150 seconds, so there will be 600 ticks in total.
  */
 
-import { ActionState } from './app-object';
+import { ActionState, AppObject } from './app-object';
 import { Point2D } from '../../../shared/submodules/calculations/src/linear-algebra/point';
 import { EventEmitter } from '../../../shared/event-emitter';
 import { ButtonCircle } from './button-circle';
 import { Canvas } from '../canvas/canvas';
-import { AppObject } from './app-object';
 import { Path } from '../canvas/path';
 import { Img } from '../canvas/image';
 import { Border } from '../canvas/border';
@@ -17,19 +16,21 @@ import { Polygon } from '../canvas/polygon';
 import { Circle } from '../canvas/circle';
 import { Color } from '../../submodules/colors/color';
 import { Settings } from '../settings';
-import { attempt, attemptAsync, Result } from '../../../shared/check';
+import { attemptAsync, Result } from '../../../shared/check';
 import { Container } from '../canvas/container';
-import { TraceArray } from '../../../shared/submodules/tatorscout-calculations/trace';
 import {
+    TraceArray,
     Action,
     TraceParse,
-    Zones
+    Zones,
+    Match
 } from '../../../shared/submodules/tatorscout-calculations/trace';
 import { generate2024App } from './2024-app';
 import { ServerRequest } from '../../utilities/requests';
-import { alert, choose, confirm } from '../../utilities/notifications';
+import { alert, confirm } from '../../utilities/notifications';
 import { Assignment } from '../../../shared/submodules/tatorscout-calculations/scout-groups';
 import {
+    CompLevel,
     matchSort,
     TBAEvent,
     TBAMatch,
@@ -37,7 +38,6 @@ import {
 } from '../../../shared/submodules/tatorscout-calculations/tba';
 import { Icon } from '../canvas/material-icons';
 import { SVG } from '../canvas/svg';
-import { Match } from '../../../shared/submodules/tatorscout-calculations/trace';
 import { downloadText, loadFileContents } from '../../utilities/downloads';
 import { sleep } from '../../../shared/sleep';
 import { socket } from '../../utilities/socket';
@@ -45,6 +45,7 @@ import { Random } from '../../../shared/math';
 import { Tick } from './tick';
 import { MatchData } from './match-data';
 import { Loop } from '../../../shared/loop';
+import { TabletState } from '../admin';
 
 /**
  * Description placeholder
@@ -1899,35 +1900,39 @@ socket.on('connect', async () => {
     App.uploadFromLocalStorage();
 });
 
-socket.on('change-state', (obj: {
-    id: string;
-    data: TabletState
-}) => {
+socket.on('change-state', (obj: { id: string; data: TabletState }) => {
     const { id, data: state } = obj;
     if (id !== ServerRequest.metadata.get('tablet-id')) return;
     // update only the private properties as to not trigger updateState on each set
     const { matchData } = App;
 
-    if (matchData.compLevel !== state.compLevel) matchData.compLevel = state.compLevel;
+    if (matchData.compLevel !== state.compLevel)
+        matchData.compLevel = state.compLevel as CompLevel;
     if (matchData.teamNumber !== state.teamNumber) {
         matchData.selectMatch(
             state.matchNumber,
-            state.compLevel,
+            state.compLevel as CompLevel,
             state.teamNumber
         );
     }
-    if (matchData.group !== state.groupNumber) matchData.selectGroup(state.groupNumber, App.matchData.matchNumber, false);
+    if (matchData.group !== state.groupNumber)
+        matchData.selectGroup(
+            state.groupNumber,
+            App.matchData.matchNumber,
+            false
+        );
     if (App.scoutName !== state.scoutName) {
         App.$scoutName = state.scoutName;
         App.emit('change-name', state.scoutName);
     }
-    if (matchData.matchNumber !== state.matchNumber) matchData.selectMatch(state.matchNumber, state.compLevel);
-    if (App.preScouting !== state.preScouting) App.preScouting = state.preScouting;
+    if (matchData.matchNumber !== state.matchNumber)
+        matchData.selectMatch(state.matchNumber, state.compLevel as CompLevel);
+    if (App.preScouting !== state.preScouting)
+        App.preScouting = state.preScouting;
 });
 
-socket.on('abort', ({ id }: { id: string; }) => {
+socket.on('abort', ({ id }: { id: string }) => {
     if (id === ServerRequest.metadata.get('tablet-id')) App.abort();
 });
-
 
 // Force submit is done in Post.svelte

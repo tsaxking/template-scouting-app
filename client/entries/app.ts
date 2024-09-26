@@ -4,7 +4,7 @@ import { v4 as uuid } from 'uuid';
 import Main from '../views/Main.svelte';
 
 new Main({
-    target: document.body,
+    target: document.body
 });
 
 document.body.style.padding = '0px';
@@ -22,10 +22,10 @@ socket.onInit = () => {
         await ServerRequest.post('/api/tablet/init');
 
         App.updateState();
-    }
+    };
     socket.on('connect', init);
     init();
-}
+};
 Object.assign(window, { Settings });
 
 window.addEventListener('beforeunload', () => {
