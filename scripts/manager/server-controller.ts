@@ -46,10 +46,9 @@ const pullEvent = async () => {
 
         if (res.isOk()) {
             return backToMain('Event pulled');
-        } else {
-            console.error(res.error);
-            backToMain('Error pulling event');
         }
+        console.error(res.error);
+        backToMain('Error pulling event');
     } else {
         console.error(allEvents.error);
         backToMain('Error pulling event');

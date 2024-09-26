@@ -1,9 +1,11 @@
 <script lang="ts">
-import { capitalize, fromSnakeCase } from '../../../../shared/text';
-export let title: string;
-let year: number = new Date().getFullYear();
-export let domain: string;
-export let active: string;
+    import { capitalize, fromSnakeCase } from '../../../../shared/text';
+    import { fade } from 'svelte/transition';
+    export let title: string;
+    let year: number = new Date().getFullYear();
+    export let domain: string;
+    export let active: string;
+    export let loading: boolean = false;
 </script>
 
 {#if active === title}

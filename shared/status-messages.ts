@@ -72,7 +72,7 @@ export type StatusMessage = {
 };
 
 export const messages: {
-    [key in StatusId]: StatusMessage;
+    [key in string]: StatusMessage;
 } = {
     'account:already-logged-in': {
         message: 'You are already logged in.',
@@ -312,6 +312,36 @@ export const messages: {
         message: 'Account has been verified.',
         color: 'success',
         code: 200,
+        instructions: ''
+    },
+    'account-notification:deleted': {
+        message: 'Notification deleted',
+        color: 'success',
+        code: 200,
+        instructions: ''
+    },
+    'account-notification:mark-read': {
+        message: 'Account notification was marked read',
+        color: 'success',
+        code: 200,
+        instructions: ''
+    },
+    'account-notification:mark-unread': {
+        message: 'Account notification was marked unread',
+        color: 'success',
+        code: 200,
+        instructions: ''
+    },
+    'account-notification:not-found': {
+        message: 'Did not find the requested account notification',
+        color: 'danger',
+        code: 404,
+        instructions: ''
+    },
+    'account-notification:not-owner': {
+        message: 'You cannot alter this notification as you are not the owner',
+        color: 'danger',
+        code: 403,
         instructions: ''
     },
     'admin:invalid-key': {
@@ -604,7 +634,7 @@ export const messages: {
         instructions: ''
     },
     'server:not-implemented': {
-        message: "This request's handler has not been implemented yet.",
+        message: 'This request\'s handler has not been implemented yet.',
         color: 'warning',
         code: 501,
         instructions: ''
@@ -691,108 +721,7 @@ export const messages: {
     }
 };
 
-export type StatusId =
-    | 'account:already-logged-in'
-    | 'account:cannot-edit-other-account'
-    | 'account:cannot-edit-self'
-    | 'account:cannot-reject-verified'
-    | 'account:check-email'
-    | 'account:created'
-    | 'account:email-change-expired'
-    | 'account:email-taken'
-    | 'account:has-role'
-    | 'account:incorrect-username-or-password'
-    | 'account:insufficient-permissions'
-    | 'account:invalid-email'
-    | 'account:invalid-first-name'
-    | 'account:invalid-last-name'
-    | 'account:invalid-password'
-    | 'account:invalid-password-reset-key'
-    | 'account:invalid-settings'
-    | 'account:invalid-username'
-    | 'account:invalid-verification-key'
-    | 'account:logged-in'
-    | 'account:logged-out'
-    | 'account:no-role'
-    | 'account:not-found'
-    | 'account:not-logged-in'
-    | 'account:not-verified'
-    | 'account:password-mismatch'
-    | 'account:password-reset-request'
-    | 'account:password-reset-success'
-    | 'account:picture-updated'
-    | 'account:removed'
-    | 'account:role-added'
-    | 'account:role-removed'
-    | 'account:server-error'
-    | 'account:settings-set'
-    | 'account:unverified'
-    | 'account:updated'
-    | 'account:username-changed'
-    | 'account:username-taken'
-    | 'account:verified'
-    | 'admin:invalid-key'
-    | 'files:invalid'
-    | 'files:invalid-extension'
-    | 'files:no-files'
-    | 'files:too-large'
-    | 'files:too-many-files'
-    | 'files:unknown-error'
-    | 'files:uploaded'
-    | 'member:accepted'
-    | 'member:add-skill'
-    | 'member:already-member'
-    | 'member:cannot-manage'
-    | 'member:invalid-request'
-    | 'member:membership-responded'
-    | 'member:not-found'
-    | 'member:not-member'
-    | 'member:rejected'
-    | 'member:remove-skill'
-    | 'member:request-sent'
-    | 'member:revoked'
-    | 'member:status-updated'
-    | 'member:update-bio'
-    | 'member:update-resume'
-    | 'member:update-title'
-    | 'page:not-found'
-    | 'permissions:added'
-    | 'permissions:error'
-    | 'permissions:forbidden'
-    | 'permissions:invalid'
-    | 'permissions:not-found'
-    | 'permissions:removed'
-    | 'permissions:unauthorized'
-    | 'pin:incorrect'
-    | 'pre-scouting:not-allowed'
-    | 'profanity:detected'
-    | 'role:not-found'
-    | 'roles:added'
-    | 'roles:added-permission'
-    | 'roles:already-exists'
-    | 'roles:cannot-edit-admin'
-    | 'roles:deleted'
-    | 'roles:invalid-role'
-    | 'roles:new'
-    | 'roles:not-found'
-    | 'roles:removed'
-    | 'roles:removed-permission'
-    | 'roles:updated'
-    | 'server-request:match-error'
-    | 'server-request:match-submitted'
-    | 'server:invalid-data'
-    | 'server:not-implemented'
-    | 'server:unknown-server-error'
-    | 'session:rate-limited'
-    | 'skills:added'
-    | 'skills:has-skill'
-    | 'skills:invalid-skill'
-    | 'skills:not-found'
-    | 'skills:removed'
-    | 'spam:detected'
-    | 'test:fail'
-    | 'test:success'
-    | 'unknown:error';
+export type StatusId = keyof typeof messages;
 
 export type AccountStatusId =
     | 'already-logged-in'
@@ -834,6 +763,13 @@ export type AccountStatusId =
     | 'username-changed'
     | 'username-taken'
     | 'verified';
+
+export type AccountNotificationStatusId =
+    | 'mark-read'
+    | 'mark-unread'
+    | 'not-found'
+    | 'not-owner'
+    | 'deleted';
 
 export type AdminStatusId = 'invalid-key';
 

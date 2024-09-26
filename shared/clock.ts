@@ -99,7 +99,6 @@ type D = Date | number | string;
  */
 export const dateString = (format: string) => {
     return (date: D = new Date()) => {
-        const input = date;
         if (typeof date === 'string') {
             if (isNaN(Number(date))) {
                 date = new Date(date);
@@ -214,20 +213,19 @@ export const segment = (dates: Date[], segments?: number): Date[] => {
             const start = min.getTime() + (range / segments) * i;
             return new Date(start);
         });
-    } else {
-        switch (true) {
-            case range < 1000 * 60 * 60: // less than an hour
-                return segment(dates, 4); // 15 minute segments
-            case range < 1000 * 60 * 60 * 24: // less than a day
-                return segment(dates, 24); // 1 hour segments
-            case range < 1000 * 60 * 60 * 24 * 7: // less than a week
-                return segment(dates, 7); // 1 day segments
-            case range < 1000 * 60 * 60 * 24 * 30: // less than a month
-                return segment(dates, 30); // 1 week segments
-            case range < 1000 * 60 * 60 * 24 * 365: // less than a year
-                return segment(dates, 12); // 1 month segments
-            default:
-                return segment(dates, 5); // 1 year segments
-        }
+    }
+    switch (true) {
+        case range < 1000 * 60 * 60: // less than an hour
+            return segment(dates, 4); // 15 minute segments
+        case range < 1000 * 60 * 60 * 24: // less than a day
+            return segment(dates, 24); // 1 hour segments
+        case range < 1000 * 60 * 60 * 24 * 7: // less than a week
+            return segment(dates, 7); // 1 day segments
+        case range < 1000 * 60 * 60 * 24 * 30: // less than a month
+            return segment(dates, 30); // 1 week segments
+        case range < 1000 * 60 * 60 * 24 * 365: // less than a year
+            return segment(dates, 12); // 1 month segments
+        default:
+            return segment(dates, 5); // 1 year segments
     }
 };

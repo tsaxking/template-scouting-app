@@ -1,51 +1,51 @@
 <script lang="ts">
-import { createEventDispatcher } from 'svelte';
-import { App } from '../../models/app/app';
-import SelectedInfo from './SelectedInfo.svelte';
-import { type TBAEvent } from '../../../shared/submodules/tatorscout-calculations/tba';
+    import { createEventDispatcher } from 'svelte';
+    import { App } from '../../models/app/app';
+    import SelectedInfo from './SelectedInfo.svelte';
+    import { type TBAEvent } from '../../../shared/submodules/tatorscout-calculations/tba';
 
-export let compLevel: 'pr' | 'qm' | 'qf' | 'sf' | 'f' = App.matchData.compLevel;
-export let matchNum: string = String(App.matchData.matchNumber || '');
-export let teamNum: number = App.matchData.teamNumber;
-export let teams: {
-    number: number;
-    name: string;
-}[] = [];
-export let events: TBAEvent[] = [];
-export let event: string = '';
+    export let compLevel: 'pr' | 'qm' | 'qf' | 'sf' | 'f' = App.matchData.compLevel;
+    export let matchNum: string = String(App.matchData.matchNumber || '');
+    export let teamNum: number = App.matchData.teamNumber;
+    export let teams: {
+        number: number;
+        name: string;
+    }[] = [];
+    export let events: TBAEvent[] = [];
+    export let event: string = '';
 
-const d = createEventDispatcher();
+    const d = createEventDispatcher();
 
-$: d('compLevel', compLevel);
-$: d('matchNum', matchNum);
-$: d('teamNum', teamNum);
+    $: d('compLevel', compLevel);
+    $: d('matchNum', matchNum);
+    $: d('teamNum', teamNum);
 
-const onEventSelect = async (eventKey: string) => {
-    const [current, newData] = await Promise.all([
-        App.getEventData(),
-        App.getEventData(eventKey)
-    ]);
-    if (current.isErr()) return console.error(current.error);
-    if (newData.isErr()) return console.error(newData.error);
+    const onEventSelect = async (eventKey: string) => {
+        const [current, newData] = await Promise.all([
+            App.getEventData(),
+            App.getEventData(eventKey)
+        ]);
+        if (current.isErr()) return console.error(current.error);
+        if (newData.isErr()) return console.error(newData.error);
 
-    if (current.value.eventKey === newData.value.eventKey) return;
+        if (current.value.eventKey === newData.value.eventKey) return;
 
-    teams = newData.value.teams.map(t => ({
-        number: t.team_number,
-        name: t.nickname
-    }));
+        teams = newData.value.teams.map(t => ({
+            number: t.team_number,
+            name: t.nickname
+        }));
 
-    matchNum =
-        eventKey === newData.value.eventKey
-            ? String(App.matchData.matchNumber)
-            : '';
-    teamNum =
-        eventKey === newData.value.eventKey ? App.matchData.teamNumber : 0;
+        matchNum =
+            eventKey === newData.value.eventKey
+                ? String(App.matchData.matchNumber)
+                : '';
+        teamNum =
+            eventKey === newData.value.eventKey ? App.matchData.teamNumber : 0;
 
-    App.matchData.selectMatch(1, 'qm');
-};
+        App.matchData.selectMatch(1, 'qm');
+    };
 
-$: onEventSelect(event);
+    $: onEventSelect(event);
 </script>
 
 <SelectedInfo />
@@ -54,21 +54,23 @@ $: onEventSelect(event);
     <!-- prescouting checkbox -->
     <div class="form-check form-switch mb-3">
         <input
+            id="PreScoutingCheck"
             class="form-check-input"
             type="checkbox"
-            id="PreScoutingCheck"
             bind:checked="{App.preScouting}"
         />
-        <label class="form-check-label" for="PreScoutingCheck">
+        <label
+            class="form-check-label"
+            for="PreScoutingCheck">
             Pre-scouting
         </label>
     </div>
 
     <div class="form-floating mb-3">
         <select
+            id="EventSelect"
             class="form-select"
             aria-label="Select Event"
-            id="EventSelect"
             bind:value="{event}"
         >
             {#each events as e}
@@ -81,13 +83,15 @@ $: onEventSelect(event);
 
 <div class="form-floating mb-3">
     <select
+        id="CompLevelSelect"
         class="form-select"
         aria-label="Select Match"
-        id="CompLevelSelect"
         bind:value="{compLevel}"
     >
         <option value="pr">Practice match</option>
-        <option value="qm" selected>Qualifying match</option>
+        <option
+            selected
+            value="qm">Qualifying match</option>
         <option value="qf">Quarter finals</option>
         <option value="sf">Semi finals</option>
         <option value="f">Finals!</option>
@@ -97,10 +101,10 @@ $: onEventSelect(event);
 
 <div class="form-floating mb-3">
     <input
-        type="number"
-        class="form-control"
         id="MatchNumberInput"
+        class="form-control"
         placeholder="Match number"
+        type="number"
         bind:value="{matchNum}"
     />
     <label for="MatchNumberInput">Match number</label>
@@ -108,9 +112,9 @@ $: onEventSelect(event);
 
 <div class="form-floating mb-3">
     <select
+        id="TeamNumberSelect"
         class="form-select"
         aria-label="Select Team"
-        id="TeamNumberSelect"
         bind:value="{teamNum}"
     >
         {#each teams as team}
