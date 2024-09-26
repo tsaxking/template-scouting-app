@@ -1,7 +1,7 @@
 import env, { __root } from './utilities/env';
-import { log } from './utilities/terminal-logging';
-import { App } from './structure/app/app';
-import { getJSON, log as serverLog } from './utilities/files';
+import { error, log } from './utilities/terminal-logging';
+import { App, ResponseStatus } from './structure/app/app';
+import { getJSON, getJSONSync, log as serverLog } from './utilities/files';
 import { homeBuilder } from './utilities/page-builder';
 import Account from './structure/accounts';
 import { router as admin } from './routes/admin';
@@ -15,6 +15,15 @@ import { parseCookie } from '../shared/cookie';
 import path from 'path';
 import { DB } from './utilities/databases';
 import { Session } from './structure/sessions';
+import { startPinger } from './utilities/ping';
+import {
+    Match,
+    validateObj
+} from '../shared/submodules/tatorscout-calculations/trace';
+import { validate } from './middleware/data-type';
+import { ServerRequest } from './utilities/requests';
+import { TBA } from './utilities/tba/tba';
+import { TBAEvent } from '../shared/tba';
 
 if (process.argv.includes('--stats')) {
     const measure = () => {
@@ -29,14 +38,28 @@ if (process.argv.includes('--stats')) {
 
 const port = +(env.PORT || 3000);
 
-// add 2 generics to the App class to specify session.customData and account.customData types
-export const app = new App(port, env.DOMAIN || `http://localhost:${port}`);
+export const app = new App<{
+    isTrusted: boolean;
+}>(port, env.DOMAIN || `http://localhost:${port}`);
 
-Session.setDeleteInterval(1000 * 60 * 10); // delete unused sessions every 10 minutes
+if (process.argv.includes('--ping')) {
+    const pinger = startPinger();
+    pinger.on('disconnect', () => {
+        console.log('Servers are disconnected!');
+    });
+    pinger.on('connect', () => {
+        console.log('Servers are connected!');
+    });
+    pinger.on('ping', () => {
+        console.log('Pinged!');
+    });
+}
 
 app.post('/env', (req, res) => {
     res.json({
-        ENVIRONMENT: env.ENVIRONMENT
+        ENVIRONMENT: env.ENVIRONMENT,
+        ALLOW_INTERNET: env.ALLOW_INTERNET,
+        ALLOW_PRESCOUTING: env.ALLOW_PRESCOUTING
     });
 });
 
@@ -126,24 +149,13 @@ app.post('/*', (req, res, next) => {
         delete b?.password;
         delete b?.confirmPassword;
         delete b?.$$files;
-        log(b);
+        console.log(b);
     } catch {
-        log(req.body);
+        console.log(req.body);
     }
 
     next();
 });
-
-// TODO: There is an error with the email validation middleware
-// app.post('/*', emailValidation(['email', 'confirmEmail'], {
-//     onspam: (req, res, next) => {
-//         res.sendStatus('spam:detected');
-//     },
-//     // onerror: (req, res, next) => {
-//     //     // res.sendStatus('unknown:error');
-//     //     next();
-//     // }
-// }));
 
 app.get('/', (req, res) => {
     res.redirect('/home');
@@ -170,29 +182,44 @@ app.get('/test/:page', (req, res, next) => {
 
 app.route('/api', api);
 app.route('/account', account);
-app.route('/roles', role);
-app.route('/account-notifications', notifications);
+// app.route('/roles', role);
+// app.route('/account-notifications', notifications);
 
-app.use('/*', Account.autoSignIn(env.AUTO_SIGN_IN));
-
-app.get('/*', (req, res, next) => {
-    if (env.ENVIRONMENT === 'test') return next();
-    if (!req.session.accountId) {
-        if (
-            ![
-                '/account/sign-in',
-                '/account/sign-up',
-                '/account/forgot-password'
-            ].includes(req.url)
-        ) {
-            // only save the previous url if it's not a sign-in, sign-up, or forgot-password page
-            // this is so that the user can be redirected back to the page they initially were trying to access
-            req.session.prevUrl = req.url;
-        }
-        return res.redirect('/account/sign-in');
+app.get('/sign-in', (req, res) => {
+    if (env.SECURITY_PIN && !req.session.customData.isTrusted) {
+        res.sendTemplate('entries/sign-in');
+    } else {
+        res.redirect('/app');
     }
+});
 
-    next();
+app.post<{
+    pin: string;
+}>(
+    '/sign-in',
+    validate({
+        pin: 'string'
+    }),
+    (req, res) => {
+        console.log('pin:', req.body.pin, env.SECURITY_PIN);
+        if (req.body.pin === env.SECURITY_PIN) {
+            req.session.customData.isTrusted = true;
+            req.session.save();
+            res.redirect('/app');
+        } else {
+            res.sendStatus('pin:incorrect');
+        }
+    }
+);
+
+app.use('/*', (req, res, next) => {
+    console.log('isTrusted:', req.session.customData);
+    if (env.SECURITY_PIN && !req.session.customData.isTrusted) {
+        console.log('redirecting to sign-in');
+        res.redirect('/sign-in');
+    } else {
+        next();
+    }
 });
 
 app.get('/dashboard/admin', Account.allowPermissions('admin'), (_req, res) => {
@@ -201,12 +228,144 @@ app.get('/dashboard/admin', Account.allowPermissions('admin'), (_req, res) => {
 
 app.route('/admin', admin);
 
-app.get('/dashboard/:dashboard', (req, res) => {
-    res.sendTemplate('entries/dashboard/' + req.params.dashboard);
+app.get('/app', (req, res) => {
+    res.sendTemplate('entries/app');
 });
 
-app.get('/user/*', Account.isSignedIn, (req, res) => {
-    res.sendTemplate('entries/user');
+app.get('/*', (req, res) => {
+    res.redirect('/app');
+});
+
+app.post<Match>(
+    '/submit',
+    validate(
+        validateObj as {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            [key in keyof Match]: any; // TODO: export IsValid type
+        }
+    ),
+    async (req, res) => {
+        const {
+            eventKey,
+            checks,
+            comments,
+            matchNumber,
+            teamNumber,
+            compLevel,
+            scout,
+            date,
+            group,
+            trace,
+            preScouting
+        } = req.body;
+
+        if (preScouting && !env.ALLOW_PRESCOUTING) {
+            return res.sendStatus('pre-scouting:not-allowed');
+        }
+
+        // I don't want to pass in req.body because it can have extra unneeded properties
+        const result = await ServerRequest.submitMatch({
+            checks,
+            comments,
+            matchNumber,
+            teamNumber,
+            compLevel,
+            eventKey,
+            scout,
+            date,
+            group,
+            trace,
+            preScouting
+        });
+
+        if (result.isOk()) {
+            res.sendStatus('server-request:match-submitted', {
+                matchNumber,
+                teamNumber,
+                compLevel,
+                data: result.value
+            });
+        } else {
+            res.sendStatus('server-request:match-error', {
+                matchNumber,
+                teamNumber,
+                compLevel,
+                eventKey,
+                scout,
+                date,
+                group,
+                trace
+            });
+
+            if (result.isOk()) {
+                res.sendStatus('server-request:match-submitted', {
+                    matchNumber,
+                    teamNumber,
+                    compLevel,
+                    data: result.value
+                });
+            } else {
+                error('Match submission error:', result.error);
+                res.sendStatus('server-request:match-error', {
+                    matchNumber,
+                    teamNumber,
+                    compLevel,
+                    error: result.error
+                });
+            }
+        }
+    }
+);
+
+app.post<{
+    key: string;
+}>('/event-data', async (req, res) => {
+    const { key } = req.body;
+
+    let name = 'dummy-event-data.json';
+    if (env.ENVIRONMENT === 'prod') name = 'event-data.json';
+
+    if (env.ALLOW_PRESCOUTING && req.body.key) {
+        console.log('Requesting event data for', key);
+        const data = await ServerRequest.getEventData(key);
+        // console.log(data);
+        if (data.isOk()) return res.json(data.value);
+        else return res.status(500).json(data.error);
+    }
+
+    const data = getJSONSync(name);
+    if (data.isOk()) {
+        res.json(data.value);
+    } else {
+        res.status(500).json(data.error);
+    }
+});
+
+app.post<{ year: number }>(
+    '/get-events',
+    validate({
+        year: 'number'
+    }),
+    async (req, res) => {
+        if (!env.ALLOW_PRESCOUTING) return res.json([]); // if prescouting is not allowed, return an empty array
+        const events = await TBA.get<TBAEvent[]>('/events/' + req.body.year);
+        // console.log({ events });
+        if (events.isOk()) {
+            // console.log('num events:', events.value?.length);
+            res.json(events.value);
+        } else {
+            res.status(500).json(events.error);
+        }
+    }
+);
+
+app.post('/get-accounts', async (req, res) => {
+    const accounts = await ServerRequest.getAccounts();
+    if (accounts.isOk()) {
+        res.json(accounts.value);
+    } else {
+        res.status(500).json(accounts.error);
+    }
 });
 
 app.get('/*', (req, res) => {

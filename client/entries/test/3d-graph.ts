@@ -11,7 +11,7 @@ import {
     translate
 } from '../../../shared/submodules/calculations/src/linear-algebra/matrix-calculations';
 import { Color } from '../../submodules/colors/color';
-import { Spline } from '../../../shared/submodules/calculations/src/linear-algebra/spline';
+import { BezzierSpline as Spline } from '../../../shared/submodules/calculations/src/linear-algebra/spline';
 
 const canvas = document.createElement('canvas');
 document.body.appendChild(canvas);
@@ -26,7 +26,9 @@ document.body.classList.add('no-scroll');
 const c = new Canvas(canvas.getContext('2d')!);
 
 // c.background.color = Color.fromName('gray');
-c.background.properties.fill.color = 'gray';
+c.background.properties.fill = {
+    color: 'rgba(255, 255, 255, 1)'
+};
 
 const cubePoints = [
     [0, 0, 0],
