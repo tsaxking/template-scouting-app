@@ -8,6 +8,7 @@ import env from '../utilities/env';
 import { Req } from '../structure/app/req';
 import { Res } from '../structure/app/res';
 import { capitalize } from '../../shared/text';
+import { resolveAll } from '../../shared/check';
 
 export const router = new Route();
 
@@ -593,15 +594,17 @@ router.post('/all', async (req, res) => {
 
     if (await account.hasPermission('editRoles')) {
         return res.json(
-            await Promise.all(
-                (await Account.getAll()).unwrap().map(a =>
-                    a.safe({
-                        roles: true,
-                        email: true,
-                        memberInfo: true,
-                        permissions: true,
-                        id: true
-                    })
+            resolveAll(
+                await Promise.all(
+                    (await Account.getAll()).unwrap().map(a =>
+                        a.safe({
+                            roles: true,
+                            email: true,
+                            memberInfo: true,
+                            permissions: true,
+                            id: true
+                        })
+                    )
                 )
             )
         );
