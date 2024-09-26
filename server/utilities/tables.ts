@@ -16,6 +16,7 @@ export type Accounts = {
     passwordChangeDate: number | undefined;
     phoneNumber: string | undefined;
     created: number;
+    customData: string;
 };
 
 export type Members = {
@@ -49,6 +50,8 @@ export type Version = {
     major: number;
     minor: number;
     patch: number;
+    gitBranch: string;
+    gitCommit: string;
 };
 
 export type Sessions = {
@@ -73,6 +76,17 @@ export type Blacklist = {
 export type AccountSettings = {
     accountId: string;
     settings: string;
+};
+
+export type AccountNotifications = {
+    id: string;
+    accountId: string;
+    type: string;
+    data: string; // JSON
+    created: number;
+    read: boolean;
+    message: string;
+    title: string;
 };
 
 export type Select_permissions_all = undefined;
@@ -260,6 +274,24 @@ export type Insert_account_new = {
     verification: string | undefined;
     created: number;
     phoneNumber: string | undefined;
+    customData: string;
+};
+
+export type Update_account_update = {
+    id: string;
+    username: string;
+    key: string;
+    salt: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    passwordChange: string | undefined;
+    picture: string | undefined;
+    verified: number;
+    verification: string | undefined;
+    passwordChangeDate: number | undefined;
+    phoneNumber: string | undefined;
+    customData: string;
 };
 
 export type Update_account_request_password_change = {
@@ -395,4 +427,32 @@ export type Insert_tba_new = {
     response: string | undefined;
     updated: number;
     update: number;
+};
+
+export type Select_account_notifications_from_account = {
+    accountId: string;
+};
+
+export type Delete_account_notifications_delete = {
+    id: string;
+};
+
+export type Update_account_notifications_mark_read = {
+    id: string;
+    read: boolean;
+};
+
+export type Insert_account_notifications_new = {
+    id: string;
+    accountId: string;
+    type: string;
+    data: string; // JSON
+    created: number;
+    read: boolean;
+    message: string;
+    title: string;
+};
+
+export type Select_account_notifications_from_id = {
+    id: string;
 };

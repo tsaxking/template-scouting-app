@@ -4,10 +4,11 @@ import { Path } from '../../models/canvas/path';
 import { Circle } from '../../models/canvas/circle';
 import { Point } from '../../../shared/submodules/calculations/src/linear-algebra/point';
 import { Color } from '../../submodules/colors/color';
-import { BezzierSpline as S } from '../../../shared/submodules/calculations/src/linear-algebra/spline';
+import { Spline as S } from '../../../shared/submodules/calculations/src/linear-algebra/spline';
 import { DrawableEvent } from '../../models/canvas/drawable';
 import { Spline } from '../../models/canvas/spline';
 import { downloadText } from '../../utilities/downloads';
+import { globalize } from '../../utilities/global';
 
 const canvas = document.createElement('canvas');
 document.body.appendChild(canvas);
@@ -54,9 +55,15 @@ const c = new Canvas(ctx, {
     ]
 });
 
-const stop = () => (c.$animating = false);
+globalize(c, 'canvas');
 
-const spline = new S();
+const stop = () => (c.animating = false);
+
+const spline = new S([], {
+    type: 'catmull-rom'
+});
+
+globalize(spline, 'spline');
 
 const start = () => {
     c.destroy();

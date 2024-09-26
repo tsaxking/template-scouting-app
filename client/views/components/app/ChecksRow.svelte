@@ -1,14 +1,14 @@
 <script lang="ts">
-import type { BootstrapColor } from '../../../submodules/colors/color';
-import type { PostDataMap } from '../../../utilities/general-types';
-import Checkbox from './Checkbox.svelte';
-import { createEventDispatcher } from 'svelte';
+    import type { BootstrapColor } from '../../../submodules/colors/color';
+    import type { PostDataMap } from '../../../utilities/general-types';
+    import Checkbox from './Checkbox.svelte';
+    import { createEventDispatcher } from 'svelte';
 
-export let checks: PostDataMap;
-export let color: BootstrapColor;
-export let name: string;
+    export let checks: PostDataMap;
+    export let color: BootstrapColor;
+    export let name: string;
 
-const d = createEventDispatcher();
+    const d = createEventDispatcher();
 </script>
 
 <div class="row">
@@ -17,10 +17,10 @@ const d = createEventDispatcher();
 <div class="row d-inline-flex">
     {#each Object.keys(checks) as key}
         <div
-            class="m-1 p-0 w-min"
             style="
-            height: 61px !important;
-        "
+                height: 61px !important;
+            "
+            class="m-1 p-0 w-min"
         >
             <Checkbox
                 bind:value="{checks[key].value}"
@@ -32,7 +32,7 @@ const d = createEventDispatcher();
                     });
                 }}"
                 bind:color
-            ></Checkbox>
+            />
         </div>
     {/each}
 </div>

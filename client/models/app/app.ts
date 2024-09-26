@@ -99,7 +99,7 @@ const SAVED_MATCH_VERSION = 0;
  * @typedef {AppEvents}
  */
 type AppEvents = {
-    section: Section;
+    section: Section | undefined;
     error: Error;
     stop: void;
     end: void;
@@ -204,7 +204,7 @@ export class App<
         return b;
     }
 
-    private static readonly emitter = new EventEmitter<keyof GlobalEvents>();
+    private static readonly emitter = new EventEmitter<GlobalEvents>();
 
     public static on<E extends keyof GlobalEvents>(
         event: E,
@@ -509,11 +509,10 @@ export class App<
                 matches.map(async m => {
                     const d = await ServerRequest.post('/submit', m);
                     if (d.isOk()) return 'success';
-                    else {
-                        if (d.error.message.includes('invalid'))
-                            return 'data parse error';
-                        else return 'server error';
-                    }
+
+                    if (d.error.message.includes('invalid'))
+                        return 'data parse error';
+                    return 'server error';
                 })
             );
         });
@@ -535,10 +534,9 @@ export class App<
                     App.emit('new-event', res.value);
                 }
                 return res.value;
-            } else {
-                alert('Error getting scout groups');
-                throw res.error;
             }
+            alert('Error getting scout groups');
+            throw res.error;
         });
     }
 
@@ -619,7 +617,7 @@ export class App<
             App.current.destroy();
         }
         App.current = this;
-        this.canvas.$ctx.canvas.style.position = 'absolute';
+        this.canvas.ctx.canvas.style.position = 'absolute';
 
         this.background = new Img(`/public/pictures/${this.year}field.png`, {
             x: 0,
@@ -747,7 +745,7 @@ export class App<
                 );
                 if (!confirmed) return;
                 App.abort();
-                this.emit('restart');
+                this.emit('restart', undefined);
             };
             target.appendChild(this.cancel);
         }
@@ -824,12 +822,12 @@ export class App<
 
         if (target.clientWidth > target.clientHeight * 2) {
             const xOffset = (target.clientWidth - target.clientHeight * 2) / 2;
-            this.canvas.$ctx.canvas.width = target.clientHeight * 2;
-            this.canvas.$ctx.canvas.height = target.clientHeight;
+            this.canvas.ctx.canvas.width = target.clientHeight * 2;
+            this.canvas.ctx.canvas.height = target.clientHeight;
             this.height = target.clientHeight;
             this.width = target.clientHeight * 2;
-            this.canvas.$ctx.canvas.style.top = '0px';
-            this.canvas.$ctx.canvas.style.left = `${xOffset}px`;
+            this.canvas.ctx.canvas.style.top = '0px';
+            this.canvas.ctx.canvas.style.left = `${xOffset}px`;
             this.xOffset = xOffset;
             this.yOffset = 0;
 
@@ -853,12 +851,12 @@ export class App<
             }
         } else {
             const yOffset = (target.clientHeight - target.clientWidth / 2) / 2;
-            this.canvas.$ctx.canvas.width = target.clientWidth;
-            this.canvas.$ctx.canvas.height = target.clientWidth / 2;
+            this.canvas.ctx.canvas.width = target.clientWidth;
+            this.canvas.ctx.canvas.height = target.clientWidth / 2;
             this.height = target.clientWidth / 2;
             this.width = target.clientWidth;
-            this.canvas.$ctx.canvas.style.top = `${yOffset}px`;
-            this.canvas.$ctx.canvas.style.left = '0px';
+            this.canvas.ctx.canvas.style.top = `${yOffset}px`;
+            this.canvas.ctx.canvas.style.left = '0px';
             this.xOffset = 0;
             this.yOffset = yOffset;
 
@@ -1153,9 +1151,7 @@ export class App<
      * @readonly
      * @type {EventEmitter<keyof AppEvents>}
      */
-    private readonly $emitter: EventEmitter<keyof AppEvents> = new EventEmitter<
-        keyof AppEvents
-    >();
+    private readonly emitter = new EventEmitter<AppEvents>();
 
     /**
      * All the ticks of the match
@@ -1205,22 +1201,25 @@ export class App<
             const now = Date.now();
             const { section } = this;
             this.currentTick = this.ticks[i];
-            if (this.section !== section) this.emit('section', this.section || undefined);
+            if (this.section !== section)
+                this.emit('section', this.section || undefined);
 
-            if (!this.currentTick) this.emit('end');
-            if (!loop.active) this.emit('stopped');
+            if (!this.currentTick) this.emit('end', undefined);
+            if (!loop.active) this.emit('stopped', undefined);
             this.currentTime = now - this.startTime;
             this.emit('tick', this.currentTick);
-            if (this.currentLocation) this.currentTick.point = this.currentLocation;
+            if (this.currentLocation)
+                this.currentTick.point = this.currentLocation;
 
             if (i % 4 === 0) this.emit('second', this.currentTick.second);
 
             try {
                 const s = Date.now();
                 cb?.(this.currentTick);
-                if (Date.now() - s > 250) console.warn('Callback took too long');
+                if (Date.now() - s > 250)
+                    console.warn('Callback took too long');
             } catch (error) {
-                this.$emitter.emit('error', error);
+                this.emitter.emit('error', error as Error);
                 return this.stop();
             }
 
@@ -1386,55 +1385,13 @@ export class App<
      * @public
      */
     public stop() {
-        this.emit('stop');
+        this.emit('stop', undefined);
     }
 
-    /**
-     * Add an event listener
-     * @date 1/9/2024 - 3:08:19 AM
-     *
-     * @public
-     * @template {keyof AppEvents} K
-     * @param {K} event
-     * @param {(data: AppEvents[K]) => void} cb
-     * @returns {void) => void}
-     */
-    public on<K extends keyof AppEvents>(
-        event: K,
-        cb: (data: AppEvents[K]) => void
-    ) {
-        this.$emitter.on(event, cb);
-    }
-
-    /**
-     * Remove an event listener
-     * @date 1/9/2024 - 3:08:19 AM
-     *
-     * @public
-     * @template {keyof AppEvents} K
-     * @param {K} event
-     * @param {?(data: AppEvents[K]) => void} [cb]
-     * @returns {void) => void}
-     */
-    public off<K extends keyof AppEvents>(
-        event: K,
-        cb?: (data: AppEvents[K]) => void
-    ) {
-        this.$emitter.off(event, cb);
-    }
-
-    /**
-     * Emit an event
-     * @date 1/9/2024 - 3:08:19 AM
-     *
-     * @public
-     * @template {keyof AppEvents} K
-     * @param {K} event
-     * @param {?AppEvents[K]} [data]
-     */
-    public emit<K extends keyof AppEvents>(event: K, data?: AppEvents[K]) {
-        this.$emitter.emit(event, data);
-    }
+    emit = this.emitter.emit.bind(this.emitter);
+    on = this.emitter.on.bind(this.emitter);
+    off = this.emitter.off.bind(this.emitter);
+    once = this.emitter.once.bind(this.emitter);
 
     /**
      * The time left in the match
@@ -1552,11 +1509,7 @@ export class App<
 
         this.cover.style.display = 'block';
         this.canvas.clearDrawables();
-        this.canvas.add(
-            this.background, 
-            this.path, 
-            this.buttonCircle
-        );
+        this.canvas.add(this.background, this.path, this.buttonCircle);
 
         let quitView = false;
 
@@ -1604,7 +1557,7 @@ export class App<
             this.built = false;
             stopAnimation();
             quitView = true;
-            this.emit('stop');
+            this.emit('stop', undefined);
         };
 
         this.on('stop', stopAnimation);
@@ -1702,7 +1655,7 @@ export class App<
      * @returns {*}
      */
     public clickPoints() {
-        const em = new EventEmitter<'point'>();
+        const em = new EventEmitter<{ point: Point2D }>();
 
         this.canvasEl.addEventListener('click', e => {
             const [p] = this.canvas.getXY(e);
@@ -1761,9 +1714,8 @@ export class App<
         canvas.clearDrawables();
         // canvas.adaptable = true;
         canvas.ratio = 2;
-        canvas.width = canvas.$ctx.canvas.parentElement?.clientWidth || 0;
-        canvas.height =
-            (canvas.$ctx.canvas.parentElement?.clientWidth || 0) / 2;
+        canvas.width = canvas.ctx.canvas.parentElement?.clientWidth || 0;
+        canvas.height = (canvas.ctx.canvas.parentElement?.clientWidth || 0) / 2;
 
         return attemptAsync(async () => {
             const img = new Img(`/public/pictures/${this.year}field.png`);
@@ -1841,9 +1793,8 @@ export class App<
                         width: 1
                     };
                     return p;
-                } else {
-                    return null;
                 }
+                return null;
             });
 
             // default filter
@@ -1908,15 +1859,14 @@ export class App<
             if (value === 'success') {
                 App.deleteFromLocalStorage(id);
                 return value;
-            } else {
-                App.updateLocalStorage(id, value);
             }
+            App.updateLocalStorage(id, value);
         }
     }
 
     // TODO: Destroy without reloading
     destroy() {
-        this.canvas.$animating = false;
+        this.canvas.animating = false;
         this.canvas.clearDrawables();
     }
 
