@@ -606,7 +606,7 @@ router.post('/all', async (req, res) => {
                         })
                     )
                 )
-            )
+            ).unwrap()
         );
     }
 
