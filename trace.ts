@@ -38,6 +38,7 @@ export const actions = {
     src: 'source',
     trp: 'trap',
     clb: 'climb',
+    lob: 'lob',
     cne: 'cone',
     cbe: 'cube',
     bal: 'balance',
@@ -521,6 +522,7 @@ export class Trace {
                         },
                         teleop: {
                             spk: 2,
+                            lob: 0,
                             amp: 1,
                             clb: 3,
                             park: 1,
@@ -537,12 +539,14 @@ export class Trace {
                         spk: 0,
                         amp: 0,
                         mobility: 0,
+                        lob: 0,
                         total: 0
                     },
                     teleop: {
                         spk: 0,
                         amp: 0,
                         trp: 0,
+                        lob: 0,
                         total: 0
                     },
                     endgame: {
@@ -671,6 +675,13 @@ export class Trace {
                                 traceData.map(t => t.teleop.trp),
                                 traceData.map(t => t.teleop.total)
                             ].map($Math.average)
+                        },
+                        {
+                            title: 'Total Lobs',
+                            labels: ['Speaker', 'Lob']
+                            data: [
+                                traceData.map(t => t.teleop.lob)
+                            ].map(#Math.average)
                         },
                         {
                             title: 'Endgame Points',
