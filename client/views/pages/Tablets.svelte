@@ -105,7 +105,7 @@ Prescouting: ${old.preScouting} -> ${state.preScouting}
             </tr>
         </thead>
         <tbody>
-            {#each tablets as t}
+            {#each tablets as t (t.id)}
                 <tr>
                     <!-- Group -->
                     <td>
@@ -189,6 +189,7 @@ Prescouting: ${old.preScouting} -> ${state.preScouting}
                             role="group">
                             <button
                                 class="btn btn-primary"
+                                type="button"
                                 on:click="{async () => {
                                     const doSubmit = await check(t);
                                     if (!doSubmit) return;
@@ -199,6 +200,7 @@ Prescouting: ${old.preScouting} -> ${state.preScouting}
                             </button>
                             <button
                                 class="btn btn-warning"
+                                type="button"
                                 on:click="{() => {
                                     t.reset();
                                     tablets = tablets; // view update
@@ -208,6 +210,7 @@ Prescouting: ${old.preScouting} -> ${state.preScouting}
                             </button>
                             <button
                                 class="btn btn-danger"
+                                type="button"
                                 on:click="{async () => {
                                     const cancel = await confirm(
                                         'Are you sure you want to abort this tablet?'
@@ -220,6 +223,7 @@ Prescouting: ${old.preScouting} -> ${state.preScouting}
                             </button>
                             <button
                                 class="btn btn-success"
+                                type="button"
                                 on:click="{async () => {
                                     const submit = await confirm(
                                         'Are you sure you want to force submit on this tablet?'
