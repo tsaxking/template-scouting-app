@@ -126,6 +126,10 @@ export const generate2024App = (
     const redSpeaker = App.button(redButtonClasses, images.spk.cloneNode());
     const blueSource = App.button(blueButtonClasses, images.src.cloneNode());
     const redSource = App.button(redButtonClasses, images.src.cloneNode());
+    const redLobA = App.button(redButtonClasses, images.lob.cloneNode());
+    const blueLobA = App.button(blueButtonClasses, images.lob.cloneNode());
+    const redLobB = App.button(redButtonClasses, images.lob.cloneNode());
+    const blueLobB = App.button(blueButtonClasses, images.lob.cloneNode());
 
     // const btns = notePositions.map((pos, i) => {
     //     const btn = App.button(
@@ -212,6 +216,38 @@ export const generate2024App = (
         redSpeaker,
         i => i.toString(),
         'red'
+    );
+
+    app.addAppObject(
+        [0.4458204334365325, 1 - 0.081018593371059015],
+        new I('Red Lob', 'Lob a note to the red side', 'lob', 0),
+        redLobA,
+        i => i.toString(),
+        'red'
+    );
+
+    app.addAppObject(
+        [0.4458204334365325, 0.021018593371059015],
+        new I('Red Lob', 'Lob a note to the red side', 'lob', 0),
+        redLobB,
+        i => i.toString(),
+        'red'
+    );
+
+    app.addAppObject(
+        [0.5433436532507739, 1 - 0.081018593371059015],
+        new I('Blue Lob', 'Lob a note to the blue side', 'lob', 0),
+        blueLobA,
+        i => i.toString(),
+        'blue'
+    );
+
+    app.addAppObject(
+        [0.5433436532507739, 0.021018593371059015],
+        new I('Blue Lob', 'Lob a note to the blue side', 'lob', 0),
+        blueLobB,
+        i => i.toString(),
+        'blue'
     );
 
     app.addAppObject(
