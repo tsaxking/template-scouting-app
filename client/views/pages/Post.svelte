@@ -4,13 +4,14 @@
     import { capitalize, fromCamelCase } from '../../../shared/text';
     import { Trace } from '../../../shared/submodules/tatorscout-calculations/trace';
     import { choose, confirm, notify } from '../../utilities/notifications';
-    import { createEventDispatcher } from 'svelte';
+    import { createEventDispatcher, onMount } from 'svelte';
     import { Canvas } from '../../models/canvas/canvas';
     import Summary from '../components/Summary.svelte';
     import { Modal } from '../../utilities/modals';
     import AutoCommenter from '../components/AutoCommenter.svelte';
     import type { PostDataMap } from '../../utilities/general-types';
     import ChecksRow from '../components/app/ChecksRow.svelte';
+    import { socket } from '../../utilities/socket';
 
     const d = createEventDispatcher();
 
@@ -203,7 +204,7 @@
     const submit = async () => {
         if (
             // TODO: make this year by year based
-            !success.groundPicks.value &&
+            !primary.groundPicks.value &&
             Trace.yearInfo[2024].mustGroundPick(app.pull())
         ) {
             const doSubmit = await confirm(
@@ -311,6 +312,11 @@
 
         modal.show();
     };
+
+    onMount(() => {
+        socket.on('submit', submit);
+        return () => socket.off('submit', submit);
+    });
 </script>
 
 <div class="container mb-3">
@@ -333,7 +339,7 @@
     {#if commentsSections.length > 0}
         <div class="row mb-3">
             <div class="container">
-                {#each commentsSections as section, i}
+                {#each commentsSections as section, i (section)}
                     <div class="row mb-3">
                         <label for="textarea-{i}">
                             Please tell us why you checked "{capitalize(

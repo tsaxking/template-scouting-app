@@ -246,26 +246,27 @@ export class MatchData {
         });
     }
 
-    async moveIndex(i: number) {
+    async moveIndex(movingMatchIndex: number) {
         return attemptAsync(async () => {
             if (this.compLevel === 'pr') this.compLevel = 'qm'; // Default to qual matches
             const eventData = await App.getEventData();
             if (eventData.isErr()) throw eventData.error;
             const { group } = App;
 
-            let currentIndex = eventData.value.matches.findIndex(
+            let currentMatchIndex = eventData.value.matches.findIndex(
                 m =>
                     m.match_number === this.matchNumber &&
                     m.comp_level === this.compLevel
             );
 
-            if (currentIndex === -1 && i !== 1) currentIndex = 0;
+            // always start at match = 0 if no match is selected
+            if (currentMatchIndex === -1 && movingMatchIndex !== 1) currentMatchIndex = 0;
 
-            const prev = eventData.value.matches[currentIndex];
+            const prev = eventData.value.matches[currentMatchIndex];
             const prevTeams = filter(prev);
-            currentIndex += i;
+            currentMatchIndex += movingMatchIndex;
 
-            const match = eventData.value.matches[currentIndex];
+            const match = eventData.value.matches[currentMatchIndex];
 
             if (!match) {
                 throw new Error('Match not found, match not changed');
@@ -274,12 +275,13 @@ export class MatchData {
             const teams: number[] = filter(match);
 
             if (group === -1) {
+                // if no group and is red 1, stay red 1
                 const teamIndex = prevTeams.indexOf(this.teamNumber) || 0;
                 this.teamNumber = teams[teamIndex];
             } else {
                 this.teamNumber =
                     eventData.value.assignments.matchAssignments[group][
-                        currentIndex
+                        currentMatchIndex
                     ];
             }
 
