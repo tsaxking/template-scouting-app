@@ -1922,8 +1922,7 @@ socket.on('change-state', (obj: { id: string; data: TabletState }) => {
             false
         );
     if (App.scoutName !== state.scoutName) {
-        App.$scoutName = state.scoutName;
-        App.emit('change-name', state.scoutName);
+        App.scoutName = state.scoutName;
     }
     if (matchData.matchNumber !== state.matchNumber)
         matchData.selectMatch(state.matchNumber, state.compLevel as CompLevel);
