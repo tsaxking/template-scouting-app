@@ -3,6 +3,7 @@
     import Page from '../components/main/Page.svelte';
     import { getOpenPage } from '../../utilities/page';
     import type { PageGroup } from '../../utilities/general-types';
+    import Tablets from '../pages/Tablets.svelte';
 
     const groups: PageGroup[] = [
         {
@@ -12,17 +13,13 @@
                     name: 'dashboard',
                     icon: 'home',
                     iconType: 'material'
-                },
-                {
-                    name: 'account',
-                    icon: 'person',
-                    iconType: 'material'
                 }
             ]
         }
     ];
 
-    let active: string = getOpenPage();
+    // let active: string = getOpenPage();
+    let active = 'dashboard';
     const domain = '';
 
     const navItems: string[] = [];
@@ -47,5 +44,7 @@
     <Page
         {active}
         {domain}
-        title="dashboard">\</Page>
+        title="dashboard">
+        <Tablets />
+    </Page>
 </Main>

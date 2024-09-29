@@ -37,5 +37,8 @@ export type SocketEvent =
     | 'server-request:match-submitted'
     | 'skills:added'
     | 'skills:removed'
+    | 'tablet:aborted'
+    | 'tablet:state-updated'
+    | 'tablet:submitted'
     | 'test:success'
     | 'test:test';
