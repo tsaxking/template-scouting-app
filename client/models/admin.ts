@@ -168,4 +168,4 @@ socket.on('delete-tablet', () => {
     State.refresh();
 });
 
-new Loop(State.refresh, 1000 * 60).start();
+new Loop(State.refresh, 1000 * 5).start();
