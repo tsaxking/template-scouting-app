@@ -219,7 +219,7 @@ export const generate2024App = (
     );
 
     app.addAppObject(
-        [0.4458204334365325, 1 - 0.081018593371059015],
+        [0.49946581196581197, 1 - 0.9594017094017094],
         new I('Red Lob', 'Lob a note to the red side', 'lob', 0),
         redLobA,
         i => i.toString(),
@@ -227,7 +227,7 @@ export const generate2024App = (
     );
 
     app.addAppObject(
-        [0.4458204334365325, 0.021018593371059015],
+        [0.49946581196581197, 0.9594017094017094],
         new I('Red Lob', 'Lob a note to the red side', 'lob', 0),
         redLobB,
         i => i.toString(),
@@ -235,7 +235,7 @@ export const generate2024App = (
     );
 
     app.addAppObject(
-        [0.5433436532507739, 1 - 0.081018593371059015],
+        [0.49946581196581197, 1 - 0.9594017094017094],
         new I('Blue Lob', 'Lob a note to the blue side', 'lob', 0),
         blueLobA,
         i => i.toString(),
@@ -243,7 +243,7 @@ export const generate2024App = (
     );
 
     app.addAppObject(
-        [0.5433436532507739, 0.021018593371059015],
+        [0.49946581196581197, 0.9594017094017094],
         new I('Blue Lob', 'Lob a note to the blue side', 'lob', 0),
         blueLobB,
         i => i.toString(),
