@@ -1,0 +1,1 @@
+DELETE FROM ServerRequests WHERE id = :id;
