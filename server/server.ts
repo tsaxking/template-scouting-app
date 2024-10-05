@@ -24,6 +24,7 @@ import { validate } from './middleware/data-type';
 import { ServerRequest } from './utilities/requests';
 import { TBA } from './utilities/tba/tba';
 import { TBAEvent } from '../shared/tba';
+import { State } from './structure/cache/state';
 
 if (process.argv.includes('--stats')) {
     const measure = () => {
@@ -40,6 +41,7 @@ const port = +(env.PORT || 3000);
 
 export const app = new App<{
     isTrusted: boolean;
+    isAdmin: boolean;
 }>(port, env.DOMAIN || `http://localhost:${port}`);
 
 if (process.argv.includes('--ping')) {
@@ -54,6 +56,8 @@ if (process.argv.includes('--ping')) {
         console.log('Pinged!');
     });
 }
+
+new State(app);
 
 app.post('/env', (req, res) => {
     res.json({
@@ -186,11 +190,12 @@ app.route('/account', account);
 // app.route('/account-notifications', notifications);
 
 app.get('/sign-in', (req, res) => {
-    if (env.SECURITY_PIN && !req.session.customData.isTrusted) {
-        res.sendTemplate('entries/sign-in');
-    } else {
-        res.redirect('/app');
-    }
+    res.sendTemplate('entries/sign-in');
+});
+
+app.use('/*', (req, _res, next) => {
+    console.log('Custom data:', req.session.customData);
+    next();
 });
 
 app.post<{
@@ -201,11 +206,16 @@ app.post<{
         pin: 'string'
     }),
     (req, res) => {
-        console.log('pin:', req.body.pin, env.SECURITY_PIN);
+        console.log('Pin:', req.body.pin);
         if (req.body.pin === env.SECURITY_PIN) {
             req.session.customData.isTrusted = true;
             req.session.save();
             res.redirect('/app');
+        } else if (env.ADMIN_PIN && req.body.pin === env.ADMIN_PIN) {
+            req.session.customData.isAdmin = true;
+            req.session.save();
+            res.redirect('/dashboard/admin');
+            req.socket?.join('admin');
         } else {
             res.sendStatus('pin:incorrect');
         }
@@ -213,7 +223,6 @@ app.post<{
 );
 
 app.use('/*', (req, res, next) => {
-    console.log('isTrusted:', req.session.customData);
     if (env.SECURITY_PIN && !req.session.customData.isTrusted) {
         console.log('redirecting to sign-in');
         res.redirect('/sign-in');
@@ -222,8 +231,12 @@ app.use('/*', (req, res, next) => {
     }
 });
 
-app.get('/dashboard/admin', Account.allowPermissions('admin'), (_req, res) => {
-    res.sendTemplate('entries/dashboard/admin');
+app.get('/dashboard/admin', (req, res) => {
+    if (req.session.customData.isAdmin) {
+        res.sendTemplate('entries/dashboard/admin');
+    } else {
+        res.redirect('/sign-in');
+    }
 });
 
 app.route('/admin', admin);
