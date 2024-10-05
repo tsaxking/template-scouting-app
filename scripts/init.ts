@@ -266,6 +266,7 @@ const createEnv = async () => {
         i => ['y', 'n'].includes(i),
         true
     );
+    await setKey('ADMIN_PIN', 'Admin Pin: (no default)', '', undefined, true);
 
     const e = Object.keys(values)
         .map(key => `${key} = '${values[key]}'`)
