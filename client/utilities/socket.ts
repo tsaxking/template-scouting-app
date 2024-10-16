@@ -28,7 +28,7 @@ type SocketOptions = {
  * @class SocketWrapper
  * @typedef {Socket}
  */
-class Socket {
+export class Socket {
     // private cache: Cache[] = [];
     private id?: string;
     // public isActive = false;
@@ -190,7 +190,9 @@ class Socket {
         this.socket.connect();
         const events = this.listeners.entries();
         for (let i = 0; i < this.listeners.size; i++) {
-            const [event, listeners] = events.next().value;
+            const next = events.next().value;
+            if (!next) break;
+            const [event, listeners] = next;
             for (const listener of listeners) {
                 this.socket.on(event, listener);
             }
