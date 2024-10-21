@@ -60,9 +60,11 @@
         "@fortawesome/fontawesome-free": "^6.5.1",
         "@neoxia-js/nodemailer-sendgrid-transport": "^0.1.1",
         "@putout/cli-choose": "^2.0.0",
+        "@types/adm-zip": "^0.5.5",
         "@types/bootstrap": "^5.2.10",
         "@types/jqueryui": "^1.12.21",
         "@types/nodemailer-sendgrid": "^1.0.3",
+        "adm-zip": "^0.5.16",
         "axios": "^1.6.7",
         "bad-words": "^3.0.4",
         "bootstrap": "^5.3.3",
@@ -102,7 +104,6 @@
         "test": "^3.3.0",
         "ts-node": "^10.9.2",
         "uuid": "^9.0.1",
-        "webcam-easy": "^1.1.1",
-        "zip-lib": "^1.0.4"
+        "webcam-easy": "^1.1.1"
     }
 }

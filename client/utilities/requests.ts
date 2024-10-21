@@ -9,7 +9,11 @@ import { error, log, warn } from './logging';
 import { bigIntDecode } from '../../shared/objects';
 
 export interface Requester {
-    post: <T>(url: string, body?: unknown, options?: RequestOptions) => Promise<Result<T>>;
+    post: <T>(
+        url: string,
+        body?: unknown,
+        options?: RequestOptions
+    ) => Promise<Result<T>>;
     get: <T>(url: string, options?: RequestOptions) => Promise<Result<T>>;
     multiple: (requests: ServerRequest[]) => Promise<unknown[]>;
 }

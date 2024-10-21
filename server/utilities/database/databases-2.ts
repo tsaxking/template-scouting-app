@@ -170,6 +170,7 @@ export class PgDatabase implements DatabaseInterface {
     ): Promise<Result<QueryResult<T>>> {
         return attemptAsync(async () => {
             const result = await this.client.query(query.sql, query.args);
+            if (!result.rows) result.rows = [];
             return new QueryResult<T>(result.rows, query);
         });
     }
@@ -287,7 +288,6 @@ export class Database {
     }
 
     async getTables(): Promise<Result<string[]>> {
-        if (!this.initialized) throw new Error('Database not initialized');
         return attemptAsync(async () => {
             const query = new Query(
                 `
@@ -309,20 +309,21 @@ export class Database {
         });
     }
 
-    async getVersion(): Promise<Result<{
-        major: number;
-        minor: number;
-        patch: number;
-    }>> {
+    async getVersion(): Promise<
+        Result<{
+            major: number;
+            minor: number;
+            patch: number;
+        }>
+    > {
         return attemptAsync(async () => {
-            (await this.connect()).unwrap();
-            const result = (await this.unsafe.get<{
-                major: number;
-                minor: number;
-                patch: number;
-            }>(
-                Query.build('SELECT * FROM Version;')
-            )).unwrap();
+            const result = (
+                await this.unsafe.get<{
+                    major: number;
+                    minor: number;
+                    patch: number;
+                }>(Query.build('SELECT * FROM Version;'))
+            ).unwrap();
             if (!result) {
                 throw new Error('Version not found');
             }
@@ -331,35 +332,65 @@ export class Database {
         });
     }
 
+    async reset(hard: boolean) {
+        return attemptAsync(async () => {
+            const tables = (await this.getTables()).unwrap();
+            if (hard) {
+                // drop all tables
+                await Promise.all(
+                    tables.map(table => {
+                        return this.unsafe.run(
+                            Query.build(`DROP TABLE ${table};`)
+                        );
+                    })
+                );
+            } else {
+                // delete all data
+                await Promise.all(
+                    tables.map(table => {
+                        return this.unsafe.run(
+                            Query.build(`DELETE FROM ${table};`)
+                        );
+                    })
+                );
+            }
+        });
+    }
+
     async init() {
         return attemptAsync(async () => {
-            const version = await (await this.getVersion()).unwrap();
-            if (version.major !== 0 || version.minor !== 0 || version.patch !== 0) {
-                this.initialized = true;
-                return;
+            if (this.initialized) return;
+            // this query must be safe from repeated calls
+            (
+                await this.unsafe.run(
+                    Query.build(`
+                        CREATE TABLE IF NOT EXISTS Structs (
+                            name TEXT PRIMARY KEY,
+                            schema TEXT NOT NULL
+                        );
+
+                        CREATE TABLE IF NOT EXISTS Version (
+                            major INTEGER NOT NULL,
+                            minor INTEGER NOT NULL,
+                            patch INTEGER NOT NULL
+                        );
+                `)
+                )
+            ).unwrap();
+
+            // check if version exists, if not, initialize it
+            const result = await this.getVersion();
+            if (result.isErr()) {
+                await this.unsafe.run(
+                    Query.build(
+                        `
+                        INSERT INTO Version (major, minor, patch)
+                        VALUES (:major, :minor, :patch);
+                    `,
+                        { major: 0, minor: 0, patch: 0 }
+                    )
+                );
             }
-
-            (await this.connect()).unwrap();
-            (await this.unsafe.run(
-                Query.build(`
-                    CREATE TABLE IF NOT EXISTS Tables (
-                        name TEXT PRIMARY KEY,
-                        schema TEXT NOT NULL
-                    );
-
-                    CREATE TABLE IF NOT EXISTS Vesrion (
-                        major INTEGER NOT NULL,
-                        minor INTEGER NOT NULL,
-                        patch INTEGER NOT NULL
-                    );
-
-                    INSERT INTO Version (
-                        major, minor, patch
-                    ) VALUES (
-                        0, 0, 0
-                    );
-                `),
-            )).unwrap();
 
             this.initialized = true;
         });

@@ -490,17 +490,15 @@ export class Version {
         if (this.major > v.major) {
             // log('this.major > v.major');
             return true;
-        } 
-            // log('this.major <= v.major');
-        
+        }
+        // log('this.major <= v.major');
 
         if (this.major === v.major) {
             if (this.minor > v.minor) {
                 // log('this.minor > v.minor');
                 return true;
-            } 
-                // log('this.minor <= v.minor');
-            
+            }
+            // log('this.minor <= v.minor');
 
             if (this.minor === v.minor) {
                 if (this.patch > v.patch) {
@@ -1469,22 +1467,22 @@ Do you want to reset the database and update to the current branch?`
     });
 };
 
-DB.connect()
-    .then(async () => {
-        log('Connected to the database');
-        (await run()).unwrap();
-        DB.em.emit('connect');
+// DB.connect()
+//     .then(async () => {
+//         log('Connected to the database');
+//         (await run()).unwrap();
+//         DB.em.emit('connect');
 
-        const close = async () => {
-            // await Promise.all(DB.stack);
-            await DB.disconnect();
-            process.exit(0);
-        };
+//         const close = async () => {
+//             // await Promise.all(DB.stack);
+//             await DB.disconnect();
+//             process.exit(0);
+//         };
 
-        process.on('SIGINT', close);
-        process.on('SIGTERM', close);
-    })
-    .catch(e => {
-        error('Error connecting to the database', e);
-        process.exit(1);
-    });
+//         process.on('SIGINT', close);
+//         process.on('SIGTERM', close);
+//     })
+//     .catch(e => {
+//         error('Error connecting to the database', e);
+//         process.exit(1);
+//     });

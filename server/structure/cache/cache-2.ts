@@ -1,4 +1,3 @@
-import { Client } from 'pg';
 import {
     attempt,
     attemptAsync,
@@ -8,7 +7,6 @@ import {
 import {
     Database,
     Parameter,
-    PgDatabase,
     Query
 } from '../../utilities/database/databases-2';
 import { uuid } from '../../utilities/uuid';
@@ -18,8 +16,6 @@ import { validate } from '../../middleware/data-type';
 import { Status } from '../../utilities/status';
 
 /*
-
-
 Questions:
 - Say I want to emit only to a specific room, how would this be configured?
     - Should I have a room for each emittable action?
@@ -29,7 +25,6 @@ export type SQL_Type =
     | 'integer'
     | 'bigint'
     | 'text'
-    | 'json'
     | 'boolean'
     | 'real'
     | 'numeric';
@@ -45,8 +40,6 @@ const type = <T extends SQL_Type>(type: T): TS_TypeStr<T> => {
             return 'number' as TS_TypeStr<T>;
         case 'text':
             return 'string' as TS_TypeStr<T>;
-        case 'json':
-            return 'object' as TS_TypeStr<T>;
         case 'boolean':
             return 'boolean' as TS_TypeStr<T>;
         default:
@@ -111,14 +104,29 @@ type StructActions =
     | 'read';
 
 export type Callable<T extends Blank> = {
-    [key: string]: (data: Data<T, Callable<T>>) => unknown;
+    [key: string]: (
+        struct: Struct<T, Callable<T>, LocalCallable<T>>,
+        ...params: string[]
+    ) => unknown;
 };
 
-type StructBuilder<T extends Blank, C extends Callable<T>> = {
+export type LocalCallable<T extends Blank> = {
+    [key: string]: (
+        data: Data<T, Callable<T>, LocalCallable<T>>,
+        ...params: string[]
+    ) => unknown;
+};
+
+type StructBuilder<
+    T extends Blank,
+    C extends Callable<T>,
+    L extends LocalCallable<T>
+> = {
     name: string;
     structure: T; // omit id because it will always be included as a uuid primary key
     database: Database;
     callables?: C;
+    dataCallables?: L;
     versionHistory?: {
         type: 'days' | 'versions';
         amount: number;
@@ -165,8 +173,6 @@ export const prove = <T extends Blank, D>(
                 return typeof value === 'number';
             } else if (type === 'text') {
                 return typeof value === 'string';
-            } else if (type === 'json') {
-                return typeof value === 'object';
             } else if (type === 'boolean') {
                 return typeof value === 'boolean';
             }
@@ -198,7 +204,11 @@ export class Column<Type extends SQL_Type, StructType extends Blank> {
     constructor(
         public readonly name: string,
         public readonly sqlType: SQL_Type,
-        public readonly struct: Struct<StructType, Callable<StructType>>
+        public readonly struct: Struct<
+            StructType,
+            Callable<StructType>,
+            LocalCallable<StructType>
+        >
     ) {
         this.type = match<SQL_Type, TS_TypeStr<typeof this.sqlType>>(
             this.sqlType
@@ -206,7 +216,6 @@ export class Column<Type extends SQL_Type, StructType extends Blank> {
             .case('integer', () => 'number')
             .case('bigint', () => 'number')
             .case('text', () => 'string')
-            .case('json', () => 'object')
             .case('boolean', () => 'boolean')
             .case('real', () => 'number')
             .case('numeric', () => 'number')
@@ -224,9 +233,13 @@ type Structable<T extends Blank> = {
     [K in keyof T]: TS_TypeActual<Column<T[K], T>['type']>;
 };
 
-export class DataVersion<T extends Blank, C extends Callable<T>> {
+export class DataVersion<
+    T extends Blank,
+    C extends Callable<T>,
+    L extends LocalCallable<T>
+> {
     constructor(
-        public readonly struct: Struct<T, C>,
+        public readonly struct: Struct<T, C, L>,
         public readonly data: Structable<
             T &
                 GlobalCols & {
@@ -286,9 +299,13 @@ export class DataVersion<T extends Blank, C extends Callable<T>> {
     }
 }
 
-export class Data<T extends Blank, C extends Callable<T>> {
+export class Data<
+    T extends Blank,
+    C extends Callable<T>,
+    L extends LocalCallable<T>
+> {
     constructor(
-        public readonly struct: Struct<T, C>,
+        public readonly struct: Struct<T, C, L>,
         public readonly data: Structable<T & GlobalCols>
     ) {}
 
@@ -470,9 +487,16 @@ export class Data<T extends Blank, C extends Callable<T>> {
     // }
 }
 
-export class Struct<T extends Blank, C extends Callable<T>> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private static structs = new Map<string, Struct<any, Callable<any>>>();
+export class Struct<
+    T extends Blank,
+    C extends Callable<T>,
+    L extends LocalCallable<T>
+> {
+    private static structs = new Map<
+        string,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        Struct<any, Callable<any>, LocalCallable<any>>
+    >();
 
     public static buildAll() {
         return attemptAsync(async () => {
@@ -498,9 +522,13 @@ export class Struct<T extends Blank, C extends Callable<T>> {
         version: new Route()
     };
 
+    public readonly callables: {
+        [key in keyof L]: (...parameters: string[]) => Promise<Result<unknown>>;
+    };
+
     public readonly cols: Readonly<ColMap<T>>;
 
-    constructor(public readonly data: StructBuilder<T, C>) {
+    constructor(public readonly data: StructBuilder<T, C, L>) {
         this.route.route('/create', this.routers.create);
         this.route.route('/update', this.routers.update);
         this.route.route('/delete', this.routers.delete);
@@ -527,6 +555,29 @@ export class Struct<T extends Blank, C extends Callable<T>> {
             {} as ColMap<T>
         );
 
+        this.callables = Object.entries(data.callables || {}).reduce(
+            (acc, [key, value]) => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (acc as any)[key] = (...parameters: string[]) => {
+                    return attemptAsync(async () => {
+                        if (!this.built) {
+                            throw new Error(
+                                `Struct ${this.data.name} not built yet`
+                            );
+                        }
+
+                        return value(this, ...parameters);
+                    });
+                };
+                return acc;
+            },
+            {} as {
+                [key in keyof L]: (
+                    ...parameters: string[]
+                ) => Promise<Result<unknown>>;
+            }
+        );
+
         if (Struct.structs.has(this.data.name)) {
             throw new Error(`Struct ${this.data.name} already exists`);
         }
@@ -547,12 +598,9 @@ export class Struct<T extends Blank, C extends Callable<T>> {
                     name: string;
                     version: number;
                 }>(
-                    Query.build(
-                        `
-                SELECT * FROM Tables WHERE name = :name
-            `,
-                        { name: this.data.name }
-                    )
+                    Query.build('SELECT * FROM Structs WHERE name = :name', {
+                        name: this.data.name
+                    })
                 )
             ).unwrap();
 
@@ -614,6 +662,7 @@ export class Struct<T extends Blank, C extends Callable<T>> {
                                 return `${key} ${value}`;
                             })
                             .join(', ')}
+                    );
                 `
             );
 
@@ -1073,10 +1122,16 @@ export class Struct<T extends Blank, C extends Callable<T>> {
 
     getVersion() {
         return attemptAsync(async () => {
-            const query = Query.build('SELECT version FROM Tables WHERE name = :name');
+            const query = Query.build(
+                'SELECT version FROM Tables WHERE name = :name'
+            );
             return (
-                await this.data.database.unsafe.get<{ version: number }>(query)
-            ).unwrap()?.version || -1;
+                (
+                    await this.data.database.unsafe.get<{ version: number }>(
+                        query
+                    )
+                ).unwrap()?.version || -1
+            );
         });
     }
 
@@ -1086,7 +1141,7 @@ export class Struct<T extends Blank, C extends Callable<T>> {
             if (!this.validate(data))
                 throw new Error(`Invalid data for ${this.data.name}`);
 
-            const d = new Data<T, C>(this, {
+            const d = new Data<T, C, L>(this, {
                 ...newGlobalCols(),
                 ...data
             });
@@ -1127,7 +1182,7 @@ export class Struct<T extends Blank, C extends Callable<T>> {
                     `Invalid data found in database. ${this.name}:${data.id} is corrupted`
                 );
 
-            return new Data<T, C>(this, data);
+            return new Data<T, C, L>(this, data);
         });
     }
 
@@ -1148,7 +1203,7 @@ export class Struct<T extends Blank, C extends Callable<T>> {
                 );
 
             return data
-                .map(d => new Data<T, C>(this, d))
+                .map(d => new Data<T, C, L>(this, d))
                 .filter(d => includeArchived || !d.data.archived);
         });
     }
@@ -1171,7 +1226,7 @@ export class Struct<T extends Blank, C extends Callable<T>> {
                         invalid.map(d => d.id).join(', ')
                 );
 
-            return data.map(d => new Data<T, C>(this, d));
+            return data.map(d => new Data<T, C, L>(this, d));
         });
     }
 
@@ -1213,38 +1268,11 @@ export class Struct<T extends Blank, C extends Callable<T>> {
         this.routers[type].post('/', this.validator(true), ...fns);
         return this;
     }
-}
 
-const DB = new Database(new PgDatabase(new Client({})));
-
-const Transaction = new Struct({
-    name: 'Transaction',
-    structure: {
-        amount: 'real',
-        description: 'text'
-    },
-    database: DB,
-    versionHistory: {
-        type: 'days',
-        amount: 30
+    drop() {
+        return attemptAsync(async () => {
+            const all = (await this.all(true)).unwrap();
+            if (all.length) throw new Error('Cannot drop table with data');
+        });
     }
-    // callables: {
-    //     test(data) {
-    //         return 'hi';
-    //     }
-    // }
-});
-
-(async () => {
-    const newTransaction = (
-        await Transaction.new({
-            amount: 10,
-            description: 'test'
-        })
-    ).unwrap();
-
-    newTransaction.data.amount;
-    newTransaction.data.id;
-
-    const versionHistory = (await newTransaction.getVersionHistory()).unwrap();
-})();
+}

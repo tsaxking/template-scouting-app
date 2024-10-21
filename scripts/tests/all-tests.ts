@@ -11,11 +11,16 @@ import { attemptAsync, check, isValid, parseJSON } from '../../shared/check';
 import { match, matchInstance } from '../../shared/match';
 import { Client } from 'pg';
 import env from '../../server/utilities/env';
-import { Database, PgDatabase, Query } from '../../server/utilities/database/databases-2';
+import {
+    Database,
+    PgDatabase,
+    Query
+} from '../../server/utilities/database/databases-2';
 import fs from 'fs';
 import path from 'path';
 import { spawn } from 'child_process';
 import { Struct } from '../../server/structure/cache/cache-2';
+import { Backup } from '../../server/utilities/database/backups';
 
 /**
  * The name of the main database
@@ -54,7 +59,7 @@ const test = async (name: string, fn: () => void | Promise<void>) => {
     }
 };
 
-export const runTests = async () =>
+export const runTests = async (env: Env, database: Database) =>
     Promise.all([
         test('Run async task functionality', async () => {
             const asyncTest = await runFile<string[]>(
@@ -309,21 +314,6 @@ export const runTests = async () =>
         }),
 
         test('Database Functionality', async () => {
-            const client = new Client({
-                user: DATABASE_USER,
-                database: DATABASE_NAME,
-                host: DATABASE_HOST,
-                password: DATABASE_PASSWORD,
-                port: Number(DATABASE_PORT),
-                keepAlive: true
-            });
-
-            const pgDb = new PgDatabase(client);
-            const database = new Database(pgDb);
-
-            (await database.connect()).unwrap();
-            database.initialized = true; // force initialized for testing
-
             const qA = Query.build(`
                 CREATE TABLE IF NOT EXISTS TestTable (
                     id INTEGER PRIMARY KEY,
@@ -333,13 +323,16 @@ export const runTests = async () =>
 
             (await database.unsafe.run(qA)).unwrap();
 
-            const qB = Query.build(`
+            const qB = Query.build(
+                `
                 INSERT INTO TestTable (id, name)
                 VALUES (:id, :name);
-            `, {
-                id: 1,
-                name: 'test',
-            });
+            `,
+                {
+                    id: 1,
+                    name: 'test'
+                }
+            );
 
             (await database.unsafe.run(qB)).unwrap();
 
@@ -347,7 +340,9 @@ export const runTests = async () =>
                 SELECT * FROM TestTable;
             `);
 
-            const result = (await database.unsafe.get<{ id: number, name: string }>(qC)).unwrap();
+            const result = (
+                await database.unsafe.get<{ id: number; name: string }>(qC)
+            ).unwrap();
 
             assertEquals(result, { id: 1, name: 'test' });
 
@@ -357,35 +352,85 @@ export const runTests = async () =>
             (await database.unsafe.run(qD)).unwrap();
         }),
 
+        test('Database Backups', async () => {
+            const qA = Query.build(`
+                CREATE TABLE IF NOT EXISTS TestTable2 (
+                    id INTEGER PRIMARY KEY,
+                    name TEXT NOT NULL
+                );
+            `);
+
+            (await database.unsafe.run(qA)).unwrap();
+
+            const qB = Query.build(
+                `
+                INSERT INTO TestTable2 (id, name)
+                VALUES (:id, :name);
+            `,
+                {
+                    id: 1,
+                    name: 'test'
+                }
+            );
+
+            (await database.unsafe.run(qB)).unwrap();
+
+            const backup = (await Backup.makeBackup(database)).unwrap();
+
+            (await backup.restore(database)).unwrap();
+
+            const qD = Query.build(`
+                SELECT * FROM TestTable2;
+            `);
+
+            const result = (
+                await database.unsafe.get<{ id: number; name: string }>(qD)
+            ).unwrap();
+
+            assertEquals(result, { id: 1, name: 'test' });
+
+            (await backup.delete()).unwrap();
+        }),
+
         test('Struct Building', async () => {
-            const client = new Client({
-                user: DATABASE_USER,
-                database: DATABASE_NAME,
-                host: DATABASE_HOST,
-                password: DATABASE_PASSWORD,
-                port: Number(DATABASE_PORT),
-                keepAlive: true
-            });
-
-            const pgDb = new PgDatabase(client);
-            const database = new Database(pgDb);
-
             const Item = new Struct({
                 name: 'Item',
                 structure: {
                     name: 'text',
-                    price: 'integer',
+                    price: 'integer'
                 },
                 database,
+                callables: {
+                    test(struct) {
+                        return struct.data.name;
+                    }
+                }
             });
 
-            // const i = (await Item.new({
-            //     name: 'test',
-            //     price: 100,
-            // })).unwrap();
+            (await Item.build()).unwrap();
 
-            // assertEquals(i.data.name, 'test');
-        }),
+            const i = (
+                await Item.new({
+                    name: 'test',
+                    price: 100
+                })
+            ).unwrap();
+
+            assertEquals(i.data.name, 'test');
+
+            (
+                await i.update({
+                    price: 200
+                })
+            ).unwrap();
+
+            assertEquals(i.data.price, 200);
+
+            const item2 = (await Item.fromId(i.id)).unwrap();
+            assertEquals(item2?.data.price, 200);
+
+            (await i.delete()).unwrap();
+        })
     ]);
 
 type Env = {
@@ -478,12 +523,23 @@ const main = async () => {
     }
     log('Database built successfully');
 
+    const client = new Client({
+        user: DATABASE_USER,
+        database: DATABASE_NAME,
+        host: DATABASE_HOST,
+        password: DATABASE_PASSWORD,
+        port: Number(DATABASE_PORT),
+        keepAlive: true
+    });
+    const pgDb = new PgDatabase(client);
+    const database = new Database(pgDb);
+    (await database.connect()).unwrap();
+    (await database.reset(true)).unwrap();
+    (await database.init()).unwrap();
 
-
-
-    runTests().then(val => process.exit(val.some(v => v === 1) ? 1 : 0));
+    runTests(env, database).then(val =>
+        process.exit(val.some(v => v === 1) ? 1 : 0)
+    );
 };
 
-
-if (require.main === module)
-    main();
+if (require.main === module) main();

@@ -1,12 +1,10 @@
-import { attemptAsync } from "../../../shared/check";
-import { gitBranch, gitCommit } from "../git";
-import { Database, Query, SimpleParameter } from "./databases-2";
+import { attemptAsync } from '../../../shared/check';
+import { gitBranch, gitCommit } from '../git';
+import { Database, Parameter, Query, SimpleParameter } from './databases-2';
 import fs from 'fs';
 import path from 'path';
-import { __root } from "../env";
-import ObjectsToCsv from 'objects-to-csv';
-import zl from 'zip-lib';
-import csv from 'csv-parser';
+import { __root } from '../env';
+import AdmZip from 'adm-zip';
 
 type Metadata = {
     version: {
@@ -17,9 +15,9 @@ type Metadata = {
     commit: string;
     branch: string;
     date: string;
-}
+};
 
-export class Backup{
+export class Backup {
     public static makeBackup(database: Database) {
         return attemptAsync(async () => {
             // create a zip file of the database with csv files for each table and a json for metadata
@@ -34,58 +32,62 @@ export class Backup{
                 version: v.unwrap(),
                 commit: c.unwrap(),
                 branch: b.unwrap(),
-                date: new Date().toISOString(),
+                date: new Date().toISOString()
             };
 
             const tables = (await database.getTables()).unwrap();
 
             await fs.promises.mkdir(
                 path.resolve(__root, `./storage/db/backups/${metadata.date}`),
-                { recursive: true },
+                { recursive: true }
             );
 
-            // build the csv files
-            await Promise.all(
-                tables.map(async table => {
-                    const data = (await database.unsafe.all(
-                        Query.build(`SELECT * FROM ${table};`)
-                    )).unwrap();
-
-                    if (!data.every(d => typeof d === 'object')) {
-                        throw new Error('Invalid data');
-                    }
-
-                    const csv = new ObjectsToCsv(data as Record<string, unknown>[]);
-
-                    await csv.toDisk(
-                        path.resolve(__root, `./storage/db/backups/${metadata.date}/${table}.csv`),
-                    );
-                }),
-            );
-
-            const meta = JSON.stringify(metadata, null, 2);
             await fs.promises.writeFile(
-                path.resolve(__root, `./storage/db/backups/${metadata.date}/metadata.json`),
-                meta,
+                path.resolve(
+                    __root,
+                    `./storage/db/backups/${metadata.date}/metadata.json`
+                ),
+                JSON.stringify(metadata, null, 2)
             );
 
-            const zip = new zl.Zip();
+            await Promise.all(
+                tables.map(async t => {
+                    const data = (
+                        await database.unsafe.all<Record<string, unknown>>(
+                            Query.build(`SELECT * FROM ${t};`)
+                        )
+                    ).unwrap();
 
-            zip.addFolder(
+                    await fs.promises.writeFile(
+                        path.resolve(
+                            __root,
+                            `./storage/db/backups/${metadata.date}/${t}.table`
+                        ),
+                        JSON.stringify(data, null, 2)
+                    );
+                })
+            );
+
+            const zip = new AdmZip();
+
+            zip.addLocalFolder(
+                path.resolve(__root, `./storage/db/backups/${metadata.date}`)
+            );
+
+            zip.writeZip(
+                path.resolve(
+                    __root,
+                    `./storage/db/backups/${metadata.date}.zip`
+                )
+            );
+
+            await fs.promises.rm(
                 path.resolve(__root, `./storage/db/backups/${metadata.date}`),
-            );
-
-            zip.archive(
-                path.resolve(__root, `./storage/db/backups/${metadata.date}.zip`),
-            );
-
-            fs.promises.rm(
-                path.resolve(__root, `./storage/db/backups/${metadata.date}`),
-                { recursive: true },
+                { recursive: true }
             );
 
             return new Backup(
-                path.resolve(__root, `./storage/db/backups/${metadata.date}`),
+                path.resolve(__root, `./storage/db/backups/${metadata.date}`)
             );
         });
     }
@@ -93,29 +95,26 @@ export class Backup{
     public static getBackups() {
         return attemptAsync(() => {
             return fs.promises.readdir(
-                path.resolve(__root, './storage/db/backups'),
+                path.resolve(__root, './storage/db/backups')
             );
         });
     }
 
-    constructor(
-        public readonly path: string,
-    ) {}
+    constructor(public readonly path: string) {}
 
     restore(database: Database) {
         return attemptAsync(async () => {
-            await zl.extract(
-                `${this.path}.zip`,
-                this.path,
-            );
+            const zip = new AdmZip(this.path + '.zip');
+
+            zip.extractAllTo(this.path, true);
 
             const version = (await database.getVersion()).unwrap();
 
             const meta: Metadata = JSON.parse(
                 await fs.promises.readFile(
                     path.resolve(this.path, 'metadata.json'),
-                    'utf-8',
-                ),
+                    'utf-8'
+                )
             );
 
             if (
@@ -126,37 +125,44 @@ export class Backup{
                 throw new Error('Version mismatch');
             }
 
-            const tables = (await fs.promises.readdir(this.path)).filter(f => f.endsWith('.csv'));
+            const tables = (await fs.promises.readdir(this.path)).filter(f =>
+                f.endsWith('.table')
+            );
             fs.promises.rm(this.path, { recursive: true });
 
             // TODO: use workers to parallelize this
 
             await Promise.all(
-                tables.map(table => {
-                    return new Promise((res, rej) => {
-                        const stream = fs.createReadStream(path.resolve(this.path, table))
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            .pipe(csv() as any)
-                            .on('data', async (data: Record<string, SimpleParameter>) => {
-                                const cols = Object.keys(data);
-                                const colNames = cols.join(', ');
-                                const colVals = cols.map(c => `:${c}`).join(', ');
+                tables.map(async table => {
+                    const data = JSON.parse(
+                        await fs.promises.readFile(
+                            path.resolve(this.path, table),
+                            'utf-8'
+                        )
+                    ) as Record<string, unknown>[];
 
-                                const q = `INSERT INTO ${table} (${colNames}) VALUES (${colVals})`;
-                                const r = await database.unsafe.run(
-                                    Query.build(q, data),
-                                );
+                    const tableName = table.replace('.table', '');
 
-                                if (r.isErr()) {
-                                    rej(r.error);
-                                }
-                            })
-                            .on('end', () => {
-                                stream.end();
-                            });
-                    });
-                }),
+                    await Promise.all(
+                        data.map(async row => {
+                            const keys = Object.keys(row);
+
+                            await database.unsafe.run(
+                                Query.build(
+                                    `INSERT INTO ${tableName} (${keys.join(', ')}) VALUES (${keys.map(k => `:${k}`).join(', ')});`,
+                                    row as Parameter
+                                )
+                            );
+                        })
+                    );
+                })
             );
+        });
+    }
+
+    delete() {
+        return attemptAsync(async () => {
+            await fs.promises.rm(this.path + '.zip');
         });
     }
 }

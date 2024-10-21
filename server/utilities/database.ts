@@ -1,5 +1,5 @@
-import { PgDatabase, Database } from "./database/databases-2";
-import { Client } from "pg";
+import { PgDatabase, Database } from './database/databases-2';
+import { Client } from 'pg';
 import env from './env';
 
 /**
@@ -37,11 +37,15 @@ const {
     }
 }
 
-export const DB = new Database(new PgDatabase(new Client({
-    user: DATABASE_USER,
-    database: DATABASE_NAME,
-    host: DATABASE_HOST,
-    password: DATABASE_PASSWORD,
-    port: Number(DATABASE_PORT),
-    keepAlive: true
-})));
+export const DB = new Database(
+    new PgDatabase(
+        new Client({
+            user: DATABASE_USER,
+            database: DATABASE_NAME,
+            host: DATABASE_HOST,
+            password: DATABASE_PASSWORD,
+            port: Number(DATABASE_PORT),
+            keepAlive: true
+        })
+    )
+);

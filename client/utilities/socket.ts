@@ -269,7 +269,6 @@ attempt(() => {
     Object.assign(window, { socket });
 });
 
-
 // let changed = false;
 
 // Yes, this has side effects. But this is used to control the socket connection.

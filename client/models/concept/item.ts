@@ -1,9 +1,9 @@
-import { Struct } from "../frontend-cache";
-import { socket } from "../../utilities/socket";
-import { ServerRequest } from "../../utilities/requests";
+import { Struct } from '../frontend-cache';
+import { socket } from '../../utilities/socket';
+import { ServerRequest } from '../../utilities/requests';
 
-
-export const Item = new Struct({
+export const Item = new Struct(
+    {
         name: 'Item',
         structure: {
             make: 'text',
@@ -13,10 +13,10 @@ export const Item = new Struct({
             rentalPrice: 'integer', // in cents
             stock: 'integer',
             status: 'text',
-            description: 'text',
+            description: 'text'
         }
-    }, 
-    socket, 
+    },
+    socket,
     'Item',
     ServerRequest
 );

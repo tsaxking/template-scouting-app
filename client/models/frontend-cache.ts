@@ -161,7 +161,8 @@ class DataVersion<T extends Blank> {
     }
 }
 
-class Data<T extends Blank> {// implements Writable<Structable<T>> {
+class Data<T extends Blank> {
+    // implements Writable<Structable<T>> {
     constructor(
         public readonly struct: Struct<T>,
         public readonly data: Readonly<Structable<T & GlobalCols>>
@@ -254,7 +255,7 @@ export class Struct<T extends Blank> {
         public readonly data: StructBuilder<T>,
         public readonly socket: Socket,
         public readonly route: string,
-        public readonly requester: Requester,
+        public readonly requester: Requester
     ) {
         if (Struct.structs.has(this.data.name)) {
             throw new Error(`Struct ${this.data.name} already exists`);
