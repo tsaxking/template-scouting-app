@@ -72,6 +72,7 @@
         "cli-select": "^1.1.2",
         "cliffy": "^2.5.1",
         "compress-images": "^1.9.9",
+        "csv-parser": "^3.0.0",
         "deep-email-validator": "^0.1.21",
         "directory-tree": "^3.5.1",
         "discord.js": "^14.15.2",
@@ -101,6 +102,7 @@
         "test": "^3.3.0",
         "ts-node": "^10.9.2",
         "uuid": "^9.0.1",
-        "webcam-easy": "^1.1.1"
+        "webcam-easy": "^1.1.1",
+        "zip-lib": "^1.0.4"
     }
 }

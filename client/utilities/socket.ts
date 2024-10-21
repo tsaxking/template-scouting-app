@@ -4,7 +4,7 @@ import { io } from 'socket.io-client';
 import { ServerRequest } from './requests';
 import { sleep } from '../../shared/sleep';
 import { alert } from './notifications';
-import { attemptAsync } from '../../shared/check';
+import { attempt, attemptAsync } from '../../shared/check';
 import { uptime } from '../../shared/clock';
 
 type SocketOptions = {
@@ -265,7 +265,10 @@ socket.on('disconnect', async () => {
     }
 });
 
-Object.assign(window, { socket });
+attempt(() => {
+    Object.assign(window, { socket });
+});
+
 
 // let changed = false;
 

@@ -4,9 +4,15 @@ import { EventEmitter } from '../../shared/event-emitter';
 import { StatusJson } from '../../shared/status';
 import { streamDelimiter } from '../../shared/text';
 import { uuid as _uuid } from '../../server/utilities/uuid';
-import { attemptAsync, Result } from '../../shared/check';
+import { attempt, attemptAsync, Result } from '../../shared/check';
 import { error, log, warn } from './logging';
 import { bigIntDecode } from '../../shared/objects';
+
+export interface Requester {
+    post: <T>(url: string, body?: unknown, options?: RequestOptions) => Promise<Result<T>>;
+    get: <T>(url: string, options?: RequestOptions) => Promise<Result<T>>;
+    multiple: (requests: ServerRequest[]) => Promise<unknown[]>;
+}
 
 /**
  * These are optional options for a request
@@ -784,4 +790,6 @@ export class ServerRequest<T = unknown> {
     }
 }
 
-Object.assign(window, { ServerRequest });
+attempt(() => {
+    Object.assign(window, { ServerRequest });
+});

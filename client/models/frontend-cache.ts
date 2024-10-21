@@ -1,8 +1,8 @@
-import { writable, Writable } from 'svelte/store';
+// import { writable, Writable } from 'svelte/store';
 import { Socket } from '../utilities/socket';
 import { attempt, attemptAsync } from '../../shared/check';
 import { match } from '../../shared/match';
-import { ServerRequest } from '../utilities/requests';
+import { Requester } from '../utilities/requests';
 
 /*
 File overview:
@@ -161,7 +161,7 @@ class DataVersion<T extends Blank> {
     }
 }
 
-class Data<T extends Blank> implements Writable<Structable<T>> {
+class Data<T extends Blank> {// implements Writable<Structable<T>> {
     constructor(
         public readonly struct: Struct<T>,
         public readonly data: Readonly<Structable<T & GlobalCols>>
@@ -204,7 +204,7 @@ class Data<T extends Blank> implements Writable<Structable<T>> {
         return attemptAsync(async () => {
             const response = await fn(this.data);
             return (
-                await ServerRequest.post(
+                await this.struct.requester.post(
                     `${this.struct.route}/${this.struct.data.name}/update`,
                     response
                 )
@@ -213,14 +213,14 @@ class Data<T extends Blank> implements Writable<Structable<T>> {
     }
 
     delete() {
-        return ServerRequest.post(
+        return this.struct.requester.post(
             `${this.struct.route}/${this.struct.data.name}/delete`,
             this.data
         );
     }
 
     setArchive(archived: boolean) {
-        return ServerRequest.post(
+        return this.struct.requester.post(
             `${this.struct.route}/${this.struct.data.name}/${archived ? 'archive' : 'unarchive'}`,
             this.data
         );
@@ -229,7 +229,7 @@ class Data<T extends Blank> implements Writable<Structable<T>> {
     getVersionHistory() {
         return attemptAsync(async () => {
             const response = (
-                await ServerRequest.post<
+                await this.struct.requester.post<
                     Structable<
                         T &
                             GlobalCols & {
@@ -253,7 +253,8 @@ export class Struct<T extends Blank> {
     constructor(
         public readonly data: StructBuilder<T>,
         public readonly socket: Socket,
-        public readonly route: string
+        public readonly route: string,
+        public readonly requester: Requester,
     ) {
         if (Struct.structs.has(this.data.name)) {
             throw new Error(`Struct ${this.data.name} already exists`);
@@ -288,15 +289,15 @@ export class Struct<T extends Blank> {
             const has = this.cache.get(id);
             if (!has) return;
             Object.assign(has.data, { archived: true });
-            this.stores.all.update(d => d.filter(d => d.id !== id));
-            this.stores.archived.update(d => [...d, has]);
+            // this.stores.all.update(d => d.filter(d => d.id !== id));
+            // this.stores.archived.update(d => [...d, has]);
         });
         socket.on(`struct:${this.data.name}:unarchive`, (id: string) => {
             const has = this.cache.get(id);
             if (!has) return;
             Object.assign(has.data, { archived: false });
-            this.stores.all.update(d => [...d, has]);
-            this.stores.archived.update(d => d.filter(d => d.id !== id));
+            // this.stores.all.update(d => [...d, has]);
+            // this.stores.archived.update(d => d.filter(d => d.id !== id));
         });
         socket.on(
             `struct:${this.data.name}:restore-version`,
@@ -316,14 +317,14 @@ export class Struct<T extends Blank> {
     }
 
     public readonly stores = {
-        all: writable<Data<T>[]>([]),
-        archived: writable<Data<T>[]>([])
+        // all: writable<Data<T>[]>([]),
+        // archived: writable<Data<T>[]>([])
     };
 
     public readonly cache = new Map<string, Data<T>>();
 
     new(data: Structable<T>) {
-        return ServerRequest.post(
+        return this.requester.post(
             `${this.route}/${this.data.name}/create`,
             data
         );
@@ -334,7 +335,7 @@ export class Struct<T extends Blank> {
             const current = this.cache.get(id);
             if (current) return current;
             const response = (
-                await ServerRequest.post<Structable<T>>(
+                await this.requester.post<Structable<T>>(
                     `${this.route}/${this.data.name}/`
                 )
             ).unwrap();
@@ -348,7 +349,7 @@ export class Struct<T extends Blank> {
     all() {
         return attemptAsync(async () => {
             const response = (
-                await ServerRequest.post<Structable<T & GlobalCols>[]>(
+                await this.requester.post<Structable<T & GlobalCols>[]>(
                     `${this.route}/${this.data.name}/all`
                 )
             ).unwrap();
@@ -361,7 +362,7 @@ export class Struct<T extends Blank> {
                 return data;
             });
 
-            this.stores.all.set(all);
+            // this.stores.all.set(all);
 
             return all;
         });
@@ -370,7 +371,7 @@ export class Struct<T extends Blank> {
     archived() {
         return attemptAsync(async () => {
             const response = (
-                await ServerRequest.post<Structable<T>[]>(
+                await this.requester.post<Structable<T>[]>(
                     `${this.route}/${this.data.name}/archived`
                 )
             ).unwrap();

@@ -2,13 +2,34 @@
 
 import { __root } from '../../server/utilities/env';
 import { runTask, runFile } from '../../server/utilities/run-task';
-import { log } from '../../server/utilities/terminal-logging';
+import { log, error } from '../../server/utilities/terminal-logging';
 import { validate } from '../../server/middleware/data-type';
 import { Req } from '../../server/structure/app/req';
 import { Res } from '../../server/structure/app/res';
 import { deepEqual } from 'assert';
-import { check, isValid, parseJSON } from '../../shared/check';
+import { attemptAsync, check, isValid, parseJSON } from '../../shared/check';
 import { match, matchInstance } from '../../shared/match';
+import { Client } from 'pg';
+import env from '../../server/utilities/env';
+import { Database, PgDatabase, Query } from '../../server/utilities/database/databases-2';
+import fs from 'fs';
+import path from 'path';
+import { spawn } from 'child_process';
+import { Struct } from '../../server/structure/cache/cache-2';
+
+/**
+ * The name of the main database
+ * @date 1/9/2024 - 12:08:08 PM
+ *
+ * @type {*}
+ */
+const {
+    DATABASE_USER,
+    DATABASE_PASSWORD,
+    DATABASE_NAME,
+    DATABASE_HOST,
+    DATABASE_PORT
+} = env;
 
 const assertEquals = (a: unknown, b: unknown) => {
     try {
@@ -285,8 +306,184 @@ export const runTests = async () =>
             assertEquals(a, 'test');
             assertEquals(b, 'default');
             assertEquals(c, 'test');
-        })
+        }),
+
+        test('Database Functionality', async () => {
+            const client = new Client({
+                user: DATABASE_USER,
+                database: DATABASE_NAME,
+                host: DATABASE_HOST,
+                password: DATABASE_PASSWORD,
+                port: Number(DATABASE_PORT),
+                keepAlive: true
+            });
+
+            const pgDb = new PgDatabase(client);
+            const database = new Database(pgDb);
+
+            (await database.connect()).unwrap();
+            database.initialized = true; // force initialized for testing
+
+            const qA = Query.build(`
+                CREATE TABLE IF NOT EXISTS TestTable (
+                    id INTEGER PRIMARY KEY,
+                    name TEXT NOT NULL
+                );
+            `);
+
+            (await database.unsafe.run(qA)).unwrap();
+
+            const qB = Query.build(`
+                INSERT INTO TestTable (id, name)
+                VALUES (:id, :name);
+            `, {
+                id: 1,
+                name: 'test',
+            });
+
+            (await database.unsafe.run(qB)).unwrap();
+
+            const qC = Query.build(`
+                SELECT * FROM TestTable;
+            `);
+
+            const result = (await database.unsafe.get<{ id: number, name: string }>(qC)).unwrap();
+
+            assertEquals(result, { id: 1, name: 'test' });
+
+            const qD = Query.build(`
+                DROP TABLE TestTable;
+            `);
+            (await database.unsafe.run(qD)).unwrap();
+        }),
+
+        test('Struct Building', async () => {
+            const client = new Client({
+                user: DATABASE_USER,
+                database: DATABASE_NAME,
+                host: DATABASE_HOST,
+                password: DATABASE_PASSWORD,
+                port: Number(DATABASE_PORT),
+                keepAlive: true
+            });
+
+            const pgDb = new PgDatabase(client);
+            const database = new Database(pgDb);
+
+            const Item = new Struct({
+                name: 'Item',
+                structure: {
+                    name: 'text',
+                    price: 'integer',
+                },
+                database,
+            });
+
+            // const i = (await Item.new({
+            //     name: 'test',
+            //     price: 100,
+            // })).unwrap();
+
+            // assertEquals(i.data.name, 'test');
+        }),
     ]);
 
-if (require.main === module)
+type Env = {
+    [key: string]: string;
+};
+
+const readEnv = (envPath: string): Env => {
+    const env = fs
+        .readFileSync(envPath, 'utf8')
+        .replace(/#.*/g, '')
+        .replace(/\n\n/g, '\n')
+        .trim();
+
+    return env.split('\n').reduce((acc, line) => {
+        const [key, value] = line
+            .split('=')
+            .map(k => k.trim().replace(/['"]/g, ''));
+        if (key && value) {
+            acc[key] = value;
+        }
+        return acc;
+    }, {} as Env);
+};
+
+const saveEnv = (envPath: string, env: Env) => {
+    const envStr = Object.keys(env)
+        .map(key => `${key} = '${env[key]}'`)
+        .join('\n');
+    fs.writeFileSync(envPath, envStr);
+};
+
+const buildDatabase = () =>
+    attemptAsync(() => {
+        return new Promise<void>((res, rej) => {
+            setTimeout(
+                () => {
+                    rej('Database took too long to build');
+                },
+                1000 * 60 * 5
+            );
+
+            const pcs = spawn('sh', ['./db-init.sh', '--force-reset'], {
+                stdio: 'inherit',
+                cwd: path.resolve(__dirname, '../')
+            });
+
+            pcs.on('exit', code => {
+                if (code === 0) {
+                    res();
+                } else {
+                    rej(code);
+                }
+            });
+        });
+    });
+const main = async () => {
+    process.on('exit', () => {
+        log('Resetting env');
+        fs.cpSync(
+            path.resolve(__dirname, '../../._env'),
+            path.resolve(__dirname, '../../.env')
+        );
+        fs.unlinkSync(path.resolve(__dirname, '../../._env'));
+    });
+
+    log('Reading env');
+    const env = readEnv(path.resolve(__dirname, '../../.env'));
+    fs.cpSync(
+        path.resolve(__dirname, '../../.env'),
+        path.resolve(__dirname, '../../._env')
+    );
+
+    env.PORT = '3000';
+    env.SOCKET_PORT = '3001';
+    env.ENVIRONMENT = 'test';
+    env.DOMAIN = 'http://localhost:3000';
+    env.SOCKET_DOMAIN = 'ws://localhost:3001';
+    env.TITLE = 'Test Server';
+    env.DATABASE_NAME = env.DATABASE_NAME + '_test';
+    env.DATABASE_PORT = '5432';
+    env.DATABASE_HOST = 'localhost';
+
+    saveEnv(path.resolve(__dirname, '../../.env'), env);
+
+    log('Building database...');
+    const dbRes = await buildDatabase();
+    if (dbRes.isErr()) {
+        error(dbRes.error);
+        process.exit(1);
+    }
+    log('Database built successfully');
+
+
+
+
     runTests().then(val => process.exit(val.some(v => v === 1) ? 1 : 0));
+};
+
+
+if (require.main === module)
+    main();

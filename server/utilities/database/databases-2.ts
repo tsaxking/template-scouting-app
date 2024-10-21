@@ -1,6 +1,6 @@
-import { attemptAsync, build, Result } from '../../shared/check';
-import cliProgress from 'cli-progress';
-import { EventEmitter } from '../../shared/event-emitter';
+import { attemptAsync, build, Result } from '../../../shared/check';
+// import cliProgress from 'cli-progress';
+import { EventEmitter } from '../../../shared/event-emitter';
 import { Client } from 'pg';
 import {
     fromCamelCase,
@@ -9,12 +9,12 @@ import {
     toCamelCase,
     fromSnakeCase,
     capitalize
-} from '../../shared/text';
-import { bigIntDecode, bigIntEncode } from '../../shared/objects';
-import { readFile } from './files';
+} from '../../../shared/text';
+import { bigIntDecode, bigIntEncode } from '../../../shared/objects';
+import { readFile } from '../files';
 import path from 'path';
-import { Queries } from './queries';
-import { log } from '../../client/utilities/logging';
+import { Queries } from '../queries';
+import { log } from '../../../client/utilities/logging';
 
 /*
 TODO:
@@ -35,7 +35,7 @@ type DBEvents = {
     disconnected: void;
     error: Error;
 };
-type SimpleParameter = string | number | boolean | null;
+export type SimpleParameter = string | number | boolean | null;
 
 export type Parameter =
     | SimpleParameter
@@ -217,6 +217,8 @@ export class Database {
         this.unsafe = new UnsafeDatabase(db);
     }
 
+    public initialized = false;
+
     public async connect(): Promise<Result<boolean>> {
         return this.db.connect();
     }
@@ -227,6 +229,7 @@ export class Database {
             ? []
             : QueryFileParams<T>
     ): Promise<Result<Queries[T][1]>> {
+        if (!this.initialized) throw new Error('Database not initialized');
         return attemptAsync(async () => {
             const query = (await Query.fromFile(type, ...args)).unwrap();
 
@@ -246,6 +249,7 @@ export class Database {
             ? []
             : QueryFileParams<T>
     ): Promise<Result<Queries[T][1][]>> {
+        if (!this.initialized) throw new Error('Database not initialized');
         return attemptAsync(async () => {
             const query = (await Query.fromFile(type, ...args)).unwrap();
             return (await this.db.query(query)).unwrap()
@@ -259,6 +263,7 @@ export class Database {
             ? []
             : QueryFileParams<T>
     ): Promise<Result<Queries[T][1]>> {
+        if (!this.initialized) throw new Error('Database not initialized');
         return attemptAsync(async () => {
             const query = (await Query.fromFile(type, ...args)).unwrap();
             return (await this.db.query(query)).unwrap()
@@ -267,6 +272,7 @@ export class Database {
     }
 
     public async vacuum() {
+        if (!this.initialized) throw new Error('Database not initialized');
         return attemptAsync(async () => {
             log('Vacuum go brrrrrrr');
             const tables = await this.getTables();
@@ -281,6 +287,7 @@ export class Database {
     }
 
     async getTables(): Promise<Result<string[]>> {
+        if (!this.initialized) throw new Error('Database not initialized');
         return attemptAsync(async () => {
             const query = new Query(
                 `
@@ -299,6 +306,62 @@ export class Database {
                 );
             }
             throw res.error;
+        });
+    }
+
+    async getVersion(): Promise<Result<{
+        major: number;
+        minor: number;
+        patch: number;
+    }>> {
+        return attemptAsync(async () => {
+            (await this.connect()).unwrap();
+            const result = (await this.unsafe.get<{
+                major: number;
+                minor: number;
+                patch: number;
+            }>(
+                Query.build('SELECT * FROM Version;')
+            )).unwrap();
+            if (!result) {
+                throw new Error('Version not found');
+            }
+
+            return result;
+        });
+    }
+
+    async init() {
+        return attemptAsync(async () => {
+            const version = await (await this.getVersion()).unwrap();
+            if (version.major !== 0 || version.minor !== 0 || version.patch !== 0) {
+                this.initialized = true;
+                return;
+            }
+
+            (await this.connect()).unwrap();
+            (await this.unsafe.run(
+                Query.build(`
+                    CREATE TABLE IF NOT EXISTS Tables (
+                        name TEXT PRIMARY KEY,
+                        schema TEXT NOT NULL
+                    );
+
+                    CREATE TABLE IF NOT EXISTS Vesrion (
+                        major INTEGER NOT NULL,
+                        minor INTEGER NOT NULL,
+                        patch INTEGER NOT NULL
+                    );
+
+                    INSERT INTO Version (
+                        major, minor, patch
+                    ) VALUES (
+                        0, 0, 0
+                    );
+                `),
+            )).unwrap();
+
+            this.initialized = true;
         });
     }
 }

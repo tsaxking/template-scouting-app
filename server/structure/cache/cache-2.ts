@@ -10,7 +10,7 @@ import {
     Parameter,
     PgDatabase,
     Query
-} from '../../utilities/databases-2';
+} from '../../utilities/database/databases-2';
 import { uuid } from '../../utilities/uuid';
 import { Route, ServerFunction } from '../app/app';
 import { match } from '../../../shared/match';
@@ -110,7 +110,7 @@ type StructActions =
     | 'version'
     | 'read';
 
-type Callable<T extends Blank> = {
+export type Callable<T extends Blank> = {
     [key: string]: (data: Data<T, Callable<T>>) => unknown;
 };
 
@@ -216,7 +216,7 @@ export class Column<Type extends SQL_Type, StructType extends Blank> {
     }
 }
 
-type Blank = {
+export type Blank = {
     [key: string]: SQL_Type;
 };
 
@@ -541,17 +541,6 @@ export class Struct<T extends Blank, C extends Callable<T>> {
         if (this.built)
             throw new Error(`Struct ${this.data.name} already built`);
         return attemptAsync(async () => {
-            // create the table if it doesn't exist
-            await this.data.database.unsafe.run(
-                Query.build(`
-                CREATE TABLE IF NOT EXISTS Tables (
-                    name text PRIMARY KEY,
-                    schema TEXT NOT NULL,
-                    version INTEGER NOT NULL DEFAULT 0
-                );
-            `)
-            ); // don't unwrap because we don't care if it fails
-
             const current = (
                 await this.data.database.unsafe.get<{
                     schema: string;
@@ -598,24 +587,6 @@ export class Struct<T extends Blank, C extends Callable<T>> {
                 ) {
                     throwErr();
                 }
-
-                // update
-                const query = Query.build(
-                    `
-                    UPDATE Tables
-                    SET 
-                        schema = :schema,
-                        version = :version
-                    WHERE name = :name
-                `,
-                    {
-                        name: this.data.name,
-                        schema: JSON.stringify(this.data.structure),
-                        version: current.version + 1
-                    }
-                );
-
-                (await this.data.database.unsafe.run(query)).unwrap();
             } else {
                 await this.data.database.unsafe.run(
                     Query.build(
@@ -1097,6 +1068,15 @@ export class Struct<T extends Blank, C extends Callable<T>> {
                 );
             }
             this.built = true;
+        });
+    }
+
+    getVersion() {
+        return attemptAsync(async () => {
+            const query = Query.build('SELECT version FROM Tables WHERE name = :name');
+            return (
+                await this.data.database.unsafe.get<{ version: number }>(query)
+            ).unwrap()?.version || -1;
         });
     }
 
