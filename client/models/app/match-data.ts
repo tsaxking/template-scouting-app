@@ -260,7 +260,8 @@ export class MatchData {
             );
 
             // always start at match = 0 if no match is selected
-            if (currentMatchIndex === -1 && movingMatchIndex !== 1) currentMatchIndex = 0;
+            if (currentMatchIndex === -1 && movingMatchIndex !== 1)
+                currentMatchIndex = 0;
 
             const prev = eventData.value.matches[currentMatchIndex];
             const prevTeams = filter(prev);
