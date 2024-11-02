@@ -10,7 +10,8 @@
     } = {};
 
     const fns = {
-        set: (app: App) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        set: (app: App<any>) => {
             if (!app) return;
 
             const data = app.pull();
