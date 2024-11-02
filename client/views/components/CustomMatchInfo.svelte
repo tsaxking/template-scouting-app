@@ -38,7 +38,7 @@
         matchNum =
             eventKey === newData.value.eventKey
                 ? String(App.matchData.matchNumber)
-                : '2024cabl';
+                : '';
         teamNum =
             eventKey === newData.value.eventKey ? App.matchData.teamNumber : 0;
 
@@ -66,7 +66,7 @@
         </label>
     </div>
 
-    <!-- <div class="form-floating mb-3">
+    <div class="form-floating mb-3">
         <select
             id="EventSelect"
             class="form-select"
@@ -78,7 +78,7 @@
             {/each}
         </select>
         <label for="EventSelect">Select event</label>
-    </div> -->
+    </div>
 {/if}
 
 <div class="form-floating mb-3">
