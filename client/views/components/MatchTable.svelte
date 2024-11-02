@@ -9,6 +9,7 @@
     import { createEventDispatcher, onMount } from 'svelte';
     import { MatchData } from '../../models/app/match-data';
     import { getMaxListeners } from 'events';
+import { confirm } from '../../utilities/notifications';
 
     const d = createEventDispatcher();
 
@@ -54,6 +55,8 @@
             }) as M[];
         },
         select: async (matchIndex: number, teamIndex?: number) => {
+            const confirmed = await confirm('Are you sure you want to change the match?');
+            if (!confirmed) return;
             d('select', { matchIndex, teamIndex });
             console.log('select', matchIndex, teamIndex);
             const res = await App.getEventData();
@@ -163,7 +166,7 @@
         </tr>
     </thead>
     <tbody>
-        {#each customMatches as match, matchIndex}
+        {#each customMatches as match, matchIndex (match.key)}
             <tr
                 class="
                     cursor-pointer"
@@ -189,7 +192,7 @@
                 >
                     {match.comp_level}
                 </td>
-                {#each match.teams as team, teamIndex}
+                {#each match.teams as team, teamIndex (team)}
                     <td on:click="{() => fns.select(matchIndex, teamIndex)}">
                         {#if teamIndex > 2}
                             <!-- Blue alliance -->
