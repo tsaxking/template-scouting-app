@@ -259,7 +259,7 @@ app.post<Match>(
     ),
     async (req, res) => {
         const {
-            eventKey,
+            // eventKey,
             checks,
             comments,
             matchNumber,
@@ -283,7 +283,7 @@ app.post<Match>(
             matchNumber,
             teamNumber,
             compLevel,
-            eventKey,
+            eventKey: '2024cabl',
             scout,
             date,
             group,
@@ -303,7 +303,7 @@ app.post<Match>(
                 matchNumber,
                 teamNumber,
                 compLevel,
-                eventKey,
+                eventKey: '2024cabl',
                 scout,
                 date,
                 group,
