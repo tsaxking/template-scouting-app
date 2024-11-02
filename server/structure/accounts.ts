@@ -19,7 +19,7 @@ import { Permission } from '../../shared/permissions';
 import { attemptAsync, resolveAll, Result } from '../../shared/check';
 import { RolePermission } from '../../shared/db-types';
 import Role from './roles';
-import { AccountNotification } from './cache/account-notifications';
+import { AccountNotification } from './account-notifications';
 
 /**
  * Properties that can be changed dynamically

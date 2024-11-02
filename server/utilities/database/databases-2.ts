@@ -1,4 +1,5 @@
-import { attemptAsync, build, Result } from '../../../shared/check';
+/* eslint-disable no-await-in-loop */
+import { attemptAsync, build, resolveAll, Result } from '../../../shared/check';
 // import cliProgress from 'cli-progress';
 import { EventEmitter } from '../../../shared/event-emitter';
 import { Client } from 'pg';
@@ -15,19 +16,25 @@ import { readFile } from '../files';
 import path from 'path';
 import { Queries } from '../queries';
 import { log } from '../../../client/utilities/logging';
+import { gitBranch, gitCommit } from '../git';
+import { getVersions } from './versions';
+import fs from 'fs';
+import { error } from '../terminal-logging';
+import { exec } from '../run-task';
 
-/*
-TODO:
-- Versioning
-- Migration
-- Backups
-*/
+class DatabaseError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = 'DatabaseError';
+    }
+}
 
 export interface DatabaseInterface {
     query<T extends Record<string, unknown>>(
         query: Query
     ): Promise<Result<QueryResult<T>>>;
     connect(): Promise<Result<boolean>>;
+    dump(target: string): Promise<Result<void>>;
 }
 
 type DBEvents = {
@@ -77,7 +84,7 @@ export class Query {
 
         if (qMatches) {
             if (qMatches.length !== args.length) {
-                throw new Error(
+                throw new DatabaseError(
                     `Number of parameters does not match number of ? in query. Query: ${query}, Parameters: ${copied}`
                 );
             }
@@ -181,6 +188,24 @@ export class PgDatabase implements DatabaseInterface {
             return true;
         });
     }
+
+    public async dump(target: string) {
+        return attemptAsync(async () => {
+            const name = this.client.database;
+            const password = this.client.password;
+            const host = this.client.host;
+            const port = this.client.port;
+            if (!name) throw new DatabaseError('No database name found');
+            if (!password) throw new DatabaseError('No password found');
+            // dump the database
+
+            (
+                await exec(
+                    `pg_dump -U postgres -h ${host} -p ${port} -d ${name} -w ${password} -f ${target}/dump.sql`
+                )
+            ).unwrap();
+        });
+    }
 }
 
 class UnsafeDatabase {
@@ -207,7 +232,171 @@ class UnsafeDatabase {
     }
 
     public async run(query: Query): Promise<Result<unknown>> {
-        return this.db.query(query);
+        return attemptAsync(async () => {
+            return this.db.query(query);
+        });
+    }
+}
+
+class Col {
+    constructor(
+        public readonly name: string,
+        public readonly type: string,
+        public readonly table: StructTable
+    ) {}
+}
+
+class TableBackup {
+    constructor(
+        public readonly date: string,
+        public readonly table: string,
+        public readonly database: Database
+    ) {}
+
+    restore() {
+        return attemptAsync(async () => {});
+    }
+
+    read(): Promise<
+        Result<{
+            data: Record<string, unknown>[];
+            version: {
+                major: number;
+                minor: number;
+                patch: number;
+            };
+        }>
+    > {
+        return attemptAsync(async () => {
+            const data = await fs.promises.readFile(
+                path.resolve(
+                    __dirname,
+                    `../../storage/db/backups/${this.date}/${this.table}.table`
+                )
+            );
+            return JSON.parse(data.toString());
+        });
+    }
+}
+
+class StructTable {
+    constructor(
+        public readonly name: string,
+        public readonly version: {
+            major: number;
+            minor: number;
+            patch: number;
+        },
+        public readonly database: Database
+    ) {}
+
+    public async getCols() {
+        return attemptAsync(async () => {
+            const res = await this.database.unsafe.all<{
+                column_name: string;
+                data_type: string;
+            }>(
+                Query.build(
+                    `
+                    SELECT column_name, data_type
+                    FROM information_schema.columns
+                    WHERE table_name = :table
+                `,
+                    { table: this.name }
+                )
+            );
+            if (res.isOk()) {
+                return res.value.map(
+                    r => new Col(r.column_name, r.data_type, this)
+                );
+            }
+            throw res.error;
+        });
+    }
+
+    public async getVersions() {
+        return attemptAsync(async () => {
+            const versions = (await getVersions()).unwrap();
+            return versions.filter(v => v.struct === this.name);
+        });
+    }
+
+    public async *getBackups() {
+        const dbBackups = (
+            await fs.promises.readdir(
+                path.resolve(__dirname, '../../storage/db/backups/')
+            )
+        )
+            .map(d => new Date(d))
+            .filter(d => d.toString() === 'Invalid Date')
+            .sort((a, b) => {
+                if (a > b) return -1;
+                if (a < b) return 1;
+                return 0;
+            })
+            .map(d => d.toISOString());
+
+        for (const dir of dbBackups) {
+            const backupPath = path.resolve(
+                __dirname,
+                '../../storage/db/backups/',
+                dir
+            );
+
+            const stats = await fs.promises.stat(backupPath);
+            if (stats.isDirectory()) {
+                const backupFiles = await fs.promises.readdir(backupPath);
+                for (const file of backupFiles) {
+                    if (file.endsWith('.table')) {
+                        const tableName = file.replace('.table', '');
+                        if (tableName === this.name) {
+                            yield new TableBackup(
+                                dir,
+                                tableName,
+                                this.database
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public async backup(dir: string) {
+        return attemptAsync(async () => {
+            const data = (
+                await this.database.unsafe.all<{
+                    [key: string]: unknown;
+                }>(Query.build(`SELECT * FROM ${this.name}`))
+            ).unwrap();
+
+            const str = JSON.stringify(
+                {
+                    data,
+                    version: this.version
+                },
+                null,
+                2
+            );
+
+            await fs.promises.writeFile(
+                path.resolve(
+                    __dirname,
+                    `../../storage/db/backups/${dir}/${this.name}.table`
+                ),
+                str
+            );
+
+            return new TableBackup(dir, this.name, this.database);
+        });
+    }
+
+    public async clear() {
+        return attemptAsync(async () => {
+            return this.database.unsafe.run(
+                Query.build(`DELETE FROM ${this.name}`)
+            );
+        });
     }
 }
 
@@ -217,6 +406,8 @@ export class Database {
     constructor(public readonly db: DatabaseInterface) {
         this.unsafe = new UnsafeDatabase(db);
     }
+
+    public readonly Query = Query;
 
     public initialized = false;
 
@@ -230,14 +421,15 @@ export class Database {
             ? []
             : QueryFileParams<T>
     ): Promise<Result<Queries[T][1]>> {
-        if (!this.initialized) throw new Error('Database not initialized');
+        if (!this.initialized)
+            throw new DatabaseError('FATAL: Database not initialized');
         return attemptAsync(async () => {
             const query = (await Query.fromFile(type, ...args)).unwrap();
 
             const result = (await this.db.query(query)).unwrap();
             if (result.rows.length === 0) {
                 console.error(type, query);
-                throw new Error('No results found');
+                throw new DatabaseError('No results found');
             }
 
             return result.rows[0] as Queries[T][1];
@@ -250,7 +442,8 @@ export class Database {
             ? []
             : QueryFileParams<T>
     ): Promise<Result<Queries[T][1][]>> {
-        if (!this.initialized) throw new Error('Database not initialized');
+        if (!this.initialized)
+            throw new DatabaseError('FATAL: Database not initialized');
         return attemptAsync(async () => {
             const query = (await Query.fromFile(type, ...args)).unwrap();
             return (await this.db.query(query)).unwrap()
@@ -264,7 +457,8 @@ export class Database {
             ? []
             : QueryFileParams<T>
     ): Promise<Result<Queries[T][1]>> {
-        if (!this.initialized) throw new Error('Database not initialized');
+        if (!this.initialized)
+            throw new DatabaseError('FATAL: Database not initialized');
         return attemptAsync(async () => {
             const query = (await Query.fromFile(type, ...args)).unwrap();
             return (await this.db.query(query)).unwrap()
@@ -273,10 +467,11 @@ export class Database {
     }
 
     public async vacuum() {
-        if (!this.initialized) throw new Error('Database not initialized');
+        if (!this.initialized)
+            throw new DatabaseError('Database not initialized');
         return attemptAsync(async () => {
             log('Vacuum go brrrrrrr');
-            const tables = await this.getTables();
+            const tables = await this.getStructTables();
             if (tables.isErr()) throw tables.error;
             return Promise.all(
                 tables.value.map(async table => {
@@ -287,72 +482,87 @@ export class Database {
         });
     }
 
-    async getTables(): Promise<Result<string[]>> {
+    async getStructs() {
+        return this.unsafe.all<{
+            name: string;
+            schema: string;
+            major: number;
+            minor: number;
+            patch: number;
+        }>(
+            Query.build(`
+                    SELECT *
+                    FROM Structs
+                `)
+        );
+    }
+
+    async getStructTables(): Promise<Result<StructTable[]>> {
         return attemptAsync(async () => {
-            const query = new Query(
-                `
+            const structs = (await this.getStructs()).unwrap();
+
+            const res = await this.unsafe.all<{ tableName: string }>(
+                Query.build(`
                 SELECT table_name
                 FROM information_schema.tables
                 WHERE table_schema = 'public'
                 ORDER BY table_name;
-            `
+            `)
             );
 
-            const res = await this.unsafe.all<{ tableName: string }>(query);
-
             if (res.isOk()) {
-                return res.value.map(r =>
-                    capitalize(toCamelCase(fromSnakeCase(r.tableName)))
-                );
+                return res.value
+                    .map(r =>
+                        capitalize(toCamelCase(fromSnakeCase(r.tableName)))
+                    )
+                    .filter(table => structs.find(s => s.name === table))
+                    .map(table => {
+                        const struct = structs.find(s => s.name === table);
+                        if (!struct)
+                            throw new DatabaseError(
+                                `Struct ${table} not found in Structs table. This should never happen!!! :(`
+                            );
+                        return new StructTable(
+                            table,
+                            {
+                                major: struct.major,
+                                minor: struct.minor,
+                                patch: struct.patch
+                            },
+                            this
+                        );
+                    });
             }
             throw res.error;
         });
     }
 
-    async getVersion(): Promise<
-        Result<{
-            major: number;
-            minor: number;
-            patch: number;
-        }>
-    > {
-        return attemptAsync(async () => {
-            const result = (
-                await this.unsafe.get<{
-                    major: number;
-                    minor: number;
-                    patch: number;
-                }>(Query.build('SELECT * FROM Version;'))
-            ).unwrap();
-            if (!result) {
-                throw new Error('Version not found');
-            }
-
-            return result;
-        });
-    }
-
     async reset(hard: boolean) {
         return attemptAsync(async () => {
-            const tables = (await this.getTables()).unwrap();
+            const tables = (await this.getStructTables()).unwrap();
             if (hard) {
                 // drop all tables
-                await Promise.all(
-                    tables.map(table => {
-                        return this.unsafe.run(
-                            Query.build(`DROP TABLE ${table};`)
-                        );
-                    })
-                );
+                resolveAll(
+                    await Promise.all(
+                        tables.map(table => {
+                            return this.unsafe.run(
+                                Query.build(`DROP TABLE ${table};`)
+                            );
+                        })
+                    )
+                ).unwrap();
+                this.initialized = false;
             } else {
                 // delete all data
-                await Promise.all(
-                    tables.map(table => {
-                        return this.unsafe.run(
-                            Query.build(`DELETE FROM ${table};`)
-                        );
-                    })
-                );
+                resolveAll(
+                    await Promise.all(
+                        tables.map(table => {
+                            return this.unsafe.run(
+                                Query.build(`DELETE FROM ${table};`)
+                            );
+                        })
+                    )
+                ).unwrap();
             }
         });
     }
@@ -366,33 +576,207 @@ export class Database {
                     Query.build(`
                         CREATE TABLE IF NOT EXISTS Structs (
                             name TEXT PRIMARY KEY,
-                            schema TEXT NOT NULL
-                        );
-
-                        CREATE TABLE IF NOT EXISTS Version (
+                            schema TEXT NOT NULL,
                             major INTEGER NOT NULL,
                             minor INTEGER NOT NULL,
                             patch INTEGER NOT NULL
                         );
+
+                        -- CREATE TABLE IF NOT EXISTS Git (
+                        --     branch TEXT PRIMARY KEY,
+                        --     commit TEXT NOT NULL
+                        -- );
                 `)
                 )
             ).unwrap();
 
-            // check if version exists, if not, initialize it
-            const result = await this.getVersion();
-            if (result.isErr()) {
-                await this.unsafe.run(
-                    Query.build(
-                        `
-                        INSERT INTO Version (major, minor, patch)
-                        VALUES (:major, :minor, :patch);
-                    `,
-                        { major: 0, minor: 0, patch: 0 }
-                    )
-                );
+            // Is git branch information necessary now?
+            // the system below should handle the issues that git branch information would solve
+
+            // answer: yes, git information is necessary
+            // if a user makes 2 branches that update the schema of a table in different ways, but have the same version numbers,
+            // the system would stay on the first branch and never update to the second branch
+
+            let currentGit = (
+                await this.unsafe.get<{
+                    branch: string;
+                    commit: string;
+                }>(
+                    Query.build(`
+                    SELECT *
+                    FROM Git
+                `)
+                )
+            ).unwrap();
+            const [branch, commit] = await Promise.all([
+                gitBranch(),
+                gitCommit()
+            ]);
+
+            const b = branch.unwrap();
+            const c = commit.unwrap();
+
+            if (!currentGit) {
+                currentGit = {
+                    branch: b,
+                    commit: c
+                };
+            }
+
+            const dir = (await this.makeCurrentBackupDir()).unwrap();
+
+            // each table has its own Major, minor, patch
+            // for each table version that needs to be made, make a backup before updating
+            // If current runtime version is lower than the version in the database, revert state to the latest backup in the branch or purge if no backup
+            // update all tables to latest backup state
+            // make a backup of the current state
+            // TODO: test if the previous state is the same as the backup
+            // TODO: optimize by merging states
+            // if there is new stuff in new state, merge it with the backup
+            // if there is new stuff in both states, user must resolve
+            // if so, do nothing
+            // if not, purge and set the table to the backup state
+
+            const tables = (await this.getStructTables()).unwrap();
+
+            // TODO: Parallelize
+            for (const table of tables) {
+                const tv = table.version;
+
+                const versions = (await table.getVersions()).unwrap();
+
+                const last = versions[versions.length - 1];
+                if (last && last.lessThan(tv.major, tv.minor, tv.patch)) {
+                    // this assumes the schema in the runtime struct is correct
+                    // the runtime struct should insert the correct schema into the database
+                    // so delete the struct from the structs table and reinsert all data
+
+                    const backup = (await table.backup(dir)).unwrap();
+                    try {
+                        (await table.clear()).unwrap();
+
+                        (
+                            await this.unsafe.run(
+                                Query.build(
+                                    `
+                                DELETE FROM Structs
+                                WHERE name = :name;
+                            `,
+                                    {
+                                        name: table.name
+                                    }
+                                )
+                            )
+                        ).unwrap();
+
+                        const backups = table.getBackups();
+                        BACKUP: for await (const backup of backups) {
+                            const data = (await backup.read()).unwrap();
+                            if (
+                                data.version.major === tv.major &&
+                                data.version.minor === tv.minor &&
+                                data.version.patch === tv.patch
+                            ) {
+                                // apply data
+                                await Promise.all(
+                                    data.data.map(async d => {
+                                        const keys = Object.keys(d);
+                                        const q = Query.build(
+                                            `
+                                                INSERT INTO ${table.name} (${keys.join(', ')})
+                                                VALUES (${keys.map(k => `:${k}`).join(', ')});
+                                            `,
+                                            d as Parameter
+                                        );
+                                        return this.unsafe.run(q);
+                                    })
+                                );
+                                break BACKUP;
+                            }
+                        }
+                    } catch (e) {
+                        error(e);
+                        error(
+                            new DatabaseError(
+                                `Failed to clear and update table ${table.name}`
+                            )
+                        );
+                        await backup.restore();
+                        process.exit(1);
+                    }
+                }
+
+                VERSION: for (const version of versions) {
+                    if (version.greaterThan(tv.major, tv.minor, tv.patch)) {
+                        const backup = (await table.backup(dir)).unwrap();
+                        try {
+                            await version.update(this);
+                        } catch (e) {
+                            error(e);
+                            await backup.restore();
+                            break VERSION;
+                        }
+
+                        // if the update is successful, update the version
+                        tv.major = version.major;
+                        tv.minor = version.minor;
+                        tv.patch = version.patch;
+
+                        (
+                            await this.unsafe.run(
+                                Query.build(
+                                    `
+                                UPDATE Structs
+                                SET major = :major, minor = :minor, patch = :patch
+                                WHERE name = :name;
+                                `,
+                                    {
+                                        name: table.name,
+                                        major: version.major,
+                                        minor: version.minor,
+                                        patch: version.patch
+                                    }
+                                )
+                            )
+                        ).unwrap();
+                    }
+                }
             }
 
             this.initialized = true;
         });
+    }
+
+    public async backup() {
+        return attemptAsync(async () => {
+            const dir = (await this.makeCurrentBackupDir()).unwrap();
+
+            const tables = (await this.getStructTables()).unwrap();
+
+            return Promise.all(tables.map(table => table.backup(dir)));
+        });
+    }
+
+    private makeCurrentBackupDir() {
+        return attemptAsync(async () => {
+            const now = new Date().toISOString();
+
+            await fs.promises.mkdir(
+                path.resolve(__dirname, '../../storage/db/backups/', now),
+                { recursive: true }
+            );
+
+            return now;
+        });
+    }
+
+    public async dump() {
+        return attemptAsync(async () => {
+            const dir = (await this.makeCurrentBackupDir()).unwrap();
+        });
+    }
+
+    public async restore(path: string) {
+        return attemptAsync(async () => {});
     }
 }

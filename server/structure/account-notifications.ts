@@ -1,8 +1,8 @@
-import { Cache } from './cache';
-import { AccountNotifications as AN } from '../../utilities/tables';
-import { attemptAsync } from '../../../shared/check';
-import { DB } from '../../utilities/databases';
-import { uuid } from '../../utilities/uuid';
+import { Cache } from './structs/cache';
+import { AccountNotifications as AN } from '../utilities/tables';
+import { attemptAsync } from '../../shared/check';
+import { DB } from '../utilities/databases';
+import { uuid } from '../utilities/uuid';
 
 export class AccountNotification extends Cache {
     public static random() {

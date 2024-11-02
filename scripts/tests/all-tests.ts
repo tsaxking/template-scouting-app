@@ -19,8 +19,7 @@ import {
 import fs from 'fs';
 import path from 'path';
 import { spawn } from 'child_process';
-import { Struct } from '../../server/structure/cache/cache-2';
-import { Backup } from '../../server/utilities/database/backups';
+import { Struct } from '../../server/structure/structs/cache-2';
 
 /**
  * The name of the main database
@@ -352,45 +351,45 @@ export const runTests = async (env: Env, database: Database) =>
             (await database.unsafe.run(qD)).unwrap();
         }),
 
-        test('Database Backups', async () => {
-            const qA = Query.build(`
-                CREATE TABLE IF NOT EXISTS TestTable2 (
-                    id INTEGER PRIMARY KEY,
-                    name TEXT NOT NULL
-                );
-            `);
+        // test('Database Backups', async () => {
+        //     const qA = Query.build(`
+        //         CREATE TABLE IF NOT EXISTS TestTable2 (
+        //             id INTEGER PRIMARY KEY,
+        //             name TEXT NOT NULL
+        //         );
+        //     `);
 
-            (await database.unsafe.run(qA)).unwrap();
+        //     (await database.unsafe.run(qA)).unwrap();
 
-            const qB = Query.build(
-                `
-                INSERT INTO TestTable2 (id, name)
-                VALUES (:id, :name);
-            `,
-                {
-                    id: 1,
-                    name: 'test'
-                }
-            );
+        //     const qB = Query.build(
+        //         `
+        //         INSERT INTO TestTable2 (id, name)
+        //         VALUES (:id, :name);
+        //     `,
+        //         {
+        //             id: 1,
+        //             name: 'test'
+        //         }
+        //     );
 
-            (await database.unsafe.run(qB)).unwrap();
+        //     (await database.unsafe.run(qB)).unwrap();
 
-            const backup = (await Backup.makeBackup(database)).unwrap();
+        //     const backup = (await Backup.makeBackup(database)).unwrap();
 
-            (await backup.restore(database)).unwrap();
+        //     (await backup.restore(database)).unwrap();
 
-            const qD = Query.build(`
-                SELECT * FROM TestTable2;
-            `);
+        //     const qD = Query.build(`
+        //         SELECT * FROM TestTable2;
+        //     `);
 
-            const result = (
-                await database.unsafe.get<{ id: number; name: string }>(qD)
-            ).unwrap();
+        //     const result = (
+        //         await database.unsafe.get<{ id: number; name: string }>(qD)
+        //     ).unwrap();
 
-            assertEquals(result, { id: 1, name: 'test' });
+        //     assertEquals(result, { id: 1, name: 'test' });
 
-            (await backup.delete()).unwrap();
-        }),
+        //     (await backup.delete()).unwrap();
+        // }),
 
         test('Struct Building', async () => {
             const Item = new Struct({
@@ -399,12 +398,7 @@ export const runTests = async (env: Env, database: Database) =>
                     name: 'text',
                     price: 'integer'
                 },
-                database,
-                callables: {
-                    test(struct) {
-                        return struct.data.name;
-                    }
-                }
+                database
             });
 
             (await Item.build()).unwrap();

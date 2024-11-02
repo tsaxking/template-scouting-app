@@ -2,7 +2,8 @@
 import { Socket } from '../utilities/socket';
 import { attempt, attemptAsync } from '../../shared/check';
 import { match } from '../../shared/match';
-import { Requester } from '../utilities/requests';
+import { Requester, ServerRequest } from '../utilities/requests';
+import { writable, Writable } from 'svelte/store';
 
 /*
 File overview:
@@ -81,6 +82,9 @@ type StructActions =
 type StructBuilder<T> = {
     name: string;
     structure: T;
+    socket: Socket;
+    route?: string;
+    requester?: Requester;
 };
 
 type Blank = {
@@ -161,8 +165,7 @@ class DataVersion<T extends Blank> {
     }
 }
 
-class Data<T extends Blank> {
-    // implements Writable<Structable<T>> {
+class Data<T extends Blank> implements Writable<Structable<T>> {
     constructor(
         public readonly struct: Struct<T>,
         public readonly data: Readonly<Structable<T & GlobalCols>>
@@ -203,13 +206,17 @@ class Data<T extends Blank> {
         fn: (data: Structable<T>) => Promise<Structable<T>> | Structable<T>
     ) {
         return attemptAsync(async () => {
+            const prev = { ...this.data };
             const response = await fn(this.data);
-            return (
+            (
                 await this.struct.requester.post(
                     `${this.struct.route}/${this.struct.data.name}/update`,
                     response
                 )
             ).unwrap();
+            return async () => {
+                return this.update(() => prev);
+            };
         });
     }
 
@@ -251,12 +258,7 @@ class Data<T extends Blank> {
 export class Struct<T extends Blank> {
     private static structs = new Map<string, Struct<Blank>>();
 
-    constructor(
-        public readonly data: StructBuilder<T>,
-        public readonly socket: Socket,
-        public readonly route: string,
-        public readonly requester: Requester
-    ) {
+    constructor(public readonly data: StructBuilder<T>) {
         if (Struct.structs.has(this.data.name)) {
             throw new Error(`Struct ${this.data.name} already exists`);
         }
@@ -264,7 +266,7 @@ export class Struct<T extends Blank> {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         Struct.structs.set(this.data.name, this as any);
 
-        socket.on(
+        data.socket.on(
             `struct:${this.data.name}:create`,
             (data: Structable<T & GlobalCols>) => {
                 const has = this.cache.get(data.id);
@@ -273,7 +275,7 @@ export class Struct<T extends Blank> {
                 this.cache.set(data.id, d);
             }
         );
-        socket.on(
+        data.socket.on(
             `struct:${this.data.name}:update`,
             (data: Structable<T & GlobalCols>) => {
                 const has = this.cache.get(data.id);
@@ -281,26 +283,26 @@ export class Struct<T extends Blank> {
                 has.set(data);
             }
         );
-        socket.on(`struct:${this.data.name}:delete`, (id: string) => {
+        data.socket.on(`struct:${this.data.name}:delete`, (id: string) => {
             const has = this.cache.get(id);
             if (!has) return;
             this.cache.delete(id);
         });
-        socket.on(`struct:${this.data.name}:archive`, (id: string) => {
+        data.socket.on(`struct:${this.data.name}:archive`, (id: string) => {
             const has = this.cache.get(id);
             if (!has) return;
             Object.assign(has.data, { archived: true });
-            // this.stores.all.update(d => d.filter(d => d.id !== id));
-            // this.stores.archived.update(d => [...d, has]);
+            this.stores.all.update(d => d.filter(d => d.id !== id));
+            this.stores.archived.update(d => [...d, has]);
         });
-        socket.on(`struct:${this.data.name}:unarchive`, (id: string) => {
+        data.socket.on(`struct:${this.data.name}:unarchive`, (id: string) => {
             const has = this.cache.get(id);
             if (!has) return;
             Object.assign(has.data, { archived: false });
-            // this.stores.all.update(d => [...d, has]);
-            // this.stores.archived.update(d => d.filter(d => d.id !== id));
+            this.stores.all.update(d => [...d, has]);
+            this.stores.archived.update(d => d.filter(d => d.id !== id));
         });
-        socket.on(
+        data.socket.on(
             `struct:${this.data.name}:restore-version`,
             (data: Structable<T & GlobalCols>) => {
                 const has = this.cache.get(data.id);
@@ -312,14 +314,29 @@ export class Struct<T extends Blank> {
                 this.cache.set(data.id, d);
             }
         );
-        socket.on(`struct:${this.data.name}:delete-version`, (id: string) => {
-            // should this do anything?
-        });
+        data.socket.on(
+            `struct:${this.data.name}:delete-version`,
+            (id: string) => {
+                // should this do anything?
+            }
+        );
+    }
+
+    public get route() {
+        return this.data.route ?? this.data.name;
+    }
+
+    public get requester() {
+        return this.data.requester ?? ServerRequest;
+    }
+
+    public get socket() {
+        return this.data.socket;
     }
 
     public readonly stores = {
-        // all: writable<Data<T>[]>([]),
-        // archived: writable<Data<T>[]>([])
+        all: writable<Data<T>[]>([]),
+        archived: writable<Data<T>[]>([])
     };
 
     public readonly cache = new Map<string, Data<T>>();
@@ -363,7 +380,7 @@ export class Struct<T extends Blank> {
                 return data;
             });
 
-            // this.stores.all.set(all);
+            this.stores.all.set(all);
 
             return all;
         });
@@ -378,7 +395,6 @@ export class Struct<T extends Blank> {
             ).unwrap();
 
             const data = response.map(d => new Data(this, d));
-            // this.store.set(data);
             return data;
         });
     }
@@ -423,5 +439,13 @@ export class Struct<T extends Blank> {
             }
             return false;
         });
+    }
+
+    get(path: string) {
+        return this.requester.get<T>(path);
+    }
+
+    post<T = unknown>(path: string, data: unknown) {
+        return this.requester.post<T>(path, data);
     }
 }

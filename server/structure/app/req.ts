@@ -1,8 +1,9 @@
 import express from 'express';
 import { App } from './app';
-import { Session } from '../sessions';
 import { FileUpload } from '../../middleware/stream';
 import { Socket } from 'socket.io';
+import { Session } from '../structs/session';
+import { Data } from '../structs/cache-2';
 
 /**
  * Body type
@@ -77,7 +78,7 @@ export class Req<
     constructor(
         public readonly app: App,
         public readonly req: express.Request,
-        public readonly session: Session<S, A>,
+        public readonly session: Data<typeof Session.Session>,
         public readonly socket?: Socket
     ) {}
 

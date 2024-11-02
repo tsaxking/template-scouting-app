@@ -4,16 +4,17 @@ import { attemptAsync, Result } from '../../../shared/check';
 import { Database } from './databases-2';
 import path from 'path';
 import { __root } from '../env';
-import { Backup } from './backups';
-import { error } from '../terminal-logging';
 
 export class Version {
+    static readonly all: Version[] = [];
+
     constructor(
-        public description: string,
-        public major: number,
-        public minor: number,
-        public patch: number,
-        public update: (database: Database) => Promise<void>
+        public readonly description: string,
+        public readonly struct: string,
+        public readonly major: number,
+        public readonly minor: number,
+        public readonly patch: number,
+        public readonly update: (database: Database) => Promise<void>
     ) {}
 
     greaterThan(major: number, minor: number, patch: number, equalTo = false) {
@@ -41,15 +42,25 @@ export class Version {
     lessThan(major: number, minor: number, patch: number, equalTo = false) {
         return !this.greaterThan(major, minor, patch, equalTo);
     }
+
+    is(major: number, minor: number, patch: number) {
+        return (
+            this.major === major && this.minor === minor && this.patch === patch
+        );
+    }
 }
 
 export const getVersions = (): Promise<Result<Version[]>> => {
     return attemptAsync(async () => {
+        if (Version.all.length) {
+            return Version.all;
+        }
+
         const files = await readdir(
             path.resolve(__root, './storage/db/scripts/migrations')
         );
 
-        return (
+        const v = (
             await Promise.all(
                 files.map(async file => {
                     const data = (await import(
@@ -90,35 +101,8 @@ export const getVersions = (): Promise<Result<Version[]>> => {
 
             return a.patch - b.patch;
         });
-    });
-};
 
-export const runUpdates = async (db: Database) => {
-    return attemptAsync(async () => {
-        const versions = (await getVersions()).unwrap();
-
-        const current = (await db.getVersion()).unwrap();
-
-        for (const v of versions) {
-            if (
-                v.greaterThan(
-                    current.major,
-                    current.minor,
-                    current.patch,
-                    false
-                )
-            ) {
-                const backup = (await Backup.makeBackup(db)).unwrap();
-                try {
-                    await v.update(db);
-                } catch (e) {
-                    error('Error updating database, restoring backup');
-                    error('Version:', v);
-                    error('Error:', e);
-                    (await backup.restore(db)).unwrap();
-                    throw e;
-                }
-            }
-        }
+        Version.all.push(...v);
+        return Version.all;
     });
 };

@@ -1,6 +1,6 @@
 import { validate } from '../middleware/data-type';
 import { Route } from '../structure/app/app';
-import { AccountNotification } from '../structure/cache/account-notifications';
+import { AccountNotification } from '../structure/structs/account-notifications';
 
 export const router = new Route();
 

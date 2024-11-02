@@ -161,15 +161,19 @@ export class Res {
      * Sends a static status message
      * @date 3/8/2024 - 6:19:36 AM
      *
-     * @param {StatusId} id
+     * @param {StatusId} status
      * @param {?unknown} [data]
      * @param {?string} [redirect]
      * @returns {*}
      */
-    sendStatus(id: StatusId, data?: unknown, redirect?: string) {
+    sendStatus(status: StatusId | Status, data?: unknown, redirect?: string) {
         return attempt(() => {
+            if (status instanceof Status) {
+                return status.send(this);
+            }
+
             const s = Status.from(
-                id,
+                status,
                 this.req,
                 JSON.stringify(bigIntEncode(data))
             );

@@ -6,8 +6,9 @@ import { Res } from './res';
 import { SocketWrapper } from '../socket';
 import http from 'http';
 import { Server, Socket } from 'socket.io';
-import { Session } from '../sessions';
+import { Session } from '../structs/session';
 import session from 'express-session';
+import { Status } from '../../utilities/status';
 
 /**
  * All file types that can be sent (can be expanded)
@@ -416,11 +417,12 @@ export class App<
             const socketId = req.headers['socket-id'] as string | undefined;
             const socket = this.io.io.sockets.sockets.get(socketId || '');
 
-            const s = await Session.from<SessionCustomData, AccountCustomData>(
-                this as App,
-                req,
-                res
-            );
+            // const s = await Session.from<SessionCustomData, AccountCustomData>(
+            //     this as App,
+            //     req,
+            //     res
+            // );
+            const s = (await Session.fromApp(this, req, res)).unwrap();
             const request = new Req<unknown, SessionCustomData>(
                 this as App,
                 req,

@@ -14,6 +14,38 @@ import { Route, ServerFunction } from '../app/app';
 import { match } from '../../../shared/match';
 import { validate } from '../../middleware/data-type';
 import { Status } from '../../utilities/status';
+import { Account } from './account';
+import { EventEmitter } from '../../../shared/event-emitter';
+import { Permissions } from './permissions';
+import { Session } from './session';
+import { Req } from '../app/req';
+import { capitalize } from '../../../shared/text';
+
+export class StructError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = 'StructError';
+    }
+}
+
+export class DataError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = 'DataError';
+    }
+}
+
+export class FatalStructError extends StructError {
+    constructor(message: string) {
+        super(message);
+    }
+}
+
+export class FatalDataError extends DataError {
+    constructor(message: string) {
+        super(message);
+    }
+}
 
 /*
 Questions:
@@ -103,46 +135,37 @@ type StructActions =
     | 'version'
     | 'read';
 
-export type Callable<T extends Blank> = {
-    [key: string]: (
-        struct: Struct<T, Callable<T>, LocalCallable<T>>,
-        ...params: string[]
-    ) => unknown;
-};
-
-export type LocalCallable<T extends Blank> = {
-    [key: string]: (
-        data: Data<T, Callable<T>, LocalCallable<T>>,
-        ...params: string[]
-    ) => unknown;
-};
-
-type StructBuilder<
-    T extends Blank,
-    C extends Callable<T>,
-    L extends LocalCallable<T>
-> = {
-    name: string;
+type StructBuilder<T extends Blank, Name extends string> = {
+    name: Name;
     structure: T; // omit id because it will always be included as a uuid primary key
     database: Database;
-    callables?: C;
-    dataCallables?: L;
     versionHistory?: {
         type: 'days' | 'versions';
         amount: number;
     };
+    generators?: Partial<{
+        id: () => string;
+        attributes: () => string[];
+    }>;
+    // defaults?: Structable<Struct<T, Name>>[];
+    // permissions?:
 };
 
-const newGlobalCols = () => {
+const newGlobalCols = (struct: Struct<Blank, string>) => {
     return {
-        id: uuid(),
+        id: struct.data.generators?.id?.() || uuid(),
         created: new Date().toISOString(),
         updated: new Date().toISOString(),
-        archived: false
+        archived: false,
+        attributes:
+            struct.data.generators
+                ?.attributes?.()
+                .map(a => a.replaceAll(',', ''))
+                .join(',') || ''
     };
 };
 
-export const prove = <T extends Blank, D>(
+export const prove = <T extends Blank, D, Name extends string>(
     data: D,
     structure: Blank
 ): Result<boolean> => {
@@ -179,36 +202,38 @@ export const prove = <T extends Blank, D>(
             return false;
         });
 
-        return typesMatch as D extends Structable<T> ? true : false;
+        return typesMatch as D extends St<T, Name> ? true : false;
     });
 };
 
-type GlobalCols = {
+export type GlobalCols = {
     id: 'text';
     created: 'text';
     updated: 'text';
     archived: 'boolean';
+    attributes: 'text';
 };
 
 export type ColMap<
     Cols extends {
         [key: string]: SQL_Type;
-    }
+    },
+    Name extends string
 > = {
-    [K in keyof Cols]: Column<Cols[K], Cols>;
+    [K in keyof Cols]: Column<Cols[K], Cols, Name>;
 };
 
-export class Column<Type extends SQL_Type, StructType extends Blank> {
+export class Column<
+    Type extends SQL_Type,
+    StructType extends Blank,
+    Name extends string
+> {
     public readonly type: TS_TypeStr<Type>;
 
     constructor(
         public readonly name: string,
         public readonly sqlType: SQL_Type,
-        public readonly struct: Struct<
-            StructType,
-            Callable<StructType>,
-            LocalCallable<StructType>
-        >
+        public readonly struct: Struct<StructType, Name>
     ) {
         this.type = match<SQL_Type, TS_TypeStr<typeof this.sqlType>>(
             this.sqlType
@@ -229,23 +254,29 @@ export type Blank = {
     [key: string]: SQL_Type;
 };
 
-type Structable<T extends Blank> = {
-    [K in keyof T]: TS_TypeActual<Column<T[K], T>['type']>;
+type St<T extends Blank, Name extends string> = {
+    [K in keyof T]: TS_TypeActual<Column<T[K], T, Name>['type']>;
 };
 
-export class DataVersion<
-    T extends Blank,
-    C extends Callable<T>,
-    L extends LocalCallable<T>
-> {
+export type Structable<SubStruct extends Struct<Blank, string>> = St<
+    SubStruct['data']['structure'] & GlobalCols,
+    SubStruct['data']['name']
+>;
+export type BasicStructable<SubStruct extends Struct<Blank, string>> = St<
+    SubStruct['data']['structure'],
+    SubStruct['data']['name']
+>;
+
+export class DataVersion<T extends Blank, Name extends string> {
     constructor(
-        public readonly struct: Struct<T, C, L>,
-        public readonly data: Structable<
+        public readonly struct: Struct<T, Name>,
+        public readonly data: St<
             T &
                 GlobalCols & {
                     vhId: 'text';
                     vhCreated: 'text';
-                }
+                },
+            Name
         >
     ) {}
 
@@ -273,6 +304,10 @@ export class DataVersion<
         return this.data.archived;
     }
 
+    get database() {
+        return this.struct.data.database;
+    }
+
     delete() {
         return attemptAsync(async () => {
             const query = Query.build(
@@ -286,28 +321,33 @@ export class DataVersion<
             );
 
             (await this.struct.data.database.unsafe.run(query)).unwrap();
+
+            this.struct.emit('delete-version', this);
         });
     }
 
     restore() {
         return attemptAsync(async () => {
             const current = (await this.struct.fromId(this.data.id)).unwrap();
-            if (!current) throw new Error('Current data not found');
+            if (!current) throw new DataError('Current data not found');
 
             await current.update(this.data);
+
+            this.struct.emit('restore-version', this);
         });
     }
 }
 
-export class Data<
-    T extends Blank,
-    C extends Callable<T>,
-    L extends LocalCallable<T>
-> {
+export class StructData<Structure extends Blank, Name extends string> {
     constructor(
-        public readonly struct: Struct<T, C, L>,
-        public readonly data: Structable<T & GlobalCols>
-    ) {}
+        public readonly struct: Struct<Structure, Name>,
+        public readonly data: Readonly<St<Structure & GlobalCols, Name>>
+    ) {
+        if (!this.struct.validate(data))
+            throw new DataError(
+                `Invalid data recieved for ${this.struct.name}`
+            );
+    }
 
     get id() {
         return this.data.id;
@@ -325,12 +365,16 @@ export class Data<
         return this.data.archived;
     }
 
-    update(data: Partial<Structable<T>>) {
+    get database() {
+        return this.struct.data.database;
+    }
+
+    update(data: Partial<St<Structure, Name>>) {
         return attemptAsync(async () => {
             await this.createVersion();
 
             if (!this.struct.validate(data))
-                throw new Error(
+                throw new DataError(
                     `Invalid data recieved for ${this.struct.name}`
                 );
 
@@ -351,6 +395,8 @@ export class Data<
 
             (await this.struct.data.database.unsafe.run(query)).unwrap();
 
+            this.struct.emit('update', this);
+
             Object.assign(this.data, data);
         });
     }
@@ -367,6 +413,8 @@ export class Data<
                     id: this.data.id
                 }
             );
+
+            this.struct.emit('delete', this);
 
             (await this.struct.data.database.unsafe.run(query)).unwrap();
         });
@@ -388,16 +436,17 @@ export class Data<
 
             (await this.struct.data.database.unsafe.run(query)).unwrap();
 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            this.data.archived = archive as any;
+            this.struct.emit(archive ? 'archive' : 'unarchive', this);
+
+            Object.assign(this.data, {
+                archived: archive
+            });
         });
     }
 
     getVersionHistory() {
         return attemptAsync(async () => {
-            if (!this.struct.data.versionHistory) {
-                throw new Error('Version history not enabled');
-            }
+            if (!this.struct.data.versionHistory) return 'not-enabled';
 
             const { type, amount } = this.struct.data.versionHistory;
 
@@ -411,8 +460,10 @@ export class Data<
                 }
             );
 
-            const versions = (
-                await this.struct.data.database.unsafe.all<Structable<T>>(query)
+            let versions = (
+                await this.struct.data.database.unsafe.all<St<Structure, Name>>(
+                    query
+                )
             )
                 .unwrap()
                 .map(d => new DataVersion(this.struct, d));
@@ -421,32 +472,35 @@ export class Data<
                 (a, b) => a.vhCreated.getTime() - b.vhCreated.getTime()
             );
 
-            // TODO: validate version state
+            versions = versions.filter(v =>
+                this.struct.validate(v.data).unwrap()
+            );
 
             if (type === 'versions') {
                 const toRemove = versions.splice(0, versions.length - amount);
                 await Promise.all(toRemove.map(v => v.delete()));
                 return versions;
-            } else if (type === 'days') {
-                const toRemove = versions.filter(
-                    v =>
-                        v.vhCreated.getTime() <
-                        new Date().getTime() - amount * 24 * 60 * 60 * 1000
-                );
-                await Promise.all(toRemove.map(v => v.delete()));
-                return versions.filter(
-                    v =>
-                        v.vhCreated.getTime() >=
-                        new Date().getTime() - amount * 24 * 60 * 60 * 1000
-                );
             }
+
+            // type === 'days';
+            const toRemove = versions.filter(
+                v =>
+                    v.vhCreated.getTime() <
+                    new Date().getTime() - amount * 24 * 60 * 60 * 1000
+            );
+            await Promise.all(toRemove.map(v => v.delete()));
+            return versions.filter(
+                v =>
+                    v.vhCreated.getTime() >=
+                    new Date().getTime() - amount * 24 * 60 * 60 * 1000
+            );
         });
     }
 
     createVersion() {
         return attemptAsync(async () => {
             if (!this.struct.data.versionHistory) {
-                throw new Error('Version history not enabled');
+                throw new DataError('Version history not enabled');
             }
 
             const vhId = uuid();
@@ -470,78 +524,156 @@ export class Data<
 
             (await this.struct.data.database.unsafe.run(query)).unwrap();
 
-            return new DataVersion(this.struct, {
+            const v = new DataVersion(this.struct, {
                 ...this.data,
                 vhId
             });
+
+            this.struct.emit('version', v);
+
+            return v;
         });
     }
 
-    // call<K extends keyof C>(fn: K, data: this): Promise<Result<C[K]>> {
-    //     return attemptAsync(async () => {
-    //         const callable = this.struct.data.callables?.[fn];
-    //         if (!callable) throw new Error(`Callable ${String(fn)} for ${this.struct.name} not found`);
+    getAttributes() {
+        return attempt(() => {
+            const { attributes } = this.data;
+            if (!attributes) throw new FatalDataError('No attributes found');
 
-    //         return callable(data);
-    //     });
-    // }
+            const parsed = JSON.parse(attributes);
+            if (!Array.isArray(parsed))
+                throw new FatalDataError('Attributes not an array');
+            if (!parsed.every(a => typeof a === 'string'))
+                throw new FatalDataError('Attributes not all strings');
+
+            return parsed;
+        });
+    }
+
+    addAttributes(...attrs: string[]) {
+        return attemptAsync(async () => {
+            const attributes = this.getAttributes().unwrap();
+            const combined = [...attributes, ...attrs].filter(
+                (a, i, arr) => arr.indexOf(a) === i
+            );
+
+            (await this.setAttributes(combined)).unwrap();
+        });
+    }
+
+    removeAttribute(attr: string) {
+        return attemptAsync(async () => {
+            const attributes = this.getAttributes().unwrap();
+
+            if (!attributes.includes(attr)) return;
+
+            const index = attributes.indexOf(attr);
+
+            attributes.splice(index, 1);
+
+            (await this.setAttributes(attributes)).unwrap();
+        });
+    }
+
+    setAttributes(attrs: string[]) {
+        return attemptAsync(async () => {
+            Object.assign(this.data, {
+                attributes: JSON.stringify(attrs)
+            });
+
+            const query = Query.build(
+                `
+                UPDATE ${this.struct.data.name}
+                SET attributes = :attributes
+                WHERE id = :id
+            `,
+                {
+                    id: this.data.id,
+                    attributes: JSON.stringify(attrs)
+                }
+            );
+
+            (await this.struct.data.database.unsafe.run(query)).unwrap();
+
+            this.struct.emit('update', this);
+        });
+    }
 }
 
-export class Struct<
-    T extends Blank,
-    C extends Callable<T>,
-    L extends LocalCallable<T>
-> {
+export type Data<SubStruct extends Struct<Blank, string>> = StructData<
+    SubStruct['data']['structure'],
+    SubStruct['data']['name']
+>;
+
+export class Struct<Structure extends Blank, Name extends string> {
     private static structs = new Map<
         string,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        Struct<any, Callable<any>, LocalCallable<any>>
+        Struct<any, string>
     >();
+
+    public static readonly router = new Route();
 
     public static buildAll() {
         return attemptAsync(async () => {
-            return resolveAll(
+            resolveAll(
                 await Promise.all(
                     Array.from(Struct.structs.values()).map(s => s.build())
                 )
             ).unwrap();
+
+            for (const s of this.structs.values()) {
+                Struct.router.route('/' + s.name, s.route);
+            }
         });
     }
 
-    public readonly route = new Route();
+    private readonly route = new Route();
+
+    private readonly defaults: Structable<Struct<Structure, Name>>[] = [];
 
     private built = false;
 
-    private readonly routers: Record<StructActions, Route> = {
-        create: new Route(),
-        update: new Route(),
-        delete: new Route(),
-        read: new Route(),
-        archive: new Route(),
-        unarchive: new Route(),
-        version: new Route()
-    };
+    // private readonly permissions: {
+    //     [key: string]: (target: string, data: Data<typeof this>) => boolean;
+    // } = {};
 
-    public readonly callables: {
-        [key in keyof L]: (...parameters: string[]) => Promise<Result<unknown>>;
-    };
+    public Generator(data: St<Structure & GlobalCols, Name>) {
+        return new StructData<Structure, Name>(this, data);
+    }
 
-    public readonly cols: Readonly<ColMap<T>>;
+    public readonly cols: Readonly<ColMap<Structure, Name>>;
 
-    constructor(public readonly data: StructBuilder<T, C, L>) {
-        this.route.route('/create', this.routers.create);
-        this.route.route('/update', this.routers.update);
-        this.route.route('/delete', this.routers.delete);
-        this.route.route('/read', this.routers.read);
-        this.route.route('/archive', this.routers.archive);
-        this.route.route('/unarchive', this.routers.unarchive);
-        this.route.route('/version', this.routers.version);
+    private readonly emitter = new EventEmitter<{
+        update: Data<Struct<Structure, Name>>;
+        delete: Data<Struct<Structure, Name>>;
+        archive: Data<Struct<Structure, Name>>;
+        unarchive: Data<Struct<Structure, Name>>;
+        create: Data<Struct<Structure, Name>>;
+        version: DataVersion<Structure, Name>;
+        'restore-version': DataVersion<Structure, Name>;
+        'delete-version': DataVersion<Structure, Name>;
+        // read: Data<Struct<Structure, Name>>;
+        build: void;
+    }>();
+
+    public on = this.emitter.on.bind(this.emitter);
+    public off = this.emitter.off.bind(this.emitter);
+    public emit = this.emitter.emit.bind(this.emitter);
+
+    constructor(public readonly data: StructBuilder<Structure, Name>) {
+        if (Struct.structs.has(this.data.name)) {
+            throw new FatalStructError(
+                `Struct ${this.data.name} already exists`
+            );
+        }
+        Struct.structs.set(this.data.name, this);
 
         const cols = Object.keys(data.structure).map(k => k.toLowerCase());
         if (
             ['id', 'created', 'updated', 'archived'].some(k => cols.includes(k))
         ) {
-            throw new Error(
+            throw new FatalStructError(
                 `${this.data.name} Struct cannot use id, created, updated, or archived as column names as they are reserved. Please remove ${cols.filter(k => ['id', 'created', 'updated', 'archived'].includes(k)).join(', ')}`
             );
         }
@@ -552,45 +684,45 @@ export class Struct<
                 (acc as any)[key] = new Column(key, value, this);
                 return acc;
             },
-            {} as ColMap<T>
+            {} as ColMap<Structure, Name>
         );
 
-        this.callables = Object.entries(data.callables || {}).reduce(
-            (acc, [key, value]) => {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (acc as any)[key] = (...parameters: string[]) => {
-                    return attemptAsync(async () => {
-                        if (!this.built) {
-                            throw new Error(
-                                `Struct ${this.data.name} not built yet`
-                            );
-                        }
+        // this.route.post<{
+        //     id: 'string';
+        // }>('/*', validate({
+        //     id: 'string',
+        // }), async (req, res, next) => {
+        //     const functions = this.permissionFunctions.get(req.pathname.replace('/', ''));
+        //     if (!functions) return res.sendStatus(new Status(
+        //         {
+        //             code: 404,
+        //             message: 'Not Found',
+        //             color: 'danger',
+        //             instructions: ''
+        //         },
+        //         this.data.name,
+        //         'Not Found',
+        //         '{}',
+        //         req
+        //     ));
 
-                        return value(this, ...parameters);
-                    });
-                };
-                return acc;
-            },
-            {} as {
-                [key in keyof L]: (
-                    ...parameters: string[]
-                ) => Promise<Result<unknown>>;
-            }
-        );
-
-        if (Struct.structs.has(this.data.name)) {
-            throw new Error(`Struct ${this.data.name} already exists`);
-        }
-        Struct.structs.set(this.data.name, this);
+        //     next();
+        // });
     }
 
     get name() {
         return this.data.name;
     }
 
+    get database() {
+        return this.data.database;
+    }
+
     build() {
         if (this.built)
-            throw new Error(`Struct ${this.data.name} already built`);
+            throw new FatalStructError(
+                `Struct ${this.data.name} already built`
+            );
         return attemptAsync(async () => {
             const current = (
                 await this.data.database.unsafe.get<{
@@ -613,7 +745,7 @@ export class Struct<
                 );
 
                 const throwErr = () => {
-                    throw new Error(
+                    throw new StructError(
                         `Struct ${this.data.name} already exists with different columns. Please remove ${cols.filter(c => !currentCols.includes(c)).join(', ')}`
                     );
                 };
@@ -687,13 +819,119 @@ export class Struct<
 
                 (await this.data.database.unsafe.run(query)).unwrap();
             }
+
+            const { defaults } = this;
+            if (defaults) {
+                // doesn't matter if this throws an error
+                await Promise.all(defaults.map(d => this.new(d)));
+            }
+
+            const notSignedInStatus = (req: Req) =>
+                new Status(
+                    {
+                        code: 401,
+                        message: 'Not Signed In',
+                        color: 'danger',
+                        instructions: ''
+                    },
+                    this.data.name,
+                    'Not Signed In',
+                    '{}',
+                    req
+                );
+
+            const notPermittedStatus = (req: Req, action: string) =>
+                new Status(
+                    {
+                        code: 403,
+                        message: `You are not permitted to perform action: ${capitalize(action)} on ${capitalize(this.data.name)}`,
+                        color: 'danger',
+                        instructions: ''
+                    },
+                    this.data.name,
+                    'Not Permitted',
+                    '{}',
+                    req
+                );
+
+            const notFoundStatus = (req: Req) =>
+                new Status(
+                    {
+                        code: 404,
+                        message: `${this.data.name} not found`,
+                        color: 'danger',
+                        instructions: ''
+                    },
+                    this.data.name,
+                    'Not Found',
+                    '{}',
+                    req
+                );
+
+            const noVersionHistoryStatus = (req: Req) =>
+                new Status(
+                    {
+                        code: 404,
+                        message: `No version history found for ${this.data.name}`,
+                        color: 'danger',
+                        instructions: ''
+                    },
+                    this.data.name,
+                    'Not Found',
+                    '{}',
+                    req
+                );
+
+            const versionHistoryNotEnabledStatus = (req: Req) =>
+                new Status(
+                    {
+                        code: 404,
+                        message: `Version history not enabled for ${this.data.name}`,
+                        color: 'danger',
+                        instructions: ''
+                    },
+                    this.data.name,
+                    'Not Found',
+                    '{}',
+                    req
+                );
+
             {
-                this.routers.create.post<Structable<T>>(
-                    '/',
+                this.route.post<St<Structure & GlobalCols, Name>>(
+                    '/create',
                     this.validator(false),
+                    validate({
+                        attributes: 'string'
+                    }),
                     async (req, res) => {
+                        const account = (
+                            await Session.getAccount(req.session)
+                        ).unwrap();
+                        if (!account)
+                            return res.sendStatus(notSignedInStatus(req));
+
+                        if (
+                            !(
+                                await Permissions.canCreate(account, this)
+                            ).unwrap()
+                        ) {
+                            return res.sendStatus(
+                                notPermittedStatus(req, 'create')
+                            );
+                        }
+
+                        const attributes = req.body.attributes.split(',');
+
+                        // delete attributes from body so they aren't added to the data improperly
+                        Object.assign(req.body, {
+                            attributes: undefined
+                        });
+
                         const n = (await this.new(req.body)).unwrap();
-                        res.sendCustomStatus(
+
+                        (await n.addAttributes(...attributes)).unwrap();
+
+                        res.sendStatus(
                             new Status(
                                 {
                                     code: 201,
@@ -712,32 +950,35 @@ export class Struct<
                     }
                 );
 
-                this.routers.update.post<Structable<T & GlobalCols>>(
-                    '/',
+                this.route.post<St<Structure & GlobalCols, Name>>(
+                    '/update',
                     this.validator(true),
                     async (req, res) => {
+                        const account = (
+                            await Session.getAccount(req.session)
+                        ).unwrap();
+                        if (!account)
+                            return res.sendStatus(notSignedInStatus(req));
+
                         const n = (await this.fromId(req.body.id)).unwrap();
-                        if (!n) {
-                            res.sendCustomStatus(
-                                new Status(
-                                    {
-                                        code: 404,
-                                        message: `${this.data.name} not found`,
-                                        color: 'danger',
-                                        instructions: ''
-                                    },
-                                    this.data.name,
-                                    'Not Found',
-                                    '{}',
-                                    req
-                                )
+                        const roles = (
+                            await Permissions.getRoles(account)
+                        ).unwrap();
+
+                        if (!n)
+                            return res.sendStatus(notFoundStatus(req));
+
+                        if (
+                            !Permissions.isAllowed(roles, 'update', n).unwrap()
+                        ) {
+                            return res.sendStatus(
+                                notPermittedStatus(req, 'update')
                             );
-                            return;
                         }
 
-                        n.update(req.body);
+                        (await n.update(req.body)).unwrap();
 
-                        res.sendCustomStatus(
+                        res.sendStatus(
                             new Status(
                                 {
                                     code: 200,
@@ -756,127 +997,180 @@ export class Struct<
                     }
                 );
 
-                this.routers.read.post<{
+                this.route.post<{
                     id: string;
                 }>(
-                    '/from-id',
+                    '/read.from-id',
                     validate({
                         id: 'string'
                     }),
                     async (req, res) => {
+                        const account = (
+                            await Session.getAccount(req.session)
+                        ).unwrap();
+                        if (!account)
+                            return res.sendStatus(notSignedInStatus(req));
+
                         const n = (await this.fromId(req.body.id)).unwrap();
-                        res.json(n?.data);
+                        if (!n)
+                            return res.sendStatus(notFoundStatus(req));
+
+                        const roles = (
+                            await Permissions.getRoles(account)
+                        ).unwrap();
+
+                        const [readable] = Permissions.filterRead(
+                            roles,
+                            n
+                        ).unwrap();
+                        if (!readable)
+                            return res.sendStatus(
+                                notPermittedStatus(req, 'read')
+                            );
+
+                        res.json(n.data);
                     }
                 );
 
-                this.routers.read.post('/all', async (req, res) => {
+                this.route.post('/read.all', async (req, res) => {
+                    const account = (
+                        await Session.getAccount(req.session)
+                    ).unwrap();
+                    if (!account)
+                        return res.sendStatus(notSignedInStatus(req));
+                    const roles = (
+                        await Permissions.getRoles(account)
+                    ).unwrap();
+
                     const n = (await this.all()).unwrap();
 
-                    res.json(n.map(d => d.data));
+                    res.json(
+                        Permissions.filterRead(
+                            roles,
+                            ...n.filter(d => !d.archived)
+                        )
+                            .unwrap()
+                            .map(d => d.data)
+                    );
                 });
 
-                this.routers.read.post('/archived', async (req, res) => {
+                this.route.post('/read.archived', async (req, res) => {
+                    const account = (
+                        await Session.getAccount(req.session)
+                    ).unwrap();
+                    if (!account)
+                        return res.sendStatus(notSignedInStatus(req));
+
+                    const roles = (
+                        await Permissions.getRoles(account)
+                    ).unwrap();
+
                     const n = (await this.archived()).unwrap();
-                    res.json(n.map(d => d.data));
+                    res.json(
+                        Permissions.filterRead(roles, ...n)
+                            .unwrap()
+                            .map(d => d.data)
+                    );
                 });
 
-                this.routers.version.post<{
+                this.route.post<{
                     id: string;
                 }>(
-                    '/get-version-history',
+                    '/read.version-history',
                     validate({
                         id: 'string'
                     }),
                     async (req, res) => {
+                        const account = (
+                            await Session.getAccount(req.session)
+                        ).unwrap();
+                        if (!account)
+                            return res.sendStatus(notSignedInStatus(req));
+
                         const n = (await this.fromId(req.body.id)).unwrap();
-                        if (!n) {
-                            return res.sendCustomStatus(
-                                new Status(
-                                    {
-                                        code: 404,
-                                        message: `${this.data.name} not found`,
-                                        color: 'danger',
-                                        instructions: ''
-                                    },
-                                    this.data.name,
-                                    'Not Found',
-                                    '{}',
-                                    req
-                                )
+                        if (!n)
+                            return res.sendStatus(notFoundStatus(req));
+
+                        const roles = (
+                            await Permissions.getRoles(account)
+                        ).unwrap();
+                        if (
+                            !Permissions.isAllowed(
+                                roles,
+                                'read.version-history',
+                                n
+                            ).unwrap()
+                        ) {
+                            return res.sendStatus(
+                                notPermittedStatus(req, 'read version history')
                             );
                         }
+
                         const versions = (await n.getVersionHistory()).unwrap();
-                        if (!versions) {
-                            return res.sendCustomStatus(
-                                new Status(
-                                    {
-                                        code: 404,
-                                        message: `No version history found for ${this.data.name}`,
-                                        color: 'danger',
-                                        instructions: ''
-                                    },
-                                    this.data.name,
-                                    'Not Found',
-                                    '{}',
-                                    req
-                                )
+
+                        if (versions === 'not-enabled') {
+                            return res.sendStatus(
+                                versionHistoryNotEnabledStatus(req)
                             );
                         }
                         res.json(versions.map(d => d.data));
                     }
                 );
 
-                this.routers.version.post<{
+                this.route.post<{
                     id: string;
                     vId: string;
                 }>(
-                    '/restore-version',
+                    '/version.restore',
                     validate({
                         id: 'string',
                         vId: 'string'
                     }),
                     async (req, res) => {
+                        const account = (
+                            await Session.getAccount(req.session)
+                        ).unwrap();
+                        if (!account)
+                            return res.sendStatus(notSignedInStatus(req));
+
                         const n = (await this.fromId(req.body.id)).unwrap();
-                        if (!n) {
-                            return res.sendCustomStatus(
-                                new Status(
-                                    {
-                                        code: 404,
-                                        message: `${this.data.name} not found`,
-                                        color: 'danger',
-                                        instructions: ''
-                                    },
-                                    this.data.name,
-                                    'Not Found',
-                                    '{}',
-                                    req
-                                )
+                        if (!n)
+                            return res.sendStatus(notFoundStatus(req));
+
+                        const roles = (
+                            await Permissions.getRoles(account)
+                        ).unwrap();
+
+                        if (
+                            !Permissions.isAllowed(
+                                roles,
+                                'version.restore',
+                                n
+                            ).unwrap()
+                        ) {
+                            return res.sendStatus(
+                                notPermittedStatus(req, 'version restore')
                             );
                         }
 
-                        const version = (await n.getVersionHistory())
-                            .unwrap()
-                            ?.find(v => v.vhId === req.body.vId);
-                        if (!version) {
-                            return res.sendCustomStatus(
-                                new Status(
-                                    {
-                                        code: 404,
-                                        message: `Version not found for ${this.data.name}`,
-                                        color: 'danger',
-                                        instructions: ''
-                                    },
-                                    this.data.name,
-                                    'Not Found',
-                                    '{}',
-                                    req
-                                )
+                        const versions = (await n.getVersionHistory()).unwrap();
+                        if (versions === 'not-enabled') {
+                            return res.sendStatus(
+                                versionHistoryNotEnabledStatus(req)
                             );
                         }
+
+                        const version = versions.find(
+                            v => v.vhId === req.body.vId
+                        );
+                        if (!version)
+                            return res.sendStatus(
+                                noVersionHistoryStatus(req)
+                            );
 
                         (await version.restore()).unwrap();
 
-                        res.sendCustomStatus(
+                        res.sendStatus(
                             new Status(
                                 {
                                     code: 200,
@@ -895,57 +1189,60 @@ export class Struct<
                     }
                 );
 
-                this.routers.version.post<{
+                this.route.post<{
                     id: string;
                     vhId: string;
                 }>(
-                    '/delete-version',
+                    '/version.delete',
                     validate({
                         id: 'string',
                         vhId: 'string'
                     }),
                     async (req, res) => {
+                        const account = (
+                            await Session.getAccount(req.session)
+                        ).unwrap();
+                        if (!account)
+                            return res.sendStatus(notSignedInStatus(req));
+
                         const n = (await this.fromId(req.body.id)).unwrap();
-                        if (!n) {
-                            return res.sendCustomStatus(
-                                new Status(
-                                    {
-                                        code: 404,
-                                        message: `${this.data.name} not found`,
-                                        color: 'danger',
-                                        instructions: ''
-                                    },
-                                    this.data.name,
-                                    'Not Found',
-                                    '{}',
-                                    req
-                                )
+                        if (!n)
+                            return res.sendStatus(notFoundStatus(req));
+
+                        const versions = (await n.getVersionHistory()).unwrap();
+                        if (versions === 'not-enabled') {
+                            return res.sendStatus(
+                                versionHistoryNotEnabledStatus(req)
                             );
                         }
 
-                        const version = (await n.getVersionHistory())
-                            .unwrap()
-                            ?.find(v => v.vhId === req.body.vhId);
+                        const roles = (
+                            await Permissions.getRoles(account)
+                        ).unwrap();
+                        if (
+                            !Permissions.isAllowed(
+                                roles,
+                                'version.delete',
+                                n
+                            ).unwrap()
+                        ) {
+                            return res.sendStatus(
+                                notPermittedStatus(req, 'version delete')
+                            );
+                        }
+
+                        const version = versions.find(
+                            v => v.vhId === req.body.vhId
+                        );
                         if (!version) {
-                            return res.sendCustomStatus(
-                                new Status(
-                                    {
-                                        code: 404,
-                                        message: `Version not found for ${this.data.name}`,
-                                        color: 'danger',
-                                        instructions: ''
-                                    },
-                                    this.data.name,
-                                    'Not Found',
-                                    '{}',
-                                    req
-                                )
+                            return res.sendStatus(
+                                noVersionHistoryStatus(req)
                             );
                         }
 
                         (await version.delete()).unwrap();
 
-                        res.sendCustomStatus(
+                        res.sendStatus(
                             new Status(
                                 {
                                     code: 200,
@@ -967,36 +1264,38 @@ export class Struct<
                     }
                 );
 
-                this.routers.delete.post<{
+                this.route.post<{
                     id: string;
                 }>(
-                    '/',
+                    '/delete',
                     validate({
                         id: 'string'
                     }),
                     async (req, res) => {
+                        const account = (
+                            await Session.getAccount(req.session)
+                        ).unwrap();
+                        if (!account)
+                            return res.sendStatus(notSignedInStatus(req));
+
                         const n = (await this.fromId(req.body.id)).unwrap();
-                        if (!n) {
-                            res.sendCustomStatus(
-                                new Status(
-                                    {
-                                        code: 404,
-                                        message: `${this.data.name} not found`,
-                                        color: 'danger',
-                                        instructions: ''
-                                    },
-                                    this.data.name,
-                                    'Not Found',
-                                    '{}',
-                                    req
-                                )
+                        if (!n)
+                            return res.sendStatus(notFoundStatus(req));
+
+                        const roles = (
+                            await Permissions.getRoles(account)
+                        ).unwrap();
+                        if (
+                            !Permissions.isAllowed(roles, 'delete', n).unwrap()
+                        ) {
+                            return res.sendStatus(
+                                notPermittedStatus(req, 'delete')
                             );
-                            return;
                         }
 
                         n.delete();
 
-                        res.sendCustomStatus(
+                        res.sendStatus(
                             new Status(
                                 {
                                     code: 200,
@@ -1015,36 +1314,44 @@ export class Struct<
                     }
                 );
 
-                this.routers.archive.post<{
+                this.route.post<{
                     id: string;
+                    archive: boolean;
                 }>(
-                    '/',
+                    '/archive.set',
                     validate({
-                        id: 'string'
+                        id: 'string',
+                        archive: 'boolean'
                     }),
                     async (req, res) => {
+                        const account = (
+                            await Session.getAccount(req.session)
+                        ).unwrap();
+                        if (!account)
+                            return res.sendStatus(notSignedInStatus(req));
+
                         const n = (await this.fromId(req.body.id)).unwrap();
-                        if (!n) {
-                            res.sendCustomStatus(
-                                new Status(
-                                    {
-                                        code: 404,
-                                        message: `${this.data.name} not found`,
-                                        color: 'danger',
-                                        instructions: ''
-                                    },
-                                    this.data.name,
-                                    'Not Found',
-                                    '{}',
-                                    req
-                                )
+                        if (!n)
+                            return res.sendStatus(notFoundStatus(req));
+
+                        const roles = (
+                            await Permissions.getRoles(account)
+                        ).unwrap();
+                        if (
+                            !Permissions.isAllowed(
+                                roles,
+                                'archive.set',
+                                n
+                            ).unwrap()
+                        ) {
+                            return res.sendStatus(
+                                notPermittedStatus(req, 'archive')
                             );
-                            return;
                         }
 
-                        n.setArchive(true);
+                        n.setArchive(req.body.archive);
 
-                        res.sendCustomStatus(
+                        res.sendStatus(
                             new Status(
                                 {
                                     code: 200,
@@ -1060,59 +1367,6 @@ export class Struct<
                         );
 
                         req.io.emit(`struct:${this.data.name}:archive`, n.data);
-                    }
-                );
-
-                this.routers.unarchive.post<{
-                    id: string;
-                    vId: string;
-                }>(
-                    '/',
-                    validate({
-                        id: 'string',
-                        vId: 'string'
-                    }),
-                    async (req, res) => {
-                        const n = (await this.fromId(req.body.id)).unwrap();
-                        if (!n) {
-                            res.sendCustomStatus(
-                                new Status(
-                                    {
-                                        code: 404,
-                                        message: `${this.data.name} not found`,
-                                        color: 'danger',
-                                        instructions: ''
-                                    },
-                                    this.data.name,
-                                    'Not Found',
-                                    '{}',
-                                    req
-                                )
-                            );
-                            return;
-                        }
-
-                        n.setArchive(false);
-
-                        res.sendCustomStatus(
-                            new Status(
-                                {
-                                    code: 200,
-                                    message: `${this.data.name} unarchived successfully`,
-                                    color: 'success',
-                                    instructions: ''
-                                },
-                                this.data.name,
-                                'Unarchived',
-                                '{}',
-                                req
-                            )
-                        );
-
-                        req.io.emit(
-                            `struct:${this.data.name}:unarchive`,
-                            n.data
-                        );
                     }
                 );
             }
@@ -1135,16 +1389,20 @@ export class Struct<
         });
     }
 
-    new(data: Structable<T>) {
-        if (!this.built) throw new Error(`Struct ${this.data.name} not built`);
+    new(data: St<Structure & Partial<GlobalCols>, Name>) {
+        if (!this.built)
+            throw new FatalStructError(`Struct ${this.data.name} not built`);
         return attemptAsync(async () => {
             if (!this.validate(data))
-                throw new Error(`Invalid data for ${this.data.name}`);
+                throw new StructError(`Invalid data for ${this.data.name}`);
 
-            const d = new Data<T, C, L>(this, {
-                ...newGlobalCols(),
-                ...data
+            const d = new StructData<Structure, Name>(this, {
+                ...newGlobalCols(this),
+                ...data // will overwrite global cols if they are included
             });
+
+            const current = (await this.fromId(d.data.id)).unwrap();
+            if (current) throw new DataError('Data already exists');
 
             const query = Query.build(
                 `
@@ -1158,12 +1416,15 @@ export class Struct<
 
             (await this.data.database.unsafe.run(query)).unwrap();
 
+            this.emit('create', d);
+
             return d;
         });
     }
 
     fromId(id: string) {
-        if (!this.built) throw new Error(`Struct ${this.data.name} not built`);
+        if (!this.built)
+            throw new FatalStructError(`Struct ${this.data.name} not built`);
         return attemptAsync(async () => {
             const query = Query.build(
                 `SELECT * FROM ${this.data.name} WHERE id = :id`,
@@ -1171,62 +1432,64 @@ export class Struct<
             );
 
             const data = (
-                await this.data.database.unsafe.get<Structable<T>>(query)
+                await this.data.database.unsafe.get<St<Structure, Name>>(query)
             ).unwrap();
 
             if (!data) return undefined;
 
             const invalid = !this.validate(data);
             if (invalid)
-                throw new Error(
+                throw new StructError(
                     `Invalid data found in database. ${this.name}:${data.id} is corrupted`
                 );
 
-            return new Data<T, C, L>(this, data);
+            return new StructData<Structure, Name>(this, data);
         });
     }
 
     all(includeArchived: boolean = false) {
-        if (!this.built) throw new Error(`Struct ${this.data.name} not built`);
+        if (!this.built)
+            throw new FatalStructError(`Struct ${this.data.name} not built`);
         return attemptAsync(async () => {
             const query = Query.build(`SELECT * FROM ${this.data.name}`);
 
             const data = (
-                await this.data.database.unsafe.all<Structable<T>>(query)
+                await this.data.database.unsafe.all<St<Structure, Name>>(query)
             ).unwrap();
 
             const invalid = data.filter(d => !this.validate(d));
             if (invalid.length)
-                throw new Error(
+                throw new StructError(
                     `Invalid data found in database. ${this.name} is corrupted` +
                         invalid.map(d => d.id).join(', ')
                 );
 
             return data
-                .map(d => new Data<T, C, L>(this, d))
+                .map(d => new StructData<Structure, Name>(this, d))
                 .filter(d => includeArchived || !d.data.archived);
         });
     }
 
     archived() {
-        if (!this.built) throw new Error(`Struct ${this.data.name} not built`);
+        if (!this.built)
+            throw new FatalStructError(`Struct ${this.data.name} not built`);
         return attemptAsync(async () => {
             const query = Query.build(
                 `SELECT * FROM ${this.data.name} WHERE archived = true`
             );
 
             const data = (
-                await this.data.database.unsafe.all<Structable<T>>(query)
+                await this.data.database.unsafe.all<St<Structure, Name>>(query)
             ).unwrap();
 
             const invalid = data.filter(d => !this.validate(d));
             if (invalid.length)
-                throw new Error(
+                throw new StructError(
                     `Invalid data found in database. ${this.name} is corrupted` +
                         invalid.map(d => d.id).join(', ')
                 );
 
-            return data.map(d => new Data<T, C, L>(this, d));
+            return data.map(d => new StructData<Structure, Name>(this, d));
         });
     }
 
@@ -1252,27 +1515,44 @@ export class Struct<
         });
     }
 
-    listen(path: string, ...fns: ServerFunction<Structable<T & GlobalCols>>[]) {
-        this.route.post(path, this.validator(true), ...fns);
-        return this;
-    }
-
-    addPermission(
-        type: StructActions,
-        ...fns: ServerFunction<Structable<T & GlobalCols>>[]
+    listen<data>(
+        path: string,
+        ...fns: ServerFunction<data>[]
     ) {
-        if (this.built)
-            throw new Error(
-                `Struct ${this.data.name} already built, cannot add permissions after building.`
-            );
-        this.routers[type].post('/', this.validator(true), ...fns);
+        this.route.post(path, ...fns);
         return this;
     }
 
     drop() {
         return attemptAsync(async () => {
             const all = (await this.all(true)).unwrap();
-            if (all.length) throw new Error('Cannot drop table with data');
+            if (all.length)
+                throw new StructError('Cannot drop table with data');
         });
     }
+
+    addDefaults(...data: St<Structure & Partial<GlobalCols>, Name>[]) {
+        if (this.built)
+            throw new FatalStructError(
+                `Struct ${this.data.name} already built, cannot add default data`
+            );
+        this.defaults.push(...data);
+    }
 }
+
+// type PermissionObj<S extends Struct<Blank, string>> = {
+export type Action =
+    | 'create'
+    | 'read'
+    | 'read.version-history'
+    | 'update'
+    | 'delete'
+    | 'read.archived'
+    | 'archive.set'
+    | 'version.restore'
+    | 'version.delete';
+
+//     fn: (target: string, data: Data<S>) => Promise<boolean> | boolean;
+
+//     permissionFilter?: (account: Data<typeof Account.Account>) => boolean;
+// };

@@ -1,17 +1,12 @@
 import { attemptAsync } from '../../../shared/check';
 import { gitBranch, gitCommit } from '../git';
-import { Database, Parameter, Query, SimpleParameter } from './databases-2';
+import { Database, Parameter, Query } from './databases-2';
 import fs from 'fs';
 import path from 'path';
 import { __root } from '../env';
 import AdmZip from 'adm-zip';
 
 type Metadata = {
-    version: {
-        major: number;
-        minor: number;
-        patch: number;
-    };
     commit: string;
     branch: string;
     date: string;
@@ -22,14 +17,12 @@ export class Backup {
         return attemptAsync(async () => {
             // create a zip file of the database with csv files for each table and a json for metadata
 
-            const [v, c, b] = await Promise.all([
-                database.getVersion(),
+            const [ c, b] = await Promise.all([
                 gitCommit(),
                 gitBranch()
             ]);
 
             const metadata: Metadata = {
-                version: v.unwrap(),
                 commit: c.unwrap(),
                 branch: b.unwrap(),
                 date: new Date().toISOString()
@@ -52,6 +45,7 @@ export class Backup {
 
             await Promise.all(
                 tables.map(async t => {
+                    // TODO: use pg_dump
                     const data = (
                         await database.unsafe.all<Record<string, unknown>>(
                             Query.build(`SELECT * FROM ${t};`)
@@ -108,22 +102,12 @@ export class Backup {
 
             zip.extractAllTo(this.path, true);
 
-            const version = (await database.getVersion()).unwrap();
-
             const meta: Metadata = JSON.parse(
                 await fs.promises.readFile(
                     path.resolve(this.path, 'metadata.json'),
                     'utf-8'
                 )
             );
-
-            if (
-                meta.version.major !== version.major ||
-                meta.version.minor !== version.minor ||
-                meta.version.patch !== version.patch
-            ) {
-                throw new Error('Version mismatch');
-            }
 
             const tables = (await fs.promises.readdir(this.path)).filter(f =>
                 f.endsWith('.table')
@@ -145,6 +129,8 @@ export class Backup {
 
                     await Promise.all(
                         data.map(async row => {
+                            // TODO: open pg_dump
+
                             const keys = Object.keys(row);
 
                             await database.unsafe.run(

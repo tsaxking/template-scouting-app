@@ -5,7 +5,7 @@ import {
     Struct,
     TS_TypeActual,
     SQL_Type
-} from '../structure/cache/cache';
+} from '../structure/structs/cache';
 
 type QueryType = 'select' | 'insert' | 'update' | 'delete';
 

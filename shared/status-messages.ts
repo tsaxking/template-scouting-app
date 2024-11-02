@@ -72,7 +72,7 @@ export type StatusMessage = {
 };
 
 export const messages: {
-    [key in string]: StatusMessage;
+    [key: string]: StatusMessage;
 } = {
     'account:already-logged-in': {
         message: 'You are already logged in.',
