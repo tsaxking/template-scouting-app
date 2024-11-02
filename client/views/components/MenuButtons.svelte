@@ -42,15 +42,15 @@
             };
 
             let events: TBAEvent[] = App.events;
-            // if ((await env).ALLOW_PRESCOUTING === 'true' && !events.length) {
-            //     const data = await ServerRequest.post<TBAEvent[]>('/get-events', {
-            //         year: new Date().getFullYear()
-            //     });
-            //     if (data.isOk()) {
-            //         events = data.value;
-            //         App.events = data.value;
-            //     }
-            // }
+            if ((await env).ALLOW_PRESCOUTING === 'true' && !events.length) {
+                const data = await ServerRequest.post<TBAEvent[]>('/get-events', {
+                    year: new Date().getFullYear()
+                });
+                if (data.isOk()) {
+                    events = data.value;
+                    App.events = data.value;
+                }
+            }
 
             // automatically appends to the body
             const body = new CustomMatchInfo({
@@ -63,9 +63,11 @@
                     compLevel: App.matchData.compLevel,
                     teamNum: App.matchData.teamNumber,
                     matchNum: String(App.matchData.matchNumber),
-                    events: events.filter(
-                        e => e.end_date < new Date().toISOString()
-                    ),
+                    events: events
+                        .filter(
+                            e => e.key === '2024cabl',
+                        )
+                    ,
                     event: eventData.eventKey
                 }
             });
