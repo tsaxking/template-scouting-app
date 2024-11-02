@@ -9,7 +9,7 @@
     import { createEventDispatcher, onMount } from 'svelte';
     import { MatchData } from '../../models/app/match-data';
     import { getMaxListeners } from 'events';
-import { confirm } from '../../utilities/notifications';
+    import { confirm } from '../../utilities/notifications';
 
     const d = createEventDispatcher();
 
@@ -55,7 +55,9 @@ import { confirm } from '../../utilities/notifications';
             }) as M[];
         },
         select: async (matchIndex: number, teamIndex?: number) => {
-            const confirmed = await confirm('Are you sure you want to change the match?');
+            const confirmed = await confirm(
+                'Are you sure you want to change the match?'
+            );
             if (!confirmed) return;
             d('select', { matchIndex, teamIndex });
             console.log('select', matchIndex, teamIndex);

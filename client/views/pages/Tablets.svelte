@@ -4,6 +4,7 @@
     import { ServerRequest } from '../../utilities/requests';
     import { confirm } from '../../utilities/notifications';
     import type { TabletState } from '../../models/admin';
+    import ServerStats from '../components/ServerStats.svelte';
 
     let tablets: Tablet[] = [];
     let accounts: string[] = [];
@@ -85,159 +86,166 @@ Prescouting: ${old.preScouting} -> ${state.preScouting}
     };
 </script>
 
-<button
-    class="btn btn-primary"
-    on:click="{submitAll}">
-    Force Submit All
-</button>
+<div class="container">
+    <div class="row">
+        <button
+            class="btn btn-primary"
+            on:click="{submitAll}">
+            Force Submit All
+        </button>
 
-<div class="table-responsive">
-    <table class="table table-striped table-hover">
-        <thead>
-            <tr>
-                <th> Group </th>
-                <th> Scout </th>
-                <th> Match </th>
-                <th> Level </th>
-                <th> Team </th>
-                <th> Prescouting </th>
-                <th> Actions </th>
-            </tr>
-        </thead>
-        <tbody>
-            {#each tablets as t (t.id)}
-                <tr>
-                    <!-- Group -->
-                    <td>
-                        <input
-                            id="tablet-num-{t.id}"
-                            name="tablet-num-{t.id}"
-                            class="form-control"
-                            type="number"
-                            bind:value="{t.abstractedGroup}"
-                        />
-                    </td>
-                    <!-- Scout name -->
-                    <td>
-                        <input
-                            id="tablet-scout-{t.id}"
-                            name="tablet-scout-{t.id}"
-                            class="form-control"
-                            list="accounts-{t.id}"
-                            type="text"
-                            bind:value="{t.abstracted.scoutName}"
-                        />
-                        <datalist id="accounts-{t.id}">
-                            {#each accounts as account}
-                                <option value="{account}" />
-                            {/each}
-                        </datalist>
-                    </td>
-                    <!-- Match number -->
-                    <td>
-                        <input
-                            id="tablet-match-{t.id}"
-                            name="tablet-match-{t.id}"
-                            class="form-control"
-                            type="number"
-                            bind:value="{t.abstracted.matchNumber}"
-                        />
-                    </td>
-                    <!-- Comp Level -->
-                    <td>
-                        <select
-                            id="tablet-level-{t.id}"
-                            name="tablet-level-{t.id}"
-                            class="form-control"
-                            bind:value="{t.abstracted.compLevel}"
-                        >
-                            <option value="pr">Practice</option>
-                            <option value="qm">Qualification</option>
-                            <option value="qf">Quarterfinal</option>
-                            <option value="sf">Semifinal</option>
-                            <option value="f">Final</option>
-                        </select>
-                    </td>
-                    <!-- Team Number -->
-                    <td>
-                        <input
-                            id="tablet-team-{t.id}"
-                            name="tablet-team-{t.id}"
-                            class="form-control"
-                            type="number"
-                            bind:value="{t.abstracted.teamNumber}"
-                        />
-                    </td>
-                    <!-- PreScouting -->
-                    <td>
-                        <input
-                            id="btn-check"
-                            class="btn-check"
-                            autocomplete="off"
-                            type="checkbox"
-                            bind:checked="{t.abstracted.preScouting}"
-                        />
-                        <label
-                            class="btn btn-primary"
-                            for="btn-check"
-                        >pre-scout</label
-                        >
-                    </td>
-                    <td>
-                        <div
-                            class="btn-group"
-                            role="group">
-                            <button
-                                class="btn btn-primary"
-                                type="button"
-                                on:click="{async () => {
-                                    const doSubmit = await check(t);
-                                    if (!doSubmit) return;
-                                    t.changeState(t.abstracted);
-                                }}"
-                            >
-                                Emit Changes
-                            </button>
-                            <button
-                                class="btn btn-warning"
-                                type="button"
-                                on:click="{() => {
-                                    t.reset();
-                                    tablets = tablets; // view update
-                                }}"
-                            >
-                                Reset
-                            </button>
-                            <button
-                                class="btn btn-danger"
-                                type="button"
-                                on:click="{async () => {
-                                    const cancel = await confirm(
-                                        'Are you sure you want to abort this tablet?'
-                                    );
-                                    if (!cancel) return;
-                                    t.abort();
-                                }}"
-                            >
-                                Abort
-                            </button>
-                            <button
-                                class="btn btn-success"
-                                type="button"
-                                on:click="{async () => {
-                                    const submit = await confirm(
-                                        'Are you sure you want to force submit on this tablet?'
-                                    );
-                                    if (!submit) return;
-                                    t.submit();
-                                }}"
-                            >
-                                Force Submit
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            {/each}
-        </tbody>
-    </table>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th> Group </th>
+                        <th> Scout </th>
+                        <th> Match </th>
+                        <th> Level </th>
+                        <th> Team </th>
+                        <th> Prescouting </th>
+                        <th> Actions </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {#each tablets as t (t.id)}
+                        <tr>
+                            <!-- Group -->
+                            <td>
+                                <input
+                                    id="tablet-num-{t.id}"
+                                    name="tablet-num-{t.id}"
+                                    class="form-control"
+                                    type="number"
+                                    bind:value="{t.abstractedGroup}"
+                                />
+                            </td>
+                            <!-- Scout name -->
+                            <td>
+                                <input
+                                    id="tablet-scout-{t.id}"
+                                    name="tablet-scout-{t.id}"
+                                    class="form-control"
+                                    list="accounts-{t.id}"
+                                    type="text"
+                                    bind:value="{t.abstracted.scoutName}"
+                                />
+                                <datalist id="accounts-{t.id}">
+                                    {#each accounts as account}
+                                        <option value="{account}" />
+                                    {/each}
+                                </datalist>
+                            </td>
+                            <!-- Match number -->
+                            <td>
+                                <input
+                                    id="tablet-match-{t.id}"
+                                    name="tablet-match-{t.id}"
+                                    class="form-control"
+                                    type="number"
+                                    bind:value="{t.abstracted.matchNumber}"
+                                />
+                            </td>
+                            <!-- Comp Level -->
+                            <td>
+                                <select
+                                    id="tablet-level-{t.id}"
+                                    name="tablet-level-{t.id}"
+                                    class="form-control"
+                                    bind:value="{t.abstracted.compLevel}"
+                                >
+                                    <option value="pr">Practice</option>
+                                    <option value="qm">Qualification</option>
+                                    <option value="qf">Quarterfinal</option>
+                                    <option value="sf">Semifinal</option>
+                                    <option value="f">Final</option>
+                                </select>
+                            </td>
+                            <!-- Team Number -->
+                            <td>
+                                <input
+                                    id="tablet-team-{t.id}"
+                                    name="tablet-team-{t.id}"
+                                    class="form-control"
+                                    type="number"
+                                    bind:value="{t.abstracted.teamNumber}"
+                                />
+                            </td>
+                            <!-- PreScouting -->
+                            <td>
+                                <input
+                                    id="btn-check"
+                                    class="btn-check"
+                                    autocomplete="off"
+                                    type="checkbox"
+                                    bind:checked="{t.abstracted.preScouting}"
+                                />
+                                <label
+                                    class="btn btn-primary"
+                                    for="btn-check"
+                                >pre-scout</label
+                                >
+                            </td>
+                            <td>
+                                <div
+                                    class="btn-group"
+                                    role="group">
+                                    <button
+                                        class="btn btn-primary"
+                                        type="button"
+                                        on:click="{async () => {
+                                            const doSubmit = await check(t);
+                                            if (!doSubmit) return;
+                                            t.changeState(t.abstracted);
+                                        }}"
+                                    >
+                                        Emit Changes
+                                    </button>
+                                    <button
+                                        class="btn btn-warning"
+                                        type="button"
+                                        on:click="{() => {
+                                            t.reset();
+                                            tablets = tablets; // view update
+                                        }}"
+                                    >
+                                        Reset
+                                    </button>
+                                    <button
+                                        class="btn btn-danger"
+                                        type="button"
+                                        on:click="{async () => {
+                                            const cancel = await confirm(
+                                                'Are you sure you want to abort this tablet?'
+                                            );
+                                            if (!cancel) return;
+                                            t.abort();
+                                        }}"
+                                    >
+                                        Abort
+                                    </button>
+                                    <button
+                                        class="btn btn-success"
+                                        type="button"
+                                        on:click="{async () => {
+                                            const submit = await confirm(
+                                                'Are you sure you want to force submit on this tablet?'
+                                            );
+                                            if (!submit) return;
+                                            t.submit();
+                                        }}"
+                                    >
+                                        Force Submit
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    {/each}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="row">
+        <ServerStats />
+    </div>
 </div>
