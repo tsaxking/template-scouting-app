@@ -149,6 +149,7 @@ type StructBuilder<T extends Blank, Name extends string> = {
     }>;
     // defaults?: Structable<Struct<T, Name>>[];
     // permissions?:
+    sample?: boolean;
 };
 
 const newGlobalCols = (struct: Struct<Blank, string>) => {
@@ -723,6 +724,7 @@ export class Struct<Structure extends Blank, Name extends string> {
             throw new FatalStructError(
                 `Struct ${this.data.name} already built`
             );
+        if (this.data.sample) throw new FatalStructError(`Sample struct: ${this.data.name}. Not built`);
         return attemptAsync(async () => {
             const current = (
                 await this.data.database.unsafe.get<{
