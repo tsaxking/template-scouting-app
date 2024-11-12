@@ -168,7 +168,7 @@ class DataVersion<T extends Blank> {
 class Data<T extends Blank> implements Writable<Structable<T>> {
     constructor(
         public readonly struct: Struct<T>,
-        public readonly data: Readonly<Structable<T & GlobalCols>>
+        public readonly data: Partial<Readonly<Structable<T & GlobalCols>>>
     ) {}
 
     public readonly subscribers = new Set<

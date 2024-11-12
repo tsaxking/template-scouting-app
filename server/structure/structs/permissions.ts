@@ -77,7 +77,17 @@ export namespace Permissions {
         roleTarget: Data<typeof RoleTarget>,
         struct: S,
         property: keyof S['data']['structure']
-    ) => {};
+    ) => {
+        return attemptAsync(async () => {
+            const properties = parseProperties(roleTarget.data.structProperties).unwrap();
+            const index = properties.findIndex(p => p.struct === struct.name && p.property === property);
+            if (index === -1) return roleTarget;
+            properties.splice(index, 1);
+            return (await roleTarget.update({
+                structProperties: stringifyProperties(properties).unwrap(),
+            })).unwrap();
+        });
+    };
 
     export const addRole = (role: Data<typeof Role>, account: Data<typeof Account.Account>) => {
         return RoleAccount.new({
