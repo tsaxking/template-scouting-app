@@ -41,10 +41,16 @@ export namespace Permissions {
         // Delete = 'delete',
         RestoreVersion = 'version.restore',
         DeleteVersion = 'version.delete',
-        ReadVersionHistory = 'read.version-history'
+        ReadVersionHistory = 'read.version-history',
+
+        /**
+         * Should never be applied to a struct.property, but used for generalization
+         */
+        Unknown = 'unknown'
     }
 
     export type StructProperty = {
+        permission: DataAction;
         struct: string;
         property: string;
     };
@@ -62,7 +68,7 @@ export namespace Permissions {
         database: DB,
         name: 'Target',
         structure: {
-            parent: 'text', // parent target (higher is more privileged)
+            parent: 'text', // parent target.id (higher is more privileged)
             name: 'text', // target is the attribute added onto the struct
             action: 'text',
             structProperties: 'text' // struct.property1,struct.property2,str\,uct.property3
@@ -94,11 +100,15 @@ export namespace Permissions {
         children: TargetChild[];
     };
 
-    export const getParents = async (target: Data<typeof Target>): Promise<Result<Data<typeof Target>[]>> => {
+    export const getParents = async (
+        target: Data<typeof Target>
+    ): Promise<Result<Data<typeof Target>[]>> => {
         return attemptAsync(async () => {
             const all = (await Target.all()).unwrap();
             const next = (): Data<typeof Target>[] => {
-                const parent = all.find(t => t.data.name === target.data.parent);
+                const parent = all.find(
+                    t => t.data.name === target.data.parent
+                );
                 if (!parent) return [];
                 all.splice(all.indexOf(parent), 1);
                 return [parent, ...next()];
@@ -108,11 +118,15 @@ export namespace Permissions {
         });
     };
 
-    export const getChildren = async (target: Data<typeof Target>): Promise<Result<TargetChild[]>> => {
+    export const getChildren = async (
+        target: Data<typeof Target>
+    ): Promise<Result<TargetChild[]>> => {
         return attemptAsync(async () => {
             const all = (await Target.all()).unwrap();
             const next = (): TargetChild[] => {
-                const children = all.filter(t => t.data.parent === target.data.name);
+                const children = all.filter(
+                    t => t.data.parent === target.data.name
+                );
                 children.forEach(c => all.splice(all.indexOf(c), 1));
                 return children.map(c => ({ target: c, children: next() }));
             };
@@ -132,7 +146,8 @@ export namespace Permissions {
             ).unwrap();
             properties.push({
                 struct: struct.name,
-                property: property as string
+                property: property as string,
+                permission: roleTarget.data.action as DataAction
             });
             return (
                 await roleTarget.update({
@@ -197,25 +212,28 @@ export namespace Permissions {
         });
     };
 
-    export const getTargets = async (role: Data<typeof Role>): Promise<Result<Data<typeof Target>[]>> => {
+    export const getTargets = async (
+        role: Data<typeof Role>
+    ): Promise<Result<Data<typeof Target>[]>> => {
         return attemptAsync(async () => {
             const roleTargets = (await getRoleTargets(role)).unwrap();
             return resolveAll(
                 await Promise.all(
                     roleTargets.map(rt => Target.fromId(rt.data.target))
                 )
-            ).unwrap().filter(Boolean);
+            )
+                .unwrap()
+                .filter(Boolean);
         });
     };
 
     export const getTargetsFromAccount = async (
         account: Data<typeof Account.Account>
     ) => {
+        // TODO: This needs to be optimized
         return attemptAsync(async () => {
             const roles = (await getRoles(account)).unwrap();
-            return resolveAll(
-                await Promise.all(roles.map(r => getTargets(r)))
-            )
+            return resolveAll(await Promise.all(roles.map(r => getTargets(r))))
                 .unwrap()
                 .flat();
         });
@@ -230,7 +248,11 @@ export namespace Permissions {
                 .split(/,(?<!\\)/)
                 .map(p => p.replace(/\\,/g, ','))
                 .map(p => p.split(/.(?<!\\)/))
-                .map(([struct, property]) => ({ struct, property }));
+                .map(([struct, property]) => ({
+                    struct,
+                    property,
+                    permission: DataAction.Unknown
+                }));
         });
     };
 
@@ -244,14 +266,27 @@ export namespace Permissions {
         });
     };
 
+    export const getAllowedStructProperties = async (
+        account: Data<typeof Account.Account>
+    ) => {
+        return attemptAsync(async () => {
+            const roleTargets = (await getTargetsFromAccount(account)).unwrap();
+            return roleTargets
+                .map(rt =>
+                    parseStructProperties(rt.data.structProperties)
+                        .unwrap()
+                        .map(p => ({ ...p, permission: rt.data.action }))
+                )
+                .flat();
+        });
+    };
+
     export const canCreate = async (
         account: Data<typeof Account.Account>,
         struct: Struct<Blank, string>
     ) => {
         return attemptAsync(async () => {
-            const roleTargets = (
-                await getTargetsFromAccount(account)
-            ).unwrap();
+            const roleTargets = (await getTargetsFromAccount(account)).unwrap();
             return roleTargets.some(
                 rt =>
                     rt.data.action === 'create' &&
@@ -267,9 +302,7 @@ export namespace Permissions {
         data: Data<Struct<Blank, string>>
     ) => {
         return attemptAsync(async () => {
-            const roleTargets = (
-                await getTargetsFromAccount(account)
-            ).unwrap();
+            const roleTargets = (await getTargetsFromAccount(account)).unwrap();
             return roleTargets.some(
                 rt =>
                     rt.data.action === 'delete' &&
@@ -285,9 +318,7 @@ export namespace Permissions {
         data: Data<Struct<Blank, string>>
     ) => {
         return attemptAsync(async () => {
-            const roleTargets = (
-                await getTargetsFromAccount(account)
-            ).unwrap();
+            const roleTargets = (await getTargetsFromAccount(account)).unwrap();
             return roleTargets.some(
                 rt =>
                     rt.data.action === 'archive' &&
@@ -303,9 +334,7 @@ export namespace Permissions {
         data: Data<Struct<Blank, string>>
     ) => {
         return attemptAsync(async () => {
-            const roleTargets = (
-                await getTargetsFromAccount(account)
-            ).unwrap();
+            const roleTargets = (await getTargetsFromAccount(account)).unwrap();
             return roleTargets.some(
                 rt =>
                     rt.data.action === 'restore' &&
@@ -349,10 +378,7 @@ export namespace Permissions {
                     const rulesets = roleTargets.filter(
                         rt =>
                             rt.data.action === action &&
-                            d
-                                .getAttributes()
-                                .unwrap()
-                                .includes(rt.data.name) &&
+                            d.getAttributes().unwrap().includes(rt.data.name) &&
                             parseStructProperties(rt.data.structProperties)
                                 .unwrap()
                                 .some(p => p.struct === d.struct.name)
