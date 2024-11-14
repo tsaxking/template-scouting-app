@@ -1,9 +1,23 @@
 // import { writable, Writable } from 'svelte/store';
 import { Socket } from '../utilities/socket';
-import { attempt, attemptAsync } from '../../shared/check';
+import { attempt, attemptAsync, Result } from '../../shared/check';
 import { match } from '../../shared/match';
 import { Requester, ServerRequest } from '../utilities/requests';
 import { writable, Writable } from 'svelte/store';
+
+export class DataError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = 'DataError';
+    }
+}
+
+export class FatalDataError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = 'FatalDataError';
+    }
+}
 
 /*
 File overview:
@@ -253,6 +267,23 @@ class Data<T extends Blank> implements Writable<Structable<T>> {
             return response.map(d => new DataVersion(this.struct, d));
         });
     }
+
+    pull<Property extends keyof T>(...properties: Property[]): Result<Readonly<{
+        [P in Property]: TS_Type<T[P]>;
+    }>> {
+        return attempt(() => {
+            // TODO: Implement writable on this
+            return Object.fromEntries(properties.map(p => {
+                if (typeof this.data[p] === 'undefined') {
+                    throw new DataError('Property does not exist');
+                }
+
+                return [p, this.data[p]] as const;
+            })) as Readonly<{
+                [P in Property]: TS_Type<T[P]>;
+            }>;
+        });
+    }
 }
 
 export class Struct<T extends Blank> {
@@ -340,6 +371,10 @@ export class Struct<T extends Blank> {
     };
 
     public readonly cache = new Map<string, Data<T>>();
+
+    get sample(): Data<T> {
+        throw new FatalDataError('Cannot get sample of a struct at runtime. This is only used for type checking before compile');
+    }
 
     new(data: Structable<T>) {
         return this.requester.post(
