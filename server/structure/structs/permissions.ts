@@ -58,17 +58,28 @@ export namespace Permissions {
         }
     });
 
-    export const RoleTarget = new Struct({
+    export const Target = new Struct({
         database: DB,
-        name: 'RoleTarget',
+        name: 'Target',
         structure: {
-            role: 'text',
-            target: 'text', // target is the attribute added onto the struct
+            parent: 'text', // parent target (higher is more privileged)
+            name: 'text', // target is the attribute added onto the struct
             action: 'text',
             structProperties: 'text' // struct.property1,struct.property2,str\,uct.property3
         }
     });
 
+    // linking table
+    export const RoleTarget = new Struct({
+        database: DB,
+        name: 'RoleTarget',
+        structure: {
+            role: 'text',
+            target: 'text'
+        }
+    });
+
+    // linking table
     export const RoleAccount = new Struct({
         database: DB,
         name: 'RoleAccount',
@@ -78,8 +89,40 @@ export namespace Permissions {
         }
     });
 
+    type TargetChild = {
+        target: Data<typeof Target>;
+        children: TargetChild[];
+    };
+
+    export const getParents = async (target: Data<typeof Target>): Promise<Result<Data<typeof Target>[]>> => {
+        return attemptAsync(async () => {
+            const all = (await Target.all()).unwrap();
+            const next = (): Data<typeof Target>[] => {
+                const parent = all.find(t => t.data.name === target.data.parent);
+                if (!parent) return [];
+                all.splice(all.indexOf(parent), 1);
+                return [parent, ...next()];
+            };
+
+            return next();
+        });
+    };
+
+    export const getChildren = async (target: Data<typeof Target>): Promise<Result<TargetChild[]>> => {
+        return attemptAsync(async () => {
+            const all = (await Target.all()).unwrap();
+            const next = (): TargetChild[] => {
+                const children = all.filter(t => t.data.parent === target.data.name);
+                children.forEach(c => all.splice(all.indexOf(c), 1));
+                return children.map(c => ({ target: c, children: next() }));
+            };
+
+            return next();
+        });
+    };
+
     export const addStructProperty = async <S extends Struct<Blank, string>>(
-        roleTarget: Data<typeof RoleTarget>,
+        roleTarget: Data<typeof Target>,
         struct: S,
         property: keyof S['data']['structure']
     ) => {
@@ -101,7 +144,7 @@ export namespace Permissions {
     };
 
     export const removeStructProperty = async <S extends Struct<Blank, string>>(
-        roleTarget: Data<typeof RoleTarget>,
+        roleTarget: Data<typeof Target>,
         struct: S,
         property: keyof S['data']['structure']
     ) => {
@@ -149,19 +192,29 @@ export namespace Permissions {
 
     export const getRoleTargets = async (role: Data<typeof Role>) => {
         return attemptAsync(async () => {
-            return (await RoleTarget.all())
-                .unwrap()
-                .filter(rt => rt.data.role === role.id);
+            const roleTargets = (await RoleTarget.all()).unwrap();
+            return roleTargets.filter(rt => rt.data.role === role.id);
         });
     };
 
-    export const roleTargetsFromAccount = async (
+    export const getTargets = async (role: Data<typeof Role>): Promise<Result<Data<typeof Target>[]>> => {
+        return attemptAsync(async () => {
+            const roleTargets = (await getRoleTargets(role)).unwrap();
+            return resolveAll(
+                await Promise.all(
+                    roleTargets.map(rt => Target.fromId(rt.data.target))
+                )
+            ).unwrap().filter(Boolean);
+        });
+    };
+
+    export const getTargetsFromAccount = async (
         account: Data<typeof Account.Account>
     ) => {
         return attemptAsync(async () => {
             const roles = (await getRoles(account)).unwrap();
             return resolveAll(
-                await Promise.all(roles.map(r => getRoleTargets(r)))
+                await Promise.all(roles.map(r => getTargets(r)))
             )
                 .unwrap()
                 .flat();
@@ -197,7 +250,7 @@ export namespace Permissions {
     ) => {
         return attemptAsync(async () => {
             const roleTargets = (
-                await roleTargetsFromAccount(account)
+                await getTargetsFromAccount(account)
             ).unwrap();
             return roleTargets.some(
                 rt =>
@@ -215,7 +268,7 @@ export namespace Permissions {
     ) => {
         return attemptAsync(async () => {
             const roleTargets = (
-                await roleTargetsFromAccount(account)
+                await getTargetsFromAccount(account)
             ).unwrap();
             return roleTargets.some(
                 rt =>
@@ -233,7 +286,7 @@ export namespace Permissions {
     ) => {
         return attemptAsync(async () => {
             const roleTargets = (
-                await roleTargetsFromAccount(account)
+                await getTargetsFromAccount(account)
             ).unwrap();
             return roleTargets.some(
                 rt =>
@@ -251,7 +304,7 @@ export namespace Permissions {
     ) => {
         return attemptAsync(async () => {
             const roleTargets = (
-                await roleTargetsFromAccount(account)
+                await getTargetsFromAccount(account)
             ).unwrap();
             return roleTargets.some(
                 rt =>
@@ -285,7 +338,7 @@ export namespace Permissions {
                 );
 
             const roleTargets = resolveAll(
-                await Promise.all(roles.map(getRoleTargets))
+                await Promise.all(roles.map(getTargets))
             )
                 .unwrap()
                 .flat();
@@ -299,7 +352,7 @@ export namespace Permissions {
                             d
                                 .getAttributes()
                                 .unwrap()
-                                .includes(rt.data.target) &&
+                                .includes(rt.data.name) &&
                             parseStructProperties(rt.data.structProperties)
                                 .unwrap()
                                 .some(p => p.struct === d.struct.name)
