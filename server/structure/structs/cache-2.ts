@@ -126,15 +126,6 @@ export type TS_TypeActual<T extends TS_Types> = T extends 'number'
           ? boolean
           : never;
 
-type StructActions =
-    | 'update'
-    | 'delete'
-    | 'archive'
-    | 'unarchive'
-    | 'create'
-    | 'version'
-    | 'read';
-
 type StructBuilder<T extends Blank, Name extends string> = {
     name: Name;
     structure: T; // omit id because it will always be included as a uuid primary key
@@ -215,6 +206,14 @@ export type GlobalCols = {
     attributes: 'text';
 };
 
+export type TS_GlobalCols = {
+    id: string;
+    created: string;
+    updated: string;
+    archived: boolean;
+    attributes: string;
+};
+
 export type ColMap<
     Cols extends {
         [key: string]: SQL_Type;
@@ -268,7 +267,23 @@ export type BasicStructable<SubStruct extends Struct<Blank, string>> = St<
     SubStruct['data']['name']
 >;
 
-export class DataVersion<T extends Blank, Name extends string> {
+export interface DataInterface<S extends Struct<Blank, string>> {
+    get id(): string;
+    get created(): Date;
+    get updated(): Date;
+    get archived(): boolean;
+    get database(): Database;
+
+    data: St<S['data']['structure'] & GlobalCols, S['data']['name']>;
+
+    struct: S;
+
+    getAttributes(): Result<string[]>;
+}
+
+export class DataVersion<T extends Blank, Name extends string>
+    implements DataInterface<Struct<T, Name>>
+{
     constructor(
         public readonly struct: Struct<T, Name>,
         public readonly data: St<
@@ -337,9 +352,26 @@ export class DataVersion<T extends Blank, Name extends string> {
             this.struct.emit('restore-version', this);
         });
     }
+
+    getAttributes() {
+        return attempt(() => {
+            const { attributes } = this.data;
+            if (!attributes) throw new FatalDataError('No attributes found');
+
+            const parsed = JSON.parse(attributes);
+            if (!Array.isArray(parsed))
+                throw new FatalDataError('Attributes not an array');
+            if (!parsed.every(a => typeof a === 'string'))
+                throw new FatalDataError('Attributes not all strings');
+
+            return parsed;
+        });
+    }
 }
 
-export class StructData<Structure extends Blank, Name extends string> {
+export class StructData<Structure extends Blank, Name extends string>
+    implements DataInterface<Struct<Structure, Name>>
+{
     constructor(
         public readonly struct: Struct<Structure, Name>,
         public readonly data: Readonly<St<Structure & GlobalCols, Name>>
@@ -719,12 +751,29 @@ export class Struct<Structure extends Blank, Name extends string> {
         return this.data.database;
     }
 
+    /**
+     * Creates a sample type of the struct.
+     * This should only be used for testing the typesystem, and not be actually run.
+     * If this is run at all, it will throw an error.
+     *
+     * @readonly
+     * @type {StructData<Structure, Name>}
+     */
+    get sample(): StructData<Structure, Name> {
+        throw new FatalStructError(
+            `${this.name}.sample should never be run. It is only used for testing the typesystm. Remove this in order for the program to run.`
+        );
+    }
+
     build() {
         if (this.built)
             throw new FatalStructError(
                 `Struct ${this.data.name} already built`
             );
-        if (this.data.sample) throw new FatalStructError(`Sample struct: ${this.data.name}. Not built`);
+        if (this.data.sample)
+            throw new FatalStructError(
+                `Sample struct: ${this.data.name}. Not built`
+            );
         return attemptAsync(async () => {
             const current = (
                 await this.data.database.unsafe.get<{
@@ -948,7 +997,9 @@ export class Struct<Structure extends Blank, Name extends string> {
                             )
                         );
 
-                        req.io.emit(`struct:${this.data.name}:create`, n.data);
+                        req.io
+                            .to(attributes)
+                            .emit(`struct:${this.data.name}:create`, n.data);
                     }
                 );
 
@@ -967,18 +1018,25 @@ export class Struct<Structure extends Blank, Name extends string> {
                             await Permissions.getRoles(account)
                         ).unwrap();
 
-                        if (!n)
-                            return res.sendStatus(notFoundStatus(req));
+                        if (!n) return res.sendStatus(notFoundStatus(req));
 
-                        if (
-                            !Permissions.isAllowed(roles, 'update', n).unwrap()
-                        ) {
-                            return res.sendStatus(
-                                notPermittedStatus(req, 'update')
-                            );
-                        }
+                        const [updatable] = (
+                            await Permissions.filterAction(
+                                roles,
+                                Permissions.DataAction.Update,
+                                [n]
+                            )
+                        ).unwrap();
 
-                        (await n.update(req.body)).unwrap();
+                        const updated = Object.fromEntries(
+                            Object.entries(updatable).map(([k, v]) => [
+                                k,
+                                req.body[k] || v
+                            ])
+                        ) as St<Structure, Name>;
+
+                        // only update the fields that are updatable
+                        (await n.update(updated)).unwrap();
 
                         res.sendStatus(
                             new Status(
@@ -995,7 +1053,9 @@ export class Struct<Structure extends Blank, Name extends string> {
                             )
                         );
 
-                        req.io.emit(`struct:${this.data.name}:update`, n.data);
+                        req.io
+                            .to(n.getAttributes().unwrap())
+                            .emit(`struct:${this.data.name}:update`, updated);
                     }
                 );
 
@@ -1014,23 +1074,25 @@ export class Struct<Structure extends Blank, Name extends string> {
                             return res.sendStatus(notSignedInStatus(req));
 
                         const n = (await this.fromId(req.body.id)).unwrap();
-                        if (!n)
-                            return res.sendStatus(notFoundStatus(req));
+                        if (!n) return res.sendStatus(notFoundStatus(req));
 
                         const roles = (
                             await Permissions.getRoles(account)
                         ).unwrap();
 
-                        const [readable] = Permissions.filterRead(
-                            roles,
-                            n
+                        const [readable] = (
+                            await Permissions.filterAction(
+                                roles,
+                                Permissions.DataAction.Read,
+                                [n]
+                            )
                         ).unwrap();
                         if (!readable)
                             return res.sendStatus(
                                 notPermittedStatus(req, 'read')
                             );
 
-                        res.json(n.data);
+                        res.json(readable);
                     }
                 );
 
@@ -1038,8 +1100,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                     const account = (
                         await Session.getAccount(req.session)
                     ).unwrap();
-                    if (!account)
-                        return res.sendStatus(notSignedInStatus(req));
+                    if (!account) return res.sendStatus(notSignedInStatus(req));
                     const roles = (
                         await Permissions.getRoles(account)
                     ).unwrap();
@@ -1047,12 +1108,13 @@ export class Struct<Structure extends Blank, Name extends string> {
                     const n = (await this.all()).unwrap();
 
                     res.json(
-                        Permissions.filterRead(
-                            roles,
-                            ...n.filter(d => !d.archived)
-                        )
-                            .unwrap()
-                            .map(d => d.data)
+                        (
+                            await Permissions.filterAction(
+                                roles,
+                                Permissions.DataAction.Read,
+                                n.filter(d => !d.archived)
+                            )
+                        ).unwrap()
                     );
                 });
 
@@ -1060,8 +1122,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                     const account = (
                         await Session.getAccount(req.session)
                     ).unwrap();
-                    if (!account)
-                        return res.sendStatus(notSignedInStatus(req));
+                    if (!account) return res.sendStatus(notSignedInStatus(req));
 
                     const roles = (
                         await Permissions.getRoles(account)
@@ -1069,7 +1130,13 @@ export class Struct<Structure extends Blank, Name extends string> {
 
                     const n = (await this.archived()).unwrap();
                     res.json(
-                        Permissions.filterRead(roles, ...n)
+                        (
+                            await Permissions.filterAction(
+                                roles,
+                                Permissions.DataAction.ReadArchived,
+                                n
+                            )
+                        )
                             .unwrap()
                             .map(d => d.data)
                     );
@@ -1090,18 +1157,19 @@ export class Struct<Structure extends Blank, Name extends string> {
                             return res.sendStatus(notSignedInStatus(req));
 
                         const n = (await this.fromId(req.body.id)).unwrap();
-                        if (!n)
-                            return res.sendStatus(notFoundStatus(req));
+                        if (!n) return res.sendStatus(notFoundStatus(req));
 
                         const roles = (
                             await Permissions.getRoles(account)
                         ).unwrap();
                         if (
-                            !Permissions.isAllowed(
-                                roles,
-                                'read.version-history',
-                                n
-                            ).unwrap()
+                            !(
+                                await Permissions.filterAction(
+                                    roles,
+                                    Permissions.DataAction.ReadVersionHistory,
+                                    [n]
+                                )
+                            ).unwrap().length
                         ) {
                             return res.sendStatus(
                                 notPermittedStatus(req, 'read version history')
@@ -1115,6 +1183,15 @@ export class Struct<Structure extends Blank, Name extends string> {
                                 versionHistoryNotEnabledStatus(req)
                             );
                         }
+
+                        // TODO: If you can read version history, how can we make it so you only see the properties you have access to?
+
+                        // const readable = (await Permissions.filterAction(
+                        //     roles,
+                        //     'read',
+                        //     versions
+                        // )).unwrap();
+
                         res.json(versions.map(d => d.data));
                     }
                 );
@@ -1136,24 +1213,24 @@ export class Struct<Structure extends Blank, Name extends string> {
                             return res.sendStatus(notSignedInStatus(req));
 
                         const n = (await this.fromId(req.body.id)).unwrap();
-                        if (!n)
-                            return res.sendStatus(notFoundStatus(req));
+                        if (!n) return res.sendStatus(notFoundStatus(req));
 
                         const roles = (
                             await Permissions.getRoles(account)
                         ).unwrap();
 
-                        if (
-                            !Permissions.isAllowed(
+                        const [restorable] = (
+                            await Permissions.filterAction(
                                 roles,
-                                'version.restore',
-                                n
-                            ).unwrap()
-                        ) {
+                                Permissions.DataAction.RestoreVersion,
+                                [n]
+                            )
+                        ).unwrap();
+
+                        if (!restorable)
                             return res.sendStatus(
                                 notPermittedStatus(req, 'version restore')
                             );
-                        }
 
                         const versions = (await n.getVersionHistory()).unwrap();
                         if (versions === 'not-enabled') {
@@ -1166,9 +1243,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                             v => v.vhId === req.body.vId
                         );
                         if (!version)
-                            return res.sendStatus(
-                                noVersionHistoryStatus(req)
-                            );
+                            return res.sendStatus(noVersionHistoryStatus(req));
 
                         (await version.restore()).unwrap();
 
@@ -1187,7 +1262,9 @@ export class Struct<Structure extends Blank, Name extends string> {
                             )
                         );
 
-                        req.io.emit(`struct:${this.data.name}:restore`, n.data);
+                        req.io
+                            .to(n.getAttributes().unwrap())
+                            .emit(`struct:${this.data.name}:restore`, n.data);
                     }
                 );
 
@@ -1208,8 +1285,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                             return res.sendStatus(notSignedInStatus(req));
 
                         const n = (await this.fromId(req.body.id)).unwrap();
-                        if (!n)
-                            return res.sendStatus(notFoundStatus(req));
+                        if (!n) return res.sendStatus(notFoundStatus(req));
 
                         const versions = (await n.getVersionHistory()).unwrap();
                         if (versions === 'not-enabled') {
@@ -1221,25 +1297,25 @@ export class Struct<Structure extends Blank, Name extends string> {
                         const roles = (
                             await Permissions.getRoles(account)
                         ).unwrap();
-                        if (
-                            !Permissions.isAllowed(
+
+                        const [deletable] = (
+                            await Permissions.filterAction(
                                 roles,
-                                'version.delete',
-                                n
-                            ).unwrap()
-                        ) {
+                                Permissions.DataAction.DeleteVersion,
+                                [n]
+                            )
+                        ).unwrap();
+
+                        if (!deletable)
                             return res.sendStatus(
-                                notPermittedStatus(req, 'version delete')
+                                notPermittedStatus(req, 'delete version')
                             );
-                        }
 
                         const version = versions.find(
                             v => v.vhId === req.body.vhId
                         );
                         if (!version) {
-                            return res.sendStatus(
-                                noVersionHistoryStatus(req)
-                            );
+                            return res.sendStatus(noVersionHistoryStatus(req));
                         }
 
                         (await version.delete()).unwrap();
@@ -1259,10 +1335,12 @@ export class Struct<Structure extends Blank, Name extends string> {
                             )
                         );
 
-                        req.io.emit(
-                            `struct:${this.data.name}:delete-version`,
-                            n.data
-                        );
+                        req.io
+                            .to(n.getAttributes().unwrap())
+                            .emit(
+                                `struct:${this.data.name}:delete-version`,
+                                n.data
+                            );
                     }
                 );
 
@@ -1281,19 +1359,23 @@ export class Struct<Structure extends Blank, Name extends string> {
                             return res.sendStatus(notSignedInStatus(req));
 
                         const n = (await this.fromId(req.body.id)).unwrap();
-                        if (!n)
-                            return res.sendStatus(notFoundStatus(req));
+                        if (!n) return res.sendStatus(notFoundStatus(req));
 
-                        const roles = (
-                            await Permissions.getRoles(account)
-                        ).unwrap();
-                        if (
-                            !Permissions.isAllowed(roles, 'delete', n).unwrap()
-                        ) {
+                        // const roles = (
+                        //     await Permissions.getRoles(account)
+                        // ).unwrap();
+
+                        // const [deletable] = (await Permissions.filterAction(
+                        //     roles,
+                        //     Permissions.DataAction.Delete,
+                        //     [n]
+                        // )).unwrap();
+
+                        // if (!deletable)
+                        if (!(await Permissions.canDelete(account, n)).unwrap())
                             return res.sendStatus(
                                 notPermittedStatus(req, 'delete')
                             );
-                        }
 
                         n.delete();
 
@@ -1312,7 +1394,9 @@ export class Struct<Structure extends Blank, Name extends string> {
                             )
                         );
 
-                        req.io.emit(`struct:${this.data.name}:delete`, n.data);
+                        req.io
+                            .to(n.getAttributes().unwrap())
+                            .emit(`struct:${this.data.name}:delete`, n.data);
                     }
                 );
 
@@ -1333,23 +1417,25 @@ export class Struct<Structure extends Blank, Name extends string> {
                             return res.sendStatus(notSignedInStatus(req));
 
                         const n = (await this.fromId(req.body.id)).unwrap();
-                        if (!n)
-                            return res.sendStatus(notFoundStatus(req));
+                        if (!n) return res.sendStatus(notFoundStatus(req));
 
-                        const roles = (
-                            await Permissions.getRoles(account)
-                        ).unwrap();
+                        // const roles = (
+                        //     await Permissions.getRoles(account)
+                        // ).unwrap();
+
+                        // const [archivable] = (await Permissions.filterAction(
+                        //     roles,
+                        //     Permissions.DataAction.Archive,
+                        //     [n]
+                        // )).unwrap();
+
+                        // if (!archivable)
                         if (
-                            !Permissions.isAllowed(
-                                roles,
-                                'archive.set',
-                                n
-                            ).unwrap()
-                        ) {
+                            !(await Permissions.canArchive(account, n)).unwrap()
+                        )
                             return res.sendStatus(
                                 notPermittedStatus(req, 'archive')
                             );
-                        }
 
                         n.setArchive(req.body.archive);
 
@@ -1368,7 +1454,9 @@ export class Struct<Structure extends Blank, Name extends string> {
                             )
                         );
 
-                        req.io.emit(`struct:${this.data.name}:archive`, n.data);
+                        req.io
+                            .to(n.getAttributes().unwrap())
+                            .emit(`struct:${this.data.name}:archive`, n.data);
                     }
                 );
             }
@@ -1517,10 +1605,7 @@ export class Struct<Structure extends Blank, Name extends string> {
         });
     }
 
-    listen<data>(
-        path: string,
-        ...fns: ServerFunction<data>[]
-    ) {
+    listen<data>(path: string, ...fns: ServerFunction<data>[]) {
         this.route.post(path, ...fns);
         return this;
     }
@@ -1541,20 +1626,3 @@ export class Struct<Structure extends Blank, Name extends string> {
         this.defaults.push(...data);
     }
 }
-
-// type PermissionObj<S extends Struct<Blank, string>> = {
-export type Action =
-    | 'create'
-    | 'read'
-    | 'read.version-history'
-    | 'update'
-    | 'delete'
-    | 'read.archived'
-    | 'archive.set'
-    | 'version.restore'
-    | 'version.delete';
-
-//     fn: (target: string, data: Data<S>) => Promise<boolean> | boolean;
-
-//     permissionFilter?: (account: Data<typeof Account.Account>) => boolean;
-// };

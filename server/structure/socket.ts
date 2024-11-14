@@ -223,7 +223,7 @@ export class SocketWrapper {
      * @param {string} room
      * @returns {*}
      */
-    to(room: string) {
+    to(room: string | string[]) {
         // return {
         //     emit: (event: string, data?: unknown) => {
         //         num++;

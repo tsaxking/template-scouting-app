@@ -1,6 +1,11 @@
 import { Data, Struct, StructData } from './cache-2';
 import { DB } from '../../utilities/database';
-import { attempt, attemptAsync, resolveAll, Result } from '../../../shared/check';
+import {
+    attempt,
+    attemptAsync,
+    resolveAll,
+    Result
+} from '../../../shared/check';
 import { Req } from '../app/req';
 import { Res } from '../app/res';
 import { Next } from '../app/app';
@@ -24,7 +29,7 @@ export namespace Account {
             email: 'text',
             picture: 'text',
             verified: 'boolean',
-            verification: 'text',
+            verification: 'text'
             // phoneNumber: 'text'
         },
         name: 'Account',
@@ -265,7 +270,7 @@ export namespace Account {
             lastName: data.lastName,
             picture: data.picture,
             verified: data.verified,
-            id: data.id,
+            id: data.id
         };
     };
 
@@ -281,7 +286,7 @@ export namespace Account {
         });
     };
 
-    export const create = async (obj:  {
+    export const create = async (obj: {
         username: string;
         password: string;
         firstName: string;
@@ -289,16 +294,22 @@ export namespace Account {
         email: string;
         picture: string;
         // phoneNumber: string;
-    }): Promise<Result<Data<typeof Account> | {
-        valid: false;
-        reason: string;
-    }>> => {
+    }): Promise<
+        Result<
+            | Data<typeof Account>
+            | {
+                  valid: false;
+                  reason: string;
+              }
+        >
+    > => {
         return attemptAsync(async () => {
-            const { username, password, firstName, lastName, email, picture } = obj;
+            const { username, password, firstName, lastName, email, picture } =
+                obj;
 
             const [u, e] = await Promise.all([
                 fromUsername(username),
-                fromEmail(email),
+                fromEmail(email)
             ]);
 
             const exists = u.unwrap() || e.unwrap();
@@ -306,22 +317,26 @@ export namespace Account {
             if (exists) {
                 return {
                     valid: false,
-                    reason: 'Account already exists',
+                    reason: 'Account already exists'
                 };
             }
 
-            const validArr = resolveAll([
-                username,
-                password,
-                email,
-                firstName,
-                lastName,
-            ].map(validAccountStr)).unwrap();
+            const validArr = resolveAll(
+                [username, password, email, firstName, lastName].map(
+                    validAccountStr
+                )
+            ).unwrap();
 
             if (!validArr.every(v => v.valid)) {
                 return {
                     valid: false,
-                    reason: 'Invalid chars:' + validArr.filter(v => !v.valid).flatMap(v => v.chars).flat().join(', '),
+                    reason:
+                        'Invalid chars:' +
+                        validArr
+                            .filter(v => !v.valid)
+                            .flatMap(v => v.chars)
+                            .flat()
+                            .join(', ')
                 };
             }
 
@@ -329,103 +344,114 @@ export namespace Account {
 
             const verification = uuid();
 
-            const account = (await Account.new({
-                username,
-                key: hash,
-                salt,
-                email,
-                firstName,
-                lastName,
-                picture,
-                verified: false,
-                verification,
-            })).unwrap();
+            const account = (
+                await Account.new({
+                    username,
+                    key: hash,
+                    salt,
+                    email,
+                    firstName,
+                    lastName,
+                    picture,
+                    verified: false,
+                    verification
+                })
+            ).unwrap();
 
             return account;
         });
     };
 
-    const notSignedInStatus = (req: Req) => new Status(
-        {
-            message: 'Not signed in',
-            color: 'danger',
-            code: 401,
-            instructions: 'Please sign in first.'
-        },
-        'Account',
-        'Not Signed In',
-        JSON.stringify(req.session.data),
-        req,
-    );
-    
+    const notSignedInStatus = (req: Req) =>
+        new Status(
+            {
+                message: 'Not signed in',
+                color: 'danger',
+                code: 401,
+                instructions: 'Please sign in first.'
+            },
+            'Account',
+            'Not Signed In',
+            JSON.stringify(req.session.data),
+            req
+        );
+
     {
         Account.listen<{
             username: string;
             password: string;
-        }>('/sign-in', notSignedIn, validate({
-            username: 'string',
-            password: 'string',
-        }), trimBody, async (req, res) => {
-            const { username, password } = req.body;
+        }>(
+            '/sign-in',
+            notSignedIn,
+            validate({
+                username: 'string',
+                password: 'string'
+            }),
+            trimBody,
+            async (req, res) => {
+                const { username, password } = req.body;
 
-            const incorrectStatus = new Status(
-                {
-                    message: 'Incorrect username or password',
-                    color: 'danger',
-                    code: 401,
-                    instructions: 'Please try again.'
-                },
-                'Account',
-                'Incorrect Username or Password',
-                JSON.stringify({ username, password }),
-                req,
-            );
+                const incorrectStatus = new Status(
+                    {
+                        message: 'Incorrect username or password',
+                        color: 'danger',
+                        code: 401,
+                        instructions: 'Please try again.'
+                    },
+                    'Account',
+                    'Incorrect Username or Password',
+                    JSON.stringify({ username, password }),
+                    req
+                );
 
-            const notVerifiedStatus = new Status(
-                {
-                    message: 'Account not verified',
-                    color: 'danger',
-                    code: 401,
-                    instructions: 'Please verify your account.'
-                },
-                'Account',
-                'Account Not Verified',
-                JSON.stringify({ username, password }),
-                req,
-            );
+                const notVerifiedStatus = new Status(
+                    {
+                        message: 'Account not verified',
+                        color: 'danger',
+                        code: 401,
+                        instructions: 'Please verify your account.'
+                    },
+                    'Account',
+                    'Account Not Verified',
+                    JSON.stringify({ username, password }),
+                    req
+                );
 
-            const signedInStatus = new Status(
-                {
-                    message: 'Already signed in',
-                    color: 'danger',
-                    code: 401,
-                    instructions: 'Please sign out first.'
-                },
-                'Account',
-                'Already Signed In',
-                JSON.stringify({ username, password }),
-                req,
-            );
+                const signedInStatus = new Status(
+                    {
+                        message: 'Already signed in',
+                        color: 'danger',
+                        code: 401,
+                        instructions: 'Please sign out first.'
+                    },
+                    'Account',
+                    'Already Signed In',
+                    JSON.stringify({ username, password }),
+                    req
+                );
 
-            const [u, e] = await Promise.all([
-                fromUsername(username),
-                fromEmail(username),
-            ]);
+                const [u, e] = await Promise.all([
+                    fromUsername(username),
+                    fromEmail(username)
+                ]);
 
-            const account = u.unwrap() || e.unwrap();
-            if (!account) return res.sendStatus(incorrectStatus);
+                const account = u.unwrap() || e.unwrap();
+                if (!account) return res.sendStatus(incorrectStatus);
 
-            const h = hash(password, account.data.salt).unwrap();
-            if (h !== account.data.key) return res.sendStatus(incorrectStatus);
+                const h = hash(password, account.data.salt).unwrap();
+                if (h !== account.data.key)
+                    return res.sendStatus(incorrectStatus);
 
-            if (!account.data.verified) return res.sendStatus(notVerifiedStatus);
+                if (!account.data.verified)
+                    return res.sendStatus(notVerifiedStatus);
 
-            (await Session.signIn(req.session, account)).unwrap();
+                (await Session.signIn(req.session, account)).unwrap();
 
-            res.sendStatus(signedInStatus);
+                res.sendStatus(signedInStatus);
 
-            req.socket?.join(account.id);
-        });
+                req.socket?.join(account.id);
+            }
+        );
 
         Account.listen<{
             username: string;
@@ -435,153 +461,197 @@ export namespace Account {
             firstName: string;
             lastName: string;
             // phoneNumber: string;
-        }>('/sign-up', notSignedIn, validate({
-            username: 'string',
-            password: 'string',
-            confirmPassword: 'string',
-            email: 'string',
-            firstName: 'string',
-            lastName: 'string',
-            // phoneNumber: 'string',
-        }), trimBody, async (req, res) => {
-            const { username, password, confirmPassword, email, firstName, lastName } = req.body;
+        }>(
+            '/sign-up',
+            notSignedIn,
+            validate({
+                username: 'string',
+                password: 'string',
+                confirmPassword: 'string',
+                email: 'string',
+                firstName: 'string',
+                lastName: 'string'
+                // phoneNumber: 'string',
+            }),
+            trimBody,
+            async (req, res) => {
+                const {
+                    username,
+                    password,
+                    confirmPassword,
+                    email,
+                    firstName,
+                    lastName
+                } = req.body;
 
-            if (password !== confirmPassword) {
-                return res.sendStatus(new Status(
-                    {
-                        message: 'Passwords do not match',
-                        color: 'danger',
-                        code: 400,
-                        instructions: 'Please try again.'
-                    },
-                    'Account',
-                    'Passwords Do Not Match',
-                    JSON.stringify({ username, password, email, firstName, lastName }),
-                    req,
-                ));
+                if (password !== confirmPassword) {
+                    return res.sendStatus(
+                        new Status(
+                            {
+                                message: 'Passwords do not match',
+                                color: 'danger',
+                                code: 400,
+                                instructions: 'Please try again.'
+                            },
+                            'Account',
+                            'Passwords Do Not Match',
+                            JSON.stringify({
+                                username,
+                                password,
+                                email,
+                                firstName,
+                                lastName
+                            }),
+                            req
+                        )
+                    );
+                }
+
+                const accountOrReason = (
+                    await create({
+                        username,
+                        password,
+                        firstName,
+                        lastName,
+                        email,
+                        picture: ''
+                    })
+                ).unwrap();
+
+                if (accountOrReason instanceof StructData) {
+                    return res.sendStatus(
+                        new Status(
+                            {
+                                message: 'Account created',
+                                color: 'success',
+                                code: 201,
+                                instructions: 'Please verify your account.',
+                                redirect: req.session.data.prevUrl || '/'
+                            },
+                            'Account',
+                            'Account Created',
+                            JSON.stringify({
+                                username,
+                                password,
+                                email,
+                                firstName,
+                                lastName
+                            }),
+                            req
+                        )
+                    );
+                }
+
+                return res.sendStatus(
+                    new Status(
+                        {
+                            message: accountOrReason.reason,
+                            color: 'danger',
+                            code: 400,
+                            instructions: 'Please try again.'
+                        },
+                        'Account',
+                        'Account Creation Failed',
+                        JSON.stringify({
+                            username,
+                            password,
+                            email,
+                            firstName,
+                            lastName
+                        }),
+                        req
+                    )
+                );
+
+                // const [u, e] = await Promise.all([
+                //     fromUsername(username),
+                //     fromEmail(email),
+                // ]);
+
+                // const exists = u.unwrap() || e.unwrap();
+                // if (exists) {
+                //     return res.sendStatus(new Status(
+                //         {
+                //             message: 'Account already exists',
+                //             color: 'danger',
+                //             code: 400,
+                //             instructions: 'Please try again.'
+                //         },
+                //         'Account',
+                //         'Account Already Exists',
+                //         JSON.stringify({ username, password, email, firstName, lastName }),
+                //         req,
+                //     ));
+                // }
+
+                // const validArr = resolveAll([
+                //     username,
+                //     password,
+                //     email,
+                //     firstName,
+                //     lastName,
+                // ].map(validAccountStr)).unwrap();
+
+                // if (!validArr.every(v => v.valid)) {
+                //     return res.sendStatus(new Status(
+                //         {
+                //             message: 'Invalid characters/words (valid characters: a-z, 0-9, _-!@#$%^&*()+={}[]|;:,.<>?~`\'"/)',
+                //             color: 'danger',
+                //             code: 400,
+                //             instructions: 'Please try again.'
+                //         },
+                //         'Account',
+                //         'Invalid Characters/Words',
+                //         JSON.stringify(validArr),
+                //         req,
+                //     ));
+                // }
+
+                // const { salt, hash } = newHash(password).unwrap();
+
+                // const verification = uuid();
+
+                // const account = (await Account.new({
+                //     username,
+                //     key: hash,
+                //     salt,
+                //     email,
+                //     firstName,
+                //     lastName,
+                //     picture: '',
+                //     verified: false,
+                //     verification,
+                // })).unwrap();
+
+                // sendVerification(account);
             }
-
-            const accountOrReason = (await create({
-                username,
-                password,
-                firstName,
-                lastName,
-                email,
-                picture: '',
-            })).unwrap();
-
-            if (accountOrReason instanceof StructData) {
-                return res.sendStatus(new Status(
-                    {
-                        message: 'Account created',
-                        color: 'success',
-                        code: 201,
-                        instructions: 'Please verify your account.',
-                        redirect: req.session.data.prevUrl || '/',
-                    },
-                    'Account',
-                    'Account Created',
-                    JSON.stringify({ username, password, email, firstName, lastName }),
-                    req,
-                ));
-            }
-
-            return res.sendStatus(new Status({
-                    message: accountOrReason.reason,
-                    color: 'danger',
-                    code: 400,
-                    instructions: 'Please try again.'
-                },
-                'Account',
-                'Account Creation Failed',
-                JSON.stringify({ username, password, email, firstName, lastName }),
-                req,
-            ));
-
-            // const [u, e] = await Promise.all([
-            //     fromUsername(username),
-            //     fromEmail(email),
-            // ]);
-
-            // const exists = u.unwrap() || e.unwrap();
-            // if (exists) {
-            //     return res.sendStatus(new Status(
-            //         {
-            //             message: 'Account already exists',
-            //             color: 'danger',
-            //             code: 400,
-            //             instructions: 'Please try again.'
-            //         },
-            //         'Account',
-            //         'Account Already Exists',
-            //         JSON.stringify({ username, password, email, firstName, lastName }),
-            //         req,
-            //     ));
-            // }
-
-            // const validArr = resolveAll([
-            //     username,
-            //     password,
-            //     email,
-            //     firstName,
-            //     lastName,
-            // ].map(validAccountStr)).unwrap();
-
-            // if (!validArr.every(v => v.valid)) {
-            //     return res.sendStatus(new Status(
-            //         {
-            //             message: 'Invalid characters/words (valid characters: a-z, 0-9, _-!@#$%^&*()+={}[]|;:,.<>?~`\'"/)',
-            //             color: 'danger',
-            //             code: 400,
-            //             instructions: 'Please try again.'
-            //         },
-            //         'Account',
-            //         'Invalid Characters/Words',
-            //         JSON.stringify(validArr),
-            //         req,
-            //     ));
-            // }
-
-            // const { salt, hash } = newHash(password).unwrap();
-
-            // const verification = uuid();
-
-            // const account = (await Account.new({
-            //     username,
-            //     key: hash,
-            //     salt,
-            //     email,
-            //     firstName,
-            //     lastName,
-            //     picture: '',
-            //     verified: false,
-            //     verification,
-            // })).unwrap();
-
-            // sendVerification(account);
-        });
+        );
 
         Account.listen('/get-account', async (req, res) => {
-            const account = await (await Session.getAccount(req.session)).unwrap();
+            const account = await (
+                await Session.getAccount(req.session)
+            ).unwrap();
             if (!account) return res.sendStatus(notSignedInStatus(req));
-            
+
             res.json(safe(account));
         });
 
         Account.listen('/sign-out', isSignedIn, async (req, res) => {
             await Session.signOut(req.session);
-            res.sendStatus(new Status(
-                {
-                    message: 'Signed out',
-                    color: 'success',
-                    code: 200,
-                    instructions: 'Please sign in again.'
-                },
-                'Account',
-                'Signed Out',
-                JSON.stringify(req.session.data),
-                req,
-            ));
+            res.sendStatus(
+                new Status(
+                    {
+                        message: 'Signed out',
+                        color: 'success',
+                        code: 200,
+                        instructions: 'Please sign in again.'
+                    },
+                    'Account',
+                    'Signed Out',
+                    JSON.stringify(req.session.data),
+                    req
+                )
+            );
         });
     }
 }

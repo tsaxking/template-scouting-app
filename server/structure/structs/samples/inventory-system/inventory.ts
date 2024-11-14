@@ -19,12 +19,12 @@ export namespace Inventory {
         },
         versionHistory: {
             amount: 3,
-            type: 'versions',
-        }
+            type: 'versions'
+        },
+        sample: true
     });
 
     Item.listen('/add-to-group', async (req, res) => {});
-
 
     export const Group = new Struct({
         database: DB,
@@ -35,11 +35,10 @@ export namespace Inventory {
         },
         versionHistory: {
             amount: 3,
-            type: 'versions',
-        }
+            type: 'versions'
+        },
+        sample: true
     });
-
-
 
     export const ItemGroup = new Struct({
         database: DB,
@@ -47,7 +46,8 @@ export namespace Inventory {
         structure: {
             item: 'text',
             group: 'text'
-        }
+        },
+        sample: true
     });
 
     export const getItemsFromGroup = async (group: Data<typeof Group>) => {
@@ -55,18 +55,29 @@ export namespace Inventory {
             const items = (await ItemGroup.all()).unwrap();
             const itemGroups = (await ItemGroup.all()).unwrap();
 
-            return items.filter(i => itemGroups.some(ig => ig.data.group === group.id && ig.data.item === i.id));
+            return items.filter(i =>
+                itemGroups.some(
+                    ig => ig.data.group === group.id && ig.data.item === i.id
+                )
+            );
         });
     };
 
-    export const addItemToGroup = async (item: Data<typeof Item>, group: Data<typeof Group>) => {
+    export const addItemToGroup = async (
+        item: Data<typeof Item>,
+        group: Data<typeof Group>
+    ) => {
         return attemptAsync(async () => {
-            const has = (await ItemGroup.all()).unwrap().some(ig => ig.data.item === item.id && ig.data.group === group.id);
+            const has = (await ItemGroup.all())
+                .unwrap()
+                .some(
+                    ig => ig.data.item === item.id && ig.data.group === group.id
+                );
             if (has) return;
 
             return ItemGroup.new({
                 item: item.id,
-                group: group.id,
+                group: group.id
             });
         });
     };

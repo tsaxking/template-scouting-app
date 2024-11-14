@@ -22,7 +22,7 @@ export namespace Session {
         },
         name: 'Session',
         generators: {
-            id: () => (uuid() + uuid() + uuid() + uuid()).replace(/-/g, ''),
+            id: () => (uuid() + uuid() + uuid() + uuid()).replace(/-/g, '')
         }
     });
 

@@ -1,34 +1,62 @@
-import { Struct, Data, Action, Blank } from './cache-2';
+import {
+    Struct,
+    Data,
+    Blank,
+    DataError,
+    DataInterface,
+    TS_GlobalCols
+} from './cache-2';
 import { DB } from '../../utilities/database';
-import { attempt, attemptAsync, resolveAll, Result } from '../../../shared/check';
+import {
+    attempt,
+    attemptAsync,
+    resolveAll,
+    Result
+} from '../../../shared/check';
 import { Account } from './account';
 
+/*
+general concept:
+using a combination of RBAC & ABAC (Role Based Access Control & Attribute Based Access Control)
+roles are assigned to accounts, and roles have permissions to access certain attributes of structs
+this allows for fine-grained control over what a user can access, and what they can do with it
+for example, a user can have a role that allows them to 'read' the 'name' attribute of a 'user' struct
+
+
+how it works:
+1. roles are created and assigned to accounts using the RoleAccount linking struct
+2. roles are assigned RoleTargets, which are the actions they can perform onto a struct.property
+3. When a RoleTarget.target is put into a Struct.data.attributes, that role is able to perform the RoleTarget.action onto the RoleTarget.structProperties
+
+A role is really just a collection of RoleTargets. I could do away with those, but the idea is that it would be easier to manage permissions this way as an end-user, even though it is more verbose.
+*/
 
 export namespace Permissions {
-    export type Property = {
+    export enum DataAction {
+        Read = 'read',
+        Update = 'update',
+        ReadArchived = 'read.archived',
+        // Archive = 'archive',
+        // Restore = 'restore',
+        // Delete = 'delete',
+        RestoreVersion = 'version.restore',
+        DeleteVersion = 'version.delete',
+        ReadVersionHistory = 'read.version-history'
+    }
+
+    export type StructProperty = {
         struct: string;
         property: string;
-    }
+    };
 
     export const Role = new Struct({
         database: DB,
         name: 'Role',
         structure: {
             name: 'text',
-            description: 'text',
-            // parent: 'text', // role id
-            // permissions: 'text' // array of permissions split by comma
+            description: 'text'
         }
     });
-
-    // Role.addDefaults({
-    //     archived: false,
-    //     id: 'general',
-    //     name: 'General',
-    //     description: 'General role',
-    //     // parent: '', // no parent, everything is a child of this
-    //     // permissions: '' // market.read,market.write,etc.
-    // });
 
     export const RoleTarget = new Struct({
         database: DB,
@@ -37,17 +65,8 @@ export namespace Permissions {
             role: 'text',
             target: 'text', // target is the attribute added onto the struct
             action: 'text',
-            structProperties: 'text', // struct.property1,struct.property2,str\,uct.property3
+            structProperties: 'text' // struct.property1,struct.property2,str\,uct.property3
         }
-    });
-
-    export const Target = new Struct({
-        database: DB,
-        name: 'Target',
-        structure: {
-            name: 'text',
-            description: 'text',
-        },
     });
 
     export const RoleAccount = new Struct({
@@ -62,14 +81,22 @@ export namespace Permissions {
     export const addStructProperty = async <S extends Struct<Blank, string>>(
         roleTarget: Data<typeof RoleTarget>,
         struct: S,
-        property: keyof S['data']['structure'],
+        property: keyof S['data']['structure']
     ) => {
         return attemptAsync(async () => {
-            const properties = parseProperties(roleTarget.data.structProperties).unwrap();
-            properties.push({ struct: struct.name, property: property as string });
-            return (await roleTarget.update({
-                structProperties: stringifyProperties(properties).unwrap(),
-            })).unwrap();
+            const properties = parseStructProperties(
+                roleTarget.data.structProperties
+            ).unwrap();
+            properties.push({
+                struct: struct.name,
+                property: property as string
+            });
+            return (
+                await roleTarget.update({
+                    structProperties:
+                        stringifyStructProperties(properties).unwrap()
+                })
+            ).unwrap();
         });
     };
 
@@ -79,20 +106,30 @@ export namespace Permissions {
         property: keyof S['data']['structure']
     ) => {
         return attemptAsync(async () => {
-            const properties = parseProperties(roleTarget.data.structProperties).unwrap();
-            const index = properties.findIndex(p => p.struct === struct.name && p.property === property);
+            const properties = parseStructProperties(
+                roleTarget.data.structProperties
+            ).unwrap();
+            const index = properties.findIndex(
+                p => p.struct === struct.name && p.property === property
+            );
             if (index === -1) return roleTarget;
             properties.splice(index, 1);
-            return (await roleTarget.update({
-                structProperties: stringifyProperties(properties).unwrap(),
-            })).unwrap();
+            return (
+                await roleTarget.update({
+                    structProperties:
+                        stringifyStructProperties(properties).unwrap()
+                })
+            ).unwrap();
         });
     };
 
-    export const addRole = (role: Data<typeof Role>, account: Data<typeof Account.Account>) => {
+    export const addRole = (
+        role: Data<typeof Role>,
+        account: Data<typeof Account.Account>
+    ) => {
         return RoleAccount.new({
             role: role.id,
-            account: account.id,
+            account: account.id
         });
     };
 
@@ -102,23 +139,9 @@ export namespace Permissions {
             const roles = (await Role.all()).unwrap();
 
             return roles.filter(r =>
-                roleAccounts.some(ra =>
-                    ra.data.account === account.id && ra.data.role === r.id
-                )
-            );
-        });
-    };
-
-    export const getTargets = async (...roles: Data<typeof Role>[]) => {
-        return attemptAsync(async () => {
-            const roleAttributes = (await RoleTarget.all()).unwrap();
-            const targets = (await Target.all()).unwrap();
-
-            return targets.filter(t =>
-                roleAttributes.some(ra =>
-                    roles.some(r =>
-                        ra.data.role === r.id && ra.data.target === t.id
-                    )
+                roleAccounts.some(
+                    ra =>
+                        ra.data.account === account.id && ra.data.role === r.id
                 )
             );
         });
@@ -126,34 +149,195 @@ export namespace Permissions {
 
     export const getRoleTargets = async (role: Data<typeof Role>) => {
         return attemptAsync(async () => {
-            return (await RoleTarget.all()).unwrap().filter(rt => rt.data.role === role.id);
+            return (await RoleTarget.all())
+                .unwrap()
+                .filter(rt => rt.data.role === role.id);
         });
     };
 
-    export const roleTargetsFromAccount = async (account: Data<typeof Account.Account>) => {
+    export const roleTargetsFromAccount = async (
+        account: Data<typeof Account.Account>
+    ) => {
         return attemptAsync(async () => {
             const roles = (await getRoles(account)).unwrap();
             return resolveAll(
                 await Promise.all(roles.map(r => getRoleTargets(r)))
-            ).unwrap().flat();
+            )
+                .unwrap()
+                .flat();
         });
     };
 
-    export const parseProperties = (properties: string): Result<Property[]> => {
+    export const parseStructProperties = (
+        properties: string
+    ): Result<StructProperty[]> => {
         return attempt(() => {
             // split by comma not followed by a backslash
-            return properties.split(/,(?<!\\)/)
+            return properties
+                .split(/,(?<!\\)/)
                 .map(p => p.replace(/\\,/g, ','))
                 .map(p => p.split(/.(?<!\\)/))
                 .map(([struct, property]) => ({ struct, property }));
         });
     };
 
-    export const stringifyProperties = (properties: Property[]): Result<string> => {
+    export const stringifyStructProperties = (
+        properties: StructProperty[]
+    ): Result<string> => {
         return attempt(() => {
-            return properties.map(p => `${p.struct}.${p.property}`.replace(/,/g, '\\,')).join(',');
+            return properties
+                .map(p => `${p.struct}.${p.property}`.replace(/,/g, '\\,'))
+                .join(',');
         });
     };
+
+    export const canCreate = async (
+        account: Data<typeof Account.Account>,
+        struct: Struct<Blank, string>
+    ) => {
+        return attemptAsync(async () => {
+            const roleTargets = (
+                await roleTargetsFromAccount(account)
+            ).unwrap();
+            return roleTargets.some(
+                rt =>
+                    rt.data.action === 'create' &&
+                    parseStructProperties(rt.data.structProperties)
+                        .unwrap()
+                        .some(p => p.struct === struct.name)
+            );
+        });
+    };
+
+    export const canDelete = async (
+        account: Data<typeof Account.Account>,
+        data: Data<Struct<Blank, string>>
+    ) => {
+        return attemptAsync(async () => {
+            const roleTargets = (
+                await roleTargetsFromAccount(account)
+            ).unwrap();
+            return roleTargets.some(
+                rt =>
+                    rt.data.action === 'delete' &&
+                    parseStructProperties(rt.data.structProperties)
+                        .unwrap()
+                        .some(p => p.struct === data.struct.name)
+            );
+        });
+    };
+
+    export const canArchive = async (
+        account: Data<typeof Account.Account>,
+        data: Data<Struct<Blank, string>>
+    ) => {
+        return attemptAsync(async () => {
+            const roleTargets = (
+                await roleTargetsFromAccount(account)
+            ).unwrap();
+            return roleTargets.some(
+                rt =>
+                    rt.data.action === 'archive' &&
+                    parseStructProperties(rt.data.structProperties)
+                        .unwrap()
+                        .some(p => p.struct === data.struct.name)
+            );
+        });
+    };
+
+    export const canRestore = async (
+        account: Data<typeof Account.Account>,
+        data: Data<Struct<Blank, string>>
+    ) => {
+        return attemptAsync(async () => {
+            const roleTargets = (
+                await roleTargetsFromAccount(account)
+            ).unwrap();
+            return roleTargets.some(
+                rt =>
+                    rt.data.action === 'restore' &&
+                    parseStructProperties(rt.data.structProperties)
+                        .unwrap()
+                        .some(p => p.struct === data.struct.name)
+            );
+        });
+    };
+
+    export const filterAction = <
+        D extends DataInterface<Struct<Blank, string>>
+    >(
+        roles: Data<typeof Role>[],
+        action: DataAction,
+        data: D[]
+    ): Promise<Result<(Partial<D['data']> & TS_GlobalCols)[]>> => {
+        return attemptAsync(async () => {
+            // this needs to filter out the data that the user does not have any permission to do <action> on
+            // then it needs to filter out the attributes that the user does not have permission to do <action> on
+
+            if (
+                data.filter(
+                    (v, i, a) =>
+                        a.findIndex(t => t.struct.name === v.struct.name) === i
+                ).length > 1
+            )
+                throw new DataError(
+                    'Multiple structs found, please ensure the data is of the same struct'
+                );
+
+            const roleTargets = resolveAll(
+                await Promise.all(roles.map(getRoleTargets))
+            )
+                .unwrap()
+                .flat();
+
+            return data
+                .map(d => {
+                    // find all applicable rulesets for this data
+                    const rulesets = roleTargets.filter(
+                        rt =>
+                            rt.data.action === action &&
+                            d
+                                .getAttributes()
+                                .unwrap()
+                                .includes(rt.data.target) &&
+                            parseStructProperties(rt.data.structProperties)
+                                .unwrap()
+                                .some(p => p.struct === d.struct.name)
+                    );
+                    if (!rulesets.length) return undefined;
+                    // these are the properties that the user has permission to do <action> on
+                    const allowedProperties = rulesets
+                        .map(rt =>
+                            parseStructProperties(
+                                rt.data.structProperties
+                            ).unwrap()
+                        )
+                        .flat()
+                        .filter(p => p.struct === d.struct.name)
+                        .map(p => p.property);
+
+                    const data = Object.fromEntries(
+                        [
+                            ...allowedProperties,
+                            ...[
+                                'id',
+                                'created',
+                                'updated',
+                                'archived',
+                                'attributes'
+                            ]
+                        ].map(p => [p, d.data[p]])
+                    );
+
+                    return data as Partial<D['data']> & TS_GlobalCols;
+                })
+                .filter(Boolean);
+        });
+    };
+}
+
+/*
+
 
     export const isAllowed = (
         roleTargets: Data<typeof RoleTarget>[],
@@ -168,13 +352,13 @@ export namespace Permissions {
         });
     };
 
-    /**
+    / **
      * 
      * @param roleTargets 
      * @param action 
      * @param data 
      * @returns Filtered data array with only the properties that the role has access to
-     */
+     * /
     export const filterData = <D extends Data<Struct<Blank, string>>>(
         roleTargets: Data<typeof RoleTarget>[],
         action: Action,
@@ -215,4 +399,4 @@ export namespace Permissions {
             return isAllowed(roleTargets, 'create', struct).unwrap();
         });
     };
-}
+*/
