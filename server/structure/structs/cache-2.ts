@@ -7,7 +7,8 @@ import {
 import {
     Database,
     Parameter,
-    Query
+    Query,
+    SimpleParameter
 } from '../../utilities/database/databases-2';
 import { uuid } from '../../utilities/uuid';
 import { Route, ServerFunction } from '../app/app';
@@ -141,6 +142,7 @@ type StructBuilder<T extends Blank, Name extends string> = {
     // defaults?: Structable<Struct<T, Name>>[];
     // permissions?:
     sample?: boolean;
+    universeLimit?: number;
 };
 
 const newGlobalCols = (struct: Struct<Blank, string>) => {
@@ -154,7 +156,7 @@ const newGlobalCols = (struct: Struct<Blank, string>) => {
                 ?.attributes?.()
                 .map(a => a.replaceAll(',', ''))
                 .join(',') || '',
-        universe: '',
+        universes: '',
     };
 };
 
@@ -205,7 +207,7 @@ export type GlobalCols = {
     updated: 'text';
     archived: 'boolean';
     attributes: 'text';
-    universe: 'text';
+    universes: 'text';
 };
 
 export type TS_GlobalCols = {
@@ -214,7 +216,7 @@ export type TS_GlobalCols = {
     updated: string;
     archived: boolean;
     attributes: string;
-    universe: string;
+    universes: string;
 };
 
 export type ColMap<
@@ -634,6 +636,48 @@ export class StructData<Structure extends Blank, Name extends string>
     //         this.struct.emit('update', this);
     //     });
     // }
+
+    getUniverses() {
+        return attempt(() => {
+            const { universes } = this.data;
+            if (!universes) throw new FatalDataError('No universes found');
+
+            const parsed = JSON.parse(universes);
+            if (!Array.isArray(parsed))
+                throw new FatalDataError('Universes not an array');
+            if (!parsed.every(a => typeof a === 'string'))
+                throw new FatalDataError('Universes not all strings');
+
+            return parsed;
+        });
+    }
+
+    setUniverses(universes: string[]) {
+        return attemptAsync(async () => {
+            let limit = this.struct.data.universeLimit;
+            if (!limit) limit = 1;
+            if (universes.length > limit) {
+                throw new DataError(
+                    `${this.struct.name} data cannot be in more than ${limit} universe(s)`
+                );
+            }
+            const str = JSON.stringify(universes);
+
+            const query = Query.build(
+                `
+                UPDATE ${this.struct.data.name}
+                SET universes = :universes
+                WHERE id = :id
+            `,
+                {
+                    id: this.data.id,
+                    universes: str
+                }
+            );
+
+            (await this.struct.data.database.unsafe.run(query)).unwrap();
+        });
+    }
 }
 
 export type Data<SubStruct extends Struct<Blank, string>> = StructData<
@@ -843,7 +887,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                         created text NOT NULL,
                         updated text NOT NULL,
                         archived boolean NOT NULL,
-                        universe text NOT NULL,
+                        universes text NOT NULL,
                         ${Object.entries(this.data.structure)
                             .map(([key, value]) => {
                                 return `${key} ${value}`;
@@ -864,7 +908,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                         created text NOT NULL,
                         updated text NOT NULL,
                         archived boolean NOT NULL,
-                        universe text NOT NULL,
+                        universes text NOT NULL,
                         ${Object.entries(this.data.structure)
                             .map(([key, value]) => {
                                 return `${key} ${value}`;
@@ -953,6 +997,93 @@ export class Struct<Structure extends Blank, Name extends string> {
                 );
 
             {
+                this.route.post<{
+                    name: string;
+                    structure: Record<string, string>;
+                }>(
+                    '/connect',
+                    validate({
+                        structure: (s: unknown) => {
+                            if (typeof s !== 'object' || !s)
+                                return true;
+                            if (Array.isArray(s)) return true;
+                            if (Object.keys(s).length === 0) return true;
+                            if (
+                                !Object.values(s).every(
+                                    v =>
+                                        typeof v === 'string' &&
+                                        ['integer', 'bigint', 'text', 'json', 'boolean', 'real', 'numeric'].includes(
+                                            v
+                                        )
+                                )
+                            )
+                                return true;
+                            return true;
+                        },
+                    }),
+                    (req, res) => {
+                        // ensure the structures are the same
+
+                        const { structure } = req.body;
+
+                        // showcase that the two objects are the same, even if the keys are out of order
+                        const keys = Object.keys(structure).sort();
+                        const keys2 = Object.keys(this.data.structure).sort();
+
+                        if (keys.join(',') !== keys2.join(',')) {
+                            return res.sendStatus(
+                                new Status(
+                                    {
+                                        code: 400,
+                                        message: 'Structures do not match',
+                                        color: 'danger',
+                                        instructions: ''
+                                    },
+                                    this.data.name,
+                                    'Structures Do Not Match',
+                                    '{}',
+                                    req
+                                )
+                            );
+                        }
+
+                        const values = Object.values(structure).sort();
+                        const values2 = Object.values(this.data.structure).sort();
+
+                        if (values.join(',') !== values2.join(',')) {
+                            return res.sendStatus(
+                                new Status(
+                                    {
+                                        code: 400,
+                                        message: 'Structures do not match',
+                                        color: 'danger',
+                                        instructions: ''
+                                    },
+                                    this.data.name,
+                                    'Structures Do Not Match',
+                                    '{}',
+                                    req
+                                )
+                            );
+                        }
+
+                        res.sendStatus(
+                            new Status(
+                                {
+                                    code: 200,
+                                    message: 'Structures match',
+                                    color: 'success',
+                                    instructions: ''
+                                },
+                                this.data.name,
+                                'Structures Match',
+                                '{}',
+                                req
+                            )
+                        );
+                    },
+                );
+
                 this.route.post<St<Structure & GlobalCols, Name>>(
                     '/create',
                     this.validator(false),
@@ -1562,6 +1693,30 @@ export class Struct<Structure extends Blank, Name extends string> {
             return data
                 .map(d => new StructData<Structure, Name>(this, d))
                 .filter(d => includeArchived || !d.data.archived);
+        });
+    }
+
+    fromProperty<Property extends keyof Structure>(property: Property, value: TS_Type<Structure[Property]>) {
+        return attemptAsync(async () => {
+            const query = Query.build(
+                `SELECT * FROM ${this.data.name} WHERE ${property as string} = :value`,
+                { 
+                    value: value as SimpleParameter
+                }
+            );
+
+            const data = (
+                await this.data.database.unsafe.all<St<Structure, Name>>(query)
+            ).unwrap();
+
+            const invalid = data.filter(d => !this.validate(d));
+            if (invalid.length)
+                throw new StructError(
+                    `Invalid data found in database. ${this.name} is corrupted` +
+                        invalid.map(d => d.id).join(', ')
+                );
+
+            return data.map(d => new StructData<Structure, Name>(this, d));
         });
     }
 

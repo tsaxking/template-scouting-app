@@ -41,7 +41,10 @@ export namespace MyNamespace {
 
         // if true and the struct is initialized, it will crash the program
         // This is useful to showcase the purpose of structs without accidentally using them and applying undesired data into the database
-        sample: true
+        sample: true,
+
+        // if true, the data cannot enter into more than 2 universes (defaults to 1)
+        universeLimit: 2,
     });
 }
 ```

@@ -351,6 +351,13 @@ export class Struct<T extends Blank> {
                 // should this do anything?
             }
         );
+
+        this.requester.post(
+            '/connect',
+            {
+                structure: this.data.structure,
+            }
+        );
     }
 
     public get route() {

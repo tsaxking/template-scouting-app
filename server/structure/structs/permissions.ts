@@ -10,8 +10,10 @@ General concept:
 - A universe is a collection of data, a data can only be inside one universe
 */
 
+import { attemptAsync, resolveAll } from "../../../shared/check";
 import { DB } from "../../utilities/database";
-import { Struct } from "./cache-2";
+import { Account } from "./account";
+import { Struct, Data } from "./cache-2";
 
 
 export namespace Permissions {
@@ -67,5 +69,30 @@ export namespace Permissions {
             account: 'text',
         },
     });
-    // export const getRolesFromUniverse = async (Data<Universe> universe) => {
+
+
+    export const getRolesFromUniverse = async (universe: Data<typeof Universe>) => {
+        return Role.fromProperty('universe', universe.id);
+    };
+
+    export const getRolesFromAccount = async (account: Data<typeof Account.Account>) => {
+        return attemptAsync(async () => {
+            const roleAccounts = (await RoleAccount.fromProperty('account', account.id)).unwrap();
+            return resolveAll(await Promise.all(
+                roleAccounts.map(async ra => Role.fromId(ra.data.role)),
+            )).unwrap()
+            .filter(Boolean);
+        });
+    };
+
+    export const giveRole = async (account: Data<typeof Account.Account>, role: Data<typeof Role>) => {
+        return attemptAsync(async () => {
+            if (role.data.name !== 'root') {
+                const roles = await (await getRolesFromAccount(account)).unwrap();
+                if (roles.find(r => r.id === role.id)) {
+                    return;
+                }
+            }
+        });
+    };
 }
