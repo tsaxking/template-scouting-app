@@ -153,7 +153,8 @@ const newGlobalCols = (struct: Struct<Blank, string>) => {
             struct.data.generators
                 ?.attributes?.()
                 .map(a => a.replaceAll(',', ''))
-                .join(',') || ''
+                .join(',') || '',
+        universe: '',
     };
 };
 
@@ -204,6 +205,7 @@ export type GlobalCols = {
     updated: 'text';
     archived: 'boolean';
     attributes: 'text';
+    universe: 'text';
 };
 
 export type TS_GlobalCols = {
@@ -212,6 +214,7 @@ export type TS_GlobalCols = {
     updated: string;
     archived: boolean;
     attributes: string;
+    universe: string;
 };
 
 export type ColMap<
@@ -278,7 +281,7 @@ export interface DataInterface<S extends Struct<Blank, string>> {
 
     struct: S;
 
-    getAttributes(): Result<string[]>;
+    // getAttributes(): Result<string[]>;
 }
 
 export class DataVersion<T extends Blank, Name extends string>
@@ -353,20 +356,20 @@ export class DataVersion<T extends Blank, Name extends string>
         });
     }
 
-    getAttributes() {
-        return attempt(() => {
-            const { attributes } = this.data;
-            if (!attributes) throw new FatalDataError('No attributes found');
+    // getAttributes() {
+    //     return attempt(() => {
+    //         const { attributes } = this.data;
+    //         if (!attributes) throw new FatalDataError('No attributes found');
 
-            const parsed = JSON.parse(attributes);
-            if (!Array.isArray(parsed))
-                throw new FatalDataError('Attributes not an array');
-            if (!parsed.every(a => typeof a === 'string'))
-                throw new FatalDataError('Attributes not all strings');
+    //         const parsed = JSON.parse(attributes);
+    //         if (!Array.isArray(parsed))
+    //             throw new FatalDataError('Attributes not an array');
+    //         if (!parsed.every(a => typeof a === 'string'))
+    //             throw new FatalDataError('Attributes not all strings');
 
-            return parsed;
-        });
-    }
+    //         return parsed;
+    //     });
+    // }
 }
 
 export class StructData<Structure extends Blank, Name extends string>
@@ -568,69 +571,69 @@ export class StructData<Structure extends Blank, Name extends string>
         });
     }
 
-    getAttributes() {
-        return attempt(() => {
-            const { attributes } = this.data;
-            if (!attributes) throw new FatalDataError('No attributes found');
+    // getAttributes() {
+    //     return attempt(() => {
+    //         const { attributes } = this.data;
+    //         if (!attributes) throw new FatalDataError('No attributes found');
 
-            const parsed = JSON.parse(attributes);
-            if (!Array.isArray(parsed))
-                throw new FatalDataError('Attributes not an array');
-            if (!parsed.every(a => typeof a === 'string'))
-                throw new FatalDataError('Attributes not all strings');
+    //         const parsed = JSON.parse(attributes);
+    //         if (!Array.isArray(parsed))
+    //             throw new FatalDataError('Attributes not an array');
+    //         if (!parsed.every(a => typeof a === 'string'))
+    //             throw new FatalDataError('Attributes not all strings');
 
-            return parsed;
-        });
-    }
+    //         return parsed;
+    //     });
+    // }
 
-    addAttributes(...attrs: string[]) {
-        return attemptAsync(async () => {
-            const attributes = this.getAttributes().unwrap();
-            const combined = [...attributes, ...attrs].filter(
-                (a, i, arr) => arr.indexOf(a) === i
-            );
+    // addAttributes(...attrs: string[]) {
+    //     return attemptAsync(async () => {
+    //         const attributes = this.getAttributes().unwrap();
+    //         const combined = [...attributes, ...attrs].filter(
+    //             (a, i, arr) => arr.indexOf(a) === i
+    //         );
 
-            (await this.setAttributes(combined)).unwrap();
-        });
-    }
+    //         (await this.setAttributes(combined)).unwrap();
+    //     });
+    // }
 
-    removeAttribute(attr: string) {
-        return attemptAsync(async () => {
-            const attributes = this.getAttributes().unwrap();
+    // removeAttribute(attr: string) {
+    //     return attemptAsync(async () => {
+    //         const attributes = this.getAttributes().unwrap();
 
-            if (!attributes.includes(attr)) return;
+    //         if (!attributes.includes(attr)) return;
 
-            const index = attributes.indexOf(attr);
+    //         const index = attributes.indexOf(attr);
 
-            attributes.splice(index, 1);
+    //         attributes.splice(index, 1);
 
-            (await this.setAttributes(attributes)).unwrap();
-        });
-    }
+    //         (await this.setAttributes(attributes)).unwrap();
+    //     });
+    // }
 
-    setAttributes(attrs: string[]) {
-        return attemptAsync(async () => {
-            Object.assign(this.data, {
-                attributes: JSON.stringify(attrs)
-            });
+    // setAttributes(attrs: string[]) {
+    //     return attemptAsync(async () => {
+    //         Object.assign(this.data, {
+    //             attributes: JSON.stringify(attrs)
+    //         });
 
-            const query = Query.build(
-                `
-                UPDATE ${this.struct.data.name}
-                SET attributes = :attributes
-                WHERE id = :id
-            `,
-                {
-                    id: this.data.id,
-                    attributes: JSON.stringify(attrs)
-                }
-            );
+    //         const query = Query.build(
+    //             `
+    //             UPDATE ${this.struct.data.name}
+    //             SET attributes = :attributes
+    //             WHERE id = :id
+    //         `,
+    //             {
+    //                 id: this.data.id,
+    //                 attributes: JSON.stringify(attrs)
+    //             }
+    //         );
 
-            (await this.struct.data.database.unsafe.run(query)).unwrap();
+    //         (await this.struct.data.database.unsafe.run(query)).unwrap();
 
-            this.struct.emit('update', this);
-        });
-    }
+    //         this.struct.emit('update', this);
+    //     });
+    // }
 }
 
 export type Data<SubStruct extends Struct<Blank, string>> = StructData<
@@ -840,6 +843,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                         created text NOT NULL,
                         updated text NOT NULL,
                         archived boolean NOT NULL,
+                        universe text NOT NULL,
                         ${Object.entries(this.data.structure)
                             .map(([key, value]) => {
                                 return `${key} ${value}`;
@@ -860,6 +864,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                         created text NOT NULL,
                         updated text NOT NULL,
                         archived boolean NOT NULL,
+                        universe text NOT NULL,
                         ${Object.entries(this.data.structure)
                             .map(([key, value]) => {
                                 return `${key} ${value}`;
