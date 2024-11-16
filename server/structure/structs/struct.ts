@@ -2260,7 +2260,7 @@ export class Struct<Structure extends Blank, Name extends string> {
             if (!this.validate(data))
                 throw new StructError(`Invalid data for ${this.data.name}`);
 
-            const d = new StructData<Structure, Name>(this, {
+            const d = this.Generator( {
                 ...newGlobalCols(this),
                 ...data // will overwrite global cols if they are included
             });
@@ -2313,37 +2313,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                     `Invalid data found in database. ${this.name}:${data.id} is corrupted`
                 );
 
-            return new StructData<Structure, Name>(this, data);
-        });
-    }
-
-    /**
-     * Retrieves all struct data
-     * Be careful using this as it can be a lot of data and could cause memory issues with large datasets
-     *
-     * @param {boolean} [includeArchived=false]
-     * @returns {*}
-     */
-    all(includeArchived: boolean = false) {
-        if (!this.built)
-            throw new FatalStructError(`Struct ${this.data.name} not built`);
-        return attemptAsync(async () => {
-            const query = Query.build(`SELECT * FROM ${this.data.name}`);
-
-            const data = (
-                await this.data.database.unsafe.all<St<Structure, Name>>(query)
-            ).unwrap();
-
-            const invalid = data.filter(d => !this.validate(d));
-            if (invalid.length)
-                throw new StructError(
-                    `Invalid data found in database. ${this.name} is corrupted` +
-                        invalid.map(d => d.id).join(', ')
-                );
-
-            return data
-                .map(d => new StructData<Structure, Name>(this, d))
-                .filter(d => includeArchived || !d.data.archived);
+            return this.Generator(data);
         });
     }
 
@@ -2378,7 +2348,66 @@ export class Struct<Structure extends Blank, Name extends string> {
                         invalid.map(d => d.id).join(', ')
                 );
 
-            return data.map(d => new StructData<Structure, Name>(this, d));
+            return data.map(d => this.Generator(d));
+        });
+    }
+    /**
+     * Retrieves all struct data
+     * Be careful using this as it can be a lot of data and could cause memory issues with large datasets
+     *
+     * @param {boolean} [includeArchived=false]
+     * @returns {*}
+     */
+    all(includeArchived: boolean = false) {
+        if (!this.built)
+            throw new FatalStructError(`Struct ${this.data.name} not built`);
+        return attemptAsync(async () => {
+            const query = Query.build(`SELECT * FROM ${this.data.name}`);
+
+            const data = (
+                await this.data.database.unsafe.all<St<Structure, Name>>(query)
+            ).unwrap();
+
+            const invalid = data.filter(d => !this.validate(d));
+            if (invalid.length)
+                throw new StructError(
+                    `Invalid data found in database. ${this.name} is corrupted` +
+                        invalid.map(d => d.id).join(', ')
+                );
+
+            return data
+                .map(d => this.Generator(d))
+                .filter(d => includeArchived || !d.data.archived);
+        });
+    }
+
+    /**
+     * Retrieves all struct data from a universe
+     *
+     * @param {string} universe
+     * @returns {*}
+     */
+    fromUniverse(universe: string) {
+        return attemptAsync(async () => {
+            const query = Query.build(
+                `SELECT * FROM ${this.data.name} WHERE universes LIKE :universe`,
+                {
+                    universe: `%${universe}%`
+                }
+            );
+
+            const data = (
+                await this.data.database.unsafe.all<St<Structure, Name>>(query)
+            ).unwrap();
+
+            const invalid = data.filter(d => !this.validate(d));
+            if (invalid.length)
+                throw new StructError(
+                    `Invalid data found in database. ${this.name} is corrupted` +
+                        invalid.map(d => d.id).join(', ')
+                );
+
+            return data.map(d => this.Generator(d));
         });
     }
 
@@ -2406,7 +2435,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                         invalid.map(d => d.id).join(', ')
                 );
 
-            return data.map(d => new StructData<Structure, Name>(this, d));
+            return data.map(d => this.Generator(d));
         });
     }
 
