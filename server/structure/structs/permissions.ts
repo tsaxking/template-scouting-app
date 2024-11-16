@@ -8,6 +8,11 @@ General concept:
 
 
 - A universe is a collection of data, a data can only be inside one universe
+
+
+- Questions:
+    - Integrate permission block list, where instead of permitting anyone to perform an action, you allow an action except on certain data
+        - Todo this, there would need to be a accountBlockList and/or roleBlockList in the globalCols of all data
 */
 
 import {
@@ -37,6 +42,7 @@ export namespace Permissions {
         Archive = 'archive',
         RestoreArchive = 'restore-archive',
         RestoreVersion = 'restore-version',
+        DeleteVersion = 'delete-version',
     }
 
     const encode = (str: string) => {
@@ -113,7 +119,6 @@ export namespace Permissions {
         structure: {
             name: 'text',
             description: 'text'
-            // doesn't matter
         }
     });
 
@@ -146,13 +151,19 @@ export namespace Permissions {
         }
     });
 
+    // join socket room
+    // RoleAccount.on('create', async ra => {});
+
+    // leave socket room
+    // RoleAccount.on('delete', async ra => {});
+
     export const getRolesFromUniverse = async (
         universe: Data<typeof Universe>
     ) => {
         return Role.fromProperty('universe', universe.id);
     };
 
-    export const getRolesFromAccount = async (
+    export const getRoles = async (
         account: Data<typeof Account.Account>
     ) => {
         return attemptAsync(async () => {
@@ -176,7 +187,7 @@ export namespace Permissions {
         return attemptAsync(async () => {
             if (role.data.name !== 'root') {
                 const roles = await (
-                    await getRolesFromAccount(account)
+                    await getRoles(account)
                 ).unwrap();
                 if (roles.find(r => r.id === role.id)) {
                     return;
@@ -248,7 +259,7 @@ export namespace Permissions {
         S extends Struct<Blank, string>,
         D extends Data<S>,
     >(
-        account: Data<typeof Account.Account>,
+        roles: Data<typeof Role>[],
         data: D[],
         action: PropertyAction
     ): Promise<Result<PartialStructable<S>[]>> => {
@@ -267,14 +278,13 @@ export namespace Permissions {
                 return [];
             }
 
-            const universes = account.getUniverses().unwrap();
-
-            const roles = (await getRolesFromAccount(account)).unwrap();
+            const universes = roles.map(r => r.data.universe);
             const permissions = resolveAll(
                 roles.map(r => permissionsFromRole(r))
             )
                 .unwrap()
                 .flat()
+                // TODO: if action is readversionhistory or readarchive, properties should be filtered by the read permissions
                 .filter(p => p.permission === action && p.struct === struct);
 
 
@@ -298,9 +308,8 @@ export namespace Permissions {
     };
 
     // global permissions
-    export const canDo = async (account: Data<typeof Account.Account>, struct: Struct<Blank, string>, action: DataAction) => {
-        return attemptAsync(async () => {
-            const roles = (await getRolesFromAccount(account)).unwrap();
+    export const canDo = (roles: Data<typeof Role>[], struct: Struct<Blank, string>, action: DataAction) => {
+        return attempt(async () => {
             const permissions = resolveAll(
                 roles.map(r => permissionsFromRole(r))
             )
