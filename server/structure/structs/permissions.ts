@@ -30,7 +30,7 @@ import {
     DataError,
     GlobalCols,
     PartialStructable
-} from './cache-2';
+} from './struct';
 import { encode, decode } from '../../../shared/text';
 
 export namespace Permissions {

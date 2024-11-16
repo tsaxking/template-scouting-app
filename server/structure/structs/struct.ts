@@ -22,27 +22,83 @@ import { Session } from './session';
 import { Req } from '../app/req';
 import { capitalize } from '../../../shared/text';
 
+/**
+ * Error class for when there's an issue with a struct
+ *
+ * @export
+ * @class StructError
+ * @typedef {StructError}
+ * @extends {Error}
+ */
 export class StructError extends Error {
+    /**
+     * Creates an instance of StructError.
+     *
+     * @constructor
+     * @param {string} message
+     */
     constructor(message: string) {
         super(message);
         this.name = 'StructError';
     }
 }
 
+/**
+ * Error class for when there's an issue with data
+ *
+ * @export
+ * @class DataError
+ * @typedef {DataError}
+ * @extends {Error}
+ */
 export class DataError extends Error {
+    /**
+     * Creates an instance of DataError.
+     *
+     * @constructor
+     * @param {string} message
+     */
     constructor(message: string) {
         super(message);
         this.name = 'DataError';
     }
 }
 
+/**
+ * Fatal error class for when there's an issue with a struct (this should be used when the program is not recoverable)
+ *
+ * @export
+ * @class FatalStructError
+ * @typedef {FatalStructError}
+ * @extends {StructError}
+ */
 export class FatalStructError extends StructError {
+    /**
+     * Creates an instance of FatalStructError.
+     *
+     * @constructor
+     * @param {string} message
+     */
     constructor(message: string) {
         super(message);
     }
 }
 
+/**
+ * Fatal error class for when there's an issue with data (this should be used when the program is not recoverable)
+ *
+ * @export
+ * @class FatalDataError
+ * @typedef {FatalDataError}
+ * @extends {DataError}
+ */
 export class FatalDataError extends DataError {
+    /**
+     * Creates an instance of FatalDataError.
+     *
+     * @constructor
+     * @param {string} message
+     */
     constructor(message: string) {
         super(message);
     }
@@ -54,6 +110,12 @@ Questions:
     - Should I have a room for each emittable action?
 */
 
+/**
+ * Basic SQL Types, there will be more added as needed
+ *
+ * @export
+ * @typedef {SQL_Type}
+ */
 export type SQL_Type =
     | 'integer'
     | 'bigint'
@@ -64,8 +126,21 @@ export type SQL_Type =
 
 
 
+/**
+ * Primitive types that SQL_Types can be converted to
+ *
+ * @export
+ * @typedef {TS_Types}
+ */
 export type TS_Types = 'number' | 'string' | 'object' | 'boolean' | 'unknown';
 
+/**
+ * Converts a SQL_Type to a TS_TypeStr
+ *
+ * @template {SQL_Type} T
+ * @param {T} type
+ * @returns {TS_TypeStr<T>}
+ */
 const type = <T extends SQL_Type>(type: T): TS_TypeStr<T> => {
     switch (type) {
         case 'integer':
@@ -82,6 +157,13 @@ const type = <T extends SQL_Type>(type: T): TS_TypeStr<T> => {
     }
 };
 
+/**
+ * Converts a SQL_Type to a real type
+ *
+ * @export
+ * @typedef {TS_Type}
+ * @template {SQL_Type} T
+ */
 export type TS_Type<T extends SQL_Type> =
     | (T extends 'integer'
           ? number
@@ -101,6 +183,13 @@ export type TS_Type<T extends SQL_Type> =
     | unknown;
 
 // for runtime
+/**
+ * Used to convert a SQL_Type to a TS_Type strings (result of typeof)
+ *
+ * @export
+ * @typedef {TS_TypeStr}
+ * @template {SQL_Type} T
+ */
 export type TS_TypeStr<T extends SQL_Type> =
     | (T extends 'integer'
           ? 'number'
@@ -119,6 +208,13 @@ export type TS_TypeStr<T extends SQL_Type> =
                       : never)
     | 'unknown';
 
+/**
+ * Converts TS_Type to the real type
+ *
+ * @export
+ * @typedef {TS_TypeActual}
+ * @template {TS_Types} T
+ */
 export type TS_TypeActual<T extends TS_Types> = T extends 'number'
     ? number
     : T extends 'string'
@@ -129,41 +225,88 @@ export type TS_TypeActual<T extends TS_Types> = T extends 'number'
           ? boolean
           : never;
 
+/**
+ * Object passed in to build the struct
+ *
+ * @typedef {StructBuilder}
+ * @template {Blank} T
+ * @template {string} Name
+ */
 type StructBuilder<T extends Blank, Name extends string> = {
+    /**
+     * Struct name (must be unique, this will be the table name in the database)
+     */
     name: Name;
     // TODO: implement complex types
     // TODO: Implement json types
+    /**
+     * Structure of the data
+     */
     structure: T; // omit id because it will always be included as a uuid primary key
+    /**
+     * Database instance to use
+     */
     database: Database;
+    /**
+     * Version history settings
+     */
     versionHistory?: {
         type: 'days' | 'versions';
         amount: number;
     };
+    /**
+     * Default generators for allowed global cols
+     */
     generators?: Partial<{
         id: () => string;
-        // attributes: () => string[];
+        attributes: () => string[];
     }>;
     // defaults?: Structable<Struct<T, Name>>[];
     // permissions?:
+    /**
+     * If this is a sample struct, only used for testing
+     * If a sample struct is built, it will crash the program
+     *
+     * @type {?boolean}
+     */
     sample?: boolean;
+    /**
+     * Limit of universes this struct's is allowed to be in
+     */
     universeLimit?: number;
 };
 
+/**
+ * Generates the new global columns for a struct
+ *
+ * @param {Struct<Blank, string>} struct
+ * @returns {{ id: any; created: any; updated: any; archived: boolean; attributes: any; universes: string; }}
+ */
 const newGlobalCols = (struct: Struct<Blank, string>) => {
     return {
         id: struct.data.generators?.id?.() || uuid(),
         created: new Date().toISOString(),
         updated: new Date().toISOString(),
         archived: false,
-        // attributes:
-        //     struct.data.generators
-        //         ?.attributes?.()
-        //         .map(a => a.replaceAll(',', ''))
-        //         .join(',') || '',
+        attributes:
+            struct.data.generators
+                ?.attributes?.()
+                .map(a => a.replaceAll(',', ''))
+                .join(',') || '',
         universes: ''
     };
 };
 
+/**
+ * Prove that the data matches the structure
+ *
+ * @template {Blank} T
+ * @template D
+ * @template {string} Name
+ * @param {D} data
+ * @param {Blank} structure
+ * @returns {Result<boolean>}
+ */
 export const prove = <T extends Blank, D, Name extends string>(
     data: D,
     structure: Blank
@@ -205,15 +348,27 @@ export const prove = <T extends Blank, D, Name extends string>(
     });
 };
 
+/**
+ * All of the global columns for all structs
+ *
+ * @export
+ * @typedef {GlobalCols}
+ */
 export type GlobalCols = {
     id: 'text';
     created: 'text';
     updated: 'text';
     archived: 'boolean';
-    // attributes: 'text';
+    attributes: 'text';
     universes: 'text';
 };
 
+/**
+ * Ts typed global columns
+ *
+ * @export
+ * @typedef {TS_GlobalCols}
+ */
 export type TS_GlobalCols = {
     id: string;
     created: string;
@@ -223,6 +378,16 @@ export type TS_GlobalCols = {
     universes: string;
 };
 
+/**
+ * Map of columns for a struct
+ *
+ * @export
+ * @typedef {ColMap}
+ * @template {{
+ *         [key: string]: SQL_Type;
+ *     }} Cols
+ * @template {string} Name
+ */
 export type ColMap<
     Cols extends {
         [key: string]: SQL_Type;
@@ -232,13 +397,40 @@ export type ColMap<
     [K in keyof Cols]: Column<Cols[K], Cols, Name>;
 };
 
+/**
+ * Struct column
+ * Used to define the type of a column in a struct
+ * Will eventually be used to generate SQL
+ *
+ * @export
+ * @class Column
+ * @typedef {Column}
+ * @template {SQL_Type} Type
+ * @template {Blank} StructType
+ * @template {string} Name
+ */
 export class Column<
     Type extends SQL_Type,
     StructType extends Blank,
     Name extends string
 > {
+    /**
+     * Type of the column
+     *
+     * @public
+     * @readonly
+     * @type {TS_TypeStr<Type>}
+     */
     public readonly type: TS_TypeStr<Type>;
 
+    /**
+     * Creates an instance of Column.
+     *
+     * @constructor
+     * @param {string} name
+     * @param {SQL_Type} sqlType
+     * @param {Struct<StructType, Name>} struct
+     */
     constructor(
         public readonly name: string,
         public readonly sqlType: SQL_Type,
@@ -259,43 +451,155 @@ export class Column<
     }
 }
 
+/**
+ * Template struct class structure
+ *
+ * @export
+ * @typedef {Blank}
+ */
 export type Blank = {
     [key: string]: SQL_Type;
 };
 
+/**
+ * Structable that is used to create data
+ * This isn't to be used outside of this file
+ *
+ * @typedef {St}
+ * @template {Blank} T
+ * @template {string} Name
+ */
 type St<T extends Blank, Name extends string> = {
     [K in keyof T]: TS_TypeActual<Column<T[K], T, Name>['type']>;
 };
 
+/**
+ * Partial Structable that is used after filtering data based on permissions
+ *
+ * @export
+ * @typedef {PartialStructable}
+ * @template {Struct<Blank, string>} SubStruct
+ */
 export type PartialStructable<SubStruct extends Struct<Blank, string>> =
     Partial<St<SubStruct['data']['structure'], SubStruct['data']['name']>> &
         St<GlobalCols, SubStruct['data']['name']>;
 
+/**
+ * The type used to generate data inside a struct
+ *
+ * @export
+ * @typedef {Structable}
+ * @template {Struct<Blank, string>} SubStruct
+ */
 export type Structable<SubStruct extends Struct<Blank, string>> = St<
     SubStruct['data']['structure'] & GlobalCols,
     SubStruct['data']['name']
 >;
+/**
+ * The type used to generate data inside a struct without the global columns
+ *
+ * @export
+ * @typedef {BasicStructable}
+ * @template {Struct<Blank, string>} SubStruct
+ */
 export type BasicStructable<SubStruct extends Struct<Blank, string>> = St<
     SubStruct['data']['structure'],
     SubStruct['data']['name']
 >;
 
+/**
+ * Interface that versions and data must implement
+ *
+ * @export
+ * @interface DataInterface
+ * @typedef {DataInterface}
+ * @template {Struct<Blank, string>} S
+ */
 export interface DataInterface<S extends Struct<Blank, string>> {
+    /**
+     * Data ID
+     *
+     * @readonly
+     * @type {string}
+     */
     get id(): string;
+    /**
+     * When the data was created
+     *
+     * @readonly
+     * @type {Date}
+     */
     get created(): Date;
+    /**
+     * When the data was last updated
+     *
+     * @readonly
+     * @type {Date}
+     */
     get updated(): Date;
+    /**
+     * If the data is archived
+     *
+     * @readonly
+     * @type {boolean}
+     */
     get archived(): boolean;
+    /**
+     * Database instance
+     *
+     * @readonly
+     * @type {Database}
+     */
     get database(): Database;
-    data: St<S['data']['structure'] & GlobalCols, S['data']['name']>;
+    /**
+     * The actual data
+     *
+     * @type {Readonly<St<S['data']['structure'] & GlobalCols, S['data']['name']>>}
+     */
+    data: Readonly<St<S['data']['structure'] & GlobalCols, S['data']['name']>>;
 
+    /**
+     * Struct instance
+     *
+     * @type {S}
+     */
     struct: S;
 
+    /**
+     * Retrieves the universes the data is in
+     *
+     * @returns {Result<string[]>}
+     */
     getUniverses(): Result<string[]>;
 }
 
+/**
+ * Version of the data (only used when versionHistory on a struct exists)
+ *
+ * @export
+ * @class DataVersion
+ * @typedef {DataVersion}
+ * @template {Blank} T
+ * @template {string} Name
+ * @implements {DataInterface<Struct<T, Name>>}
+ */
 export class DataVersion<T extends Blank, Name extends string>
     implements DataInterface<Struct<T, Name>>
 {
+    /**
+     * Creates an instance of DataVersion.
+     *
+     * @constructor
+     * @param {Struct<T, Name>} struct
+     * @param {St<
+     *             T &
+     *                 GlobalCols & {
+     *                     vhId: 'text';
+     *                     vhCreated: 'text';
+     *                 },
+     *             Name
+     *         >} data
+     */
     constructor(
         public readonly struct: Struct<T, Name>,
         public readonly data: St<
@@ -308,34 +612,81 @@ export class DataVersion<T extends Blank, Name extends string>
         >
     ) {}
 
+    /**
+     * Version history id
+     *
+     * @readonly
+     * @type {TS_TypeActual<(T & GlobalCols & { vhId: "text"; vhCreated: "text"; })["vhId"] extends "integer" ? "number" : (T & GlobalCols & { vhId: "text"; vhCreated: "text"; })["vhId"] extends "bigint" ? "number" : (T & ... 1 more ... & { ...; })["vhId"] extends "text" ? "string" : (T & ... 1 more ... & { ...; })["vhId"] extend...}
+     */
     get vhId() {
         return this.data.vhId;
     }
 
+    /**
+     * When the version was created
+     *
+     * @readonly
+     * @type {*}
+     */
     get vhCreated() {
         return new Date(this.data.vhCreated);
     }
 
+    /**
+     * Data id (there can be multiple versions of the same data)
+     *
+     * @readonly
+     * @type {TS_TypeActual<(T & GlobalCols & { vhId: "text"; vhCreated: "text"; })["id"] extends "integer" ? "number" : (T & GlobalCols & { vhId: "text"; vhCreated: "text"; })["id"] extends "bigint" ? "number" : (T & ... 1 more ... & { ...; })["id"] extends "text" ? "string" : (T & ... 1 more ... & { ...; })["id"] extends "json"...}
+     */
     get id() {
         return this.data.id;
     }
 
+    /**
+     * The date the data was created
+     *
+     * @readonly
+     * @type {*}
+     */
     get created() {
         return new Date(this.data.created);
     }
 
+    /**
+     * The date the data was last updated
+     *
+     * @readonly
+     * @type {*}
+     */
     get updated() {
         return new Date(this.data.updated);
     }
 
+    /**
+     * If the data is archived
+     *
+     * @readonly
+     * @type {TS_TypeActual<(T & GlobalCols & { vhId: "text"; vhCreated: "text"; })["archived"] extends "integer" ? "number" : (T & GlobalCols & { vhId: "text"; vhCreated: "text"; })["archived"] extends "bigint" ? "number" : (T & ... 1 more ... & { ...; })["archived"] extends "text" ? "string" : (T & ... 1 more ... & { ...; })["a...}
+     */
     get archived() {
         return this.data.archived;
     }
 
+    /**
+     * Database instance
+     *
+     * @readonly
+     * @type {Database}
+     */
     get database() {
         return this.struct.data.database;
     }
 
+    /**
+     * Deletes the version
+     *
+     * @returns {*}
+     */
     delete() {
         return attemptAsync(async () => {
             const query = Query.build(
@@ -354,17 +705,27 @@ export class DataVersion<T extends Blank, Name extends string>
         });
     }
 
+    /**
+     * Restores the data to this version
+     *
+     * @returns {*}
+     */
     restore() {
         return attemptAsync(async () => {
             const current = (await this.struct.fromId(this.data.id)).unwrap();
             if (!current) throw new DataError('Current data not found');
 
-            await current.update(this.data);
+            (await current.update(this.data)).unwrap();
 
             this.struct.emit('restore-version', this);
         });
     }
 
+    /**
+     * Retrieves the data from this version
+     *
+     * @returns {*}
+     */
     getUniverses() {
         return attempt(() => {
             const { universes } = this.data;
@@ -381,9 +742,26 @@ export class DataVersion<T extends Blank, Name extends string>
     }
 }
 
+/**
+ * The class that the data is instantiated to
+ *
+ * @export
+ * @class StructData
+ * @typedef {StructData}
+ * @template {Blank} Structure
+ * @template {string} Name
+ * @implements {DataInterface<Struct<Structure, Name>>}
+ */
 export class StructData<Structure extends Blank, Name extends string>
     implements DataInterface<Struct<Structure, Name>>
 {
+    /**
+     * Creates an instance of StructData.
+     *
+     * @constructor
+     * @param {Struct<Structure, Name>} struct
+     * @param {Readonly<St<Structure & GlobalCols, Name>>} data
+     */
     constructor(
         public readonly struct: Struct<Structure, Name>,
         public readonly data: Readonly<St<Structure & GlobalCols, Name>>
@@ -394,26 +772,62 @@ export class StructData<Structure extends Blank, Name extends string>
             );
     }
 
+    /**
+     * Data ID
+     *
+     * @readonly
+     * @type {*}
+     */
     get id() {
         return this.data.id;
     }
 
+    /**
+     * The date the data was created
+     *
+     * @readonly
+     * @type {*}
+     */
     get created() {
         return new Date(this.data.created);
     }
 
+    /**
+     * The date the data was last updated
+     *
+     * @readonly
+     * @type {*}
+     */
     get updated() {
         return new Date(this.data.updated);
     }
 
+    /**
+     * If the data is archived
+     *
+     * @readonly
+     * @type {*}
+     */
     get archived() {
         return this.data.archived;
     }
 
+    /**
+     * Database instance
+     *
+     * @readonly
+     * @type {Database}
+     */
     get database() {
         return this.struct.data.database;
     }
 
+    /**
+     * Updates the data in the database
+     *
+     * @param {Partial<St<Structure, Name>>} data
+     * @returns {*}
+     */
     update(data: Partial<St<Structure, Name>>) {
         return attemptAsync(async () => {
             await this.createVersion();
@@ -423,29 +837,50 @@ export class StructData<Structure extends Blank, Name extends string>
                     `Invalid data recieved for ${this.struct.name}`
                 );
 
-            const query = Query.build(
-                `
+            const old = this.data;
+
+            const sql = `
+                UPDATE ${this.struct.data.name}
+                SET ${Object.keys(data)
+                    .map(k => `${k} = :${k}`)
+                    .join(', ')},
+                    updated = :updated
+                WHERE id = :id;
+            `;
+
+            const res = await this.struct.data.database.unsafe.run(Query.build(
+                sql,
+                {
+                    ...old,
+                    ...data
+                } as Parameter
+            ));
+            if (res.isErr()) {
+                // reset data if update fails
+                (await this.struct.data.database.unsafe.run(Query.build(
+                    `
                     UPDATE ${this.struct.data.name}
-                    SET ${Object.keys(data)
+                    SET ${Object.keys(old)
                         .map(k => `${k} = :${k}`)
                         .join(', ')},
                         updated = :updated
-                    WHERE id = :id
+                    WHERE id = :id;
                 `,
-                {
-                    ...this.data,
-                    ...data
-                } as Parameter
-            );
+                    old
+                ))).unwrap();
+            } else {
+                this.struct.emit('update', this);
 
-            (await this.struct.data.database.unsafe.run(query)).unwrap();
-
-            this.struct.emit('update', this);
-
-            Object.assign(this.data, data);
+                Object.assign(this.data, data);
+            }
         });
     }
 
+    /**
+     * Deletes the data from the database
+     *
+     * @returns {*}
+     */
     delete() {
         return attemptAsync(async () => {
             await this.createVersion();
@@ -465,6 +900,12 @@ export class StructData<Structure extends Blank, Name extends string>
         });
     }
 
+    /**
+     * Sets the data to be archived or unarchived
+     *
+     * @param {boolean} archive
+     * @returns {*}
+     */
     setArchive(archive: boolean) {
         return attemptAsync(async () => {
             const query = Query.build(
@@ -489,6 +930,11 @@ export class StructData<Structure extends Blank, Name extends string>
         });
     }
 
+    /**
+     * Retrieves the version history of the data
+     *
+     * @returns {*}
+     */
     getVersionHistory() {
         return attemptAsync(async () => {
             if (!this.struct.data.versionHistory) return 'not-enabled';
@@ -542,6 +988,11 @@ export class StructData<Structure extends Blank, Name extends string>
         });
     }
 
+    /**
+     * Creates a new version of the data
+     *
+     * @returns {*}
+     */
     createVersion() {
         return attemptAsync(async () => {
             if (!this.struct.data.versionHistory) {
@@ -580,70 +1031,98 @@ export class StructData<Structure extends Blank, Name extends string>
         });
     }
 
-    // getAttributes() {
-    //     return attempt(() => {
-    //         const { attributes } = this.data;
-    //         if (!attributes) throw new FatalDataError('No attributes found');
+    /**
+     * Gets the attributes of the data
+     *
+     * @returns {*}
+     */
+    getAttributes() {
+        return attempt(() => {
+            const { attributes } = this.data;
+            if (!attributes) throw new FatalDataError('No attributes found');
 
-    //         const parsed = JSON.parse(attributes);
-    //         if (!Array.isArray(parsed))
-    //             throw new FatalDataError('Attributes not an array');
-    //         if (!parsed.every(a => typeof a === 'string'))
-    //             throw new FatalDataError('Attributes not all strings');
+            const parsed = JSON.parse(attributes);
+            if (!Array.isArray(parsed))
+                throw new FatalDataError('Attributes not an array');
+            if (!parsed.every(a => typeof a === 'string'))
+                throw new FatalDataError('Attributes not all strings');
 
-    //         return parsed;
-    //     });
-    // }
+            return parsed;
+        });
+    }
 
-    // addAttributes(...attrs: string[]) {
-    //     return attemptAsync(async () => {
-    //         const attributes = this.getAttributes().unwrap();
-    //         const combined = [...attributes, ...attrs].filter(
-    //             (a, i, arr) => arr.indexOf(a) === i
-    //         );
+    /**
+     * Creates new attributes for the data
+     *
+     * @param {...string[]} attrs
+     * @returns {*}
+     */
+    addAttributes(...attrs: string[]) {
+        return attemptAsync(async () => {
+            const attributes = this.getAttributes().unwrap();
+            const combined = [...attributes, ...attrs].filter(
+                (a, i, arr) => arr.indexOf(a) === i
+            );
 
-    //         (await this.setAttributes(combined)).unwrap();
-    //     });
-    // }
+            (await this.setAttributes(combined)).unwrap();
+        });
+    }
 
-    // removeAttribute(attr: string) {
-    //     return attemptAsync(async () => {
-    //         const attributes = this.getAttributes().unwrap();
+    /**
+     * Removes an attribute from the data
+     *
+     * @param {string} attr
+     * @returns {*}
+     */
+    removeAttribute(attr: string) {
+        return attemptAsync(async () => {
+            const attributes = this.getAttributes().unwrap();
 
-    //         if (!attributes.includes(attr)) return;
+            if (!attributes.includes(attr)) return;
 
-    //         const index = attributes.indexOf(attr);
+            const index = attributes.indexOf(attr);
 
-    //         attributes.splice(index, 1);
+            attributes.splice(index, 1);
 
-    //         (await this.setAttributes(attributes)).unwrap();
-    //     });
-    // }
+            (await this.setAttributes(attributes)).unwrap();
+        });
+    }
 
-    // setAttributes(attrs: string[]) {
-    //     return attemptAsync(async () => {
-    //         Object.assign(this.data, {
-    //             attributes: JSON.stringify(attrs)
-    //         });
+    /**
+     * Sets the attributes of the data (overwrites)
+     *
+     * @param {string[]} attrs
+     * @returns {*}
+     */
+    setAttributes(attrs: string[]) {
+        return attemptAsync(async () => {
+            Object.assign(this.data, {
+                attributes: JSON.stringify(attrs)
+            });
 
-    //         const query = Query.build(
-    //             `
-    //             UPDATE ${this.struct.data.name}
-    //             SET attributes = :attributes
-    //             WHERE id = :id
-    //         `,
-    //             {
-    //                 id: this.data.id,
-    //                 attributes: JSON.stringify(attrs)
-    //             }
-    //         );
+            const query = Query.build(
+                `
+                UPDATE ${this.struct.data.name}
+                SET attributes = :attributes
+                WHERE id = :id
+            `,
+                {
+                    id: this.data.id,
+                    attributes: JSON.stringify(attrs)
+                }
+            );
 
-    //         (await this.struct.data.database.unsafe.run(query)).unwrap();
+            (await this.struct.data.database.unsafe.run(query)).unwrap();
 
-    //         this.struct.emit('update', this);
-    //     });
-    // }
+            this.struct.emit('update', this);
+        });
+    }
 
+    /**
+     * Retrieves the universes the data is in
+     *
+     * @returns {*}
+     */
     getUniverses() {
         return attempt(() => {
             const { universes } = this.data;
@@ -659,6 +1138,12 @@ export class StructData<Structure extends Blank, Name extends string>
         });
     }
 
+    /**
+     * Sets the universes the data is in (overwrites)
+     *
+     * @param {string[]} universes
+     * @returns {*}
+     */
     setUniverses(universes: string[]) {
         return attemptAsync(async () => {
             let limit = this.struct.data.universeLimit;
@@ -687,20 +1172,59 @@ export class StructData<Structure extends Blank, Name extends string>
     }
 }
 
+/**
+ * Used to type the data that is returned from a struct
+ *
+ * @export
+ * @typedef {Data}
+ * @template {Struct<Blank, string>} SubStruct
+ */
 export type Data<SubStruct extends Struct<Blank, string>> = StructData<
     SubStruct['data']['structure'],
     SubStruct['data']['name']
 >;
 
+/**
+ * Struct class
+ * Used to define the structure of data
+ *
+ * @export
+ * @class Struct
+ * @typedef {Struct}
+ * @template {Blank} Structure
+ * @template {string} Name
+ */
 export class Struct<Structure extends Blank, Name extends string> {
+    /**
+     * All the structs in the program
+     *
+     * @private
+     * @static
+     * @type {*}
+     */
     private static structs = new Map<
         string,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         Struct<any, string>
     >();
 
+    /**
+     * The global router used for all structs
+     *
+     * @public
+     * @static
+     * @readonly
+     * @type {*}
+     */
     public static readonly router = new Route();
 
+    /**
+     * Builds all the structs
+     *
+     * @public
+     * @static
+     * @returns {*}
+     */
     public static buildAll() {
         return attemptAsync(async () => {
             resolveAll(
@@ -715,22 +1239,63 @@ export class Struct<Structure extends Blank, Name extends string> {
         });
     }
 
+    /**
+     * Route for the struct
+     *
+     * @private
+     * @readonly
+     * @type {*}
+     */
     private readonly route = new Route();
 
+    /**
+     * Default data for the struct (applied when building)
+     *
+     * @private
+     * @readonly
+     * @type {Structable<Struct<Structure, Name>>[]}
+     */
     private readonly defaults: Structable<Struct<Structure, Name>>[] = [];
 
+    /**
+     * If the struct has been built
+     *
+     * @private
+     * @type {boolean}
+     */
     private built = false;
 
     // private readonly permissions: {
     //     [key: string]: (target: string, data: Data<typeof this>) => boolean;
     // } = {};
 
+    /**
+     * Used to instantiate the data
+     *
+     * @public
+     * @param {St<Structure & GlobalCols, Name>} data
+     * @returns {StructData<Structure, Name>}
+     */
     public Generator(data: St<Structure & GlobalCols, Name>) {
         return new StructData<Structure, Name>(this, data);
     }
 
+    /**
+     * The columns of the struct
+     *
+     * @public
+     * @readonly
+     * @type {Readonly<ColMap<Structure, Name>>}
+     */
     public readonly cols: Readonly<ColMap<Structure, Name>>;
 
+    /**
+     * Event emitter for the struct
+     *
+     * @private
+     * @readonly
+     * @type {*}
+     */
     private readonly emitter = new EventEmitter<{
         update: Data<Struct<Structure, Name>>;
         delete: Data<Struct<Structure, Name>>;
@@ -744,17 +1309,43 @@ export class Struct<Structure extends Blank, Name extends string> {
         build: void;
     }>();
 
+    /**
+     * Listens for events
+     *
+     * @public
+     * @type {*}
+     */
     public on = this.emitter.on.bind(this.emitter);
+    /**
+     * Removes event listeners
+     *
+     * @public
+     * @type {*}
+     */
     public off = this.emitter.off.bind(this.emitter);
+    /**
+     * Emits an event
+     *
+     * @public
+     * @type {*}
+     */
     public emit = this.emitter.emit.bind(this.emitter);
 
+    /**
+     * Creates an instance of Struct.
+     *
+     * @constructor
+     * @param {StructBuilder<Structure, Name>} data
+     */
     constructor(public readonly data: StructBuilder<Structure, Name>) {
-        if (Struct.structs.has(this.data.name)) {
-            throw new FatalStructError(
-                `Struct ${this.data.name} already exists`
-            );
+        if (!data.sample) {
+            if (Struct.structs.has(this.data.name)) {
+                throw new FatalStructError(
+                    `Struct ${this.data.name} already exists in the program or you have a duplicate struct name`
+                );
+            }
+            Struct.structs.set(this.data.name, this);
         }
-        Struct.structs.set(this.data.name, this);
 
         const cols = Object.keys(data.structure).map(k => k.toLowerCase());
         if (
@@ -797,10 +1388,22 @@ export class Struct<Structure extends Blank, Name extends string> {
         // });
     }
 
+    /**
+     * Struct name
+     *
+     * @readonly
+     * @type {Name}
+     */
     get name() {
         return this.data.name;
     }
 
+    /**
+     * Database instance
+     *
+     * @readonly
+     * @type {Database}
+     */
     get database() {
         return this.data.database;
     }
@@ -819,6 +1422,20 @@ export class Struct<Structure extends Blank, Name extends string> {
         );
     }
 
+    /**
+     * Builds the struct
+     * This will:
+     *      - Create the table in the database
+     *      - Create the version history table if versionHistory is enabled
+     *      - Insert the default data if it exists
+     *      - Check if the struct already exists and has the same columns
+     *      - If the struct already exists with different columns, it will throw an error
+     *      - If the struct already exists with the same columns, it will do nothing
+     *      - Creates the front end routes
+     * If the struct has already been built or is a sample, it will throw an error
+     *
+     * @returns {*}
+     */
     build() {
         if (this.built)
             throw new FatalStructError(
@@ -894,6 +1511,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                         created text NOT NULL,
                         updated text NOT NULL,
                         archived boolean NOT NULL,
+                        attributes text NOT NULL,
                         universes text NOT NULL,
                         ${Object.entries(this.data.structure)
                             .map(([key, value]) => {
@@ -915,6 +1533,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                         created text NOT NULL,
                         updated text NOT NULL,
                         archived boolean NOT NULL,
+                        attributes text NOT NULL,
                         universes text NOT NULL,
                         ${Object.entries(this.data.structure)
                             .map(([key, value]) => {
@@ -1606,8 +2225,14 @@ export class Struct<Structure extends Blank, Name extends string> {
         });
     }
 
+    /**
+     * Gets the version of the struct (M.m.p)
+     *
+     * @returns {*}
+     */
     getVersion() {
         return attemptAsync(async () => {
+            // TODO: Version must be Major.minor.patch
             const query = Query.build(
                 'SELECT version FROM Tables WHERE name = :name'
             );
@@ -1621,6 +2246,13 @@ export class Struct<Structure extends Blank, Name extends string> {
         });
     }
 
+    /**
+     * Generates a new struct data
+     * This will insert into the database and return the data created
+     *
+     * @param {St<Structure & Partial<GlobalCols>, Name>} data
+     * @returns {*}
+     */
     new(data: St<Structure & Partial<GlobalCols>, Name>) {
         if (!this.built)
             throw new FatalStructError(`Struct ${this.data.name} not built`);
@@ -1654,6 +2286,12 @@ export class Struct<Structure extends Blank, Name extends string> {
         });
     }
 
+    /**
+     * Retrieves a struct data from the id
+     *
+     * @param {string} id
+     * @returns {*}
+     */
     fromId(id: string) {
         if (!this.built)
             throw new FatalStructError(`Struct ${this.data.name} not built`);
@@ -1679,6 +2317,13 @@ export class Struct<Structure extends Blank, Name extends string> {
         });
     }
 
+    /**
+     * Retrieves all struct data
+     * Be careful using this as it can be a lot of data and could cause memory issues with large datasets
+     *
+     * @param {boolean} [includeArchived=false]
+     * @returns {*}
+     */
     all(includeArchived: boolean = false) {
         if (!this.built)
             throw new FatalStructError(`Struct ${this.data.name} not built`);
@@ -1702,6 +2347,14 @@ export class Struct<Structure extends Blank, Name extends string> {
         });
     }
 
+    /**
+     * Retrieves struct data where the property is equal to the value 
+     *
+     * @template {keyof Structure} Property
+     * @param {Property} property
+     * @param {TS_Type<Structure[Property]>} value
+     * @returns {*}
+     */
     fromProperty<Property extends keyof Structure>(
         property: Property,
         value: TS_Type<Structure[Property]>
@@ -1729,6 +2382,11 @@ export class Struct<Structure extends Blank, Name extends string> {
         });
     }
 
+    /**
+     * Retrieves all archived struct data
+     *
+     * @returns {*}
+     */
     archived() {
         if (!this.built)
             throw new FatalStructError(`Struct ${this.data.name} not built`);
@@ -1752,10 +2410,23 @@ export class Struct<Structure extends Blank, Name extends string> {
         });
     }
 
+    /**
+     * Validates the data, ensuring it matches the structure
+     *
+     * @param {unknown} data
+     * @returns {Result<boolean>}
+     */
     validate(data: unknown) {
         return prove(data, this.data.structure);
     }
 
+    /**
+     * This is the validator function for the front-end listeners
+     * This will return a server function that will verify the data coming in matches the structure
+     *
+     * @param {boolean} defaults
+     * @returns {*}
+     */
     validator(defaults: boolean) {
         return validate({
             ...(defaults
@@ -1774,19 +2445,42 @@ export class Struct<Structure extends Blank, Name extends string> {
         });
     }
 
+    /**
+     * Listens for a path
+     * You can use this for custom functions
+     *
+     * @template data
+     * @param {string} path
+     * @param {...ServerFunction<data>[]} fns
+     * @returns {this}
+     */
     listen<data>(path: string, ...fns: ServerFunction<data>[]) {
         this.route.post(path, ...fns);
         return this;
     }
 
+    /**
+     * Drops the table
+     * This will only work if there is no data in the table
+     * If there is, it will throw an error
+     *
+     * @returns {*}
+     */
     drop() {
         return attemptAsync(async () => {
             const all = (await this.all(true)).unwrap();
             if (all.length)
-                throw new StructError('Cannot drop table with data');
+                throw new FatalStructError('Cannot drop table with data');
         });
     }
 
+    /**
+     * Adds default data to the struct
+     * BE SURE TO HAVE THE ID OF THE DATA HARD-CODED
+     * The id is used to determine if the defaults exist, so if you use a function that generates ids (uuid, nanoid, etc), it will not work as it will have a different id each time the program is run and will insert new data each time
+     *
+     * @param {...St<Structure & Partial<GlobalCols>, Name>[]} data
+     */
     addDefaults(...data: St<Structure & Partial<GlobalCols>, Name>[]) {
         if (this.built)
             throw new FatalStructError(

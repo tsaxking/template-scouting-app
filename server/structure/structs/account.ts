@@ -34,9 +34,6 @@ export namespace Account {
             // phoneNumber: 'text'
         },
         name: 'Account',
-        generators: {
-            attributes: () => ['admin']
-        }
     });
 
     export const DiscordLink = new Struct({

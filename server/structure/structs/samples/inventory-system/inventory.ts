@@ -1,4 +1,4 @@
-import { Data, BasicStructable, GlobalCols, Struct } from '../../cache-2';
+import { Data, BasicStructable, GlobalCols, Struct } from '../../struct';
 import { DB } from '../../../../utilities/database';
 import { attemptAsync, resolveAll } from '../../../../../shared/check';
 import { app } from '../../../../server';

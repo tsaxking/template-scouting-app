@@ -1,4 +1,4 @@
-import { Data, Struct } from './cache-2';
+import { Data, Struct } from './struct';
 import { DB } from '../../utilities/database';
 import { Account } from './account';
 import { attemptAsync, resolveAll } from '../../../shared/check';
