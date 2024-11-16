@@ -159,6 +159,8 @@ export class SocketWrapper {
                             ...(await Permissions.getRoles(a)).unwrap().map(r => r.id),
                         ]);
                     }
+
+                    s.emit('refresh');
                 }
             }
         }, 1000 * 60 * 10).start();
