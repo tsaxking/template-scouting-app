@@ -5,6 +5,10 @@ import { parseCookie } from '../../shared/cookie';
 import { validate } from '../middleware/data-type';
 import { uuid } from '../utilities/uuid';
 import env from '../utilities/env';
+import { Session } from './structs/session';
+import { Account } from './structs/account';
+import { Permissions } from './structs/permissions';
+import { Loop } from '../../shared/loop';
 
 type Cache = {
     event: string;
@@ -91,7 +95,12 @@ export class SocketWrapper {
         public readonly io: Server
         // cb?: (socket: Socket) => void
     ) {
-        io.on('connection', socket => {
+        const getSession = async (socket: Socket) => {
+            return Session.Session.fromId(parseCookie(socket.handshake.headers.cookie || '').ssid || '');
+        };
+
+        io.on('connection', async socket => {
+
             if (socket.recovered) console.log('recovered connection');
             if (env.ENVIRONMENT === 'dev') {
                 if (performance.now() < 10000) {
@@ -103,12 +112,19 @@ export class SocketWrapper {
 
             socket.emit('init', socket.id);
 
-            const cookie = socket.handshake.headers.cookie;
-            if (cookie) {
-                const { ssid } = parseCookie(cookie);
+            const session = await (await getSession(socket)).unwrap();
 
-                if (ssid) {
-                    socket.join(ssid);
+            if (session) {
+                socket.join(session.id);
+
+                const a = (await Account.Account.fromId(session.data.accountId)).unwrap();
+
+                if (a) {
+                    socket.join([
+                        a.id,
+                        ...a.getUniverses().unwrap(),
+                        ...(await Permissions.getRoles(a)).unwrap().map(r => r.id),
+                    ]);
                 }
             }
 
@@ -117,6 +133,35 @@ export class SocketWrapper {
                 this.em.emit('disconnect', socket);
             });
         });
+
+
+        new Loop(async () => {
+            const sockets = io.sockets.sockets;
+            for (const s of sockets.values()) {
+                if (s.connected) {
+                    // leave all rooms
+                    for (const room of s.rooms) {
+                        s.leave(room);
+                    }
+                }
+
+                const session = (await getSession(s)).unwrap();
+
+                if (session) {
+                    s.join(session.id);
+
+                    const a = (await Account.Account.fromId(session.data.accountId)).unwrap();
+
+                    if (a) {
+                        s.join([
+                            a.id,
+                            ...a.getUniverses().unwrap(),
+                            ...(await Permissions.getRoles(a)).unwrap().map(r => r.id),
+                        ]);
+                    }
+                }
+            }
+        }, 1000 * 60 * 10).start();
 
         // this.app.post<{
         //     cache: {
