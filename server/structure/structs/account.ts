@@ -16,6 +16,7 @@ import { trimBody, validate } from '../../middleware/data-type';
 import { Status } from '../../utilities/status';
 import { Session } from './session';
 import { uuid } from '../../utilities/uuid';
+import { Permissions } from './permissions';
 
 export namespace Account {
     export const Account = new Struct({
@@ -449,7 +450,11 @@ export namespace Account {
 
                 res.sendStatus(signedInStatus);
 
-                req.socket?.join(account.id);
+                req.socket?.join([
+                    account.id,
+                    ...account.getUniverses().unwrap(),
+                    ...(await Permissions.getRoles(account)).unwrap().map(r => r.id),
+                ]);
             }
         );
 
@@ -652,6 +657,9 @@ export namespace Account {
                     req
                 )
             );
+
+            // TODO: Test if this will prevent the user from reconnecting in the future
+            req.socket?.disconnect();
         });
     }
 }
