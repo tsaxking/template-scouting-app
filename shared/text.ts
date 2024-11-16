@@ -120,3 +120,29 @@ export const cost = (amount: number | string): string => {
         ? `$${fmtNumber((+amount).toFixed(2))}`
         : `-$${Math.abs(+amount).toFixed(2)}`;
 };
+
+
+export const encode = (str: string) => {
+    const chars =
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-=!@#$%^&*()_+[]{}|;:\'",.<>?/`~\\ ';
+    let result = '';
+    for (let i = 0; i < str.length; i++) {
+        const char = str[i];
+        result += chars.indexOf(char).toString().padStart(2, '0');
+    }
+
+    return result;
+};
+
+export const decode = (str: string) => {
+    const chars =
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-=!@#$%^&*()_+[]{}|;:\'",.<>?/`~\\ ';
+    let result = '';
+    for (let i = 0; i < str.length; i++) {
+    const char = str.slice(i, i + 2);
+    result += chars[parseInt(char)];
+    i++;
+    }
+
+    return result;
+}

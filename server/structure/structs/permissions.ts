@@ -24,6 +24,7 @@ import {
 import { DB } from '../../utilities/database';
 import { Account } from './account';
 import { Struct, Data, Blank, DataError, GlobalCols, PartialStructable } from './cache-2';
+import { encode, decode } from '../../../shared/text';
 
 export namespace Permissions {
     export enum PropertyAction {
@@ -44,31 +45,6 @@ export namespace Permissions {
         RestoreVersion = 'restore-version',
         DeleteVersion = 'delete-version',
     }
-
-    const encode = (str: string) => {
-        const chars =
-            'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-=!@#$%^&*()_+[]{}|;:\'",.<>?/`~\\ ';
-        let result = '';
-        for (let i = 0; i < str.length; i++) {
-            const char = str[i];
-            result += chars.indexOf(char).toString().padStart(2, '0');
-        }
-
-        return result;
-    };
-
-    const decode = (str: string) => {
-        const chars =
-            'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-=!@#$%^&*()_+[]{}|;:\'",.<>?/`~\\ ';
-        let result = '';
-        for (let i = 0; i < str.length; i++) {
-            const char = str.slice(i, i + 2);
-            result += chars[parseInt(char)];
-            i++;
-        }
-
-        return result;
-    };
 
     export class DataPermission {
         static stringify(permissions: DataPermission[]): Result<string> {
