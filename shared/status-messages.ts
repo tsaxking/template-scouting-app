@@ -622,7 +622,7 @@ export const messages: {
         instructions: ''
     },
     'server:not-implemented': {
-        message: "This request's handler has not been implemented yet.",
+        message: 'This request\'s handler has not been implemented yet.',
         color: 'warning',
         code: 501,
         instructions: ''

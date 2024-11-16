@@ -96,11 +96,12 @@ export class SocketWrapper {
         // cb?: (socket: Socket) => void
     ) {
         const getSession = async (socket: Socket) => {
-            return Session.Session.fromId(parseCookie(socket.handshake.headers.cookie || '').ssid || '');
+            return Session.Session.fromId(
+                parseCookie(socket.handshake.headers.cookie || '').ssid || ''
+            );
         };
 
         io.on('connection', async socket => {
-
             if (socket.recovered) console.log('recovered connection');
             if (env.ENVIRONMENT === 'dev') {
                 if (performance.now() < 10000) {
@@ -117,13 +118,17 @@ export class SocketWrapper {
             if (session) {
                 socket.join(session.id);
 
-                const a = (await Account.Account.fromId(session.data.accountId)).unwrap();
+                const a = (
+                    await Account.Account.fromId(session.data.accountId)
+                ).unwrap();
 
                 if (a) {
                     socket.join([
                         a.id,
                         ...a.getUniverses().unwrap(),
-                        ...(await Permissions.getRoles(a)).unwrap().map(r => r.id),
+                        ...(await Permissions.getRoles(a))
+                            .unwrap()
+                            .map(r => r.id)
                     ]);
                 }
             }
@@ -134,36 +139,42 @@ export class SocketWrapper {
             });
         });
 
-
-        new Loop(async () => {
-            const sockets = io.sockets.sockets;
-            for (const s of sockets.values()) {
-                if (s.connected) {
-                    // leave all rooms
-                    for (const room of s.rooms) {
-                        s.leave(room);
-                    }
-                }
-
-                const session = (await getSession(s)).unwrap();
-
-                if (session) {
-                    s.join(session.id);
-
-                    const a = (await Account.Account.fromId(session.data.accountId)).unwrap();
-
-                    if (a) {
-                        s.join([
-                            a.id,
-                            ...a.getUniverses().unwrap(),
-                            ...(await Permissions.getRoles(a)).unwrap().map(r => r.id),
-                        ]);
+        new Loop(
+            async () => {
+                const sockets = io.sockets.sockets;
+                for (const s of sockets.values()) {
+                    if (s.connected) {
+                        // leave all rooms
+                        for (const room of s.rooms) {
+                            s.leave(room);
+                        }
                     }
 
-                    s.emit('refresh');
+                    const session = (await getSession(s)).unwrap();
+
+                    if (session) {
+                        s.join(session.id);
+
+                        const a = (
+                            await Account.Account.fromId(session.data.accountId)
+                        ).unwrap();
+
+                        if (a) {
+                            s.join([
+                                a.id,
+                                ...a.getUniverses().unwrap(),
+                                ...(await Permissions.getRoles(a))
+                                    .unwrap()
+                                    .map(r => r.id)
+                            ]);
+                        }
+
+                        s.emit('refresh');
+                    }
                 }
-            }
-        }, 1000 * 60 * 10).start();
+            },
+            1000 * 60 * 10
+        ).start();
 
         // this.app.post<{
         //     cache: {

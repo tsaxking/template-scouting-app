@@ -263,12 +263,9 @@ type St<T extends Blank, Name extends string> = {
     [K in keyof T]: TS_TypeActual<Column<T[K], T, Name>['type']>;
 };
 
-export type PartialStructable<SubStruct extends Struct<Blank, string>> = Partial<
-    St<SubStruct['data']['structure'], SubStruct['data']['name']>
-> & St<
-    GlobalCols,
-    SubStruct['data']['name']
->;
+export type PartialStructable<SubStruct extends Struct<Blank, string>> =
+    Partial<St<SubStruct['data']['structure'], SubStruct['data']['name']>> &
+        St<GlobalCols, SubStruct['data']['name']>;
 
 export type Structable<SubStruct extends Struct<Blank, string>> = St<
     SubStruct['data']['structure'] & GlobalCols,
@@ -1107,18 +1104,23 @@ export class Struct<Structure extends Blank, Name extends string> {
                         if (!account)
                             return res.sendStatus(notSignedInStatus(req));
 
-                        const roles = await (await Permissions.getRoles(account)).unwrap();
+                        const roles = await (
+                            await Permissions.getRoles(account)
+                        ).unwrap();
 
                         if (
                             !(
-                                await Permissions.canDo(roles, this, Permissions.DataAction.Create)
+                                await Permissions.canDo(
+                                    roles,
+                                    this,
+                                    Permissions.DataAction.Create
+                                )
                             ).unwrap()
                         ) {
                             return res.sendStatus(
                                 notPermittedStatus(req, 'create')
                             );
                         }
-
 
                         // delete attributes from body so they aren't added to the data improperly
                         Object.assign(req.body, {
@@ -1127,9 +1129,11 @@ export class Struct<Structure extends Blank, Name extends string> {
 
                         const n = (await this.new(req.body)).unwrap();
 
-                        (await n.setUniverses(
-                            req.session.getUniverses().unwrap(),
-                        )).unwrap();
+                        (
+                            await n.setUniverses(
+                                req.session.getUniverses().unwrap()
+                            )
+                        ).unwrap();
 
                         res.sendStatus(
                             new Status(
@@ -1173,7 +1177,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                             await Permissions.filterAction(
                                 roles,
                                 [n],
-                                Permissions.PropertyAction.Update,
+                                Permissions.PropertyAction.Update
                             )
                         ).unwrap();
 
@@ -1233,7 +1237,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                             await Permissions.filterAction(
                                 roles,
                                 [n],
-                                Permissions.PropertyAction.Read,
+                                Permissions.PropertyAction.Read
                             )
                         ).unwrap();
                         if (!readable)
@@ -1261,7 +1265,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                             await Permissions.filterAction(
                                 roles,
                                 n.filter(d => !d.archived),
-                                Permissions.PropertyAction.Read,
+                                Permissions.PropertyAction.Read
                             )
                         ).unwrap()
                     );
@@ -1283,7 +1287,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                             await Permissions.filterAction(
                                 roles,
                                 n,
-                                Permissions.PropertyAction.ReadArchive,
+                                Permissions.PropertyAction.ReadArchive
                             )
                         )
                             .unwrap()
@@ -1316,7 +1320,8 @@ export class Struct<Structure extends Blank, Name extends string> {
                                 await Permissions.filterAction(
                                     roles,
                                     [n],
-                                    Permissions.PropertyAction.ReadVersionHistory,
+                                    Permissions.PropertyAction
+                                        .ReadVersionHistory
                                 )
                             ).unwrap().length
                         ) {
@@ -1502,7 +1507,13 @@ export class Struct<Structure extends Blank, Name extends string> {
                             await Permissions.getRoles(account)
                         ).unwrap();
 
-                        if (!(Permissions.canDo(roles, this, Permissions.DataAction.Delete)).unwrap())
+                        if (
+                            !Permissions.canDo(
+                                roles,
+                                this,
+                                Permissions.DataAction.Delete
+                            ).unwrap()
+                        )
                             return res.sendStatus(
                                 notPermittedStatus(req, 'delete')
                             );
@@ -1552,8 +1563,14 @@ export class Struct<Structure extends Blank, Name extends string> {
                         const roles = (
                             await Permissions.getRoles(account)
                         ).unwrap();
-                        
-                        if (!Permissions.canDo(roles, this, Permissions.DataAction.Archive).unwrap())
+
+                        if (
+                            !Permissions.canDo(
+                                roles,
+                                this,
+                                Permissions.DataAction.Archive
+                            ).unwrap()
+                        )
                             return res.sendStatus(
                                 notPermittedStatus(req, 'archive')
                             );

@@ -453,7 +453,9 @@ export namespace Account {
                 req.socket?.join([
                     account.id,
                     ...account.getUniverses().unwrap(),
-                    ...(await Permissions.getRoles(account)).unwrap().map(r => r.id),
+                    ...(await Permissions.getRoles(account))
+                        .unwrap()
+                        .map(r => r.id)
                 ]);
             }
         );

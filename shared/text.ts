@@ -121,7 +121,6 @@ export const cost = (amount: number | string): string => {
         : `-$${Math.abs(+amount).toFixed(2)}`;
 };
 
-
 export const encode = (str: string) => {
     const chars =
         'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-=!@#$%^&*()_+[]{}|;:\'",.<>?/`~\\ ';
@@ -136,13 +135,13 @@ export const encode = (str: string) => {
 
 export const decode = (str: string) => {
     const chars =
-    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-=!@#$%^&*()_+[]{}|;:\'",.<>?/`~\\ ';
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-=!@#$%^&*()_+[]{}|;:\'",.<>?/`~\\ ';
     let result = '';
     for (let i = 0; i < str.length; i++) {
-    const char = str.slice(i, i + 2);
-    result += chars[parseInt(char)];
-    i++;
+        const char = str.slice(i, i + 2);
+        result += chars[parseInt(char)];
+        i++;
     }
 
     return result;
-}
+};

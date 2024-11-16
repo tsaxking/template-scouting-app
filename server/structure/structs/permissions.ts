@@ -23,7 +23,14 @@ import {
 } from '../../../shared/check';
 import { DB } from '../../utilities/database';
 import { Account } from './account';
-import { Struct, Data, Blank, DataError, GlobalCols, PartialStructable } from './cache-2';
+import {
+    Struct,
+    Data,
+    Blank,
+    DataError,
+    GlobalCols,
+    PartialStructable
+} from './cache-2';
 import { encode, decode } from '../../../shared/text';
 
 export namespace Permissions {
@@ -33,7 +40,7 @@ export namespace Permissions {
 
         // anyone who can read version history or archives can read only the properties that they can read using their respective read permission
         ReadVersionHistory = 'read-version-history',
-        ReadArchive = 'read-archive',
+        ReadArchive = 'read-archive'
     }
 
     // these are not property specific
@@ -43,7 +50,7 @@ export namespace Permissions {
         Archive = 'archive',
         RestoreArchive = 'restore-archive',
         RestoreVersion = 'restore-version',
-        DeleteVersion = 'delete-version',
+        DeleteVersion = 'delete-version'
     }
 
     export class DataPermission {
@@ -139,9 +146,7 @@ export namespace Permissions {
         return Role.fromProperty('universe', universe.id);
     };
 
-    export const getRoles = async (
-        account: Data<typeof Account.Account>
-    ) => {
+    export const getRoles = async (account: Data<typeof Account.Account>) => {
         return attemptAsync(async () => {
             const roleAccounts = (
                 await RoleAccount.fromProperty('account', account.id)
@@ -162,9 +167,7 @@ export namespace Permissions {
     ) => {
         return attemptAsync(async () => {
             if (role.data.name !== 'root') {
-                const roles = await (
-                    await getRoles(account)
-                ).unwrap();
+                const roles = await (await getRoles(account)).unwrap();
                 if (roles.find(r => r.id === role.id)) {
                     return;
                 }
@@ -233,7 +236,7 @@ export namespace Permissions {
     // TODO: This isn't really typed correctly. As of right now, the output is using the generic Struct<Blank, string> type rather than the actual struct type that's passed in.
     export const filterAction = async <
         S extends Struct<Blank, string>,
-        D extends Data<S>,
+        D extends Data<S>
     >(
         roles: Data<typeof Role>[],
         data: D[],
@@ -249,7 +252,7 @@ export namespace Permissions {
                 throw new DataError('Data must be from the same struct');
             }
 
-            let struct = data[0].struct.name;
+            const struct = data[0].struct.name;
             if (!struct) {
                 return [];
             }
@@ -263,8 +266,8 @@ export namespace Permissions {
                 // TODO: if action is readversionhistory or readarchive, properties should be filtered by the read permissions
                 .filter(p => p.permission === action && p.struct === struct);
 
-
-            return data.filter(d => {
+            return data
+                .filter(d => {
                     const dataUniverses = d.getUniverses().unwrap();
                     return dataUniverses.some(du => universes.includes(du));
                 })
@@ -272,28 +275,40 @@ export namespace Permissions {
                     const { data } = d;
                     const properties = permissions
                         .map(p => p.property)
-                        .concat('id', 'created', 'updated', 'archived', 'universes')
+                        .concat(
+                            'id',
+                            'created',
+                            'updated',
+                            'archived',
+                            'universes'
+                        )
                         .filter((v, i, a) => a.indexOf(v) === i)
                         .filter(Boolean);
 
                     return Object.fromEntries(
-                        properties.map(p => ([p, data[p]]))
+                        properties.map(p => [p, data[p]])
                     ) as PartialStructable<S>;
                 });
         });
     };
 
     // global permissions
-    export const canDo = (roles: Data<typeof Role>[], struct: Struct<Blank, string>, action: DataAction) => {
+    export const canDo = (
+        roles: Data<typeof Role>[],
+        struct: Struct<Blank, string>,
+        action: DataAction
+    ) => {
         return attempt(async () => {
             const permissions = resolveAll(
                 roles.map(r => permissionsFromRole(r))
             )
                 .unwrap()
                 .flat()
-                .filter(p => p.permission === action && p.struct === struct.name);
+                .filter(
+                    p => p.permission === action && p.struct === struct.name
+                );
 
             return permissions.length > 0;
         });
-    }
+    };
 }
