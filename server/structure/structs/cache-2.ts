@@ -156,7 +156,7 @@ const newGlobalCols = (struct: Struct<Blank, string>) => {
                 ?.attributes?.()
                 .map(a => a.replaceAll(',', ''))
                 .join(',') || '',
-        universes: '',
+        universes: ''
     };
 };
 
@@ -263,6 +263,13 @@ type St<T extends Blank, Name extends string> = {
     [K in keyof T]: TS_TypeActual<Column<T[K], T, Name>['type']>;
 };
 
+export type PartialStructable<SubStruct extends Struct<Blank, string>> = Partial<
+    St<SubStruct['data']['structure'], SubStruct['data']['name']>
+> & St<
+    GlobalCols,
+    SubStruct['data']['name']
+>;
+
 export type Structable<SubStruct extends Struct<Blank, string>> = St<
     SubStruct['data']['structure'] & GlobalCols,
     SubStruct['data']['name']
@@ -278,12 +285,11 @@ export interface DataInterface<S extends Struct<Blank, string>> {
     get updated(): Date;
     get archived(): boolean;
     get database(): Database;
-
     data: St<S['data']['structure'] & GlobalCols, S['data']['name']>;
 
     struct: S;
 
-    // getAttributes(): Result<string[]>;
+    getUniverses(): Result<string[]>;
 }
 
 export class DataVersion<T extends Blank, Name extends string>
@@ -358,20 +364,20 @@ export class DataVersion<T extends Blank, Name extends string>
         });
     }
 
-    // getAttributes() {
-    //     return attempt(() => {
-    //         const { attributes } = this.data;
-    //         if (!attributes) throw new FatalDataError('No attributes found');
+    getUniverses() {
+        return attempt(() => {
+            const { universes } = this.data;
+            if (!universes) throw new FatalDataError('No universes found');
 
-    //         const parsed = JSON.parse(attributes);
-    //         if (!Array.isArray(parsed))
-    //             throw new FatalDataError('Attributes not an array');
-    //         if (!parsed.every(a => typeof a === 'string'))
-    //             throw new FatalDataError('Attributes not all strings');
+            const parsed = JSON.parse(universes);
+            if (!Array.isArray(parsed))
+                throw new FatalDataError('Universes not an array');
+            if (!parsed.every(a => typeof a === 'string'))
+                throw new FatalDataError('Universes not all strings');
 
-    //         return parsed;
-    //     });
-    // }
+            return parsed;
+        });
+    }
 }
 
 export class StructData<Structure extends Blank, Name extends string>
@@ -1004,22 +1010,27 @@ export class Struct<Structure extends Blank, Name extends string> {
                     '/connect',
                     validate({
                         structure: (s: unknown) => {
-                            if (typeof s !== 'object' || !s)
-                                return true;
+                            if (typeof s !== 'object' || !s) return true;
                             if (Array.isArray(s)) return true;
                             if (Object.keys(s).length === 0) return true;
                             if (
                                 !Object.values(s).every(
                                     v =>
                                         typeof v === 'string' &&
-                                        ['integer', 'bigint', 'text', 'json', 'boolean', 'real', 'numeric'].includes(
-                                            v
-                                        )
+                                        [
+                                            'integer',
+                                            'bigint',
+                                            'text',
+                                            'json',
+                                            'boolean',
+                                            'real',
+                                            'numeric'
+                                        ].includes(v)
                                 )
                             )
                                 return true;
                             return true;
-                        },
+                        }
                     }),
                     (req, res) => {
                         // ensure the structures are the same
@@ -1048,7 +1059,9 @@ export class Struct<Structure extends Blank, Name extends string> {
                         }
 
                         const values = Object.values(structure).sort();
-                        const values2 = Object.values(this.data.structure).sort();
+                        const values2 = Object.values(
+                            this.data.structure
+                        ).sort();
 
                         if (values.join(',') !== values2.join(',')) {
                             return res.sendStatus(
@@ -1081,7 +1094,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                                 req
                             )
                         );
-                    },
+                    }
                 );
 
                 this.route.post<St<Structure & GlobalCols, Name>>(
@@ -1159,7 +1172,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                         const [updatable] = (
                             await Permissions.filterAction(
                                 roles,
-                                Permissions.DataAction.Update,
+                                Permissions.PropertyAction.Update,
                                 [n]
                             )
                         ).unwrap();
@@ -1219,7 +1232,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                         const [readable] = (
                             await Permissions.filterAction(
                                 roles,
-                                Permissions.DataAction.Read,
+                                Permissions.PropertyAction.Read,
                                 [n]
                             )
                         ).unwrap();
@@ -1247,7 +1260,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                         (
                             await Permissions.filterAction(
                                 roles,
-                                Permissions.DataAction.Read,
+                                Permissions.PropertyAction.Read,
                                 n.filter(d => !d.archived)
                             )
                         ).unwrap()
@@ -1269,7 +1282,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                         (
                             await Permissions.filterAction(
                                 roles,
-                                Permissions.DataAction.ReadArchived,
+                                Permissions.PropertyAction.ReadArchived,
                                 n
                             )
                         )
@@ -1302,7 +1315,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                             !(
                                 await Permissions.filterAction(
                                     roles,
-                                    Permissions.DataAction.ReadVersionHistory,
+                                    Permissions.PropertyAction.ReadVersionHistory,
                                     [n]
                                 )
                             ).unwrap().length
@@ -1358,7 +1371,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                         const [restorable] = (
                             await Permissions.filterAction(
                                 roles,
-                                Permissions.DataAction.RestoreVersion,
+                                Permissions.PropertyAction.RestoreVersion,
                                 [n]
                             )
                         ).unwrap();
@@ -1437,7 +1450,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                         const [deletable] = (
                             await Permissions.filterAction(
                                 roles,
-                                Permissions.DataAction.DeleteVersion,
+                                Permissions.PropertyAction.DeleteVersion,
                                 [n]
                             )
                         ).unwrap();
@@ -1696,11 +1709,14 @@ export class Struct<Structure extends Blank, Name extends string> {
         });
     }
 
-    fromProperty<Property extends keyof Structure>(property: Property, value: TS_Type<Structure[Property]>) {
+    fromProperty<Property extends keyof Structure>(
+        property: Property,
+        value: TS_Type<Structure[Property]>
+    ) {
         return attemptAsync(async () => {
             const query = Query.build(
                 `SELECT * FROM ${this.data.name} WHERE ${property as string} = :value`,
-                { 
+                {
                     value: value as SimpleParameter
                 }
             );

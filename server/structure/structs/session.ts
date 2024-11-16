@@ -18,13 +18,13 @@ export namespace Session {
             userAgent: 'text',
             requests: 'integer',
             prevUrl: 'text',
-            customData: 'text',
+            customData: 'text'
         },
         name: 'Session',
         generators: {
             id: () => (uuid() + uuid() + uuid() + uuid()).replace(/-/g, '')
         },
-        universeLimit: 1,
+        universeLimit: 1
     });
 
     export const Blacklist = new Struct({
@@ -76,7 +76,7 @@ export namespace Session {
                     userAgent: req.get('User-Agent') || '',
                     requests: 0,
                     prevUrl: req.url,
-                    customData: '{}',
+                    customData: '{}'
                 })
             ).unwrap();
         });

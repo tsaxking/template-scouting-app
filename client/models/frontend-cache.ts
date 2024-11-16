@@ -268,18 +268,24 @@ class Data<T extends Blank> implements Writable<Structable<T>> {
         });
     }
 
-    pull<Property extends keyof T>(...properties: Property[]): Result<Readonly<{
-        [P in Property]: TS_Type<T[P]>;
-    }>> {
+    pull<Property extends keyof T>(
+        ...properties: Property[]
+    ): Result<
+        Readonly<{
+            [P in Property]: TS_Type<T[P]>;
+        }>
+    > {
         return attempt(() => {
             // TODO: Implement writable on this
-            return Object.fromEntries(properties.map(p => {
-                if (typeof this.data[p] === 'undefined') {
-                    throw new DataError('Property does not exist');
-                }
+            return Object.fromEntries(
+                properties.map(p => {
+                    if (typeof this.data[p] === 'undefined') {
+                        throw new DataError('Property does not exist');
+                    }
 
-                return [p, this.data[p]] as const;
-            })) as Readonly<{
+                    return [p, this.data[p]] as const;
+                })
+            ) as Readonly<{
                 [P in Property]: TS_Type<T[P]>;
             }>;
         });
@@ -352,12 +358,9 @@ export class Struct<T extends Blank> {
             }
         );
 
-        this.requester.post(
-            '/connect',
-            {
-                structure: this.data.structure,
-            }
-        );
+        this.requester.post('/connect', {
+            structure: this.data.structure
+        });
     }
 
     public get route() {
@@ -380,7 +383,9 @@ export class Struct<T extends Blank> {
     public readonly cache = new Map<string, Data<T>>();
 
     get sample(): Data<T> {
-        throw new FatalDataError('Cannot get sample of a struct at runtime. This is only used for type checking before compile');
+        throw new FatalDataError(
+            'Cannot get sample of a struct at runtime. This is only used for type checking before compile'
+        );
     }
 
     new(data: Structable<T>) {

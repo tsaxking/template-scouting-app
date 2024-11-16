@@ -44,7 +44,7 @@ export namespace MyNamespace {
         sample: true,
 
         // if true, the data cannot enter into more than 2 universes (defaults to 1)
-        universeLimit: 2,
+        universeLimit: 2
     });
 }
 ```
