@@ -293,7 +293,7 @@ class Data<T extends Blank> implements Writable<PartialStructable<T>> {
                 [P in Property]: TS_Type<T[P]>;
             }>;
 
-            class W implements Writable<typeof o> {
+            class PartialWritable implements Writable<typeof o> {
                 constructor(public data: typeof o) {}
 
                 public readonly subscribers = new Set<
@@ -332,7 +332,7 @@ class Data<T extends Blank> implements Writable<PartialStructable<T>> {
                 }
             }
 
-            const w = new W(o);
+            const w = new PartialWritable(o);
 
             const u = this.subscribe(d => {
                 Object.assign(o, d);
