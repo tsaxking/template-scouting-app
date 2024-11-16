@@ -62,6 +62,8 @@ export type SQL_Type =
     | 'real'
     | 'numeric';
 
+
+
 export type TS_Types = 'number' | 'string' | 'object' | 'boolean' | 'unknown';
 
 const type = <T extends SQL_Type>(type: T): TS_TypeStr<T> => {
@@ -129,6 +131,8 @@ export type TS_TypeActual<T extends TS_Types> = T extends 'number'
 
 type StructBuilder<T extends Blank, Name extends string> = {
     name: Name;
+    // TODO: implement complex types
+    // TODO: Implement json types
     structure: T; // omit id because it will always be included as a uuid primary key
     database: Database;
     versionHistory?: {
@@ -137,7 +141,7 @@ type StructBuilder<T extends Blank, Name extends string> = {
     };
     generators?: Partial<{
         id: () => string;
-        attributes: () => string[];
+        // attributes: () => string[];
     }>;
     // defaults?: Structable<Struct<T, Name>>[];
     // permissions?:

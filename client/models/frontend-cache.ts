@@ -109,6 +109,10 @@ type Structable<T extends Blank> = {
     [K in keyof T]: TS_TypeActual<Column<T[K], T>['type']>;
 };
 
+type PartialStructable<T extends Blank> = {
+    [K in keyof T]?: TS_TypeActual<Column<T[K], T>['type']>;
+}
+
 type GlobalCols = {
     id: 'text';
     created: 'text';
@@ -179,14 +183,14 @@ class DataVersion<T extends Blank> {
     }
 }
 
-class Data<T extends Blank> implements Writable<Structable<T>> {
+class Data<T extends Blank> implements Writable<PartialStructable<T>> {
     constructor(
         public readonly struct: Struct<T>,
-        public readonly data: Partial<Readonly<Structable<T & GlobalCols>>>
+        public readonly data: Readonly<PartialStructable<T & GlobalCols>>
     ) {}
 
     public readonly subscribers = new Set<
-        (data: Structable<T & GlobalCols>) => void
+        (data: PartialStructable<T & GlobalCols>) => void
     >();
 
     get id() {
@@ -194,30 +198,30 @@ class Data<T extends Blank> implements Writable<Structable<T>> {
     }
 
     get created() {
-        return new Date(this.data.created);
+        return new Date(this.data.created || 'Invalid Date');
     }
 
     get updated() {
-        return new Date(this.data.updated);
+        return new Date(this.data.updated || 'Invalid Date');
     }
 
     get archived() {
         return this.data.archived;
     }
 
-    set(data: Structable<T>) {
+    set(data: PartialStructable<T>) {
         Object.assign(this.data, data);
         this.subscribers.forEach(s => s(this.data));
     }
 
-    subscribe(fn: (data: Structable<T>) => void) {
+    subscribe(fn: (data: PartialStructable<T>) => void) {
         this.subscribers.add(fn);
         return () => this.subscribers.delete(fn);
     }
 
     // this will not update the subscribers until the server approves the update
     update(
-        fn: (data: Structable<T>) => Promise<Structable<T>> | Structable<T>
+        fn: (data: PartialStructable<T>) => Promise<PartialStructable<T>> | PartialStructable<T>
     ) {
         return attemptAsync(async () => {
             const prev = { ...this.data };
@@ -271,13 +275,13 @@ class Data<T extends Blank> implements Writable<Structable<T>> {
     pull<Property extends keyof T>(
         ...properties: Property[]
     ): Result<
+    Writable<
         Readonly<{
             [P in Property]: TS_Type<T[P]>;
         }>
-    > {
+    >> {
         return attempt(() => {
-            // TODO: Implement writable on this
-            return Object.fromEntries(
+            const o = Object.fromEntries(
                 properties.map(p => {
                     if (typeof this.data[p] === 'undefined') {
                         throw new DataError('Property does not exist');
@@ -288,6 +292,55 @@ class Data<T extends Blank> implements Writable<Structable<T>> {
             ) as Readonly<{
                 [P in Property]: TS_Type<T[P]>;
             }>;
+
+            class W implements Writable<typeof o> {
+                constructor(public data: typeof o) {}
+
+                public readonly subscribers = new Set<
+                    (data: typeof o) => void
+                >();
+
+                set(data: typeof o) {
+                    Object.assign(this.data, data);
+                    this.subscribers.forEach(s => s(this.data));
+                }
+
+                subscribe(fn: (data: typeof o) => void) {
+                    this.subscribers.add(fn);
+                    return () => {
+                        this.subscribers.delete(fn);
+                        if (this.subscribers.size === 0) {
+                            return u();
+                        }
+                    };
+                }
+
+                update(
+                    fn: (
+                        data: typeof o
+                    ) => Promise<typeof o> | typeof o
+                ) {
+                    return attemptAsync(async () => {
+                        const prev = { ...this.data };
+                        const response = await fn(this.data);
+                        Object.assign(this.data, response);
+                        this.subscribers.forEach(s => s(this.data));
+                        return async () => {
+                            return this.update(() => prev);
+                        };
+                    });
+                }
+            }
+
+            const w = new W(o);
+
+            const u = this.subscribe(d => {
+                Object.assign(o, d);
+                w.set(o);
+            });
+
+
+            return w;
         });
     }
 }
@@ -414,16 +467,16 @@ export class Struct<T extends Blank> {
     all() {
         return attemptAsync(async () => {
             const response = (
-                await this.requester.post<Structable<T & GlobalCols>[]>(
+                await this.requester.post<PartialStructable<T & GlobalCols>[]>(
                     `${this.route}/${this.data.name}/all`
                 )
             ).unwrap();
 
             const all = response.map(d => {
-                const has = this.cache.get(d.id);
+                const has = this.cache.get(d.id || '');
                 if (has) return has;
                 const data = new Data(this, d);
-                this.cache.set(data.id, data);
+                if (data.id) this.cache.set(data.id, data);
                 return data;
             });
 
