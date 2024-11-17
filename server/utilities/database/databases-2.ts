@@ -23,39 +23,97 @@ import { error } from '../terminal-logging';
 import { exec } from '../run-task';
 import { SQL_Type } from '../../structure/structs/struct';
 
+/**
+ * Error class for the database
+ *
+ * @class DatabaseError
+ * @typedef {DatabaseError}
+ * @extends {Error}
+ */
 class DatabaseError extends Error {
+    /**
+     * Creates an instance of DatabaseError.
+     *
+     * @constructor
+     * @param {string} message
+     */
     constructor(message: string) {
         super(message);
         this.name = 'DatabaseError';
     }
 }
 
+/**
+ * Interface for using different databases in the future
+ *
+ * @export
+ * @interface DatabaseInterface
+ * @typedef {DatabaseInterface}
+ */
 export interface DatabaseInterface {
+    /**
+     * Queries the database
+     *
+     * @template {Record<string, unknown>} T
+     * @param {Query} query
+     * @returns {Promise<Result<QueryResult<T>>>}
+     */
     query<T extends Record<string, unknown>>(
         query: Query
     ): Promise<Result<QueryResult<T>>>;
+    /**
+     * Connects to the database
+     *
+     * @returns {Promise<Result<boolean>>}
+     */
     connect(): Promise<Result<boolean>>;
+    /**
+     * Creates a dump file of the database
+     *
+     * @param {string} target
+     * @returns {Promise<Result<void>>}
+     */
     dump(target: string): Promise<Result<void>>;
 }
 
-type DBEvents = {
-    connected: void;
-    disconnected: void;
-    error: Error;
-};
+/**
+ * Parameter for a query
+ *
+ * @export
+ * @typedef {SimpleParameter}
+ */
 export type SimpleParameter = string | number | boolean | null;
 
+/**
+ * Parameter Object for a query
+ *
+ * @export
+ * @typedef {Parameter}
+ */
 export type Parameter =
-    | SimpleParameter
+    SimpleParameter
     | {
           [key: string]: SimpleParameter;
       };
 
+/**
+ * Old query method, all paremters for a given query
+ *
+ * @typedef {QueryFileParams}
+ * @template {keyof Queries} T
+ */
 type QueryFileParams<T extends keyof Queries> = Queries[T][0];
 
+/**
+ * Query object for the database
+ *
+ * @export
+ * @class Query
+ * @typedef {Query}
+ */
 export class Query {
     /**
-     *
+     * Builds a query from a string and parameters
      * @param query Can be a query with ? or :variable, use camelCase for everything
      * @param args
      * @returns
@@ -123,6 +181,18 @@ export class Query {
         return new Query(deCamelCase(query), copied);
     }
 
+    /**
+     * Builds a query object from a file and parameters
+     *
+     * @public
+     * @static
+     * @template {keyof Queries} T
+     * @param {T} file
+     * @param {...QueryFileParams<T> extends [undefined]
+     *             ? []
+     *             : QueryFileParams<T>} args
+     * @returns {Promise<Result<Query>>}
+     */
     public static fromFile<T extends keyof Queries>(
         file: T,
         ...args: QueryFileParams<T> extends [undefined]
@@ -144,8 +214,22 @@ export class Query {
         });
     }
 
+    /**
+     * Query arguments
+     *
+     * @public
+     * @readonly
+     * @type {Parameter[]}
+     */
     public readonly args: Parameter[];
 
+    /**
+     * Creates an instance of Query.
+     *
+     * @constructor
+     * @param {string} sql
+     * @param {Parameter[]} [args=[]]
+     */
     constructor(
         public readonly sql: string,
         args: Parameter[] = []
@@ -154,8 +238,29 @@ export class Query {
     }
 }
 
+/**
+ * Result of a query
+ *
+ * @class QueryResult
+ * @typedef {QueryResult}
+ * @template {Record<string, unknown>} T
+ */
 class QueryResult<T extends Record<string, unknown>> {
+    /**
+     * Rows of the query result
+     *
+     * @public
+     * @readonly
+     * @type {T[]}
+     */
     public readonly rows: T[];
+    /**
+     * Creates an instance of QueryResult.
+     *
+     * @constructor
+     * @param {T[]} rows
+     * @param {Query} query
+     */
     constructor(
         rows: T[],
         public readonly query: Query
@@ -168,11 +273,34 @@ class QueryResult<T extends Record<string, unknown>> {
     }
 }
 
+/**
+ * Postgres database using the database interface
+ *
+ * @export
+ * @class PgDatabase
+ * @typedef {PgDatabase}
+ * @implements {DatabaseInterface}
+ */
 export class PgDatabase implements DatabaseInterface {
+    /**
+     * Creates an instance of PgDatabase.
+     *
+     * @constructor
+     * @param {Client} client
+     */
     constructor(public readonly client: Client) {
         // super();
     }
 
+    /**
+     * Queries the database
+     *
+     * @public
+     * @async
+     * @template {Record<string, unknown>} T
+     * @param {Query} query
+     * @returns {Promise<Result<QueryResult<T>>>}
+     */
     public async query<T extends Record<string, unknown>>(
         query: Query
     ): Promise<Result<QueryResult<T>>> {
@@ -183,6 +311,13 @@ export class PgDatabase implements DatabaseInterface {
         });
     }
 
+    /**
+     * Connects to the database
+     *
+     * @public
+     * @async
+     * @returns {Promise<Result<boolean>>}
+     */
     public async connect(): Promise<Result<boolean>> {
         return attemptAsync(async () => {
             await this.client.connect();
@@ -190,6 +325,14 @@ export class PgDatabase implements DatabaseInterface {
         });
     }
 
+    /**
+     * Creates a dump file of the database
+     *
+     * @public
+     * @async
+     * @param {string} target
+     * @returns {unknown}
+     */
     public async dump(target: string) {
         return attemptAsync(async () => {
             const name = this.client.database;
@@ -209,13 +352,42 @@ export class PgDatabase implements DatabaseInterface {
     }
 }
 
+
+/**
+ * Database where you can pass in queries directly rather than building them from files
+ *
+ * @class UnsafeDatabase
+ * @typedef {UnsafeDatabase}
+ */
 class UnsafeDatabase {
+    /**
+     * Creates an instance of UnsafeDatabase.
+     *
+     * @constructor
+     * @param {DatabaseInterface} db
+     */
     constructor(public readonly db: DatabaseInterface) {}
 
+    /**
+     * Connects to the database
+     *
+     * @public
+     * @async
+     * @returns {Promise<Result<boolean>>}
+     */
     public async connect(): Promise<Result<boolean>> {
         return this.db.connect();
     }
 
+    /**
+     * Returns a single row from a query
+     *
+     * @public
+     * @async
+     * @template T
+     * @param {Query} query
+     * @returns {Promise<Result<T | undefined>>}
+     */
     public async get<T>(query: Query): Promise<Result<T | undefined>> {
         return attemptAsync(async () => {
             const result = (await this.db.query(query)).unwrap();
@@ -226,12 +398,29 @@ class UnsafeDatabase {
         });
     }
 
+    /**
+     * Returns all rows from a query
+     *
+     * @public
+     * @async
+     * @template T
+     * @param {Query} query
+     * @returns {Promise<Result<T[]>>}
+     */
     public async all<T>(query: Query): Promise<Result<T[]>> {
         return attemptAsync(async () => {
             return (await this.db.query(query)).unwrap().rows as T[];
         });
     }
 
+    /**
+     * Runs a query
+     *
+     * @public
+     * @async
+     * @param {Query} query
+     * @returns {Promise<Result<unknown>>}
+     */
     public async run(query: Query): Promise<Result<unknown>> {
         return attemptAsync(async () => {
             return this.db.query(query);
@@ -239,7 +428,21 @@ class UnsafeDatabase {
     }
 }
 
+/**
+ * Column in a table
+ *
+ * @class Col
+ * @typedef {Col}
+ */
 class Col {
+    /**
+     * Creates an instance of Col.
+     *
+     * @constructor
+     * @param {string} name
+     * @param {string} type
+     * @param {StructTable} table
+     */
     constructor(
         public readonly name: string,
         public readonly type: string,
@@ -247,17 +450,50 @@ class Col {
     ) {}
 }
 
+/**
+ * Backup of a table
+ *
+ * @class TableBackup
+ * @typedef {TableBackup}
+ */
 class TableBackup {
+    /**
+     * Creates an instance of TableBackup.
+     *
+     * @constructor
+     * @param {string} date
+     * @param {string} table
+     * @param {Database} database
+     */
     constructor(
         public readonly date: string,
         public readonly table: string,
         public readonly database: Database
     ) {}
 
+    /**
+     * Restores the table to the state of the backup
+     *
+     * @returns {*}
+     */
     restore() {
         return attemptAsync(async () => {});
     }
 
+    /**
+     * Reads the backup
+     *
+     * @returns {Promise<
+     *         Result<{
+     *             data: Record<string, unknown>[];
+     *             version: {
+     *                 major: number;
+     *                 minor: number;
+     *                 patch: number;
+     *             };
+     *         }>
+     *     >}
+     */
     read(): Promise<
         Result<{
             data: Record<string, unknown>[];
@@ -280,9 +516,29 @@ class TableBackup {
     }
 }
 
+/**
+ * Struct table
+ * Only available for tables that are built using the struct system
+ *
+ * @class StructTable
+ * @typedef {StructTable}
+ */
 class StructTable {
+    /**
+     * Creates an instance of StructTable.
+     *
+     * @constructor
+     * @param {string} name
+     * @param {{
+     *             major: number;
+     *             minor: number;
+     *             patch: number;
+     *             schema: Record<string, SQL_Type>;
+     *             name: string;
+     *         }} struct
+     * @param {Database} database
+     */
     constructor(
-        public readonly name: string,
         public readonly struct: {
             major: number;
             minor: number;
@@ -293,6 +549,12 @@ class StructTable {
         public readonly database: Database
     ) {}
 
+    /**
+     * Gets the version of the table
+     *
+     * @readonly
+     * @type {{ major: number; minor: number; patch: number; }}
+     */
     get version() {
         return {
             major: this.struct.major,
@@ -301,6 +563,22 @@ class StructTable {
         };
     }
 
+    /**
+     * Struct name
+     * @readonly
+     * @type {string}
+     */
+    get name() {
+        return this.struct.name;
+    }
+
+    /**
+     * Retrieves all the columns in the table
+     *
+     * @public
+     * @async
+     * @returns {unknown}
+     */
     public async getCols() {
         return attemptAsync(async () => {
             const res = await this.database.unsafe.all<{
@@ -325,6 +603,13 @@ class StructTable {
         });
     }
 
+    /**
+     * Gets all the versions of the table
+     *
+     * @public
+     * @async
+     * @returns {unknown}
+     */
     public async getVersions() {
         return attemptAsync(async () => {
             const versions = (await getVersions()).unwrap();
@@ -332,6 +617,13 @@ class StructTable {
         });
     }
 
+    /**
+     * Creates an async generator that yields all the backups of the table
+     *
+     * @public
+     * @async
+     * @returns {{}}
+     */
     public async *getBackups() {
         const dbBackups = (
             await fs.promises.readdir(
@@ -373,6 +665,14 @@ class StructTable {
         }
     }
 
+    /**
+     * Backs up the table
+     *
+     * @public
+     * @async
+     * @param {string} dir
+     * @returns {unknown}
+     */
     public async backup(dir: string) {
         return attemptAsync(async () => {
             const data = (
@@ -402,6 +702,13 @@ class StructTable {
         });
     }
 
+    /**
+     * Deletes all data from the table
+     *
+     * @public
+     * @async
+     * @returns {unknown}
+     */
     public async clear() {
         return attemptAsync(async () => {
             return this.database.unsafe.run(
@@ -411,21 +718,73 @@ class StructTable {
     }
 }
 
+/**
+ * Database class that is used to interact with a database connection
+ *
+ * @export
+ * @class Database
+ * @typedef {Database}
+ */
 export class Database {
+    /**
+     * Unsafe database
+     *
+     * @public
+     * @readonly
+     * @type {UnsafeDatabase}
+     */
     public readonly unsafe: UnsafeDatabase;
 
+    /**
+     * Creates an instance of Database.
+     *
+     * @constructor
+     * @param {DatabaseInterface} db
+     */
     constructor(public readonly db: DatabaseInterface) {
         this.unsafe = new UnsafeDatabase(db);
     }
 
+    /**
+     * Query class
+     *
+     * @public
+     * @readonly
+     * @type {typeof Query}
+     */
     public readonly Query = Query;
 
+    /**
+     * If the database is initialized
+     *
+     * @public
+     * @type {boolean}
+     */
     public initialized = false;
 
+    /**
+     * Connects to the database
+     *
+     * @public
+     * @async
+     * @returns {Promise<Result<boolean>>}
+     */
     public async connect(): Promise<Result<boolean>> {
         return this.db.connect();
     }
 
+    /**
+     * Returns a single row from a query
+     *
+     * @public
+     * @async
+     * @template {keyof Queries} T
+     * @param {T} type
+     * @param {...QueryFileParams<T> extends [undefined]
+     *             ? []
+     *             : QueryFileParams<T>} args
+     * @returns {Promise<Result<Queries[T][1]>>}
+     */
     public async get<T extends keyof Queries>(
         type: T,
         ...args: QueryFileParams<T> extends [undefined]
@@ -447,6 +806,18 @@ export class Database {
         });
     }
 
+    /**
+     * Returns all rows from a query
+     *
+     * @public
+     * @async
+     * @template {keyof Queries} T
+     * @param {T} type
+     * @param {...QueryFileParams<T> extends [undefined]
+     *             ? []
+     *             : QueryFileParams<T>} args
+     * @returns {Promise<Result<Queries[T][1][]>>}
+     */
     public async all<T extends keyof Queries>(
         type: T,
         ...args: QueryFileParams<T> extends [undefined]
@@ -462,6 +833,18 @@ export class Database {
         });
     }
 
+    /**
+     * Runs a query
+     *
+     * @public
+     * @async
+     * @template {keyof Queries} T
+     * @param {T} type
+     * @param {...QueryFileParams<T> extends [undefined]
+     *             ? []
+     *             : QueryFileParams<T>} args
+     * @returns {Promise<Result<Queries[T][1]>>}
+     */
     public async run<T extends keyof Queries>(
         type: T,
         ...args: QueryFileParams<T> extends [undefined]
@@ -477,6 +860,13 @@ export class Database {
         });
     }
 
+    /**
+     * Vacuums the database
+     *
+     * @public
+     * @async
+     * @returns {unknown}
+     */
     public async vacuum() {
         if (!this.initialized)
             throw new DatabaseError('Database not initialized');
@@ -493,6 +883,18 @@ export class Database {
         });
     }
 
+    /**
+     * Get all structs in the database from the Structs table
+     *
+     * @async
+     * @returns {Promise<Result<{
+     *         name: string;
+     *         schema: Record<string, SQL_Type>;
+     *         major: number;
+     *         minor: number;
+     *         patch: number;
+     *     }[]>>}
+     */
     async getStructs(): Promise<Result<{
         name: string;
         schema: Record<string, SQL_Type>;
@@ -521,8 +923,16 @@ export class Database {
         });
     }
 
+    /**
+     * Get all struct tables in the database as a StructTable object
+     * 
+     *
+     * @async
+     * @returns {Promise<Result<StructTable[]>>}
+     */
     async getStructTables(): Promise<Result<StructTable[]>> {
         return attemptAsync(async () => {
+            // TODO: Shouldn't the above function do this?
             const structs = (await this.getStructs()).unwrap();
 
             const res = await this.unsafe.all<{ tableName: string }>(
@@ -547,7 +957,6 @@ export class Database {
                                 `Struct ${table} not found in Structs table. This should never happen!!! :(`
                             );
                         return new StructTable(
-                            table,
                             struct,
                             this
                         );
@@ -557,8 +966,20 @@ export class Database {
         });
     }
 
+    /**
+     * Resets the database
+     * If hard is true, it will drop all tables
+     * If hard is false, it will only delete all data
+     * 
+     * 
+     *
+     * @async
+     * @param {boolean} hard
+     * @returns {unknown}
+     */
     async reset(hard: boolean) {
         return attemptAsync(async () => {
+            // TODO: This function only works for struct tables
             const tables = (await this.getStructTables()).unwrap();
             if (hard) {
                 // drop all tables
@@ -587,6 +1008,15 @@ export class Database {
         });
     }
 
+    /**
+     * Initializes the database
+     * This function will create the Structs and Git tables if they do not exist
+     * It will also update all tables to the latest version
+     * It will also create a backup of the current state
+     *
+     * @async
+     * @returns {unknown}
+     */
     async init() {
         return attemptAsync(async () => {
             if (this.initialized) return;
@@ -787,6 +1217,13 @@ export class Database {
         });
     }
 
+    /**
+     * Makes a backup of the current state of the database
+     *
+     * @public
+     * @async
+     * @returns {unknown}
+     */
     public async backup() {
         return attemptAsync(async () => {
             const dir = (await this.makeCurrentBackupDir()).unwrap();
@@ -797,6 +1234,12 @@ export class Database {
         });
     }
 
+    /**
+     * Creates the directory for the current backup
+     *
+     * @private
+     * @returns {*}
+     */
     private makeCurrentBackupDir() {
         return attemptAsync(async () => {
             const now = new Date().toISOString();
@@ -810,12 +1253,27 @@ export class Database {
         });
     }
 
+    /**
+     * Creates a dump file of the database
+     *
+     * @public
+     * @async
+     * @returns {unknown}
+     */
     public async dump() {
         return attemptAsync(async () => {
             const dir = (await this.makeCurrentBackupDir()).unwrap();
         });
     }
 
+    /**
+     * Restores the database from a dump file
+     *
+     * @public
+     * @async
+     * @param {string} path
+     * @returns {unknown}
+     */
     public async restore(path: string) {
         return attemptAsync(async () => {});
     }
