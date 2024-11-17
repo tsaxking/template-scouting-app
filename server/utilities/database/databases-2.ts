@@ -21,6 +21,7 @@ import { getVersions } from './versions';
 import fs from 'fs';
 import { error } from '../terminal-logging';
 import { exec } from '../run-task';
+import { SQL_Type } from '../../structure/structs/struct';
 
 class DatabaseError extends Error {
     constructor(message: string) {
@@ -282,13 +283,23 @@ class TableBackup {
 class StructTable {
     constructor(
         public readonly name: string,
-        public readonly version: {
+        public readonly struct: {
             major: number;
             minor: number;
             patch: number;
+            schema: Record<string, SQL_Type>;
+            name: string;
         },
         public readonly database: Database
     ) {}
+
+    get version() {
+        return {
+            major: this.struct.major,
+            minor: this.struct.minor,
+            patch: this.struct.patch
+        };
+    }
 
     public async getCols() {
         return attemptAsync(async () => {
@@ -482,19 +493,32 @@ export class Database {
         });
     }
 
-    async getStructs() {
-        return this.unsafe.all<{
-            name: string;
-            schema: string;
-            major: number;
-            minor: number;
-            patch: number;
-        }>(
-            Query.build(`
-                    SELECT *
-                    FROM Structs
-                `)
-        );
+    async getStructs(): Promise<Result<{
+        name: string;
+        schema: Record<string, SQL_Type>;
+        major: number;
+        minor: number;
+        patch: number;
+    }[]>> {
+        return attemptAsync(async () => {
+            const structs = (await this.unsafe.all<{
+                name: string;
+                schema: string;
+                major: number;
+                minor: number;
+                patch: number;
+            }>(
+                Query.build(`
+                        SELECT *
+                        FROM Structs
+                    `)
+            )).unwrap();
+
+            return structs.map(s => ({
+                ...s,
+                schema: JSON.parse(s.schema) 
+            }));
+        });
     }
 
     async getStructTables(): Promise<Result<StructTable[]>> {
@@ -524,11 +548,7 @@ export class Database {
                             );
                         return new StructTable(
                             table,
-                            {
-                                major: struct.major,
-                                minor: struct.minor,
-                                patch: struct.patch
-                            },
+                            struct,
                             this
                         );
                     });
@@ -582,10 +602,10 @@ export class Database {
                             patch INTEGER NOT NULL
                         );
 
-                        -- CREATE TABLE IF NOT EXISTS Git (
-                        --     branch TEXT PRIMARY KEY,
-                        --     commit TEXT NOT NULL
-                        -- );
+                        CREATE TABLE IF NOT EXISTS Git (
+                            branch TEXT PRIMARY KEY,
+                            commit TEXT NOT NULL
+                        );
                 `)
                 )
             ).unwrap();
@@ -622,6 +642,26 @@ export class Database {
                     commit: c
                 };
             }
+
+            (
+                await this.unsafe.run(
+                    Query.build(`
+                        DELETE FROM Git;
+                `)
+                )
+            ).unwrap();
+
+            (
+                await this.unsafe.run(
+                    Query.build(`
+                        INSERT INTO Git (branch, commit)
+                        VALUES (:branch, :commit);
+                `, {
+                        branch: b,
+                        commit: c
+                    })
+                )
+            ).unwrap();
 
             const dir = (await this.makeCurrentBackupDir()).unwrap();
 

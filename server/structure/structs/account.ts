@@ -1,4 +1,4 @@
-import { Data, Struct, StructData } from './cache-2';
+import { Data, Struct, StructData } from './struct';
 import { DB } from '../../utilities/database';
 import {
     attempt,

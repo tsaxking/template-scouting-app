@@ -21,6 +21,7 @@ import { Permissions } from './permissions';
 import { Session } from './session';
 import { Req } from '../app/req';
 import { capitalize } from '../../../shared/text';
+import { Logs } from './logs'; 
 
 /**
  * Error class for when there's an issue with a struct
@@ -1493,8 +1494,8 @@ export class Struct<Structure extends Blank, Name extends string> {
                 await this.data.database.unsafe.run(
                     Query.build(
                         `
-                    INSERT INTO Tables (name, schema)
-                    VALUES (:name, :schema)
+                    INSERT INTO Structs (name, schema, major, minor, patch)
+                    VALUES (:name, :schema, 1, 0, 0)
                 `,
                         {
                             name: this.data.name,
@@ -1733,7 +1734,7 @@ export class Struct<Structure extends Blank, Name extends string> {
 
                         if (
                             !(
-                                await Permissions.canDo(
+                                Permissions.canDo(
                                     roles,
                                     this,
                                     Permissions.DataAction.Create
@@ -1776,6 +1777,13 @@ export class Struct<Structure extends Blank, Name extends string> {
                         req.io
                             .to(roles.map(r => r.id))
                             .emit(`struct:${this.data.name}:create`, n.data);
+
+                        // (await Logs.Log.new({
+                        //     account: account.id,
+                        //     action: Permissions.DataAction.Create,
+                        //     struct: this.name,
+                        //     properties: n.id,
+                        // })).unwrap();
                     }
                 );
 
@@ -1832,6 +1840,16 @@ export class Struct<Structure extends Blank, Name extends string> {
                         req.io
                             .to(roles.map(r => r.id))
                             .emit(`struct:${this.data.name}:update`, updated);
+
+                        // (await Logs.Log.new({
+                        //     account: account.id,
+                        //     action: Permissions.PropertyAction.Update,
+                        //     struct: this.name,
+                        //     properties: JSON.stringify({
+                        //         id: n.id,
+                        //         updated,
+                        //     }),
+                        // })).unwrap();
                     }
                 );
 
@@ -2234,7 +2252,7 @@ export class Struct<Structure extends Blank, Name extends string> {
         return attemptAsync(async () => {
             // TODO: Version must be Major.minor.patch
             const query = Query.build(
-                'SELECT version FROM Tables WHERE name = :name'
+                'SELECT major, minor, patch FROM Tables WHERE name = :name'
             );
             return (
                 (
