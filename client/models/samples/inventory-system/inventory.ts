@@ -1,4 +1,4 @@
-import { Struct } from '../../frontend-cache';
+import { Struct } from '../../struct';
 import { socket } from '../../../utilities/socket';
 
 export namespace Inventory {
@@ -30,8 +30,15 @@ export namespace Inventory {
         name: 'ItemGroup',
         structure: {
             item: 'text',
-            group: 'text'
+            group: 'text',
+            test: 'integer',
         },
         socket
     });
+
+
+    const sample = ItemGroup.sample;
+
+    const data = sample.pull('item', 'group', 'test').unwrap();
+    data.data.test;
 }

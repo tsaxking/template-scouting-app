@@ -14,7 +14,11 @@ Samples can be found in /server/structure/structs/samples.
 ## Initialization
 
 ```typescript
-import { Struct } from '/server/structure/structs/struct.ts';
+import { Struct, Data } from '/server/structure/structs/struct';
+import { DATABASE } from '/server/structure/database';
+
+// it is highly recommended you use this function for operations
+import { attemptAsync } from '/shared/check';
 
 export namespace MyNamespace {
     export const MyStruct = new Struct({
@@ -45,5 +49,13 @@ export namespace MyNamespace {
         // if true, the data cannot enter into more than 2 universes (defaults to 1)
         universeLimit: 2
     });
+
+    // If you want custom functionality, you can add them here
+
+    export const myFunction = async (data: Data<typeof MyStruct>) => {
+        return attemptAsync(async () => {
+            // custom functionality
+        });
+    };
 }
 ```

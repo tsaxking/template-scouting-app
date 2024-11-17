@@ -3,7 +3,7 @@ import { Socket } from '../utilities/socket';
 import { attempt, attemptAsync, Result } from '../../shared/check';
 import { match } from '../../shared/match';
 import { Requester, ServerRequest } from '../utilities/requests';
-import { writable, Writable } from 'svelte/store';
+import { Readable, writable, Writable } from 'svelte/store';
 
 export class DataError extends Error {
     constructor(message: string) {
@@ -272,38 +272,22 @@ class Data<T extends Blank> implements Writable<PartialStructable<T>> {
         });
     }
 
-    pull<Property extends keyof T>(
-        ...properties: Property[]
-    ): Result<
-    Writable<
-        Readonly<{
-            [P in Property]: TS_Type<T[P]>;
-        }>
-    >> {
+    pull<K extends keyof T>(...keys: K[]) {
         return attempt(() => {
-            const o = Object.fromEntries(
-                properties.map(p => {
-                    if (typeof this.data[p] === 'undefined') {
-                        throw new DataError('Property does not exist');
-                    }
-
-                    return [p, this.data[p]] as const;
-                })
-            ) as Readonly<{
-                [P in Property]: TS_Type<T[P]>;
+            const o = {} as Structable<{
+                [P in K]: T[P];
             }>;
+            keys.forEach(k => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (o as any)[k] = this.data[k];
+            });
 
-            class PartialWritable implements Writable<typeof o> {
+            class PartialReadable implements Readable<typeof o> {
                 constructor(public data: typeof o) {}
 
                 public readonly subscribers = new Set<
                     (data: typeof o) => void
                 >();
-
-                set(data: typeof o) {
-                    Object.assign(this.data, data);
-                    this.subscribers.forEach(s => s(this.data));
-                }
 
                 subscribe(fn: (data: typeof o) => void) {
                     this.subscribers.add(fn);
@@ -314,31 +298,13 @@ class Data<T extends Blank> implements Writable<PartialStructable<T>> {
                         }
                     };
                 }
-
-                update(
-                    fn: (
-                        data: typeof o
-                    ) => Promise<typeof o> | typeof o
-                ) {
-                    return attemptAsync(async () => {
-                        const prev = { ...this.data };
-                        const response = await fn(this.data);
-                        Object.assign(this.data, response);
-                        this.subscribers.forEach(s => s(this.data));
-                        return async () => {
-                            return this.update(() => prev);
-                        };
-                    });
-                }
             }
 
-            const w = new PartialWritable(o);
+            const w = new PartialReadable(o);
 
             const u = this.subscribe(d => {
                 Object.assign(o, d);
-                w.set(o);
             });
-
 
             return w;
         });
