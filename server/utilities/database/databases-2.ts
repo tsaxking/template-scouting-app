@@ -517,208 +517,6 @@ class TableBackup {
 }
 
 /**
- * Struct table
- * Only available for tables that are built using the struct system
- *
- * @class StructTable
- * @typedef {StructTable}
- */
-class StructTable {
-    /**
-     * Creates an instance of StructTable.
-     *
-     * @constructor
-     * @param {string} name
-     * @param {{
-     *             major: number;
-     *             minor: number;
-     *             patch: number;
-     *             schema: Record<string, SQL_Type>;
-     *             name: string;
-     *         }} struct
-     * @param {Database} database
-     */
-    constructor(
-        public readonly struct: {
-            major: number;
-            minor: number;
-            patch: number;
-            schema: Record<string, SQL_Type>;
-            name: string;
-        },
-        public readonly database: Database
-    ) {}
-
-    /**
-     * Gets the version of the table
-     *
-     * @readonly
-     * @type {{ major: number; minor: number; patch: number; }}
-     */
-    get version() {
-        return {
-            major: this.struct.major,
-            minor: this.struct.minor,
-            patch: this.struct.patch
-        };
-    }
-
-    /**
-     * Struct name
-     * @readonly
-     * @type {string}
-     */
-    get name() {
-        return this.struct.name;
-    }
-
-    /**
-     * Retrieves all the columns in the table
-     *
-     * @public
-     * @async
-     * @returns {unknown}
-     */
-    public async getCols() {
-        return attemptAsync(async () => {
-            const res = await this.database.unsafe.all<{
-                column_name: string;
-                data_type: string;
-            }>(
-                Query.build(
-                    `
-                    SELECT column_name, data_type
-                    FROM information_schema.columns
-                    WHERE table_name = :table
-                `,
-                    { table: this.name }
-                )
-            );
-            if (res.isOk()) {
-                return res.value.map(
-                    r => new Col(r.column_name, r.data_type, this)
-                );
-            }
-            throw res.error;
-        });
-    }
-
-    /**
-     * Gets all the versions of the table
-     *
-     * @public
-     * @async
-     * @returns {unknown}
-     */
-    public async getVersions() {
-        return attemptAsync(async () => {
-            const versions = (await getVersions()).unwrap();
-            return versions.filter(v => v.struct === this.name);
-        });
-    }
-
-    /**
-     * Creates an async generator that yields all the backups of the table
-     *
-     * @public
-     * @async
-     * @returns {{}}
-     */
-    public async *getBackups() {
-        const dbBackups = (
-            await fs.promises.readdir(
-                path.resolve(__dirname, '../../storage/db/backups/')
-            )
-        )
-            .map(d => new Date(d))
-            .filter(d => d.toString() === 'Invalid Date')
-            .sort((a, b) => {
-                if (a > b) return -1;
-                if (a < b) return 1;
-                return 0;
-            })
-            .map(d => d.toISOString());
-
-        for (const dir of dbBackups) {
-            const backupPath = path.resolve(
-                __dirname,
-                '../../storage/db/backups/',
-                dir
-            );
-
-            const stats = await fs.promises.stat(backupPath);
-            if (stats.isDirectory()) {
-                const backupFiles = await fs.promises.readdir(backupPath);
-                for (const file of backupFiles) {
-                    if (file.endsWith('.table')) {
-                        const tableName = file.replace('.table', '');
-                        if (tableName === this.name) {
-                            yield new TableBackup(
-                                dir,
-                                tableName,
-                                this.database
-                            );
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Backs up the table
-     *
-     * @public
-     * @async
-     * @param {string} dir
-     * @returns {unknown}
-     */
-    public async backup(dir: string) {
-        return attemptAsync(async () => {
-            const data = (
-                await this.database.unsafe.all<{
-                    [key: string]: unknown;
-                }>(Query.build(`SELECT * FROM ${this.name}`))
-            ).unwrap();
-
-            const str = JSON.stringify(
-                {
-                    data,
-                    version: this.version
-                },
-                null,
-                2
-            );
-
-            await fs.promises.writeFile(
-                path.resolve(
-                    __dirname,
-                    `../../storage/db/backups/${dir}/${this.name}.table`
-                ),
-                str
-            );
-
-            return new TableBackup(dir, this.name, this.database);
-        });
-    }
-
-    /**
-     * Deletes all data from the table
-     *
-     * @public
-     * @async
-     * @returns {unknown}
-     */
-    public async clear() {
-        return attemptAsync(async () => {
-            return this.database.unsafe.run(
-                Query.build(`DELETE FROM ${this.name}`)
-            );
-        });
-    }
-}
-
-/**
  * Database class that is used to interact with a database connection
  *
  * @export
@@ -906,9 +704,6 @@ export class Database {
             const structs = (await this.unsafe.all<{
                 name: string;
                 schema: string;
-                major: number;
-                minor: number;
-                patch: number;
             }>(
                 Query.build(`
                         SELECT *
@@ -920,49 +715,6 @@ export class Database {
                 ...s,
                 schema: JSON.parse(s.schema) 
             }));
-        });
-    }
-
-    /**
-     * Get all struct tables in the database as a StructTable object
-     * 
-     *
-     * @async
-     * @returns {Promise<Result<StructTable[]>>}
-     */
-    async getStructTables(): Promise<Result<StructTable[]>> {
-        return attemptAsync(async () => {
-            // TODO: Shouldn't the above function do this?
-            const structs = (await this.getStructs()).unwrap();
-
-            const res = await this.unsafe.all<{ tableName: string }>(
-                Query.build(`
-                SELECT table_name
-                FROM information_schema.tables
-                WHERE table_schema = 'public'
-                ORDER BY table_name;
-            `)
-            );
-
-            if (res.isOk()) {
-                return res.value
-                    .map(r =>
-                        capitalize(toCamelCase(fromSnakeCase(r.tableName)))
-                    )
-                    .filter(table => structs.find(s => s.name === table))
-                    .map(table => {
-                        const struct = structs.find(s => s.name === table);
-                        if (!struct)
-                            throw new DatabaseError(
-                                `Struct ${table} not found in Structs table. This should never happen!!! :(`
-                            );
-                        return new StructTable(
-                            struct,
-                            this
-                        );
-                    });
-            }
-            throw res.error;
         });
     }
 
@@ -1026,10 +778,7 @@ export class Database {
                     Query.build(`
                         CREATE TABLE IF NOT EXISTS Structs (
                             name TEXT PRIMARY KEY,
-                            schema TEXT NOT NULL,
-                            major INTEGER NOT NULL,
-                            minor INTEGER NOT NULL,
-                            patch INTEGER NOT NULL
+                            schema TEXT NOT NULL
                         );
 
                         CREATE TABLE IF NOT EXISTS Git (

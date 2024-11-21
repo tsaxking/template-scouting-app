@@ -1451,7 +1451,6 @@ export class Struct<Structure extends Blank, Name extends string> {
                 await this.data.database.unsafe.get<{
                     schema: string;
                     name: string;
-                    version: number;
                 }>(
                     Query.build('SELECT * FROM Structs WHERE name = :name', {
                         name: this.data.name
@@ -1494,8 +1493,8 @@ export class Struct<Structure extends Blank, Name extends string> {
                 await this.data.database.unsafe.run(
                     Query.build(
                         `
-                    INSERT INTO Structs (name, schema, major, minor, patch)
-                    VALUES (:name, :schema, 1, 0, 0)
+                    INSERT INTO Structs (name, schema)
+                    VALUES (:name, :schema)
                 `,
                         {
                             name: this.data.name,

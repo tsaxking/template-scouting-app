@@ -10,7 +10,6 @@ export class Version {
 
     constructor(
         public readonly description: string,
-        public readonly struct: string,
         public readonly major: number,
         public readonly minor: number,
         public readonly patch: number,

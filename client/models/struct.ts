@@ -272,12 +272,15 @@ class Data<T extends Blank> implements Writable<PartialStructable<T>> {
         });
     }
 
-    pull<K extends keyof T>(...keys: K[]) {
+    pull<Key extends keyof T>(...keys: Key[]) {
         return attempt(() => {
             const o = {} as Structable<{
-                [P in K]: T[P];
+                [Property in Key]: T[Property];
             }>;
             keys.forEach(k => {
+                if (typeof this.data[k] === 'undefined') {
+                    throw new DataError(`User does not have permissions to read ${this.struct.name}.${k as string}`);
+                }
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 (o as any)[k] = this.data[k];
             });
@@ -380,6 +383,10 @@ export class Struct<T extends Blank> {
         this.requester.post('/connect', {
             structure: this.data.structure
         });
+    }
+
+    get name() {
+        return this.data.name;
     }
 
     public get route() {

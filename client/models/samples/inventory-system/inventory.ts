@@ -40,5 +40,5 @@ export namespace Inventory {
     const sample = ItemGroup.sample;
 
     const data = sample.pull('item', 'group', 'test').unwrap();
-    data.data.test;
+
 }
