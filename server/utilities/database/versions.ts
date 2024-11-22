@@ -4,17 +4,55 @@ import { attemptAsync, Result } from '../../../shared/check';
 import { Database } from './databases-2';
 import path from 'path';
 import { __root } from '../env';
+import { Blank } from '../../structure/structs/struct';
+
+/*
+After a version change, the database will validate the data in the database to ensure
+the schema for a struct is valid.
+
+
+*/
 
 export class Version {
-    static readonly all: Version[] = [];
+    public static compare(a: [number, number, number], b: [number, number, number]) {
+        const [aM, am, ap] = a;
+        const [bM, bm, bp] = b;
+        if (aM > bM) return 'greater';
+        if (aM < bM) return 'lower';
+        if (am > bm) return 'greater';
+        if (am < bm) return 'lower';
+        if (ap > bp) return 'greater';
+        if (ap < bp) return 'lower';
+        return 'equal';
+    }
+
+    // TODO: Set up cache
+    // static readonly all: Version[] = [];
 
     constructor(
         public readonly description: string,
-        public readonly major: number,
-        public readonly minor: number,
-        public readonly patch: number,
-        public readonly update: (database: Database) => Promise<void>
+        public readonly version: [number, number, number],
+        public readonly update: (database: Database) => Promise<void>,
+        public readonly newSchemas: {
+            [table: string]: Blank;
+        } = {},
     ) {}
+
+    get major() {
+        return this.version[0];
+    }
+
+    get minor() {
+        return this.version[1];
+    }
+
+    get patch() {
+        return this.version[2];
+    }
+
+    get versionStr() {
+        return this.version.join('.');
+    }
 
     greaterThan(major: number, minor: number, patch: number, equalTo = false) {
         if (this.major > major) {
@@ -51,9 +89,9 @@ export class Version {
 
 export const getVersions = (): Promise<Result<Version[]>> => {
     return attemptAsync(async () => {
-        if (Version.all.length) {
-            return Version.all;
-        }
+        // if (Version.all.length) {
+        //     return Version.all;
+        // }
 
         const files = await readdir(
             path.resolve(__root, './storage/db/scripts/migrations')
@@ -101,7 +139,6 @@ export const getVersions = (): Promise<Result<Version[]>> => {
             return a.patch - b.patch;
         });
 
-        Version.all.push(...v);
-        return Version.all;
+        return v;
     });
 };

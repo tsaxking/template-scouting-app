@@ -9,7 +9,7 @@ import {
 import { Req } from '../app/req';
 import { Res } from '../app/res';
 import { Next } from '../app/app';
-import crypto from 'node:crypto';
+import crypto from 'crypto';
 import { log } from '../../utilities/terminal-logging';
 import Filter from 'bad-words';
 import { trimBody, validate } from '../../middleware/data-type';

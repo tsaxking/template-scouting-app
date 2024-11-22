@@ -1,5 +1,5 @@
 /* eslint-disable no-await-in-loop */
-import { attemptAsync, build, resolveAll, Result } from '../../../shared/check';
+import { attempt, attemptAsync, build, Err, Ok, resolveAll, Result } from '../../../shared/check';
 // import cliProgress from 'cli-progress';
 import { EventEmitter } from '../../../shared/event-emitter';
 import { Client } from 'pg';
@@ -9,7 +9,9 @@ import {
     parseObject,
     toCamelCase,
     fromSnakeCase,
-    capitalize
+    capitalize,
+    encode,
+    decode
 } from '../../../shared/text';
 import { bigIntDecode, bigIntEncode } from '../../../shared/objects';
 import { readFile } from '../files';
@@ -17,11 +19,13 @@ import path from 'path';
 import { Queries } from '../queries';
 import { log } from '../../../client/utilities/logging';
 import { gitBranch, gitCommit } from '../git';
-import { getVersions } from './versions';
+import { getVersions, Version } from './versions';
 import fs from 'fs';
 import { error } from '../terminal-logging';
 import { exec } from '../run-task';
-import { SQL_Type } from '../../structure/structs/struct';
+import { Blank, SQL_Type } from '../../structure/structs/struct';
+import { __root } from '../env';
+import crypto from 'crypto';
 
 /**
  * Error class for the database
@@ -446,7 +450,7 @@ class Col {
     constructor(
         public readonly name: string,
         public readonly type: string,
-        public readonly table: StructTable
+        // public readonly table: StructTable
     ) {}
 }
 
@@ -466,55 +470,431 @@ class TableBackup {
      * @param {Database} database
      */
     constructor(
-        public readonly date: string,
-        public readonly table: string,
-        public readonly database: Database
+        public readonly filename: string, // does not include extension
+        public readonly database: Database,
     ) {}
+
+    get tableName() {
+        return this.filename.split('-')[0];
+    }
+
+    get date() {
+        return Number(this.filename.split('-')[1]);
+    }
 
     /**
      * Restores the table to the state of the backup
      *
      * @returns {*}
      */
-    restore() {
-        return attemptAsync(async () => {});
+    async restore() {
+        return attemptAsync(async () => {
+            const [t, m, v] = await Promise.all([
+                this.getTable(),
+                this.getMetdata(),
+                this.database.getVersion(),
+            ]);
+    
+    
+            const table = t.unwrap();
+            const metadata = m.unwrap();
+            const version = v.unwrap();
+    
+            // TODO: What if there's a backup that is compatibile but it's from a different database version?
+            // Is this a problem? The database will create a backup between each version change
+            if (Version.compare(version, metadata.version) !== 'equal') {
+                return new Err(
+                    new DatabaseError('Backup is from a different version than the current database version')
+                );
+            }
+    
+    
+            const hash = (await table.getHash()).unwrap();
+    
+            if (hash === metadata.hash) {
+                // table is in the same state, no reason to restore
+                return new Ok(undefined);
+            }
+    
+            (await table.backup()).unwrap();
+            (await table.clear()).unwrap();
+
+            // need to drop so we can recreate the table with the correct schema
+            // this is important because when migrating versions, it's possible for the schema to change
+            // and if the version fails, we should restore to the most recent schema
+            (await table.drop()).unwrap();
+    
+            // Did it in here so I could isolate the stream side of the function 
+            return await new Promise<void>(async (res, rej) => {
+                let resolved = false;
+                const resolve = () => {
+                    if (resolved) return;
+                    resolved = true;
+                    if (error) rej(error);
+                    else res();
+                }
+
+                const rs = this.read().unwrap();
+
+                let error: DatabaseError;
+
+                let row = 0;
+                let headers: string[] = [];
+                rs.on('data', (d) => {
+                    if (row === 0) {
+                        headers = d.toString().split(',').map(decode);
+                    } else {
+                        if (!headers.length) {
+                            rs.close();
+                            error = new DatabaseError(`Did not find any headers for ${table.name} in backup`);
+                            return;
+                        }
+                        const data = (JSON.parse(decode(d.toString())) as unknown[]).reduce((cur, acc, i) => {
+                            (acc as any)[headers[i]] = cur;
+                            return acc;
+                        }, {} as Record<string, unknown>) as Record<string, unknown>;
+    
+                        this.database.unsafe.run(Query.build(`
+                            INSERT INTO ${table.name} (
+                                ${Object.keys(data).join(',')}
+                            ) VALUES (
+                                ${Object.keys(data).map(h => `:${h}`).join(',')}
+                            );
+                        `, data as Parameter));
+                    }
+                    row++;
+                });
+
+                rs.on('end', () => {
+                    rs.close();
+                    resolve(); // TODO: How should I structure the end of this function?
+                });
+
+                rs.on('close', () => {
+                    resolve();
+                });
+            });
+        });
     }
 
     /**
-     * Reads the backup
+     * Creates a read stream of the backup
      *
-     * @returns {Promise<
-     *         Result<{
-     *             data: Record<string, unknown>[];
-     *             version: {
-     *                 major: number;
-     *                 minor: number;
-     *                 patch: number;
-     *             };
-     *         }>
-     *     >}
      */
-    read(): Promise<
-        Result<{
-            data: Record<string, unknown>[];
-            version: {
-                major: number;
-                minor: number;
-                patch: number;
-            };
-        }>
-    > {
+    read() {
+        return attempt(() => {
+            return fs.createReadStream(path.resolve(
+                __root,
+                './storage/db/backups',
+                `${this.filename}.backupv2`
+            ));
+        });
+    }
+
+    getTable() {
         return attemptAsync(async () => {
-            const data = await fs.promises.readFile(
+            const table = (await this.database.getTables()).unwrap().find(t => t.name === this.tableName);
+            if (!table) throw new DatabaseError(`Unable to find table ${this.tableName}`);
+            return table;
+        });
+    }
+
+    getMetdata(): Promise<Result<TableMetadata>> {
+        return attemptAsync(async () => {
+            const data =  await fs.promises.readFile(
                 path.resolve(
-                    __dirname,
-                    `../../storage/db/backups/${this.date}/${this.table}.table`
-                )
+                    __root,
+                    './storage/db/backups',
+                    `${this.filename}.metadatav2`
+                ),
+                'utf-8'
             );
-            return JSON.parse(data.toString());
+
+            const parsed = JSON.parse(data);
+            const error = new DatabaseError(`${this.filename}.metadatav2 is malformed`);
+            if (!parsed) throw error;
+            if (Array.isArray(parsed)) throw error;
+            if (!Object.hasOwn(parsed, 'name')) throw error;
+            if (!Object.hasOwn(parsed, 'branch')) throw error;
+            if (!Object.hasOwn(parsed, 'commit')) throw error;
+            if (!Object.hasOwn(parsed, 'date')) throw error;
+            if (!Object.hasOwn(parsed, 'hash')) throw error;
+
+            if (!Object.values(parsed).every(k => typeof k === 'string')) throw error;
+
+            return parsed as TableMetadata;
+        });
+    }
+
+    copy(dir: string) {
+        return attemptAsync(async () => {
+            // TODO: Ensure dir is an absolute path
+            return await Promise.all([
+                fs.promises.copyFile(path.resolve(
+                    __root,
+                    './storage/db/backups',
+                    `${this.filename}.backupv2`,
+                ),
+                path.resolve(
+                    dir,
+                    `${this.filename}.backupv2`,
+                )
+            ),
+            fs.promises.copyFile(
+                path.resolve(
+                    __root,
+                    './storage/db/backups',
+                    `${this.filename}.metadatav2`,
+                ),
+                path.resolve(
+                    dir,
+                    `${this.filename}.metadatav2`,
+                )
+            )
+            ]);
         });
     }
 }
+
+type Schema = {
+    columnName: string;
+    dataType: string;
+};
+
+type TableMetadata = {
+    name: string;
+    branch: string;
+    commit: string;
+    date: string;
+    hash: string;
+    version: [number, number, number];
+    schema: Schema[];
+};
+
+class Table {
+    constructor(
+        public readonly name: string,
+        public readonly database: Database,
+    ) {}
+
+    getSchema() {
+        return this.database.unsafe.all<Schema>(Query.build(
+                `
+                    SELECT
+                        columnName,
+                        dataType --,
+                        -- characterMaximumLength
+                    FROM INFORMATION_SCHEMA.COLUMNS WHERE tableName = :tableName
+                `, {
+                    tableName: this.name,
+                }
+            ))
+    }
+
+    create() {
+        return attemptAsync(async () => {
+            const schema = (await this.getSchema()).unwrap();
+            this.database.unsafe.run(Query.build(`
+                CREATE TABLE IF NOT EXISTS ${this.name} (
+                    ${
+                        // TODO: Will this even work?
+                        // I don't know if dataType handles all edge cases
+                        schema.map(s => `${s.columnName} ${s.dataType}`)
+                    }
+                );
+            `));
+        });
+    }
+
+    hasSchema(compare: Schema[]) {
+        return attemptAsync(async () => {
+            const current = (await this.getSchema()).unwrap();
+
+            const every = (to: Schema[]) => (s: Schema): boolean => {
+                const exists = to.find(t => t.columnName === s.columnName);
+                if (!exists) return false;
+                return s.dataType === exists.dataType;
+            };
+
+            // it is possible for one to have more columns than the other, so we must to the same comparison on both to handle all edge cases
+            return current.every(every(compare)) && compare.every(every(current));
+        });
+    }
+
+    // TODO: cache that should deplete quickly
+    // private __all: {
+    //     [key: string]: unknown;
+    // }[] = [];
+
+    all() {
+        return attemptAsync(async () => {
+            // if (this.__all.length) return this.__all;
+            // this.__all = 
+            return (await this.database.unsafe.all<{
+                [key: string]: unknown;
+            }>(Query.build(`SELECT * FROM ${this.name};`))).unwrap();
+            // setTimeout(() => this.__all = []);
+            // return this.__all;
+        });
+    }
+
+    getHash() {
+        return attemptAsync(async () => {
+            const data = (await this.all()).unwrap();
+            return crypto.pbkdf2Sync(JSON.stringify(data), 'salt', 1, 64, 'sha512').toString('hex');
+        });
+    }
+
+    backup(force = false) {
+        return attemptAsync(async () => {
+            const backups = (await this.getBackups()).unwrap();
+            const thisHash = (await this.getHash()).unwrap();
+
+            // if the table states are the same, return the backup that has the same table state
+            if (!force) {
+                const last = backups[backups.length - 1];
+                if (last) {
+                    const m = (await last.getMetdata()).unwrap();
+                    if (thisHash === m.hash) return last;
+                }
+            }
+
+            // TODO: This method cannot be done with blobs
+            const all = (await this.all()).unwrap();
+            if (!all.length) return;
+
+            const headers = Object.keys(all[0]);
+            let values = all
+                .map(row => {
+                    return JSON.stringify(headers.map(h => row[h]));
+                })
+                .map(encode);
+            values = [headers.map(encode).join(','), ...values];
+
+            const date = new Date().toISOString();
+            const { name } = this;
+            const [branch, commit] = await Promise.all([
+                gitBranch(),
+                gitCommit()
+            ]);
+
+            const b = branch.unwrap();
+            const c = commit.unwrap();
+
+            const metadata = JSON.stringify({
+                name,
+                branch: b,
+                commit: c,
+                date,
+                hash: thisHash,
+                version: (await this.database.getVersion()).unwrap(),
+                schema: (await this.getSchema()).unwrap(),
+            });
+
+            const filename = `${name}-${Date.now()}`;
+
+            fs.promises.writeFile(path.resolve(
+                __root,
+                './storage/db/backups',
+                `${filename}.metadatav2`
+            ), metadata);
+
+            // This will run asynchronously, it may still be writing after the function is completed
+            const ws = fs.createWriteStream(path.resolve(
+                __root,
+                './storage/db/backups',
+                `${filename}.backupv2` // new index
+            ));
+
+            for (let i = 0; i < values.length; i++) {
+                ws.write(values[i]);
+            }
+
+            ws.once('drain', () => ws.close());
+
+            return new TableBackup(
+                filename,
+                this.database,
+            );
+        });
+    }
+
+    getBackups() {
+        return attemptAsync(async () => {
+            const files = await fs.promises.readdir(path.join(
+                __root,
+                './storage/db/backups'
+            ));
+
+            return files
+                .filter(f => path.extname(f).includes('backupv2'))
+                .filter(f => f.includes(this.name))
+                .map(f => {
+                    const name = f.replace('.backupv2', '');
+
+                    return new TableBackup(
+                        name,
+                        this.database,
+                    )
+                })
+                .sort((a, b) => a.date - b.date);
+        });
+    }
+
+    clear() {
+        return this.database.unsafe.run(Query.build(`DELETE FROM ${this.name};`));
+    }
+
+    drop() {
+        return attemptAsync(async () => {
+            const all = (await this.all()).unwrap();
+            if (all.length) throw new DatabaseError('Cannot drop table that contains data');
+            return (await this.database.unsafe.run(Query.build(`DROP TABLE ${this.name};`))).unwrap();
+        });
+    }
+
+    // verifyData() {
+    //     return attemptAsync(async () => {
+    //         const [a, s] = await Promise.all([
+    //             this.all(),
+    //             this.getSchema(),
+    //         ]);
+
+    //         const all = a.unwrap();
+    //         const schema = s.unwrap();
+
+    //         for (let i = 0; i < all.length; i++) {
+    //             const d = all[i];
+
+    //             for (let j = 0; j < schema.length; j++) {
+    //                 const s = schema[j];
+    //             }
+    //         }
+    //     });
+    // }
+}
+
+class TableStruct extends Table {
+    constructor(
+        public readonly name: string,
+        public readonly schema: Blank,
+        public readonly database: Database,
+    ) {
+        super(name, database);
+    }
+
+
+    // verifyData() {
+    //     return attemptAsync<boolean>(async () => {
+    //         const all = (await this.all()).unwrap();
+
+    //         // TODO: Build validation function for struct data
+    //         return all.every
+    //     });
+    // }
+}
+
+
 
 /**
  * Database class that is used to interact with a database connection
@@ -658,6 +1038,34 @@ export class Database {
         });
     }
 
+    public async getTables() {
+        return attemptAsync(async () => {
+            return (await this.unsafe.all<{ name: string }>(
+                Query.build(`
+                    SELECT table_name as name
+                    FROM information_schema.tables
+                    WHERE table_schema = 'public'
+                    ORDER BY table_name;
+                `)
+            )).unwrap().map(t => t.name).map(t => toCamelCase(fromSnakeCase(t)))
+            .map(t => new Table(t, this));
+        });
+    }
+
+    public async getStructs() {
+        return attemptAsync(async () => {
+            return (await this.unsafe.all<{
+                name: string;
+                schema: string;
+            }>(Query.build(`SELECT * FROM Structs`))).unwrap()
+            .map(s => new TableStruct(
+                s.name,
+                JSON.parse(s.schema) as Blank,
+                this,
+            ))
+        });
+    }
+
     /**
      * Vacuums the database
      *
@@ -670,7 +1078,7 @@ export class Database {
             throw new DatabaseError('Database not initialized');
         return attemptAsync(async () => {
             log('Vacuum go brrrrrrr');
-            const tables = await this.getStructTables();
+            const tables = await this.getTables();
             if (tables.isErr()) throw tables.error;
             return Promise.all(
                 tables.value.map(async table => {
@@ -681,42 +1089,6 @@ export class Database {
         });
     }
 
-    /**
-     * Get all structs in the database from the Structs table
-     *
-     * @async
-     * @returns {Promise<Result<{
-     *         name: string;
-     *         schema: Record<string, SQL_Type>;
-     *         major: number;
-     *         minor: number;
-     *         patch: number;
-     *     }[]>>}
-     */
-    async getStructs(): Promise<Result<{
-        name: string;
-        schema: Record<string, SQL_Type>;
-        major: number;
-        minor: number;
-        patch: number;
-    }[]>> {
-        return attemptAsync(async () => {
-            const structs = (await this.unsafe.all<{
-                name: string;
-                schema: string;
-            }>(
-                Query.build(`
-                        SELECT *
-                        FROM Structs
-                    `)
-            )).unwrap();
-
-            return structs.map(s => ({
-                ...s,
-                schema: JSON.parse(s.schema) 
-            }));
-        });
-    }
 
     /**
      * Resets the database
@@ -732,7 +1104,7 @@ export class Database {
     async reset(hard: boolean) {
         return attemptAsync(async () => {
             // TODO: This function only works for struct tables
-            const tables = (await this.getStructTables()).unwrap();
+            const tables = (await this.getTables()).unwrap();
             if (hard) {
                 // drop all tables
                 resolveAll(
@@ -785,16 +1157,15 @@ export class Database {
                             branch TEXT PRIMARY KEY,
                             commit TEXT NOT NULL
                         );
+
+                        CREATE TABLE IF NOT EXISTS Version (
+                            major INTEGER,
+                            minor INTEGER,
+                            patch INTEGER
+                        );
                 `)
                 )
             ).unwrap();
-
-            // Is git branch information necessary now?
-            // the system below should handle the issues that git branch information would solve
-
-            // answer: yes, git information is necessary
-            // if a user makes 2 branches that update the schema of a table in different ways, but have the same version numbers,
-            // the system would stay on the first branch and never update to the second branch
 
             let currentGit = (
                 await this.unsafe.get<{
@@ -842,129 +1213,84 @@ export class Database {
                 )
             ).unwrap();
 
-            const dir = (await this.makeCurrentBackupDir()).unwrap();
+            const versions = (await getVersions()).unwrap();
 
-            // each table has its own Major, minor, patch
-            // for each table version that needs to be made, make a backup before updating
-            // If current runtime version is lower than the version in the database, revert state to the latest backup in the branch or purge if no backup
-            // update all tables to latest backup state
-            // make a backup of the current state
-            // TODO: test if the previous state is the same as the backup
-            // TODO: optimize by merging states
-            // if there is new stuff in new state, merge it with the backup
-            // if there is new stuff in both states, user must resolve
-            // if so, do nothing
-            // if not, purge and set the table to the backup state
+            for (const version of versions) {
+                const backup = (await this.backup()).unwrap();
 
-            const tables = (await this.getStructTables()).unwrap();
-
-            // TODO: Parallelize
-            for (const table of tables) {
-                const tv = table.version;
-
-                const versions = (await table.getVersions()).unwrap();
-
-                const last = versions[versions.length - 1];
-                if (last && last.lessThan(tv.major, tv.minor, tv.patch)) {
-                    // this assumes the schema in the runtime struct is correct
-                    // the runtime struct should insert the correct schema into the database
-                    // so delete the struct from the structs table and reinsert all data
-
-                    const backup = (await table.backup(dir)).unwrap();
-                    try {
-                        (await table.clear()).unwrap();
-
-                        (
-                            await this.unsafe.run(
-                                Query.build(
-                                    `
-                                DELETE FROM Structs
-                                WHERE name = :name;
-                            `,
-                                    {
-                                        name: table.name
-                                    }
-                                )
-                            )
-                        ).unwrap();
-
-                        const backups = table.getBackups();
-                        BACKUP: for await (const backup of backups) {
-                            const data = (await backup.read()).unwrap();
-                            if (
-                                data.version.major === tv.major &&
-                                data.version.minor === tv.minor &&
-                                data.version.patch === tv.patch
-                            ) {
-                                // apply data
-                                await Promise.all(
-                                    data.data.map(async d => {
-                                        const keys = Object.keys(d);
-                                        const q = Query.build(
-                                            `
-                                                INSERT INTO ${table.name} (${keys.join(', ')})
-                                                VALUES (${keys.map(k => `:${k}`).join(', ')});
-                                            `,
-                                            d as Parameter
-                                        );
-                                        return this.unsafe.run(q);
-                                    })
-                                );
-                                break BACKUP;
-                            }
-                        }
-                    } catch (e) {
-                        error(e);
-                        error(
-                            new DatabaseError(
-                                `Failed to clear and update table ${table.name}`
-                            )
-                        );
-                        await backup.restore();
-                        process.exit(1);
-                    }
+                // TODO: Restoring a backup will not work because the schema hasn't been set to the previous version
+                // The schema for each table must be stored with the backup
+                try {
+                    log(`Running version update: ${version.versionStr}`);
+                    log(version.description);
+                    await version.update(this);
+                } catch (e) {
+                    (await this.restore(backup)).unwrap();
+                    throw new DatabaseError(`Error running version update: ${version.versionStr}`);
                 }
 
-                VERSION: for (const version of versions) {
-                    if (version.greaterThan(tv.major, tv.minor, tv.patch)) {
-                        const backup = (await table.backup(dir)).unwrap();
-                        try {
-                            await version.update(this);
-                        } catch (e) {
-                            error(e);
-                            await backup.restore();
-                            break VERSION;
-                        }
+                // this can't be outside the for loop because it's assumed the schema will change after the update
+                // const structs = (await this.getStructs()).unwrap();
+                // const valid = resolveAll(await Promise.all(structs.map(s => s.verifyData()))).unwrap();
 
-                        // if the update is successful, update the version
-                        tv.major = version.major;
-                        tv.minor = version.minor;
-                        tv.patch = version.patch;
+                // const invalidStructs = structs.filter((s, i) => !valid[i]);
 
-                        (
-                            await this.unsafe.run(
-                                Query.build(
-                                    `
-                                UPDATE Structs
-                                SET major = :major, minor = :minor, patch = :patch
-                                WHERE name = :name;
-                                `,
-                                    {
-                                        name: table.name,
-                                        major: version.major,
-                                        minor: version.minor,
-                                        patch: version.patch
-                                    }
-                                )
-                            )
-                        ).unwrap();
-                    }
-                }
+                // if (invalidStructs.length) {
+                    // (await this.restore(backup)).unwrap();
+                    // throw new DatabaseError(`After updating, the data inside the struct(s): ${invalidStructs.join(', ')} had invalid data. The database has been restored to the previous state and the version has been undone.`);
+                // }
+
+                (await this.setVersion(version.version)).unwrap();
             }
 
             this.initialized = true;
         });
     }
+
+    public async getVersion() {
+        return attemptAsync<[number, number, number]>(async () => {
+            const result = (await this.unsafe.get<{
+                major: number;
+                minor: number;
+                patch: number;
+            }>(Query.build(`
+                SELECT * FROM Version
+            `))).unwrap()
+
+            if (!result) return [0,0,0];
+            return [
+                result.major,
+                result.minor,
+                result.patch,
+            ];
+        });
+    }
+
+    public async setVersion(version: [number, number, number]) {
+        return attemptAsync(async () => {
+            const [major, minor, patch] = version;
+            (await this.unsafe.run(Query.build(`
+                DELETE FROM Version;
+            `))).unwrap();
+
+            (await this.unsafe.run(Query.build(`
+                INSERT INTO Version (
+                    major,
+                    minor,
+                    patch
+                ) VALUES (
+                    :major,
+                    :minor,
+                    :patch
+                );
+            `, {
+                major,
+                minor,
+                patch,
+            }))).unwrap();
+        });
+    }
+
 
     /**
      * Makes a backup of the current state of the database
@@ -974,12 +1300,27 @@ export class Database {
      * @returns {unknown}
      */
     public async backup() {
-        return attemptAsync(async () => {
+        return attemptAsync<string>(async () => {
+            const tables = (await this.getTables()).unwrap();
+
+            const backups = resolveAll(await Promise.all(tables.map(table => table.backup()))).unwrap().filter(Boolean);
+
             const dir = (await this.makeCurrentBackupDir()).unwrap();
+            resolveAll(await Promise.all(
+                backups.map(b => b.copy(dir)),
+            )).unwrap();
 
-            const tables = (await this.getStructTables()).unwrap();
+            // TODO: Create zip file
 
-            return Promise.all(tables.map(table => table.backup(dir)));
+            // TODO: when extracting the backup, we need to handle the potential name conflicts
+            // This should be alleviated by using Date.now(), so the backup should be the same,
+            // However, it is a good idea to compare the hashes
+        });
+    }
+
+    public async restore(zipFile: string) {
+        return attemptAsync(async () => {
+            // This should use workers
         });
     }
 
@@ -991,14 +1332,18 @@ export class Database {
      */
     private makeCurrentBackupDir() {
         return attemptAsync(async () => {
-            const now = new Date().toISOString();
+            const name = path.resolve(
+                __root,
+                './storage/db/backups',
+                new Date().toISOString(),
+            );
 
             await fs.promises.mkdir(
-                path.resolve(__dirname, '../../storage/db/backups/', now),
+                name,
                 { recursive: true }
             );
 
-            return now;
+            return name;
         });
     }
 
@@ -1013,17 +1358,5 @@ export class Database {
         return attemptAsync(async () => {
             const dir = (await this.makeCurrentBackupDir()).unwrap();
         });
-    }
-
-    /**
-     * Restores the database from a dump file
-     *
-     * @public
-     * @async
-     * @param {string} path
-     * @returns {unknown}
-     */
-    public async restore(path: string) {
-        return attemptAsync(async () => {});
     }
 }
