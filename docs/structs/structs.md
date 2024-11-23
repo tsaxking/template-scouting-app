@@ -39,7 +39,7 @@ export namespace MyNamespace {
 
         generators: {
             // used to generate the default data for the struct
-            id: (): string => 'my-id',
+            id: (): string => 'my-id'
         },
 
         // if true and the struct is initialized, it will crash the program

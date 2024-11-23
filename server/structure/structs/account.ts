@@ -33,7 +33,7 @@ export namespace Account {
             verification: 'text'
             // phoneNumber: 'text'
         },
-        name: 'Account',
+        name: 'Account'
     });
 
     export const DiscordLink = new Struct({

@@ -4,6 +4,19 @@ import { attempt, attemptAsync, Result } from '../../shared/check';
 import { match } from '../../shared/match';
 import { Requester, ServerRequest } from '../utilities/requests';
 import { Readable, writable, Writable } from 'svelte/store';
+import {
+    SQL_Type,
+    TS_Type,
+    TS_Types,
+    type,
+    typeValidation,
+    TS_TypeStr,
+    TS_TypeActual,
+    GlobalCols,
+    TS_GlobalCols,
+    Blank
+} from '../../shared/struct';
+import { EventEmitter } from '../../shared/event-emitter';
 
 export class DataError extends Error {
     constructor(message: string) {
@@ -27,72 +40,6 @@ File overview:
 
 */
 
-export type SQL_Type =
-    | 'integer'
-    | 'bigint'
-    | 'text'
-    | 'json'
-    | 'boolean'
-    | 'real'
-    | 'numeric';
-
-export type TS_Types = 'number' | 'string' | 'object' | 'boolean' | 'unknown';
-
-export type TS_Type<T extends SQL_Type> =
-    | (T extends 'integer'
-          ? number
-          : T extends 'bigint'
-            ? number
-            : T extends 'text'
-              ? string
-              : T extends 'json'
-                ? object
-                : T extends 'boolean'
-                  ? boolean
-                  : T extends 'real'
-                    ? number
-                    : T extends 'numeric'
-                      ? number
-                      : never)
-    | unknown;
-
-// for runtime
-export type TS_TypeStr<T extends SQL_Type> =
-    | (T extends 'integer'
-          ? 'number'
-          : T extends 'bigint'
-            ? 'number'
-            : T extends 'text'
-              ? 'string'
-              : T extends 'json'
-                ? 'object'
-                : T extends 'boolean'
-                  ? 'boolean'
-                  : T extends 'real'
-                    ? 'number'
-                    : T extends 'numeric'
-                      ? 'number'
-                      : never)
-    | 'unknown';
-
-export type TS_TypeActual<T extends TS_Types> = T extends 'number'
-    ? number
-    : T extends 'string'
-      ? string
-      : T extends 'object'
-        ? object
-        : T extends 'boolean'
-          ? boolean
-          : never;
-
-type StructActions =
-    | 'update'
-    | 'delete'
-    | 'archive'
-    | 'unarchive'
-    | 'create'
-    | 'read';
-
 type StructBuilder<T> = {
     name: string;
     structure: T;
@@ -101,23 +48,12 @@ type StructBuilder<T> = {
     requester?: Requester;
 };
 
-type Blank = {
-    [key: string]: SQL_Type;
-};
-
 type Structable<T extends Blank> = {
     [K in keyof T]: TS_TypeActual<Column<T[K], T>['type']>;
 };
 
 type PartialStructable<T extends Blank> = {
     [K in keyof T]?: TS_TypeActual<Column<T[K], T>['type']>;
-}
-
-type GlobalCols = {
-    id: 'text';
-    created: 'text';
-    updated: 'text';
-    archived: 'boolean';
 };
 
 class Column<Type extends SQL_Type, StructType extends Blank> {
@@ -134,7 +70,7 @@ class Column<Type extends SQL_Type, StructType extends Blank> {
             .case('integer', () => 'number')
             .case('bigint', () => 'number')
             .case('text', () => 'string')
-            .case('json', () => 'object')
+            // .case('json', () => 'object')
             .case('boolean', () => 'boolean')
             .case('real', () => 'number')
             .case('numeric', () => 'number')
@@ -183,7 +119,55 @@ class DataVersion<T extends Blank> {
     }
 }
 
-class Data<T extends Blank> implements Writable<PartialStructable<T>> {
+export class DataArr<T extends Blank> implements Readable<Data<T>[]> {
+    constructor(
+        public readonly struct: Struct<T>,
+        public readonly data: Data<T>[]
+    ) {}
+
+    public readonly subscribers = new Set<(data: Data<T>[]) => void>();
+
+    private onUnsubscribe: (() => void) | undefined;
+
+    subscribe(fn: (data: Data<T>[]) => void) {
+        this.subscribers.add(fn);
+        return () => {
+            this.subscribers.delete(fn);
+            if (this.subscribers.size === 0) {
+                this.onUnsubscribe?.();
+            }
+        };
+    }
+
+    get(id: string) {
+        return this.data.find(d => d.id === id);
+    }
+
+    fromProperty<Key extends keyof Data<T>['data']>(
+        key: Key,
+        value: Data<T>['data'][Key]
+    ) {
+        return this.data.filter(d => d.data[key] === value);
+    }
+
+    add(...data: Data<T>[]) {
+        this.data.push(...data);
+        this.subscribers.forEach(s => s(this.data));
+    }
+
+    remove(data: Data<T>) {
+        const index = this.data.indexOf(data);
+        if (index === -1) return;
+        this.data.splice(index, 1);
+        this.subscribers.forEach(s => s(this.data));
+    }
+
+    onAllUnsubscribe(fn: () => void) {
+        this.onUnsubscribe = fn;
+    }
+}
+
+export class Data<T extends Blank> implements Writable<PartialStructable<T>> {
     constructor(
         public readonly struct: Struct<T>,
         public readonly data: Readonly<PartialStructable<T & GlobalCols>>
@@ -221,7 +205,9 @@ class Data<T extends Blank> implements Writable<PartialStructable<T>> {
 
     // this will not update the subscribers until the server approves the update
     update(
-        fn: (data: PartialStructable<T>) => Promise<PartialStructable<T>> | PartialStructable<T>
+        fn: (
+            data: PartialStructable<T>
+        ) => Promise<PartialStructable<T>> | PartialStructable<T>
     ) {
         return attemptAsync(async () => {
             const prev = { ...this.data };
@@ -279,7 +265,9 @@ class Data<T extends Blank> implements Writable<PartialStructable<T>> {
             }>;
             keys.forEach(k => {
                 if (typeof this.data[k] === 'undefined') {
-                    throw new DataError(`User does not have permissions to read ${this.struct.name}.${k as string}`);
+                    throw new DataError(
+                        `User does not have permissions to read ${this.struct.name}.${k as string}`
+                    );
                 }
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 (o as any)[k] = this.data[k];
@@ -314,8 +302,23 @@ class Data<T extends Blank> implements Writable<PartialStructable<T>> {
     }
 }
 
+type StructEvents<T extends Blank> = {
+    new: Data<T>;
+    update: Data<T>;
+    delete: Data<T>;
+    archive: Data<T>;
+    restore: Data<T>;
+};
+
 export class Struct<T extends Blank> {
-    private static structs = new Map<string, Struct<Blank>>();
+    public static readonly structs = new Map<string, Struct<Blank>>();
+
+    private readonly eventEmitter = new EventEmitter<StructEvents<T>>();
+
+    public on = this.eventEmitter.on.bind(this.eventEmitter);
+    public off = this.eventEmitter.off.bind(this.eventEmitter);
+    public emit = this.eventEmitter.emit.bind(this.eventEmitter);
+    public once = this.eventEmitter.once.bind(this.eventEmitter);
 
     constructor(public readonly data: StructBuilder<T>) {
         if (Struct.structs.has(this.data.name)) {
@@ -332,6 +335,7 @@ export class Struct<T extends Blank> {
                 if (has) return;
                 const d = new Data(this, data);
                 this.cache.set(data.id, d);
+                this.emit('new', d);
             }
         );
         data.socket.on(
@@ -340,12 +344,14 @@ export class Struct<T extends Blank> {
                 const has = this.cache.get(data.id);
                 if (!has) return;
                 has.set(data);
+                this.emit('update', has);
             }
         );
         data.socket.on(`struct:${this.data.name}:delete`, (id: string) => {
             const has = this.cache.get(id);
             if (!has) return;
             this.cache.delete(id);
+            this.emit('delete', has);
         });
         data.socket.on(`struct:${this.data.name}:archive`, (id: string) => {
             const has = this.cache.get(id);
@@ -353,13 +359,15 @@ export class Struct<T extends Blank> {
             Object.assign(has.data, { archived: true });
             this.stores.all.update(d => d.filter(d => d.id !== id));
             this.stores.archived.update(d => [...d, has]);
+            this.emit('archive', has);
         });
-        data.socket.on(`struct:${this.data.name}:unarchive`, (id: string) => {
+        data.socket.on(`struct:${this.data.name}:restore`, (id: string) => {
             const has = this.cache.get(id);
             if (!has) return;
             Object.assign(has.data, { archived: false });
             this.stores.all.update(d => [...d, has]);
             this.stores.archived.update(d => d.filter(d => d.id !== id));
+            this.emit('restore', has);
         });
         data.socket.on(
             `struct:${this.data.name}:restore-version`,
@@ -438,7 +446,8 @@ export class Struct<T extends Blank> {
     }
 
     all() {
-        return attemptAsync(async () => {
+        const arr = new DataArr(this, []);
+        const fetcher = async () => {
             const response = (
                 await this.requester.post<PartialStructable<T & GlobalCols>[]>(
                     `${this.route}/${this.data.name}/all`
@@ -454,9 +463,31 @@ export class Struct<T extends Blank> {
             });
 
             this.stores.all.set(all);
+            arr.add(...all);
+        };
 
-            return all;
+        const add = (data: Data<T>) => {
+            arr.add(data);
+        };
+        const remove = (data: Data<T>) => {
+            arr.remove(data);
+        };
+
+        this.on('new', add);
+        this.on('archive', remove);
+        this.on('delete', remove);
+
+        arr.onAllUnsubscribe(() => {
+            this.off('new', add);
+            this.off('archive', remove);
+            this.off('delete', remove);
         });
+
+        // do not await because we want to return the array immediately
+        // since it's returning a writable, we'll be able to get the changes through subscriptions
+        fetcher();
+
+        return arr;
     }
 
     archived() {
@@ -499,9 +530,9 @@ export class Struct<T extends Blank> {
                         return typeof value === 'number';
                     } else if (type === 'text') {
                         return typeof value === 'string';
-                    } else if (type === 'json') {
+                        // } else if (type === 'json') {
                         // TODO: could have a better check in here in the future
-                        return typeof value === 'object';
+                        // return typeof value === 'object';
                     } else if (type === 'boolean') {
                         return typeof value === 'boolean';
                     }

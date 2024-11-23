@@ -31,14 +31,12 @@ export namespace Inventory {
         structure: {
             item: 'text',
             group: 'text',
-            test: 'integer',
+            test: 'integer'
         },
         socket
     });
 
-
     const sample = ItemGroup.sample;
 
     const data = sample.pull('item', 'group', 'test').unwrap();
-
 }

@@ -21,10 +21,72 @@ import { Permissions } from './permissions';
 import { Session } from './session';
 import { Req } from '../app/req';
 import { capitalize, decode, encode } from '../../../shared/text';
-import { Logs } from './logs'; 
+import { Logs } from './logs';
 import { saveFile } from '../../utilities/files';
 import fs from 'fs';
 import path from 'path';
+import {
+    SQL_Type,
+    TS_Type,
+    TS_Types,
+    type,
+    typeValidation,
+    TS_TypeStr,
+    TS_TypeActual,
+    GlobalCols,
+    TS_GlobalCols,
+    Blank
+} from '../../../shared/struct';
+/**
+ * Prove that the data matches the structure
+ *
+ * @template {Blank} T
+ * @template D
+ * @template {string} Name
+ * @param {D} data
+ * @param {Blank} structure
+ * @returns {Result<boolean>}
+ */
+export const prove = <T extends Blank, D, Name extends string>(
+    data: D,
+    structure: Blank
+): Result<boolean> => {
+    return attempt(() => {
+        if (!data || typeof data !== 'object') {
+            return false;
+        }
+
+        const keys = Object.keys(data);
+        if (keys.length === 0) {
+            return false;
+        }
+
+        const keysMatch = keys.every(k => Object.keys(structure).includes(k));
+        if (!keysMatch) {
+            return false;
+        }
+
+        const typesMatch = keys.every(k => {
+            const type = structure[k];
+            const value = (data as Record<string, unknown>)[k];
+            if (
+                type === 'integer' ||
+                type === 'bigint' ||
+                type === 'real' ||
+                type === 'numeric'
+            ) {
+                return typeof value === 'number';
+            } else if (type === 'text') {
+                return typeof value === 'string';
+            } else if (type === 'boolean') {
+                return typeof value === 'boolean';
+            }
+            return false;
+        });
+
+        return typesMatch as D extends St<T, Name> ? true : false;
+    });
+};
 
 /**
  * Error class for when there's an issue with a struct
@@ -115,125 +177,6 @@ Questions:
 */
 
 /**
- * Basic SQL Types, there will be more added as needed
- *
- * @export
- * @typedef {SQL_Type}
- */
-export type SQL_Type =
-    | 'integer'
-    | 'bigint'
-    | 'text'
-    | 'boolean'
-    | 'real'
-    | 'numeric';
-
-
-
-/**
- * Primitive types that SQL_Types can be converted to
- *
- * @export
- * @typedef {TS_Types}
- */
-export type TS_Types = 'number' | 'string' | 'object' | 'boolean' | 'unknown';
-
-/**
- * Converts a SQL_Type to a TS_TypeStr
- *
- * @template {SQL_Type} T
- * @param {T} type
- * @returns {TS_TypeStr<T>}
- */
-const type = <T extends SQL_Type>(type: T): TS_TypeStr<T> => {
-    switch (type) {
-        case 'integer':
-        case 'bigint':
-        case 'real':
-        case 'numeric':
-            return 'number' as TS_TypeStr<T>;
-        case 'text':
-            return 'string' as TS_TypeStr<T>;
-        case 'boolean':
-            return 'boolean' as TS_TypeStr<T>;
-        default:
-            return 'unknown';
-    }
-};
-
-export const typeValidation = <T extends SQL_Type>(t: T, data: unknown): boolean => {
-    return typeof data === type(t);
-};
-
-/**
- * Converts a SQL_Type to a real type
- *
- * @export
- * @typedef {TS_Type}
- * @template {SQL_Type} T
- */
-export type TS_Type<T extends SQL_Type> =
-    | (T extends 'integer'
-          ? number
-          : T extends 'bigint'
-            ? number
-            : T extends 'text'
-              ? string
-              : T extends 'json'
-                ? object
-                : T extends 'boolean'
-                  ? boolean
-                  : T extends 'real'
-                    ? number
-                    : T extends 'numeric'
-                      ? number
-                      : never)
-    | unknown;
-
-// for runtime
-/**
- * Used to convert a SQL_Type to a TS_Type strings (result of typeof)
- *
- * @export
- * @typedef {TS_TypeStr}
- * @template {SQL_Type} T
- */
-export type TS_TypeStr<T extends SQL_Type> =
-    | (T extends 'integer'
-          ? 'number'
-          : T extends 'bigint'
-            ? 'number'
-            : T extends 'text'
-              ? 'string'
-              : T extends 'json'
-                ? 'object'
-                : T extends 'boolean'
-                  ? 'boolean'
-                  : T extends 'real'
-                    ? 'number'
-                    : T extends 'numeric'
-                      ? 'number'
-                      : never)
-    | 'unknown';
-
-/**
- * Converts TS_Type to the real type
- *
- * @export
- * @typedef {TS_TypeActual}
- * @template {TS_Types} T
- */
-export type TS_TypeActual<T extends TS_Types> = T extends 'number'
-    ? number
-    : T extends 'string'
-      ? string
-      : T extends 'object'
-        ? object
-        : T extends 'boolean'
-          ? boolean
-          : never;
-
-/**
  * Object passed in to build the struct
  *
  * @typedef {StructBuilder}
@@ -282,6 +225,10 @@ type StructBuilder<T extends Blank, Name extends string> = {
      * Limit of universes this struct's is allowed to be in
      */
     universeLimit?: number;
+    /**
+     * Time (in milliseconds) for how long a data in this struct should last
+     */
+    lifetime?: number;
 };
 
 type StructImage = {
@@ -291,7 +238,7 @@ type StructImage = {
     versionHistory?: {
         type: 'days' | 'versions';
         amount: number;
-    }
+    };
 };
 
 /**
@@ -311,108 +258,9 @@ const newGlobalCols = (struct: Struct<Blank, string>) => {
                 ?.attributes?.()
                 .map(a => a.replaceAll(',', ''))
                 .join(',') || '',
-        universes: ''
+        universes: '',
+        liftetime: struct.data.lifetime || 0
     };
-};
-
-/**
- * Prove that the data matches the structure
- *
- * @template {Blank} T
- * @template D
- * @template {string} Name
- * @param {D} data
- * @param {Blank} structure
- * @returns {Result<boolean>}
- */
-export const prove = <T extends Blank, D, Name extends string>(
-    data: D,
-    structure: Blank
-): Result<boolean> => {
-    return attempt(() => {
-        if (!data || typeof data !== 'object') {
-            return false;
-        }
-
-        const keys = Object.keys(data);
-        if (keys.length === 0) {
-            return false;
-        }
-
-        const keysMatch = keys.every(k => Object.keys(structure).includes(k));
-        if (!keysMatch) {
-            return false;
-        }
-
-        const typesMatch = keys.every(k => {
-            const type = structure[k];
-            const value = (data as Record<string, unknown>)[k];
-            if (
-                type === 'integer' ||
-                type === 'bigint' ||
-                type === 'real' ||
-                type === 'numeric'
-            ) {
-                return typeof value === 'number';
-            } else if (type === 'text') {
-                return typeof value === 'string';
-            } else if (type === 'boolean') {
-                return typeof value === 'boolean';
-            }
-            return false;
-        });
-
-        return typesMatch as D extends St<T, Name> ? true : false;
-    });
-};
-
-/**
- * All of the global columns for all structs
- *
- * @export
- * @typedef {GlobalCols}
- */
-export type GlobalCols = {
-    id: 'text';
-    created: 'text';
-    updated: 'text';
-    archived: 'boolean';
-    attributes: 'text';
-    universes: 'text';
-};
-
-/**
- * Ts typed global columns
- *
- * @export
- * @typedef {TS_GlobalCols}
- */
-export type TS_GlobalCols = {
-    id: string;
-    created: string;
-    updated: string;
-    archived: boolean;
-    // attributes: string;
-    universes: string;
-};
-
-/**
- * Map of columns for a struct
- *
- * @export
- * @typedef {ColMap}
- * @template {{
- *         [key: string]: SQL_Type;
- *     }} Cols
- * @template {string} Name
- */
-export type ColMap<
-    Cols extends {
-        [key: string]: SQL_Type;
-    },
-    Name extends string
-> = {
-    [K in keyof Cols]: Column<Cols[K], Cols, Name>;
 };
 
 /**
@@ -470,13 +318,22 @@ export class Column<
 }
 
 /**
- * Template struct class structure
+ * Map of columns for a struct
  *
  * @export
- * @typedef {Blank}
+ * @typedef {ColMap}
+ * @template {{
+ *         [key: string]: SQL_Type;
+ *     }} Cols
+ * @template {string} Name
  */
-export type Blank = {
-    [key: string]: SQL_Type;
+export type ColMap<
+    Cols extends {
+        [key: string]: SQL_Type;
+    },
+    Name extends string
+> = {
+    [K in keyof Cols]: Column<Cols[K], Cols, Name>;
 };
 
 /**
@@ -866,17 +723,18 @@ export class StructData<Structure extends Blank, Name extends string>
                 WHERE id = :id;
             `;
 
-            const res = await this.struct.data.database.unsafe.run(Query.build(
-                sql,
-                {
+            const res = await this.struct.data.database.unsafe.run(
+                Query.build(sql, {
                     ...old,
                     ...data
-                } as Parameter
-            ));
+                } as Parameter)
+            );
             if (res.isErr()) {
                 // reset data if update fails
-                (await this.struct.data.database.unsafe.run(Query.build(
-                    `
+                (
+                    await this.struct.data.database.unsafe.run(
+                        Query.build(
+                            `
                     UPDATE ${this.struct.data.name}
                     SET ${Object.keys(old)
                         .map(k => `${k} = :${k}`)
@@ -884,8 +742,10 @@ export class StructData<Structure extends Blank, Name extends string>
                         updated = :updated
                     WHERE id = :id;
                 `,
-                    old
-                ))).unwrap();
+                            old
+                        )
+                    )
+                ).unwrap();
             } else {
                 this.struct.emit('update', this);
 
@@ -919,7 +779,7 @@ export class StructData<Structure extends Blank, Name extends string>
     }
 
     /**
-     * Sets the data to be archived or unarchived
+     * Sets the data to be archived or restored
      *
      * @param {boolean} archive
      * @returns {*}
@@ -940,7 +800,7 @@ export class StructData<Structure extends Blank, Name extends string>
 
             (await this.struct.data.database.unsafe.run(query)).unwrap();
 
-            this.struct.emit(archive ? 'archive' : 'unarchive', this);
+            this.struct.emit(archive ? 'archive' : 'restore', this);
 
             Object.assign(this.data, {
                 archived: archive
@@ -1236,15 +1096,12 @@ export class Struct<Structure extends Blank, Name extends string> {
     private static initImage(struct: Struct<Blank, string>, image: string) {
         return attemptAsync(async () => {
             // TODO: Type checking for image
-            const {
-                name,
-                defaults,
-                structure,
-                versionHistory,
-            } = JSON.parse(decode(image)) as StructImage;
+            const { name, defaults, structure, versionHistory } = JSON.parse(
+                decode(image)
+            ) as StructImage;
 
             const { database } = struct.data;
-            
+
             const current = (
                 await database.unsafe.get<{
                     schema: string;
@@ -1257,9 +1114,7 @@ export class Struct<Structure extends Blank, Name extends string> {
             ).unwrap();
 
             if (current) {
-                const cols = Object.keys(structure).map(k =>
-                    k.toLowerCase()
-                );
+                const cols = Object.keys(structure).map(k => k.toLowerCase());
                 const currentCols = Object.keys(JSON.parse(current.schema)).map(
                     k => k.toLowerCase()
                 );
@@ -1290,18 +1145,20 @@ export class Struct<Structure extends Blank, Name extends string> {
                     throwErr();
                 }
             } else {
-                (await database.unsafe.run(
-                    Query.build(
-                        `
+                (
+                    await database.unsafe.run(
+                        Query.build(
+                            `
                     INSERT INTO Structs (name, schema)
                     VALUES (:name, :schema);
                 `,
-                        {
-                            name: name,
-                            schema: JSON.stringify(structure)
-                        }
+                            {
+                                name: name,
+                                schema: JSON.stringify(structure)
+                            }
+                        )
                     )
-                )).unwrap();
+                ).unwrap();
             }
 
             const query = Query.build(
@@ -1313,6 +1170,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                         archived boolean NOT NULL,
                         attributes text NOT NULL,
                         universes text NOT NULL,
+                        lifetime int NOT NULL,
                         ${Object.entries(structure)
                             .map(([key, value]) => {
                                 return `${key} ${value}`;
@@ -1335,6 +1193,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                         archived boolean NOT NULL,
                         attributes text NOT NULL,
                         universes text NOT NULL,
+                        lifetime int NOT NULL,
                         ${Object.entries(structure)
                             .map(([key, value]) => {
                                 return `${key} ${value}`;
@@ -1459,7 +1318,7 @@ export class Struct<Structure extends Blank, Name extends string> {
         update: Data<Struct<Structure, Name>>;
         delete: Data<Struct<Structure, Name>>;
         archive: Data<Struct<Structure, Name>>;
-        unarchive: Data<Struct<Structure, Name>>;
+        restore: Data<Struct<Structure, Name>>;
         create: Data<Struct<Structure, Name>>;
         version: DataVersion<Structure, Name>;
         'restore-version': DataVersion<Structure, Name>;
@@ -1788,12 +1647,10 @@ export class Struct<Structure extends Blank, Name extends string> {
                         ).unwrap();
 
                         if (
-                            !(
-                                Permissions.canDo(
-                                    roles,
-                                    this,
-                                    Permissions.DataAction.Create
-                                )
+                            !Permissions.canDo(
+                                roles,
+                                this,
+                                Permissions.DataAction.Create
                             ).unwrap()
                         ) {
                             return res.sendStatus(
@@ -2312,7 +2169,7 @@ export class Struct<Structure extends Blank, Name extends string> {
             if (!this.validate(data))
                 throw new StructError(`Invalid data for ${this.data.name}`);
 
-            const d = this.Generator( {
+            const d = this.Generator({
                 ...newGlobalCols(this),
                 ...data // will overwrite global cols if they are included
             });
@@ -2370,7 +2227,7 @@ export class Struct<Structure extends Blank, Name extends string> {
     }
 
     /**
-     * Retrieves struct data where the property is equal to the value 
+     * Retrieves struct data where the property is equal to the value
      *
      * @template {keyof Structure} Property
      * @param {Property} property
@@ -2414,7 +2271,9 @@ export class Struct<Structure extends Blank, Name extends string> {
         if (!this.built)
             throw new FatalStructError(`Struct ${this.data.name} not built`);
         return attemptAsync(async () => {
-            const query = Query.build(`SELECT * FROM ${this.data.name} WHERE archived = false;`);
+            const query = Query.build(
+                `SELECT * FROM ${this.data.name} WHERE archived = false;`
+            );
 
             const data = (
                 await this.data.database.unsafe.all<St<Structure, Name>>(query)
@@ -2578,22 +2437,35 @@ export class Struct<Structure extends Blank, Name extends string> {
     }
 
     private imagize() {
-        if (this.built) throw new FatalStructError(`${this.name}.imagize() run after struct is built`);
-        if (this.sample) throw new FatalStructError(`${this.name}.imagize() run on sample struct`);
+        if (this.built)
+            throw new FatalStructError(
+                `${this.name}.imagize() run after struct is built`
+            );
+        if (this.sample)
+            throw new FatalStructError(
+                `${this.name}.imagize() run on sample struct`
+            );
         return attemptAsync(async () => {
             const { structure, name } = this.data;
             const { defaults } = this;
 
-            const image = encode(JSON.stringify({
-                structure, name, defaults
-            } as StructImage));
+            const image = encode(
+                JSON.stringify({
+                    structure,
+                    name,
+                    defaults
+                } as StructImage)
+            );
 
             const exists = fs.existsSync(
                 path.resolve(__dirname, `./images/${this.name}.imagev1`)
             );
 
             if (!exists) {
-                await fs.promises.writeFile(path.resolve(__dirname, `./images${this.name}.imagev1`), image);
+                await fs.promises.writeFile(
+                    path.resolve(__dirname, `./images${this.name}.imagev1`),
+                    image
+                );
             }
 
             return image;

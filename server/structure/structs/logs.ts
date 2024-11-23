@@ -1,6 +1,5 @@
-import { Struct } from "./struct";
-import { DB } from "../../utilities/database";
-
+import { Struct } from './struct';
+import { DB } from '../../utilities/database';
 
 export namespace Logs {
     export const Log = new Struct({
@@ -10,7 +9,7 @@ export namespace Logs {
             account: 'text',
             action: 'text',
             struct: 'text',
-            properties: 'text',
-        },
+            properties: 'text'
+        }
     });
 }

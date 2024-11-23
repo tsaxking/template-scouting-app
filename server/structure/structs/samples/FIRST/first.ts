@@ -1,5 +1,5 @@
-import { Struct } from "../../cache-2";
-import { DB } from "../../../../utilities/database";
+import { Struct } from '../../cache-2';
+import { DB } from '../../../../utilities/database';
 
 export namespace FIRST {
     export const Events = new Struct({
@@ -8,9 +8,9 @@ export namespace FIRST {
         structure: {
             eventKey: 'text',
             flipX: 'boolean',
-            flipY: 'boolean',
+            flipY: 'boolean'
         },
-        sample: true,
+        sample: true
     });
 
     export const Teams = new Struct({
@@ -19,9 +19,9 @@ export namespace FIRST {
         structure: {
             number: 'integer',
             eventKey: 'text',
-            watchPriority: 'integer',
+            watchPriority: 'integer'
         },
-        sample: true,
+        sample: true
     });
 
     export const Matches = new Struct({
@@ -30,9 +30,9 @@ export namespace FIRST {
         structure: {
             eventKey: 'text',
             matchNumber: 'text',
-            compLevel: 'text',
+            compLevel: 'text'
         },
-        sample: true,
+        sample: true
     });
 
     export const CustomMatches = new Struct({
@@ -50,8 +50,8 @@ export namespace FIRST {
             blue2: 'integer',
             blue3: 'integer',
             blue4: 'integer',
-            name: 'text',
+            name: 'text'
         },
-        sample: true,
+        sample: true
     });
 }

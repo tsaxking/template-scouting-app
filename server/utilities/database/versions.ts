@@ -14,7 +14,10 @@ the schema for a struct is valid.
 */
 
 export class Version {
-    public static compare(a: [number, number, number], b: [number, number, number]) {
+    public static compare(
+        a: [number, number, number],
+        b: [number, number, number]
+    ) {
         const [aM, am, ap] = a;
         const [bM, bm, bp] = b;
         if (aM > bM) return 'greater';
@@ -35,7 +38,7 @@ export class Version {
         public readonly update: (database: Database) => Promise<void>,
         public readonly newSchemas: {
             [table: string]: Blank;
-        } = {},
+        } = {}
     ) {}
 
     get major() {

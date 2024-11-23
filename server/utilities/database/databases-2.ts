@@ -1,5 +1,13 @@
 /* eslint-disable no-await-in-loop */
-import { attempt, attemptAsync, build, Err, Ok, resolveAll, Result } from '../../../shared/check';
+import {
+    attempt,
+    attemptAsync,
+    build,
+    Err,
+    Ok,
+    resolveAll,
+    Result
+} from '../../../shared/check';
 // import cliProgress from 'cli-progress';
 import { EventEmitter } from '../../../shared/event-emitter';
 import { Client } from 'pg';
@@ -23,7 +31,7 @@ import { getVersions, Version } from './versions';
 import fs from 'fs';
 import { error } from '../terminal-logging';
 import { exec } from '../run-task';
-import { Blank, SQL_Type } from '../../structure/structs/struct';
+import { Blank, SQL_Type } from '../../../shared/struct';
 import { __root } from '../env';
 import crypto from 'crypto';
 
@@ -95,7 +103,7 @@ export type SimpleParameter = string | number | boolean | null;
  * @typedef {Parameter}
  */
 export type Parameter =
-    SimpleParameter
+    | SimpleParameter
     | {
           [key: string]: SimpleParameter;
       };
@@ -356,7 +364,6 @@ export class PgDatabase implements DatabaseInterface {
     }
 }
 
-
 /**
  * Database where you can pass in queries directly rather than building them from files
  *
@@ -449,7 +456,7 @@ class Col {
      */
     constructor(
         public readonly name: string,
-        public readonly type: string,
+        public readonly type: string
         // public readonly table: StructTable
     ) {}
 }
@@ -471,7 +478,7 @@ class TableBackup {
      */
     constructor(
         public readonly filename: string, // does not include extension
-        public readonly database: Database,
+        public readonly database: Database
     ) {}
 
     get tableName() {
@@ -492,30 +499,30 @@ class TableBackup {
             const [t, m, v] = await Promise.all([
                 this.getTable(),
                 this.getMetdata(),
-                this.database.getVersion(),
+                this.database.getVersion()
             ]);
-    
-    
+
             const table = t.unwrap();
             const metadata = m.unwrap();
             const version = v.unwrap();
-    
+
             // TODO: What if there's a backup that is compatibile but it's from a different database version?
             // Is this a problem? The database will create a backup between each version change
             if (Version.compare(version, metadata.version) !== 'equal') {
                 return new Err(
-                    new DatabaseError('Backup is from a different version than the current database version')
+                    new DatabaseError(
+                        'Backup is from a different version than the current database version'
+                    )
                 );
             }
-    
-    
+
             const hash = (await table.getHash()).unwrap();
-    
+
             if (hash === metadata.hash) {
                 // table is in the same state, no reason to restore
                 return new Ok(undefined);
             }
-    
+
             (await table.backup()).unwrap();
             (await table.clear()).unwrap();
 
@@ -523,8 +530,9 @@ class TableBackup {
             // this is important because when migrating versions, it's possible for the schema to change
             // and if the version fails, we should restore to the most recent schema
             (await table.drop()).unwrap();
-    
-            // Did it in here so I could isolate the stream side of the function 
+
+            // Did it in here so I could isolate the stream side of the function
+            // eslint-disable-next-line no-async-promise-executor
             return await new Promise<void>(async (res, rej) => {
                 let resolved = false;
                 const resolve = () => {
@@ -532,7 +540,7 @@ class TableBackup {
                     resolved = true;
                     if (error) rej(error);
                     else res();
-                }
+                };
 
                 const rs = this.read().unwrap();
 
@@ -540,27 +548,42 @@ class TableBackup {
 
                 let row = 0;
                 let headers: string[] = [];
-                rs.on('data', (d) => {
+                rs.on('data', d => {
                     if (row === 0) {
                         headers = d.toString().split(',').map(decode);
                     } else {
                         if (!headers.length) {
                             rs.close();
-                            error = new DatabaseError(`Did not find any headers for ${table.name} in backup`);
+                            error = new DatabaseError(
+                                `Did not find any headers for ${table.name} in backup`
+                            );
                             return;
                         }
-                        const data = (JSON.parse(decode(d.toString())) as unknown[]).reduce((cur, acc, i) => {
-                            (acc as any)[headers[i]] = cur;
-                            return acc;
-                        }, {} as Record<string, unknown>) as Record<string, unknown>;
-    
-                        this.database.unsafe.run(Query.build(`
+                        const data = (
+                            JSON.parse(decode(d.toString())) as unknown[]
+                        ).reduce(
+                            (cur, acc, i) => {
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                (acc as any)[headers[i]] = cur;
+                                return acc;
+                            },
+                            {} as Record<string, unknown>
+                        ) as Record<string, unknown>;
+
+                        this.database.unsafe.run(
+                            Query.build(
+                                `
                             INSERT INTO ${table.name} (
                                 ${Object.keys(data).join(',')}
                             ) VALUES (
-                                ${Object.keys(data).map(h => `:${h}`).join(',')}
+                                ${Object.keys(data)
+                                    .map(h => `:${h}`)
+                                    .join(',')}
                             );
-                        `, data as Parameter));
+                        `,
+                                data as Parameter
+                            )
+                        );
                     }
                     row++;
                 });
@@ -583,25 +606,32 @@ class TableBackup {
      */
     read() {
         return attempt(() => {
-            return fs.createReadStream(path.resolve(
-                __root,
-                './storage/db/backups',
-                `${this.filename}.backupv2`
-            ));
+            return fs.createReadStream(
+                path.resolve(
+                    __root,
+                    './storage/db/backups',
+                    `${this.filename}.backupv2`
+                )
+            );
         });
     }
 
     getTable() {
         return attemptAsync(async () => {
-            const table = (await this.database.getTables()).unwrap().find(t => t.name === this.tableName);
-            if (!table) throw new DatabaseError(`Unable to find table ${this.tableName}`);
+            const table = (await this.database.getTables())
+                .unwrap()
+                .find(t => t.name === this.tableName);
+            if (!table)
+                throw new DatabaseError(
+                    `Unable to find table ${this.tableName}`
+                );
             return table;
         });
     }
 
     getMetdata(): Promise<Result<TableMetadata>> {
         return attemptAsync(async () => {
-            const data =  await fs.promises.readFile(
+            const data = await fs.promises.readFile(
                 path.resolve(
                     __root,
                     './storage/db/backups',
@@ -611,7 +641,9 @@ class TableBackup {
             );
 
             const parsed = JSON.parse(data);
-            const error = new DatabaseError(`${this.filename}.metadatav2 is malformed`);
+            const error = new DatabaseError(
+                `${this.filename}.metadatav2 is malformed`
+            );
             if (!parsed) throw error;
             if (Array.isArray(parsed)) throw error;
             if (!Object.hasOwn(parsed, 'name')) throw error;
@@ -620,7 +652,8 @@ class TableBackup {
             if (!Object.hasOwn(parsed, 'date')) throw error;
             if (!Object.hasOwn(parsed, 'hash')) throw error;
 
-            if (!Object.values(parsed).every(k => typeof k === 'string')) throw error;
+            if (!Object.values(parsed).every(k => typeof k === 'string'))
+                throw error;
 
             return parsed as TableMetadata;
         });
@@ -630,27 +663,22 @@ class TableBackup {
         return attemptAsync(async () => {
             // TODO: Ensure dir is an absolute path
             return await Promise.all([
-                fs.promises.copyFile(path.resolve(
-                    __root,
-                    './storage/db/backups',
-                    `${this.filename}.backupv2`,
+                fs.promises.copyFile(
+                    path.resolve(
+                        __root,
+                        './storage/db/backups',
+                        `${this.filename}.backupv2`
+                    ),
+                    path.resolve(dir, `${this.filename}.backupv2`)
                 ),
-                path.resolve(
-                    dir,
-                    `${this.filename}.backupv2`,
+                fs.promises.copyFile(
+                    path.resolve(
+                        __root,
+                        './storage/db/backups',
+                        `${this.filename}.metadatav2`
+                    ),
+                    path.resolve(dir, `${this.filename}.metadatav2`)
                 )
-            ),
-            fs.promises.copyFile(
-                path.resolve(
-                    __root,
-                    './storage/db/backups',
-                    `${this.filename}.metadatav2`,
-                ),
-                path.resolve(
-                    dir,
-                    `${this.filename}.metadatav2`,
-                )
-            )
             ]);
         });
     }
@@ -674,27 +702,31 @@ type TableMetadata = {
 class Table {
     constructor(
         public readonly name: string,
-        public readonly database: Database,
+        public readonly database: Database
     ) {}
 
     getSchema() {
-        return this.database.unsafe.all<Schema>(Query.build(
+        return this.database.unsafe.all<Schema>(
+            Query.build(
                 `
                     SELECT
                         columnName,
                         dataType --,
                         -- characterMaximumLength
                     FROM INFORMATION_SCHEMA.COLUMNS WHERE tableName = :tableName
-                `, {
-                    tableName: this.name,
+                `,
+                {
+                    tableName: this.name
                 }
-            ))
+            )
+        );
     }
 
     create() {
         return attemptAsync(async () => {
             const schema = (await this.getSchema()).unwrap();
-            this.database.unsafe.run(Query.build(`
+            this.database.unsafe.run(
+                Query.build(`
                 CREATE TABLE IF NOT EXISTS ${this.name} (
                     ${
                         // TODO: Will this even work?
@@ -702,7 +734,8 @@ class Table {
                         schema.map(s => `${s.columnName} ${s.dataType}`)
                     }
                 );
-            `));
+            `)
+            );
         });
     }
 
@@ -710,14 +743,18 @@ class Table {
         return attemptAsync(async () => {
             const current = (await this.getSchema()).unwrap();
 
-            const every = (to: Schema[]) => (s: Schema): boolean => {
-                const exists = to.find(t => t.columnName === s.columnName);
-                if (!exists) return false;
-                return s.dataType === exists.dataType;
-            };
+            const every =
+                (to: Schema[]) =>
+                (s: Schema): boolean => {
+                    const exists = to.find(t => t.columnName === s.columnName);
+                    if (!exists) return false;
+                    return s.dataType === exists.dataType;
+                };
 
             // it is possible for one to have more columns than the other, so we must to the same comparison on both to handle all edge cases
-            return current.every(every(compare)) && compare.every(every(current));
+            return (
+                current.every(every(compare)) && compare.every(every(current))
+            );
         });
     }
 
@@ -729,10 +766,12 @@ class Table {
     all() {
         return attemptAsync(async () => {
             // if (this.__all.length) return this.__all;
-            // this.__all = 
-            return (await this.database.unsafe.all<{
-                [key: string]: unknown;
-            }>(Query.build(`SELECT * FROM ${this.name};`))).unwrap();
+            // this.__all =
+            return (
+                await this.database.unsafe.all<{
+                    [key: string]: unknown;
+                }>(Query.build(`SELECT * FROM ${this.name};`))
+            ).unwrap();
             // setTimeout(() => this.__all = []);
             // return this.__all;
         });
@@ -741,7 +780,9 @@ class Table {
     getHash() {
         return attemptAsync(async () => {
             const data = (await this.all()).unwrap();
-            return crypto.pbkdf2Sync(JSON.stringify(data), 'salt', 1, 64, 'sha512').toString('hex');
+            return crypto
+                .pbkdf2Sync(JSON.stringify(data), 'salt', 1, 64, 'sha512')
+                .toString('hex');
         });
     }
 
@@ -788,23 +829,28 @@ class Table {
                 date,
                 hash: thisHash,
                 version: (await this.database.getVersion()).unwrap(),
-                schema: (await this.getSchema()).unwrap(),
+                schema: (await this.getSchema()).unwrap()
             });
 
             const filename = `${name}-${Date.now()}`;
 
-            fs.promises.writeFile(path.resolve(
-                __root,
-                './storage/db/backups',
-                `${filename}.metadatav2`
-            ), metadata);
+            fs.promises.writeFile(
+                path.resolve(
+                    __root,
+                    './storage/db/backups',
+                    `${filename}.metadatav2`
+                ),
+                metadata
+            );
 
             // This will run asynchronously, it may still be writing after the function is completed
-            const ws = fs.createWriteStream(path.resolve(
-                __root,
-                './storage/db/backups',
-                `${filename}.backupv2` // new index
-            ));
+            const ws = fs.createWriteStream(
+                path.resolve(
+                    __root,
+                    './storage/db/backups',
+                    `${filename}.backupv2` // new index
+                )
+            );
 
             for (let i = 0; i < values.length; i++) {
                 ws.write(values[i]);
@@ -812,19 +858,15 @@ class Table {
 
             ws.once('drain', () => ws.close());
 
-            return new TableBackup(
-                filename,
-                this.database,
-            );
+            return new TableBackup(filename, this.database);
         });
     }
 
     getBackups() {
         return attemptAsync(async () => {
-            const files = await fs.promises.readdir(path.join(
-                __root,
-                './storage/db/backups'
-            ));
+            const files = await fs.promises.readdir(
+                path.join(__root, './storage/db/backups')
+            );
 
             return files
                 .filter(f => path.extname(f).includes('backupv2'))
@@ -832,24 +874,28 @@ class Table {
                 .map(f => {
                     const name = f.replace('.backupv2', '');
 
-                    return new TableBackup(
-                        name,
-                        this.database,
-                    )
+                    return new TableBackup(name, this.database);
                 })
                 .sort((a, b) => a.date - b.date);
         });
     }
 
     clear() {
-        return this.database.unsafe.run(Query.build(`DELETE FROM ${this.name};`));
+        return this.database.unsafe.run(
+            Query.build(`DELETE FROM ${this.name};`)
+        );
     }
 
     drop() {
         return attemptAsync(async () => {
             const all = (await this.all()).unwrap();
-            if (all.length) throw new DatabaseError('Cannot drop table that contains data');
-            return (await this.database.unsafe.run(Query.build(`DROP TABLE ${this.name};`))).unwrap();
+            if (all.length)
+                throw new DatabaseError('Cannot drop table that contains data');
+            return (
+                await this.database.unsafe.run(
+                    Query.build(`DROP TABLE ${this.name};`)
+                )
+            ).unwrap();
         });
     }
 
@@ -878,11 +924,10 @@ class TableStruct extends Table {
     constructor(
         public readonly name: string,
         public readonly schema: Blank,
-        public readonly database: Database,
+        public readonly database: Database
     ) {
         super(name, database);
     }
-
 
     // verifyData() {
     //     return attemptAsync<boolean>(async () => {
@@ -893,8 +938,6 @@ class TableStruct extends Table {
     //     });
     // }
 }
-
-
 
 /**
  * Database class that is used to interact with a database connection
@@ -1040,29 +1083,40 @@ export class Database {
 
     public async getTables() {
         return attemptAsync(async () => {
-            return (await this.unsafe.all<{ name: string }>(
-                Query.build(`
+            return (
+                await this.unsafe.all<{ name: string }>(
+                    Query.build(`
                     SELECT table_name as name
                     FROM information_schema.tables
                     WHERE table_schema = 'public'
                     ORDER BY table_name;
                 `)
-            )).unwrap().map(t => t.name).map(t => toCamelCase(fromSnakeCase(t)))
-            .map(t => new Table(t, this));
+                )
+            )
+                .unwrap()
+                .map(t => t.name)
+                .map(t => toCamelCase(fromSnakeCase(t)))
+                .map(t => new Table(t, this));
         });
     }
 
     public async getStructs() {
         return attemptAsync(async () => {
-            return (await this.unsafe.all<{
-                name: string;
-                schema: string;
-            }>(Query.build(`SELECT * FROM Structs`))).unwrap()
-            .map(s => new TableStruct(
-                s.name,
-                JSON.parse(s.schema) as Blank,
-                this,
-            ))
+            return (
+                await this.unsafe.all<{
+                    name: string;
+                    schema: string;
+                }>(Query.build('SELECT * FROM Structs'))
+            )
+                .unwrap()
+                .map(
+                    s =>
+                        new TableStruct(
+                            s.name,
+                            JSON.parse(s.schema) as Blank,
+                            this
+                        )
+                );
         });
     }
 
@@ -1089,13 +1143,12 @@ export class Database {
         });
     }
 
-
     /**
      * Resets the database
      * If hard is true, it will drop all tables
      * If hard is false, it will only delete all data
-     * 
-     * 
+     *
+     *
      *
      * @async
      * @param {boolean} hard
@@ -1202,13 +1255,16 @@ export class Database {
 
             (
                 await this.unsafe.run(
-                    Query.build(`
+                    Query.build(
+                        `
                         INSERT INTO Git (branch, commit)
                         VALUES (:branch, :commit);
-                `, {
-                        branch: b,
-                        commit: c
-                    })
+                `,
+                        {
+                            branch: b,
+                            commit: c
+                        }
+                    )
                 )
             ).unwrap();
 
@@ -1224,7 +1280,9 @@ export class Database {
                     await version.update(this);
                 } catch (e) {
                     (await this.restore(backup)).unwrap();
-                    throw new DatabaseError(`Error running version update: ${version.versionStr}`);
+                    throw new DatabaseError(
+                        `Error running version update: ${version.versionStr}`
+                    );
                 }
 
                 // this can't be outside the for loop because it's assumed the schema will change after the update
@@ -1234,8 +1292,8 @@ export class Database {
                 // const invalidStructs = structs.filter((s, i) => !valid[i]);
 
                 // if (invalidStructs.length) {
-                    // (await this.restore(backup)).unwrap();
-                    // throw new DatabaseError(`After updating, the data inside the struct(s): ${invalidStructs.join(', ')} had invalid data. The database has been restored to the previous state and the version has been undone.`);
+                // (await this.restore(backup)).unwrap();
+                // throw new DatabaseError(`After updating, the data inside the struct(s): ${invalidStructs.join(', ')} had invalid data. The database has been restored to the previous state and the version has been undone.`);
                 // }
 
                 (await this.setVersion(version.version)).unwrap();
@@ -1247,31 +1305,38 @@ export class Database {
 
     public async getVersion() {
         return attemptAsync<[number, number, number]>(async () => {
-            const result = (await this.unsafe.get<{
-                major: number;
-                minor: number;
-                patch: number;
-            }>(Query.build(`
+            const result = (
+                await this.unsafe.get<{
+                    major: number;
+                    minor: number;
+                    patch: number;
+                }>(
+                    Query.build(`
                 SELECT * FROM Version
-            `))).unwrap()
+            `)
+                )
+            ).unwrap();
 
-            if (!result) return [0,0,0];
-            return [
-                result.major,
-                result.minor,
-                result.patch,
-            ];
+            if (!result) return [0, 0, 0];
+            return [result.major, result.minor, result.patch];
         });
     }
 
     public async setVersion(version: [number, number, number]) {
         return attemptAsync(async () => {
             const [major, minor, patch] = version;
-            (await this.unsafe.run(Query.build(`
+            (
+                await this.unsafe.run(
+                    Query.build(`
                 DELETE FROM Version;
-            `))).unwrap();
+            `)
+                )
+            ).unwrap();
 
-            (await this.unsafe.run(Query.build(`
+            (
+                await this.unsafe.run(
+                    Query.build(
+                        `
                 INSERT INTO Version (
                     major,
                     minor,
@@ -1281,14 +1346,17 @@ export class Database {
                     :minor,
                     :patch
                 );
-            `, {
-                major,
-                minor,
-                patch,
-            }))).unwrap();
+            `,
+                        {
+                            major,
+                            minor,
+                            patch
+                        }
+                    )
+                )
+            ).unwrap();
         });
     }
-
 
     /**
      * Makes a backup of the current state of the database
@@ -1301,12 +1369,16 @@ export class Database {
         return attemptAsync<string>(async () => {
             const tables = (await this.getTables()).unwrap();
 
-            const backups = resolveAll(await Promise.all(tables.map(table => table.backup()))).unwrap().filter(Boolean);
+            const backups = resolveAll(
+                await Promise.all(tables.map(table => table.backup()))
+            )
+                .unwrap()
+                .filter(Boolean);
 
             const dir = (await this.makeCurrentBackupDir()).unwrap();
-            resolveAll(await Promise.all(
-                backups.map(b => b.copy(dir)),
-            )).unwrap();
+            resolveAll(
+                await Promise.all(backups.map(b => b.copy(dir)))
+            ).unwrap();
 
             // TODO: Create zip file
 
@@ -1333,13 +1405,10 @@ export class Database {
             const name = path.resolve(
                 __root,
                 './storage/db/backups',
-                new Date().toISOString(),
+                new Date().toISOString()
             );
 
-            await fs.promises.mkdir(
-                name,
-                { recursive: true }
-            );
+            await fs.promises.mkdir(name, { recursive: true });
 
             return name;
         });

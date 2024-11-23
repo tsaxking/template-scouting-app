@@ -1,5 +1,5 @@
-import { DB } from "../../utilities/database";
-import { Struct } from "./struct";
+import { DB } from '../../utilities/database';
+import { Struct } from './struct';
 
 export namespace Email {
     export const Email = new Struct({
@@ -9,7 +9,7 @@ export namespace Email {
             type: 'text',
             to: 'text', // string[]
             clicked: 'boolean',
-            link: 'text',
-        },
+            link: 'text'
+        }
     });
 }
