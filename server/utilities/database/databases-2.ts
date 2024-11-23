@@ -1103,7 +1103,6 @@ export class Database {
      */
     async reset(hard: boolean) {
         return attemptAsync(async () => {
-            // TODO: This function only works for struct tables
             const tables = (await this.getTables()).unwrap();
             if (hard) {
                 // drop all tables
@@ -1218,7 +1217,6 @@ export class Database {
             for (const version of versions) {
                 const backup = (await this.backup()).unwrap();
 
-                // TODO: Restoring a backup will not work because the schema hasn't been set to the previous version
                 // The schema for each table must be stored with the backup
                 try {
                     log(`Running version update: ${version.versionStr}`);

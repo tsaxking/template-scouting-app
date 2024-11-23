@@ -145,3 +145,9 @@ export const decode = (str: string) => {
 
     return result;
 };
+
+export const removeWhitespace = (str: string): string => {
+    const res = str.replaceAll('  ', ' ');
+    if (res === str) return res;
+    return removeWhitespace(res);
+};

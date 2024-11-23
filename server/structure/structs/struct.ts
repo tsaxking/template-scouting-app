@@ -20,8 +20,11 @@ import { EventEmitter } from '../../../shared/event-emitter';
 import { Permissions } from './permissions';
 import { Session } from './session';
 import { Req } from '../app/req';
-import { capitalize } from '../../../shared/text';
+import { capitalize, decode, encode } from '../../../shared/text';
 import { Logs } from './logs'; 
+import { saveFile } from '../../utilities/files';
+import fs from 'fs';
+import path from 'path';
 
 /**
  * Error class for when there's an issue with a struct
@@ -158,6 +161,10 @@ const type = <T extends SQL_Type>(type: T): TS_TypeStr<T> => {
     }
 };
 
+export const typeValidation = <T extends SQL_Type>(t: T, data: unknown): boolean => {
+    return typeof data === type(t);
+};
+
 /**
  * Converts a SQL_Type to a real type
  *
@@ -275,6 +282,16 @@ type StructBuilder<T extends Blank, Name extends string> = {
      * Limit of universes this struct's is allowed to be in
      */
     universeLimit?: number;
+};
+
+type StructImage = {
+    name: string;
+    structure: Blank;
+    defaults?: Structable<Struct<Blank, string>>[];
+    versionHistory?: {
+        type: 'days' | 'versions';
+        amount: number;
+    }
 };
 
 /**
@@ -1171,6 +1188,26 @@ export class StructData<Structure extends Blank, Name extends string>
             (await this.struct.data.database.unsafe.run(query)).unwrap();
         });
     }
+
+    addUniverses(...universe: string[]) {
+        return attemptAsync(async () => {
+            const current = this.getUniverses().unwrap();
+            const combined = [...current, ...universe].filter(
+                (a, i, arr) => arr.indexOf(a) === i
+            );
+
+            return (await this.setUniverses(combined)).unwrap();
+        });
+    }
+
+    removeUniverses(...universe: string[]) {
+        return attemptAsync(async () => {
+            const current = this.getUniverses().unwrap();
+            const combined = current.filter(u => !universe.includes(u));
+
+            return (await this.setUniverses(combined)).unwrap();
+        });
+    }
 }
 
 /**
@@ -1196,6 +1233,127 @@ export type Data<SubStruct extends Struct<Blank, string>> = StructData<
  * @template {string} Name
  */
 export class Struct<Structure extends Blank, Name extends string> {
+    private static initImage(struct: Struct<Blank, string>, image: string) {
+        return attemptAsync(async () => {
+            // TODO: Type checking for image
+            const {
+                name,
+                defaults,
+                structure,
+                versionHistory,
+            } = JSON.parse(decode(image)) as StructImage;
+
+            const { database } = struct.data;
+            
+            const current = (
+                await database.unsafe.get<{
+                    schema: string;
+                    name: string;
+                }>(
+                    Query.build('SELECT * FROM Structs WHERE name = :name', {
+                        name: name
+                    })
+                )
+            ).unwrap();
+
+            if (current) {
+                const cols = Object.keys(structure).map(k =>
+                    k.toLowerCase()
+                );
+                const currentCols = Object.keys(JSON.parse(current.schema)).map(
+                    k => k.toLowerCase()
+                );
+
+                const throwErr = () => {
+                    // TODO: Prompt through CLI to delete all data and reset the change
+                    // "THis will affect (x) columns"
+                    throw new StructError(
+                        `Struct ${name} already exists with different columns. Please remove ${cols.filter(c => !currentCols.includes(c)).join(', ')}`
+                    );
+                };
+
+                if (!cols.every(c => currentCols.includes(c))) {
+                    throwErr();
+                }
+
+                if (!currentCols.every(c => cols.includes(c))) {
+                    throwErr();
+                }
+
+                if (
+                    currentCols.some(
+                        c =>
+                            cols[c as keyof typeof cols] !==
+                            currentCols[c as keyof typeof currentCols]
+                    )
+                ) {
+                    throwErr();
+                }
+            } else {
+                (await database.unsafe.run(
+                    Query.build(
+                        `
+                    INSERT INTO Structs (name, schema)
+                    VALUES (:name, :schema);
+                `,
+                        {
+                            name: name,
+                            schema: JSON.stringify(structure)
+                        }
+                    )
+                )).unwrap();
+            }
+
+            const query = Query.build(
+                `
+                    CREATE TABLE IF NOT EXISTS ${name} (
+                        id text PRIMARY KEY,
+                        created text NOT NULL,
+                        updated text NOT NULL,
+                        archived boolean NOT NULL,
+                        attributes text NOT NULL,
+                        universes text NOT NULL,
+                        ${Object.entries(structure)
+                            .map(([key, value]) => {
+                                return `${key} ${value}`;
+                            })
+                            .join(', ')}
+                    );
+                `
+            );
+
+            (await database.unsafe.run(query)).unwrap();
+
+            if (versionHistory) {
+                const query = Query.build(`
+                    CREATE TABLE IF NOT EXISTS ${name}History (
+                        vhId text PRIMARY KEY,
+                        vhCreated text NOT NULL,
+                        id text,
+                        created text NOT NULL,
+                        updated text NOT NULL,
+                        archived boolean NOT NULL,
+                        attributes text NOT NULL,
+                        universes text NOT NULL,
+                        ${Object.entries(structure)
+                            .map(([key, value]) => {
+                                return `${key} ${value}`;
+                            })
+                            .join(', ')}
+                    );
+                `);
+
+                (await database.unsafe.run(query)).unwrap();
+            }
+
+            if (defaults) {
+                // doesn't matter if this throws an error. It most likely is due duplicate data, which is fine since it's the default values.
+                // TODO: should we await this? It could be better to just let it run in the background
+                await Promise.all(defaults.map(d => struct.new(d)));
+            }
+        });
+    }
+
     /**
      * All the structs in the program
      *
@@ -1447,110 +1605,8 @@ export class Struct<Structure extends Blank, Name extends string> {
                 `Sample struct: ${this.data.name}. Not built`
             );
         return attemptAsync(async () => {
-            const current = (
-                await this.data.database.unsafe.get<{
-                    schema: string;
-                    name: string;
-                }>(
-                    Query.build('SELECT * FROM Structs WHERE name = :name', {
-                        name: this.data.name
-                    })
-                )
-            ).unwrap();
-
-            if (current) {
-                const cols = Object.keys(this.data.structure).map(k =>
-                    k.toLowerCase()
-                );
-                const currentCols = Object.keys(JSON.parse(current.schema)).map(
-                    k => k.toLowerCase()
-                );
-
-                const throwErr = () => {
-                    throw new StructError(
-                        `Struct ${this.data.name} already exists with different columns. Please remove ${cols.filter(c => !currentCols.includes(c)).join(', ')}`
-                    );
-                };
-
-                if (!cols.every(c => currentCols.includes(c))) {
-                    throwErr();
-                }
-
-                if (!currentCols.every(c => cols.includes(c))) {
-                    throwErr();
-                }
-
-                if (
-                    currentCols.some(
-                        c =>
-                            cols[c as keyof typeof cols] !==
-                            currentCols[c as keyof typeof currentCols]
-                    )
-                ) {
-                    throwErr();
-                }
-            } else {
-                await this.data.database.unsafe.run(
-                    Query.build(
-                        `
-                    INSERT INTO Structs (name, schema)
-                    VALUES (:name, :schema)
-                `,
-                        {
-                            name: this.data.name,
-                            schema: JSON.stringify(this.data.structure)
-                        }
-                    )
-                );
-            }
-
-            const query = Query.build(
-                `
-                    CREATE TABLE IF NOT EXISTS ${this.data.name} (
-                        id text PRIMARY KEY,
-                        created text NOT NULL,
-                        updated text NOT NULL,
-                        archived boolean NOT NULL,
-                        attributes text NOT NULL,
-                        universes text NOT NULL,
-                        ${Object.entries(this.data.structure)
-                            .map(([key, value]) => {
-                                return `${key} ${value}`;
-                            })
-                            .join(', ')}
-                    );
-                `
-            );
-
-            (await this.data.database.unsafe.run(query)).unwrap();
-
-            if (this.data.versionHistory) {
-                const query = Query.build(`
-                    CREATE TABLE IF NOT EXISTS ${this.data.name}History (
-                        vhId text PRIMARY KEY,
-                        vhCreated text NOT NULL,
-                        id text,
-                        created text NOT NULL,
-                        updated text NOT NULL,
-                        archived boolean NOT NULL,
-                        attributes text NOT NULL,
-                        universes text NOT NULL,
-                        ${Object.entries(this.data.structure)
-                            .map(([key, value]) => {
-                                return `${key} ${value}`;
-                            })
-                            .join(', ')}
-                    );
-                `);
-
-                (await this.data.database.unsafe.run(query)).unwrap();
-            }
-
-            const { defaults } = this;
-            if (defaults) {
-                // doesn't matter if this throws an error
-                await Promise.all(defaults.map(d => this.new(d)));
-            }
+            const image = (await this.imagize()).unwrap();
+            (await Struct.initImage(this, image)).unwrap();
 
             const notSignedInStatus = (req: Req) =>
                 new Status(
@@ -2243,27 +2299,6 @@ export class Struct<Structure extends Blank, Name extends string> {
     }
 
     /**
-     * Gets the version of the struct (M.m.p)
-     *
-     * @returns {*}
-     */
-    getVersion() {
-        return attemptAsync(async () => {
-            // TODO: Version must be Major.minor.patch
-            const query = Query.build(
-                'SELECT major, minor, patch FROM Tables WHERE name = :name'
-            );
-            return (
-                (
-                    await this.data.database.unsafe.get<{ version: number }>(
-                        query
-                    )
-                ).unwrap()?.version || -1
-            );
-        });
-    }
-
-    /**
      * Generates a new struct data
      * This will insert into the database and return the data created
      *
@@ -2379,7 +2414,7 @@ export class Struct<Structure extends Blank, Name extends string> {
         if (!this.built)
             throw new FatalStructError(`Struct ${this.data.name} not built`);
         return attemptAsync(async () => {
-            const query = Query.build(`SELECT * FROM ${this.data.name}`);
+            const query = Query.build(`SELECT * FROM ${this.data.name} WHERE archived = false;`);
 
             const data = (
                 await this.data.database.unsafe.all<St<Structure, Name>>(query)
@@ -2520,6 +2555,13 @@ export class Struct<Structure extends Blank, Name extends string> {
         });
     }
 
+    clear() {
+        return attemptAsync(async () => {
+            const query = Query.build(`DELETE FROM ${this.data.name}`);
+            (await this.data.database.unsafe.run(query)).unwrap();
+        });
+    }
+
     /**
      * Adds default data to the struct
      * BE SURE TO HAVE THE ID OF THE DATA HARD-CODED
@@ -2533,5 +2575,36 @@ export class Struct<Structure extends Blank, Name extends string> {
                 `Struct ${this.data.name} already built, cannot add default data`
             );
         this.defaults.push(...data);
+    }
+
+    private imagize() {
+        if (this.built) throw new FatalStructError(`${this.name}.imagize() run after struct is built`);
+        if (this.sample) throw new FatalStructError(`${this.name}.imagize() run on sample struct`);
+        return attemptAsync(async () => {
+            const { structure, name } = this.data;
+            const { defaults } = this;
+
+            const image = encode(JSON.stringify({
+                structure, name, defaults
+            } as StructImage));
+
+            const exists = fs.existsSync(
+                path.resolve(__dirname, `./images/${this.name}.imagev1`)
+            );
+
+            if (!exists) {
+                await fs.promises.writeFile(path.resolve(__dirname, `./images${this.name}.imagev1`), image);
+            }
+
+            return image;
+        });
+    }
+
+    deleteImage() {
+        return attemptAsync(async () => {
+            await fs.promises.unlink(
+                path.resolve(__dirname, `./images/${this.name}.imagev1`)
+            );
+        });
     }
 }

@@ -2,6 +2,8 @@ import FuzzySearch from 'fuzzy-search';
 import { Colors } from '../server/utilities/colors';
 import { attemptAsync, Result } from '../shared/check';
 import prompts from 'prompts';
+import Table from 'cli-table';
+import chalk from 'chalk';
 // import {choose} from '@putout/cli-choose';
 
 /**
@@ -292,4 +294,63 @@ export const search = async <T extends string | Option>(
     };
 
     return run();
+};
+
+export const selectTable = <T extends Record<string, unknown>>(message: string, data: T[]) => {
+    return new Promise<T>((res, rej) => {
+        const headers = Object.keys(data[0]);
+
+        const stdin = process.stdin as unknown as NodeJS.ReadStream & {
+            off: (event: string, listener: (key: string) => void) => void;
+        };
+
+        stdin.setRawMode(true);
+        stdin.resume();
+        stdin.setEncoding('utf8');
+
+        let selected = 0;
+
+        const run  = (selected: number) => {
+            console.clear();
+            console.log(message);
+            const t = new Table({
+                head: headers,
+            });
+        
+            t.push(...data.map((o, i) => headers.map(h => {
+                if (i === selected) {
+                    return chalk.blue(String(o[h]));
+                }
+                return String(o[h]);
+            })));
+        
+            console.log(t.toString());
+
+            stdin.on('data', handleKey);
+        };
+
+        const handleKey = (key: string) => {
+            switch (key) {
+                case '\u0003':
+                    process.exit();
+                    break;
+                case '\r':
+                    console.clear();
+                    res(data[selected]);
+                    break;
+                case '\u001b[A':
+                    selected = selected === 0 ? data.length - 1 : selected - 1;
+                    run(selected);
+                    break;
+                case '\u001b[B':
+                    selected = selected === data.length - 1 ? 0 : selected + 1;
+                    run(selected);
+                    break;
+            }
+
+            stdin.off('data', handleKey);
+        };
+
+        run(0);
+    });
 };
