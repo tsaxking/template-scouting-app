@@ -191,3 +191,22 @@ export const returnType = (str: string, type: SQL_Type) => {
         .exec()
         .unwrap();
 };
+
+export enum PropertyAction {
+    Read = 'read',
+    Update = 'update',
+
+    // anyone who can read version history or archives can read only the properties that they can read using their respective read permission
+    ReadVersionHistory = 'read-version-history',
+    ReadArchive = 'read-archive'
+}
+
+// these are not property specific
+export enum DataAction {
+    Create = 'create',
+    Delete = 'delete',
+    Archive = 'archive',
+    RestoreArchive = 'restore-archive',
+    RestoreVersion = 'restore-version',
+    DeleteVersion = 'delete-version'
+}

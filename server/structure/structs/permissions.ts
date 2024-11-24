@@ -23,15 +23,9 @@ import {
 } from '../../../shared/check';
 import { DB } from '../../utilities/database';
 import { Account } from './account';
-import {
-    Struct,
-    Data,
-    Blank,
-    DataError,
-    GlobalCols,
-    PartialStructable
-} from './struct';
+import { Struct, Data, DataError, PartialStructable } from './struct';
 import { encode, decode } from '../../../shared/text';
+import { Blank } from '../../../shared/struct';
 
 export namespace Permissions {
     export enum PropertyAction {
@@ -110,7 +104,6 @@ export namespace Permissions {
         name: 'Role',
         structure: {
             name: 'text',
-            parent: 'text',
             universe: 'text',
             permissions: 'text'
         }
@@ -119,7 +112,6 @@ export namespace Permissions {
     Universe.on('create', universe => {
         Role.new({
             name: 'root',
-            parent: '',
             universe: universe.id,
             permissions: ''
         });
@@ -280,7 +272,9 @@ export namespace Permissions {
                             'created',
                             'updated',
                             'archived',
-                            'universes'
+                            'universes',
+                            'lifetime',
+                            'attributes'
                         )
                         .filter((v, i, a) => a.indexOf(v) === i)
                         .filter(Boolean);

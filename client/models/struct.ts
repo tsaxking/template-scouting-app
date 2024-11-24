@@ -3,7 +3,14 @@ import { Socket } from '../utilities/socket';
 import { attempt, attemptAsync, Result } from '../../shared/check';
 import { match } from '../../shared/match';
 import { Requester, ServerRequest } from '../utilities/requests';
-import { Readable, writable, Writable } from 'svelte/store';
+import {
+    Invalidator,
+    Readable,
+    Subscriber,
+    Unsubscriber,
+    writable,
+    Writable
+} from 'svelte/store';
 import {
     SQL_Type,
     TS_Type,
@@ -119,17 +126,17 @@ class DataVersion<T extends Blank> {
     }
 }
 
-export class DataArr<T extends Blank> implements Readable<Data<T>[]> {
+export class DataArr<T extends Blank> implements Readable<StructData<T>[]> {
     constructor(
         public readonly struct: Struct<T>,
-        public readonly data: Data<T>[]
+        public readonly data: StructData<T>[]
     ) {}
 
-    public readonly subscribers = new Set<(data: Data<T>[]) => void>();
+    public readonly subscribers = new Set<(data: StructData<T>[]) => void>();
 
     private onUnsubscribe: (() => void) | undefined;
 
-    subscribe(fn: (data: Data<T>[]) => void) {
+    subscribe(fn: (data: StructData<T>[]) => void) {
         this.subscribers.add(fn);
         return () => {
             this.subscribers.delete(fn);
@@ -143,19 +150,19 @@ export class DataArr<T extends Blank> implements Readable<Data<T>[]> {
         return this.data.find(d => d.id === id);
     }
 
-    fromProperty<Key extends keyof Data<T>['data']>(
+    fromProperty<Key extends keyof StructData<T>['data']>(
         key: Key,
-        value: Data<T>['data'][Key]
+        value: StructData<T>['data'][Key]
     ) {
         return this.data.filter(d => d.data[key] === value);
     }
 
-    add(...data: Data<T>[]) {
+    add(...data: StructData<T>[]) {
         this.data.push(...data);
         this.subscribers.forEach(s => s(this.data));
     }
 
-    remove(data: Data<T>) {
+    remove(data: StructData<T>) {
         const index = this.data.indexOf(data);
         if (index === -1) return;
         this.data.splice(index, 1);
@@ -167,7 +174,47 @@ export class DataArr<T extends Blank> implements Readable<Data<T>[]> {
     }
 }
 
-export class Data<T extends Blank> implements Writable<PartialStructable<T>> {
+export class UniverseArr<T extends Blank> implements Readable<string[]> {
+    private readonly subscribers = new Set<Subscriber<string[]>>();
+
+    constructor(
+        public readonly data: StructData<T>,
+        public readonly universes: string[]
+    ) {}
+
+    private onUnsubscribe: (() => void) | undefined;
+
+    subscribe(run: Subscriber<string[]>): Unsubscriber {
+        return () => {
+            this.subscribers.delete(run);
+            if (this.subscribers.size === 0) {
+                this.onUnsubscribe?.();
+            }
+        };
+    }
+
+    add(...universes: string[]) {
+        this.universes.push(
+            ...universes.filter(u => !this.universes.includes(u))
+        );
+        this.subscribers.forEach(s => s(this.universes));
+    }
+
+    remove(universe: string) {
+        this.universes.splice(this.universes.indexOf(universe), 1);
+        this.subscribers.forEach(s => s(this.universes));
+    }
+
+    onAllUnsubscribe(fn: () => void) {
+        this.onUnsubscribe = fn;
+    }
+}
+
+export type Data<T extends Struct<Blank>> = StructData<T['data']['structure']>;
+
+export class StructData<T extends Blank>
+    implements Writable<PartialStructable<T>>
+{
     constructor(
         public readonly struct: Struct<T>,
         public readonly data: Readonly<PartialStructable<T & GlobalCols>>
@@ -191,6 +238,10 @@ export class Data<T extends Blank> implements Writable<PartialStructable<T>> {
 
     get archived() {
         return this.data.archived;
+    }
+
+    get lifetime() {
+        return this.data.lifetime;
     }
 
     set(data: PartialStructable<T>) {
@@ -300,14 +351,44 @@ export class Data<T extends Blank> implements Writable<PartialStructable<T>> {
             return w;
         });
     }
+
+    getUniverses() {
+        const { universes } = this.data;
+        const universe = new UniverseArr(this, []);
+
+        if (!universes) return undefined;
+
+        const parsed = JSON.parse(universes);
+        if (!Array.isArray(parsed)) {
+            console.error(new DataError('Universes are not an array'));
+            return universe;
+        }
+        if (!parsed.every(a => typeof a === 'string')) {
+            console.error(new DataError('Universes contain non-string values'));
+            return universe;
+        }
+
+        universe.add(...parsed);
+        return universe;
+    }
+
+    addUniverse(...universes: string[]) {}
+
+    removeUniverse(universe: string) {}
+
+    getAttributes() {
+        return attempt(() => {});
+    }
 }
 
+// TODO: Infrastructure for changing universes and attributes from the client
+
 type StructEvents<T extends Blank> = {
-    new: Data<T>;
-    update: Data<T>;
-    delete: Data<T>;
-    archive: Data<T>;
-    restore: Data<T>;
+    new: StructData<T>;
+    update: StructData<T>;
+    delete: StructData<T>;
+    archive: StructData<T>;
+    restore: StructData<T>;
 };
 
 export class Struct<T extends Blank> {
@@ -333,7 +414,7 @@ export class Struct<T extends Blank> {
             (data: Structable<T & GlobalCols>) => {
                 const has = this.cache.get(data.id);
                 if (has) return;
-                const d = new Data(this, data);
+                const d = new StructData(this, data);
                 this.cache.set(data.id, d);
                 this.emit('new', d);
             }
@@ -377,7 +458,7 @@ export class Struct<T extends Blank> {
                     has.set(data);
                     return;
                 }
-                const d = new Data(this, data);
+                const d = new StructData(this, data);
                 this.cache.set(data.id, d);
             }
         );
@@ -410,13 +491,13 @@ export class Struct<T extends Blank> {
     }
 
     public readonly stores = {
-        all: writable<Data<T>[]>([]),
-        archived: writable<Data<T>[]>([])
+        all: writable<StructData<T>[]>([]),
+        archived: writable<StructData<T>[]>([])
     };
 
-    public readonly cache = new Map<string, Data<T>>();
+    public readonly cache = new Map<string, StructData<T>>();
 
-    get sample(): Data<T> {
+    get sample(): StructData<T> {
         throw new FatalDataError(
             'Cannot get sample of a struct at runtime. This is only used for type checking before compile'
         );
@@ -439,7 +520,7 @@ export class Struct<T extends Blank> {
                 )
             ).unwrap();
             // TODO: Prove this is a valid response
-            const d = new Data(this, response);
+            const d = new StructData(this, response);
             this.cache.set(id, d);
             return d;
         });
@@ -457,7 +538,7 @@ export class Struct<T extends Blank> {
             const all = response.map(d => {
                 const has = this.cache.get(d.id || '');
                 if (has) return has;
-                const data = new Data(this, d);
+                const data = new StructData(this, d);
                 if (data.id) this.cache.set(data.id, data);
                 return data;
             });
@@ -466,10 +547,10 @@ export class Struct<T extends Blank> {
             arr.add(...all);
         };
 
-        const add = (data: Data<T>) => {
+        const add = (data: StructData<T>) => {
             arr.add(data);
         };
-        const remove = (data: Data<T>) => {
+        const remove = (data: StructData<T>) => {
             arr.remove(data);
         };
 
@@ -498,7 +579,7 @@ export class Struct<T extends Blank> {
                 )
             ).unwrap();
 
-            const data = response.map(d => new Data(this, d));
+            const data = response.map(d => new StructData(this, d));
             return data;
         });
     }

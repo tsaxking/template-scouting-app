@@ -36,6 +36,14 @@ export namespace Account {
         name: 'Account'
     });
 
+    const bypassAccount = (a1: AccountData, a2: AccountData) => a1.id === a2.id;
+
+    Account.bypass(Permissions.DataAction.Delete, bypassAccount);
+    Account.bypass(Permissions.PropertyAction.Update, bypassAccount);
+    Account.bypass(Permissions.PropertyAction.Read, bypassAccount);
+
+    export type AccountData = Data<typeof Account>;
+
     export const DiscordLink = new Struct({
         database: DB,
         structure: {
@@ -50,9 +58,14 @@ export namespace Account {
         structure: {
             account: 'text',
             key: 'text',
-            expires: 'integer'
+            expires: 'text'
         },
-        name: 'PasswordChange'
+        name: 'PasswordChange',
+        validators: {
+            expires: (val: unknown) => {
+                return new Date(String(val)).toString() !== 'Invalid Date';
+            }
+        }
     });
 
     export const EmailChange = new Struct({
@@ -61,9 +74,14 @@ export namespace Account {
             account: 'text',
             email: 'text',
             key: 'text',
-            expires: 'integer'
+            expires: 'text'
         },
-        name: 'EmailChange'
+        name: 'EmailChange',
+        validators: {
+            expires: (val: unknown) => {
+                return new Date(String(val)).toString() !== 'Invalid Date';
+            }
+        }
     });
 
     export const Notification = new Struct({
@@ -79,70 +97,71 @@ export namespace Account {
         name: 'Notification'
     });
 
+    export type NotificationData = Data<typeof Notification>;
+
+    const bypassNotif = (a: AccountData, notif: NotificationData) => a.id === notif.data.accountId;
+
+    Notification.bypass(Permissions.DataAction.Delete, bypassNotif);
+    Notification.bypass(Permissions.PropertyAction.Update, bypassNotif);
+    Notification.bypass(Permissions.PropertyAction.Read, bypassNotif);
+
     export const Settings = new Struct({
         database: DB,
         structure: {
-            account: 'text',
+            accountId: 'text',
             key: 'text',
-            value: 'text'
+            value: 'text' // flexible type based on use-case
         },
         name: 'Settings'
     });
 
+    export type SettingsData = Data<typeof Settings>;
+
+    const bypassSettings = (a: AccountData, setting: SettingsData) => a.id === setting.data.accountId;
+
+    
+    Settings.bypass(Permissions.DataAction.Delete, bypassSettings);
+    Settings.bypass(Permissions.PropertyAction.Update, bypassSettings);
+    Settings.bypass(Permissions.PropertyAction.Read, bypassSettings);
+
+
     export const getNotifications = async (account: Data<typeof Account>) => {
-        return attemptAsync(async () => {
-            const all = (await Notification.all()).unwrap();
-            return all.filter(n => n.data.accountId === account.id);
-        });
+        return Notification.fromProperty('accountId', account.id);
     };
 
     export const getSettings = async (account: Data<typeof Account>) => {
-        return attemptAsync(async () => {
-            const all = (await Settings.all()).unwrap();
-            return all.filter(s => s.data.account === account.id);
-        });
+        return Settings.fromProperty('accountId', account.id);
     };
 
     export const getVerifiedAccounts = async () => {
-        return attemptAsync(async () => {
-            const all = (await Account.all()).unwrap();
-            return all.filter(a => a.data.verified);
-        });
+        return Account.fromProperty('verified', true);
     };
 
     export const getUnverifiedAccounts = async () => {
-        return attemptAsync(async () => {
-            const all = (await Account.all()).unwrap();
-            return all.filter(a => !a.data.verified);
-        });
+        return Account.fromProperty('verified', false);
     };
 
     export const fromUsername = async (username: string) => {
-        return attemptAsync(async () => {
-            return (await Account.all())
-                .unwrap()
-                .find(a => a.data.username === username);
+        return attemptAsync<AccountData|undefined>(async () => {
+            return (await Account.fromProperty('username', username)).unwrap()[0];
         });
     };
 
     export const fromEmail = async (email: string) => {
-        return attemptAsync(async () => {
-            return (await Account.all())
-                .unwrap()
-                .find(a => a.data.email === email);
+        return attemptAsync<AccountData|undefined>(async () => {
+            return (await Account.fromProperty('email', email)).unwrap()[0];
         });
     };
 
     export const fromVerificationKey = async (key: string) => {
-        return attemptAsync(async () => {
-            return (await Account.all())
-                .unwrap()
-                .find(a => a.data.verification === key);
+        return attemptAsync<AccountData|undefined>(async () => {
+            return (await Account.fromProperty('verification', key)).unwrap()[0];
         });
     };
 
     export const fromDiscordID = async (discordID: string) => {
         return attemptAsync(async () => {
+            // TODO: Optimize through a join query
             const [accounts, discordLinks] = await Promise.all([
                 Account.all(),
                 DiscordLink.all()

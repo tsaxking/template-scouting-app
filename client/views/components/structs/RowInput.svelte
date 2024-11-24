@@ -7,11 +7,10 @@
         returnType,
         type as tsTypeActual
     } from '../../../../shared/struct';
-    import { Data } from '../../../models/struct';
+    import { confirm } from '../../../utilities/notifications';
 
     export let type: SQL_Type;
     export let data: TS_Type<SQL_Type>;
-    export let header: string;
     export let onChange: (value: TS_Type<SQL_Type>) => void;
 
     // Svelete did not like the type being passed in as a prop for the boolean case
@@ -20,51 +19,63 @@
         boolData = data as boolean;
     }
 
+    const doChange = async (
+        event: Event & {
+            currentTarget: HTMLInputElement;
+        }
+    ) => {
+        const value = event.currentTarget.value as TS_Type<SQL_Type>;
+        const sure = await confirm(`Change value from ${data} to ${value}?`);
+        if (sure) {
+            onChange(value);
+            data = value;
+        }
+    };
+
 // let tsType = tsTypeActual(type);
 </script>
 
 {#if type === 'text'}
     <input
         type="text"
-        bind:value="{data}"
-        on:change="{onChange}" />
+        value="{data}"
+        on:change="{doChange}" />
 {:else if type === 'integer'}
     <input
         step="1"
         type="number"
-        bind:value="{data}"
-        on:change="{onChange}" />
+        value="{data}"
+        on:change="{doChange}" />
 {:else if type === 'real'}
     <input
         step="0.0001"
         type="number"
-        bind:value="{data}"
-        on:change="{onChange}"
-    />
+        value="{data}"
+        on:change="{doChange}" />
 {:else if type === 'boolean'}
     <input
+        checked="{boolData}"
         type="checkbox"
-        bind:checked="{boolData}"
-        on:change="{onChange}" />
+        on:change="{doChange}" />
     <!-- {:else if type === 'date'}
-    <input type="date" bind:value={data} on:change={onChange} />
+    <input type="date" value={data} on:change={onChange} />
 {:else if type === 'time'}
-    <input type="time" bind:value={data} on:change={onChange} />
+    <input type="time" value={data} on:change={onChange} />
 {:else if type === 'timestamp'}
-    <input type="datetime-local" bind:value={data} on:change={onChange} />
+    <input type="datetime-local" value={data} on:change={onChange} />
 {:else if type === 'enum'}
-    <select bind:value={data} on:change={onChange}>
+    <select value={data} on:change={onChange}>
         {#each tsType as option (option)}
             <option value={option}>{option}</option>
         {/each}
     </select>
 {:else if type === 'json'}
-    <textarea bind:value={data} on:change={onChange}></textarea>
+    <textarea value={data} on:change={onChange}></textarea>
 {:else} -->
     <input
         type="text"
-        bind:value="{data}"
-        on:change="{onChange}" />
+        value="{data}"
+        on:change="{doChange}" />
 {/if}
 
 <!-- {#if checkStrType(type) === 'array'}
