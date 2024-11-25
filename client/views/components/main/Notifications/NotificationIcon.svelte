@@ -3,7 +3,7 @@
 
     export let account: Accounts.AccountData;
 
-    const notifsStore = Accounts.Notification.fromProperty('accountId', account.id);
+    const notifsStore = Accounts.Notification.fromProperty('accountId', account.id, true);
     const notifs = $notifsStore;
 
     let showNotifs = false;

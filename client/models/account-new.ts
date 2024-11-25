@@ -51,7 +51,7 @@ export namespace Accounts {
         name: 'PasswordChange',
         socket,
         structure: {
-            account: 'text',
+            accountId: 'text',
             key: 'text',
             expires: 'text'
         }
@@ -87,11 +87,25 @@ export namespace Accounts {
         name: 'Settings',
         socket,
         structure: {
-            account: 'text',
+            accountId: 'text',
             key: 'text',
-            value: 'text'
+            value: 'text',
         }
     });
 
+    export type SettingsData = StructData<typeof Settings.data.structure>;
 
+    export class SettingsObj<T extends Record<string, boolean | number | string>> {
+        public readonly settings: T;
+        
+        constructor(data: SettingsData[], account: AccountData) {
+            this.settings = data.reduce((acc, setting) => {
+                if (setting.data.accountId === account.id) {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    (acc as any)[setting.data.key || ''] = setting.data.value;
+                }
+                return acc;
+            }, {} as T);
+        }
+    }
 }

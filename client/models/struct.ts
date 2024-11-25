@@ -1,3 +1,4 @@
+/* eslint-disable no-dupe-class-members */
 // import { writable, Writable } from 'svelte/store';
 import { Socket } from '../utilities/socket';
 import { attempt, attemptAsync, Result } from '../../shared/check';
@@ -171,6 +172,24 @@ export class DataArr<T extends Blank> implements Readable<StructData<T>[]> {
 
     onAllUnsubscribe(fn: () => void) {
         this.onUnsubscribe = fn;
+    }
+
+    /**
+     * Resolves when the next time the data has been populated or the time has passed
+     * // TODO: will this cause a race condition?
+     */
+    await(time = 1000 * 60) {
+        return attemptAsync(() => new Promise((res, rej) => {
+            const u = this.subscribe((data) => {
+                u();
+                res(data);
+            });
+
+            setTimeout(() => {
+                u();
+                rej(new Error('DataArr timed out'));
+            }, time);
+        }));
     }
 }
 
@@ -578,7 +597,10 @@ export class Struct<T extends Blank> {
         });
     }
 
-    all() {
+    all(asWritable: true): DataArr<T>;
+    all(asWritable: false): Promise<Result<StructData<T>[]>>;
+    all(asWritable: boolean): DataArr<T> | Promise<Result<StructData<T>[]>> {
+        if (asWritable) {
         const arr = new DataArr(this, []);
         const fetcher = async () => {
             const response = (
@@ -621,9 +643,49 @@ export class Struct<T extends Blank> {
         fetcher();
 
         return arr;
+    
+    }
+        return attemptAsync(async () => {
+            const response = (
+                await this.requester.post<Structable<T & GlobalCols>[]>(
+                    `${this.route}/${this.data.name}/all`
+                )
+            ).unwrap();
+
+            return response.map(this.Generator);
+        });
     }
 
-    archived() {
+
+    archived(asWritable: true): DataArr<T>;
+    archived(asWritable: false): Promise<Result<StructData<T>[]>>;
+    archived(asWritable: boolean): DataArr<T> | Promise<Result<StructData<T>[]>> {
+        if (asWritable) {
+            const arr = new DataArr(this, []);
+
+            const fetcher = async () => {
+                const response = (
+                    await this.requester.post<PartialStructable<T & GlobalCols>[]>(
+                        `${this.route}/${this.data.name}/archived`
+                    )
+                ).unwrap();
+
+                const all = response.map(d => {
+                    const has = this.cache.get(d.id || '');
+                    if (has) return has;
+                    const data = new StructData(this, d);
+                    if (data.id) this.cache.set(data.id, data);
+                    return data;
+                });
+
+                this.stores.archived.set(all);
+                arr.add(...all);
+            };
+
+            fetcher();
+
+            return arr;
+        }
         return attemptAsync(async () => {
             const response = (
                 await this.requester.post<Structable<T>[]>(
@@ -686,21 +748,35 @@ export class Struct<T extends Blank> {
         return this.requester.post<T>(path, data);
     }
 
-    fromProperty<prop extends keyof T>(property: prop, value: TS_Type<T[prop]>) {
-        const w = new DataArr(this, []);
 
-        const run = async () => {
+    fromProperty<prop extends keyof T>(property: prop, value: TS_Type<T[prop]>, asWritable: true): DataArr<T>;
+    fromProperty<prop extends keyof T>(property: prop, value: TS_Type<T[prop]>, asWritable: false): Promise<Result<StructData<T>[]>>;
+    fromProperty<prop extends keyof T>(property: prop, value: TS_Type<T[prop]>, asWritable: boolean): DataArr<T> | Promise<Result<StructData<T>[]>> {
+        if (asWritable) {
+            const w = new DataArr(this, []);
+
+            const run = async () => {
+                const res = (await this.post<Structable<T>[]>('/read.from-property', {
+                    property,
+                    value,
+                })).unwrap();
+    
+                const list = res.map(this.Generator);
+                // this is to avoid potential race conditions with the writable.await() method
+                setTimeout(() => w.add(...list));
+            };
+    
+            run();
+    
+            return w;
+        }
+        return attemptAsync(async () => {
             const res = (await this.post<Structable<T>[]>('/read.from-property', {
                 property,
                 value,
             })).unwrap();
-
-            const list = res.map(this.Generator);
-            w.add(...list);
-        };
-
-        run();
-
-        return w;
+    
+            return res.map(this.Generator);
+        });
     }
 }
