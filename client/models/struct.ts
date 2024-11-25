@@ -55,7 +55,7 @@ type StructBuilder<T> = {
     requester?: Requester;
 };
 
-type Structable<T extends Blank> = {
+export type Structable<T extends Blank> = {
     [K in keyof T]: TS_TypeActual<Column<T[K], T>['type']>;
 };
 
@@ -171,6 +171,38 @@ export class DataArr<T extends Blank> implements Readable<StructData<T>[]> {
 
     onAllUnsubscribe(fn: () => void) {
         this.onUnsubscribe = fn;
+    }
+}
+
+export class SingleWritable<T extends Blank> implements Writable<StructData<T>> {
+    private data: StructData<T>;
+    
+    constructor(defaultData: StructData<T>) {
+        this.data = defaultData;
+    }
+
+    private _onUnsubscribe?: () => void;
+    private readonly subscribers = new Set<(data: StructData<T>) => void>();
+
+    subscribe(fn: (data: StructData<T>) => void) {
+        this.subscribers.add(fn);
+        return () => {
+            this.subscribers.delete(fn);
+            if (!this.subscribers.size) this._onUnsubscribe?.();
+        };
+    }
+
+    onUnsubscribe(fn: () => void) {
+        this._onUnsubscribe = fn;
+    }
+
+    set(data: StructData<T>) {
+        this.data = data;
+        this.subscribers.forEach(fn => fn(data));
+    }
+
+    update(fn: (data: StructData<T>) => StructData<T>) {
+        this.set(fn(this.data));
     }
 }
 
@@ -310,46 +342,45 @@ export class StructData<T extends Blank>
     }
 
     pull<Key extends keyof T>(...keys: Key[]) {
-        return attempt(() => {
-            const o = {} as Structable<{
-                [Property in Key]: T[Property];
-            }>;
-            keys.forEach(k => {
-                if (typeof this.data[k] === 'undefined') {
-                    throw new DataError(
-                        `User does not have permissions to read ${this.struct.name}.${k as string}`
-                    );
-                }
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (o as any)[k] = this.data[k];
-            });
+        const o = {} as Structable<{
+            [Property in Key]: T[Property];
+        }>;
 
-            class PartialReadable implements Readable<typeof o> {
-                constructor(public data: typeof o) {}
-
-                public readonly subscribers = new Set<
-                    (data: typeof o) => void
-                >();
-
-                subscribe(fn: (data: typeof o) => void) {
-                    this.subscribers.add(fn);
-                    return () => {
-                        this.subscribers.delete(fn);
-                        if (this.subscribers.size === 0) {
-                            return u();
-                        }
-                    };
-                }
+        for (const k of keys) {
+            if (typeof this.data[k] === 'undefined') {
+                console.error(new DataError(
+                    `User does not have permissions to read ${this.struct.name}.${k as string}`
+                ));
+                return;
             }
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (o as any)[k] = this.data[k];
+        }
+        class PartialReadable implements Readable<typeof o> {
+            constructor(public data: typeof o) {}
 
-            const w = new PartialReadable(o);
+            public readonly subscribers = new Set<
+                (data: typeof o) => void
+            >();
 
-            const u = this.subscribe(d => {
-                Object.assign(o, d);
-            });
+            subscribe(fn: (data: typeof o) => void) {
+                this.subscribers.add(fn);
+                return () => {
+                    this.subscribers.delete(fn);
+                    if (this.subscribers.size === 0) {
+                        return u();
+                    }
+                };
+            }
+        }
 
-            return w;
+        const w = new PartialReadable(o);
+
+        const u = this.subscribe(d => {
+            Object.assign(o, d);
         });
+
+        return w;
     }
 
     getUniverses() {
@@ -409,8 +440,8 @@ export class Struct<T extends Blank> {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         Struct.structs.set(this.data.name, this as any);
 
-        data.socket.on(
-            `struct:${this.data.name}:create`,
+        this.listen(
+            'create',
             (data: Structable<T & GlobalCols>) => {
                 const has = this.cache.get(data.id);
                 if (has) return;
@@ -419,8 +450,8 @@ export class Struct<T extends Blank> {
                 this.emit('new', d);
             }
         );
-        data.socket.on(
-            `struct:${this.data.name}:update`,
+        this.listen(
+            'update',
             (data: Structable<T & GlobalCols>) => {
                 const has = this.cache.get(data.id);
                 if (!has) return;
@@ -428,13 +459,13 @@ export class Struct<T extends Blank> {
                 this.emit('update', has);
             }
         );
-        data.socket.on(`struct:${this.data.name}:delete`, (id: string) => {
+        this.listen('delete', (id: string) => {
             const has = this.cache.get(id);
             if (!has) return;
             this.cache.delete(id);
             this.emit('delete', has);
         });
-        data.socket.on(`struct:${this.data.name}:archive`, (id: string) => {
+        this.listen('archive', (id: string) => {
             const has = this.cache.get(id);
             if (!has) return;
             Object.assign(has.data, { archived: true });
@@ -442,7 +473,7 @@ export class Struct<T extends Blank> {
             this.stores.archived.update(d => [...d, has]);
             this.emit('archive', has);
         });
-        data.socket.on(`struct:${this.data.name}:restore`, (id: string) => {
+        this.listen('restore', (id: string) => {
             const has = this.cache.get(id);
             if (!has) return;
             Object.assign(has.data, { archived: false });
@@ -450,8 +481,8 @@ export class Struct<T extends Blank> {
             this.stores.archived.update(d => d.filter(d => d.id !== id));
             this.emit('restore', has);
         });
-        data.socket.on(
-            `struct:${this.data.name}:restore-version`,
+        this.listen(
+            'restore-version',
             (data: Structable<T & GlobalCols>) => {
                 const has = this.cache.get(data.id);
                 if (has) {
@@ -462,8 +493,8 @@ export class Struct<T extends Blank> {
                 this.cache.set(data.id, d);
             }
         );
-        data.socket.on(
-            `struct:${this.data.name}:delete-version`,
+        this.listen(
+            'delete-version',
             (id: string) => {
                 // should this do anything?
             }
@@ -490,6 +521,13 @@ export class Struct<T extends Blank> {
         return this.data.socket;
     }
 
+    public listen<T>(event: string, fn: (data: T) => void) {
+        this.socket.on(`struct:${this.name}:${event}`, fn);
+        return () => {
+            this.socket.off(`struct:${this.name}:${event}`, fn);
+        };
+    }
+
     public readonly stores = {
         all: writable<StructData<T>[]>([]),
         archived: writable<StructData<T>[]>([])
@@ -502,6 +540,22 @@ export class Struct<T extends Blank> {
             'Cannot get sample of a struct at runtime. This is only used for type checking before compile'
         );
     }
+
+    public readonly Generator = (data: Structable<T>) => {
+        if (Object.hasOwn(data, 'id')) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            if (this.cache.has((data as any).id)) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                return this.cache.get((data as any).id) as StructData<T>;
+            }
+        }
+
+        const d = new StructData(this, data);
+
+        if (d.id) this.cache.set(d.id, d);
+
+        return d;
+    };
 
     new(data: Structable<T>) {
         return this.requester.post(
@@ -520,9 +574,7 @@ export class Struct<T extends Blank> {
                 )
             ).unwrap();
             // TODO: Prove this is a valid response
-            const d = new StructData(this, response);
-            this.cache.set(id, d);
-            return d;
+            return this.Generator(response);
         });
     }
 
@@ -579,7 +631,7 @@ export class Struct<T extends Blank> {
                 )
             ).unwrap();
 
-            const data = response.map(d => new StructData(this, d));
+            const data = response.map(this.Generator);
             return data;
         });
     }
@@ -632,5 +684,23 @@ export class Struct<T extends Blank> {
 
     post<T = unknown>(path: string, data: unknown) {
         return this.requester.post<T>(path, data);
+    }
+
+    fromProperty<prop extends keyof T>(property: prop, value: TS_Type<T[prop]>) {
+        const w = new DataArr(this, []);
+
+        const run = async () => {
+            const res = (await this.post<Structable<T>[]>('/read.from-property', {
+                property,
+                value,
+            })).unwrap();
+
+            const list = res.map(this.Generator);
+            w.add(...list);
+        };
+
+        run();
+
+        return w;
     }
 }

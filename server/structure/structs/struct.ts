@@ -1906,6 +1906,52 @@ export class Struct<Structure extends Blank, Name extends string> {
                     );
                 });
 
+                this.route.post<{
+                    property: unknown;
+                    value: unknown;
+                }>('/read.from-property', validate({
+                    property: (v) => Object.keys(this.data.structure).includes(v),
+                    value: (v, self) => typeValidation(this.data.structure[self.property as keyof Structure], v),
+                }), async (req, res) => {
+                    const account = (
+                        await Session.getAccount(req.session)
+                    ).unwrap();
+                    if (!account) return res.sendStatus(notSignedInStatus(req));
+                    const roles = (
+                        await Permissions.getRoles(account)
+                    ).unwrap();
+
+                    const n = (await this.fromProperty(req.body.property as keyof Structure, req.body.value)).unwrap();
+
+                    const bypasses = this.bypasses.filter(
+                        b => b.permission === Permissions.PropertyAction.Read
+                    );
+
+                    res.json(
+                        [
+                            ...n
+                                .filter(d =>
+                                    bypasses.some(bp => bp.fn(account, d))
+                                )
+                                .map(d => d.data),
+                            ...(
+                                await Permissions.filterAction(
+                                    roles,
+                                    n.filter(d => !d.archived),
+                                    Permissions.PropertyAction.Read
+                                )
+                            )
+                                .unwrap()
+                        ].filter(
+                            (v, i, a) =>
+                                a.findIndex(
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                    t => (t as any).id === (v as any).id
+                                ) === i
+                        )
+                    );
+                });
+
                 this.route.post('/read.archived', async (req, res) => {
                     const account = (
                         await Session.getAccount(req.session)

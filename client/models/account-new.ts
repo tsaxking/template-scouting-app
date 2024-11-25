@@ -1,9 +1,11 @@
 import { read } from 'fs';
 import { socket } from '../utilities/socket';
-import { Data, StructData, Struct } from './struct';
+import { Data, StructData, Struct, SingleWritable } from './struct';
 import { Blank } from '../../shared/struct';
+import { attemptAsync } from '../../shared/check';
 
 export namespace Accounts {
+
     export const Account = new Struct({
         name: 'Account',
         socket,
@@ -21,6 +23,20 @@ export namespace Accounts {
     });
 
     export type AccountData = StructData<typeof Account.data.structure>;
+
+    export const self = new SingleWritable(
+        Account.Generator({
+            username: 'guest',
+            firstName: 'Guest',
+            lastName: 'Guest',
+            key: '',
+            salt: '',
+            email: '',
+            picture: '',
+            verified: false,
+            verification: '',
+        }),
+    );
 
     export const DiscordLink = new Struct({
         name: 'DiscordLink',
@@ -65,6 +81,8 @@ export namespace Accounts {
         }
     });
 
+    export type NotificationData = StructData<typeof Notification.data.structure>;
+
     export const Settings = new Struct({
         name: 'Settings',
         socket,
@@ -75,9 +93,5 @@ export namespace Accounts {
         }
     });
 
-    // export const self: StructData<typeof Account.data.structure> | null = null;
 
-    // export const getSelf = async () => {
-
-    // };
 }

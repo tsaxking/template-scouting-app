@@ -44,11 +44,11 @@ type AllowedPrimitive = 'string' | 'number' | 'boolean' | 'undefined';
  *
  * @typedef {IsValid}
  */
-type IsValid =
+type IsValid<T> =
     | AllowedPrimitive
     | AllowedPrimitive[]
     | (string | number | boolean)[]
-    | ((data: any) => boolean);
+    | ((data: any, body: T) => boolean);
 
 /**
  * Event emitter for data validation
@@ -67,7 +67,7 @@ export const emitter = (() => {
     class DataValidationFaliure<T> {
         constructor(
             public readonly type: T,
-            public readonly data: [string, unknown, IsValid],
+            public readonly data: [string, unknown, IsValid<unknown>],
             public readonly url: string,
             public readonly method: string,
             public readonly reason: Reason
@@ -106,7 +106,7 @@ export const emitter = (() => {
 export const validate = <type = unknown>(
     data: {
         // each key is a key in the type generic
-        [key in keyof type]: IsValid;
+        [key in keyof type]: IsValid<type>;
     },
     options?: ValidateOptions
 ): ServerFunction<type> => {
@@ -132,7 +132,7 @@ export const validate = <type = unknown>(
                 missing.push(key);
                 emitter.throw(
                     'fail',
-                    [key, (body as any)[key], isValid as IsValid],
+                    [key, (body as any)[key], isValid as IsValid<unknown>],
                     req,
                     'missing-key'
                 );
@@ -163,7 +163,7 @@ export const validate = <type = unknown>(
                         failed.push(key);
                         emitter.throw(
                             'fail',
-                            [key, (body as any)[key], isValid as IsValid],
+                            [key, (body as any)[key], isValid as IsValid<unknown>],
                             req,
                             'invalid-primitive-array'
                         );
@@ -182,7 +182,7 @@ export const validate = <type = unknown>(
                         failed.push(key);
                         emitter.throw(
                             'fail',
-                            [key, (body as any)[key], isValid as IsValid],
+                            [key, (body as any)[key], isValid as IsValid<unknown>],
                             req,
                             'invalid-normal-array'
                         );
@@ -205,7 +205,7 @@ export const validate = <type = unknown>(
                         failed.push(key);
                         emitter.throw(
                             'fail',
-                            [key, (body as any)[key], isValid as IsValid],
+                            [key, (body as any)[key], isValid as IsValid<unknown>],
                             req,
                             'invalid-primitive'
                         );
@@ -225,7 +225,7 @@ export const validate = <type = unknown>(
                         failed.push(key);
                         emitter.throw(
                             'fail',
-                            [key, (body as any)[key], isValid as IsValid],
+                            [key, (body as any)[key], isValid as IsValid<unknown>],
                             req,
                             'invalid-non-primitive'
                         );

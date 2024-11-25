@@ -1,22 +1,17 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
     import { capitalize, fromSnakeCase } from '../../../../shared/text';
     export let title: string;
     export let navItems: string[] = [];
-    import { Account } from '../../../models/account';
     import { Modal } from '../../../utilities/modals';
     import Settings from '../../pages/Settings.svelte';
-    import { AccountNotification } from '../../../models/account-notifications';
-    import AccountNotifications from './AccountNotifications.svelte';
+    import AccountNotifications from './Notifications/AccountNotifications.svelte';
+import { Accounts } from '../../../models/account-new';
+import NotificationIcon from './Notifications/NotificationIcon.svelte';
+
+    const myAccount = Accounts.self;
+    const self = $myAccount;
 
     export let active: string = '';
-
-    let account: Account = Account.guest;
-    let notifications: AccountNotification[] = [];
-    let showNotifications = false;
-    let unread: number;
-
-    $: unread = notifications.filter(n => !n.read).length;
 
     export let accountLinks: (string | null)[] = [];
 
@@ -34,21 +29,6 @@
         m.setBody(body);
         m.show();
     };
-
-    const initAccount = async () => {
-        const a = await Account.getAccount();
-        if (a.isOk() && a.value) {
-            account = a.value;
-            const n = await a.value.getNotifications();
-            if (n.isOk()) {
-                notifications = n.value;
-            }
-        }
-    };
-
-    onMount(() => {
-        initAccount();
-    });
 </script>
 
 <nav
@@ -104,35 +84,18 @@
             href="#navbarDropdown"
             role="button"
         >
-            Hello, {account.username}&nbsp;
-            {#if account.picture}
+            Hello, {self.data.username}&nbsp;
+            {#if self.data.picture}
                 <img
                     class="profile-pic mx-1"
                     alt=""
-                    src="../uploads/${account.picture}"
+                    src="../uploads/${self.data.picture}"
                 />
             {:else}
                 <span class="material-icons">person</span>
             {/if}
         </a>
-        <button
-            class="btn btn-primary position-relative p-2 me-5"
-            aria-controls="notifications-offcanvas"
-            data-bs-target="#notifications-offcanvas"
-            data-bs-toggle="offcanvas"
-            type="button"
-            on:click="{() => {
-                showNotifications = !showNotifications;
-            }}"
-        >
-            <i class="material-icons"> notifications </i>
-            {#if !!unread}
-                <span class="badge bg-danger position-absolute top-0 start-100 translate-middle rounded-pill"
-                >
-                    {unread}
-                </span>
-            {/if}
-        </button>
+        <NotificationIcon account={self} />
         <ul
             id="navbarDropdown"
             class="dropdown-menu dropdown-menu-end p-0"
@@ -185,4 +148,4 @@
     </div>
 </nav>
 
-<AccountNotifications {notifications} />
+<AccountNotifications />
