@@ -695,6 +695,10 @@ export class Struct<T extends Blank> {
 
         this.writables.set('all', arr);
 
+        arr.onAllUnsubscribe(() => {
+            this.writables.delete('all');
+        });
+
         return arr;
     
     }
@@ -741,6 +745,10 @@ export class Struct<T extends Blank> {
             fetcher();
 
             this.writables.set('archived', arr);
+
+            arr.onAllUnsubscribe(() => {
+                this.writables.delete('archived');
+            });
 
             return arr;
         }
@@ -811,8 +819,11 @@ export class Struct<T extends Blank> {
     fromProperty<prop extends keyof T>(property: prop, value: TS_Type<T[prop]>, asWritable: false): Promise<Result<StructData<T>[]>>;
     fromProperty<prop extends keyof T>(property: prop, value: TS_Type<T[prop]>, asWritable: boolean): DataArr<T> | Promise<Result<StructData<T>[]>> {
         if (asWritable) {
-            const has = this.writables.get(`${String(property)}=${value}`);
+            const str = `${String(property)}=${value}`;
+
+            const has = this.writables.get(str);
             if (has) return has;
+
 
             const w = new DataArr(this, []);
 
@@ -829,7 +840,10 @@ export class Struct<T extends Blank> {
     
             run();
 
-            this.writables.set(`${String(property)}=${value}`, w);
+            this.writables.set(str, w);
+            w.onAllUnsubscribe(() => {
+                this.writables.delete(str);
+            });
     
             return w;
         }
