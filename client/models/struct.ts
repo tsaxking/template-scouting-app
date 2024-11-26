@@ -236,6 +236,7 @@ export class UniverseArr<T extends Blank> implements Readable<string[]> {
     private onUnsubscribe: (() => void) | undefined;
 
     subscribe(run: Subscriber<string[]>): Unsubscriber {
+        this.subscribers.add(run);
         return () => {
             this.subscribers.delete(run);
             if (this.subscribers.size === 0) {
@@ -257,6 +258,7 @@ export class UniverseArr<T extends Blank> implements Readable<string[]> {
     }
 
     onAllUnsubscribe(fn: () => void) {
+        if (this.onUnsubscribe) return console.error(new DataError('onUnsubscribe already set'));
         this.onUnsubscribe = fn;
     }
 }
