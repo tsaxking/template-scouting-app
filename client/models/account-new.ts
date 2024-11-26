@@ -3,6 +3,7 @@ import { socket } from '../utilities/socket';
 import { Data, StructData, Struct, SingleWritable } from './struct';
 import { Blank } from '../../shared/struct';
 import { attemptAsync } from '../../shared/check';
+import { Writable } from 'svelte/store';
 
 export namespace Accounts {
 
@@ -95,49 +96,4 @@ export namespace Accounts {
 
     export type SettingsData = StructData<typeof Settings.data.structure>;
 
-    export class SettingsObj<T extends Record<string, boolean | number | string>> {
-        // public readonly settings: T;
-        
-        constructor(private data: SettingsData[], public readonly account: AccountData) {
-            // this.settings = data.reduce((acc, setting) => {
-            //     if (setting.data.accountId === account.id) {
-            //         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            //         // (acc as any)[setting.data.key || ''] = setting.data.value;
-
-            //         acc = {
-            //             ...acc,
-            //             get [setting.data.key || '']() {
-            //                 return setting.data.value;
-            //             },
-
-            //             set [setting.data.key || ''](value: string) {
-            //                 setting.
-            //             }
-            //         };
-            //     }
-            //     return acc;
-            // }, {} as T);
-        }
-
-        set(key: keyof T, value: string) {
-            return attemptAsync(async () => {
-                const setting = this.data.find(s => s.data.accountId === this.account.id && s.data.key === key);
-                if (setting) {
-                    setting.update((data) => ({
-                        value,
-                    }));
-                } else {
-                    Settings.new({
-                        key: String(key),
-                        value,
-                        accountId: String(this.account.id),
-                    });
-                }
-            });
-        }
-
-        get (key: keyof T) {
-            return this.data.find(setting => setting.data.key === key)?.data.value;
-        }
-    }
 }

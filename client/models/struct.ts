@@ -444,6 +444,8 @@ type StructEvents<T extends Blank> = {
 export class Struct<T extends Blank> {
     public static readonly structs = new Map<string, Struct<Blank>>();
 
+    private readonly writables = new Map<string, DataArr<T>>();
+
     private readonly eventEmitter = new EventEmitter<StructEvents<T>>();
 
     public on = this.eventEmitter.on.bind(this.eventEmitter);
@@ -465,6 +467,16 @@ export class Struct<T extends Blank> {
                 const has = this.cache.get(data.id);
                 if (has) return;
                 const d = new StructData(this, data);
+
+                const all = this.writables.get('all');
+                if (all) all.add(d);
+
+                for (const [key, value] of Object.entries(data)) {
+                    const str = `${key}=${value}`;
+                    const from = this.writables.get(str);
+                    if (from) from.add(d);
+                }
+
                 this.cache.set(data.id, d);
                 this.emit('new', d);
             }
@@ -481,12 +493,35 @@ export class Struct<T extends Blank> {
         this.listen('delete', (id: string) => {
             const has = this.cache.get(id);
             if (!has) return;
+
+            const all = this.writables.get('all');
+            if (all) all.remove(has);
+
+            for (const [key, value] of Object.entries(data)) {
+                const str = `${key}=${value}`;
+                const from = this.writables.get(str);
+                if (from) from.remove(has);
+            }
+            
             this.cache.delete(id);
             this.emit('delete', has);
         });
         this.listen('archive', (id: string) => {
             const has = this.cache.get(id);
             if (!has) return;
+
+            const all = this.writables.get('all');
+            if (all) all.remove(has);
+
+            const archived = this.writables.get('archived');
+            if (archived) archived.add(has);
+
+            for (const [key, value] of Object.entries(data)) {
+                const str = `${key}=${value}`;
+                const from = this.writables.get(str);
+                if (from) from.remove(has);
+            }
+
             Object.assign(has.data, { archived: true });
             this.stores.all.update(d => d.filter(d => d.id !== id));
             this.stores.archived.update(d => [...d, has]);
@@ -495,6 +530,19 @@ export class Struct<T extends Blank> {
         this.listen('restore', (id: string) => {
             const has = this.cache.get(id);
             if (!has) return;
+
+            const all = this.writables.get('all');
+            if (all) all.add(has);
+
+            const archived = this.writables.get('archived');
+            if (archived) archived.remove(has);
+
+            for (const [key, value] of Object.entries(data)) {
+                const str = `${key}=${value}`;
+                const from = this.writables.get(str);
+                if (from) from.add(has);
+            }
+
             Object.assign(has.data, { archived: false });
             this.stores.all.update(d => [...d, has]);
             this.stores.archived.update(d => d.filter(d => d.id !== id));
@@ -601,6 +649,9 @@ export class Struct<T extends Blank> {
     all(asWritable: false): Promise<Result<StructData<T>[]>>;
     all(asWritable: boolean): DataArr<T> | Promise<Result<StructData<T>[]>> {
         if (asWritable) {
+            const has = this.writables.get('all');
+            if (has) return has;
+
         const arr = new DataArr(this, []);
         const fetcher = async () => {
             const response = (
@@ -642,6 +693,8 @@ export class Struct<T extends Blank> {
         // since it's returning a writable, we'll be able to get the changes through subscriptions
         fetcher();
 
+        this.writables.set('all', arr);
+
         return arr;
     
     }
@@ -661,6 +714,9 @@ export class Struct<T extends Blank> {
     archived(asWritable: false): Promise<Result<StructData<T>[]>>;
     archived(asWritable: boolean): DataArr<T> | Promise<Result<StructData<T>[]>> {
         if (asWritable) {
+            const has = this.writables.get('archived');
+            if (has) return has;
+
             const arr = new DataArr(this, []);
 
             const fetcher = async () => {
@@ -683,6 +739,8 @@ export class Struct<T extends Blank> {
             };
 
             fetcher();
+
+            this.writables.set('archived', arr);
 
             return arr;
         }
@@ -753,6 +811,9 @@ export class Struct<T extends Blank> {
     fromProperty<prop extends keyof T>(property: prop, value: TS_Type<T[prop]>, asWritable: false): Promise<Result<StructData<T>[]>>;
     fromProperty<prop extends keyof T>(property: prop, value: TS_Type<T[prop]>, asWritable: boolean): DataArr<T> | Promise<Result<StructData<T>[]>> {
         if (asWritable) {
+            const has = this.writables.get(`${String(property)}=${value}`);
+            if (has) return has;
+
             const w = new DataArr(this, []);
 
             const run = async () => {
@@ -767,6 +828,8 @@ export class Struct<T extends Blank> {
             };
     
             run();
+
+            this.writables.set(`${String(property)}=${value}`, w);
     
             return w;
         }
