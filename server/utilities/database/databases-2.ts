@@ -1,3 +1,4 @@
+/* eslint-disable no-dupe-class-members */
 // TODO: Query Streams: https://npmjs.com/package/pg-query-stream
 
 /* eslint-disable no-await-in-loop */
@@ -59,19 +60,19 @@ class DatabaseError extends Error {
 }
 
 type StreamEvents<T> = {
-    data: (data: T) => void;
-    end: () => void;
-    close: () => void;
-    error: (error: Error) => void;
+    data: T;
+    end: void;
+    close: void;
+    error: Error;
 };
 
-class QueryStreamer<T extends Record<string, unknown>> {
+class QueryStreamer<T> {
     private readonly emitter = new EventEmitter<StreamEvents<T>>();
 
     on = this.emitter.on.bind(this.emitter);
     off = this.emitter.off.bind(this.emitter);
-    emit = this.emitter.emit.bind(this.emitter);
     once = this.emitter.once.bind(this.emitter);
+    emit = this.emitter.emit.bind(this.emitter);
 
     constructor() {}
 }
@@ -388,7 +389,7 @@ export class PgDatabase implements DatabaseInterface {
         });
     }
 
-    stream<T extends Record<string, unknown>>(query: Query) {
+    stream<T>(query: Query) {
         const streamer = new QueryStreamer<T>();
         const q = new QueryStream(query.sql, query.args);
         const stream = this.client.query(q);
