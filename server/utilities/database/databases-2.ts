@@ -1,3 +1,5 @@
+// TODO: Query Streams: https://npmjs.com/package/pg-query-stream
+
 /* eslint-disable no-await-in-loop */
 import {
     attempt,
@@ -11,6 +13,7 @@ import {
 // import cliProgress from 'cli-progress';
 import { EventEmitter } from '../../../shared/event-emitter';
 import { Client } from 'pg';
+import QueryStream from 'pg-query-stream';
 import {
     fromCamelCase,
     toSnakeCase,
@@ -55,6 +58,24 @@ class DatabaseError extends Error {
     }
 }
 
+type StreamEvents<T> = {
+    data: (data: T) => void;
+    end: () => void;
+    close: () => void;
+    error: (error: Error) => void;
+};
+
+class QueryStreamer<T extends Record<string, unknown>> {
+    private readonly emitter = new EventEmitter<StreamEvents<T>>();
+
+    on = this.emitter.on.bind(this.emitter);
+    off = this.emitter.off.bind(this.emitter);
+    emit = this.emitter.emit.bind(this.emitter);
+    once = this.emitter.once.bind(this.emitter);
+
+    constructor() {}
+}
+
 /**
  * Interface for using different databases in the future
  *
@@ -86,6 +107,10 @@ export interface DatabaseInterface {
      * @returns {Promise<Result<void>>}
      */
     dump(target: string): Promise<Result<void>>;
+
+    stream<T extends Record<string, unknown>>(
+        query: Query
+    ): QueryStreamer<T>;
 }
 
 /**
@@ -361,6 +386,30 @@ export class PgDatabase implements DatabaseInterface {
                 )
             ).unwrap();
         });
+    }
+
+    stream<T extends Record<string, unknown>>(query: Query) {
+        const streamer = new QueryStreamer<T>();
+        const q = new QueryStream(query.sql, query.args);
+        const stream = this.client.query(q);
+
+        stream.on('data', (data: T) => {
+            streamer.emit('data', data as T);
+        });
+
+        stream.on('end', () => {
+            streamer.emit('end', undefined);
+        });
+
+        stream.on('close', () => {
+            streamer.emit('close', undefined);
+        });
+
+        stream.on('error', (error: Error) => {
+            streamer.emit('error', error);
+        });
+
+        return streamer;
     }
 }
 

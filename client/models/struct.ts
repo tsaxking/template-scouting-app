@@ -1,3 +1,4 @@
+// TODO: It may be good to implement streams
 /* eslint-disable no-dupe-class-members */
 // import { writable, Writable } from 'svelte/store';
 import { Socket } from '../utilities/socket';
