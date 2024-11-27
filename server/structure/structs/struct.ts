@@ -1,3 +1,4 @@
+/* eslint-disable no-dupe-class-members */
 import {
     attempt,
     attemptAsync,
@@ -626,6 +627,48 @@ export class DataVersion<T extends Blank, Name extends string>
 
             return parsed;
         });
+    }
+}
+
+type StreamEvents<T extends Blank, Name extends string> = {
+    data: StructData<T, Name>;
+    end: void;
+    close: void;
+    error: Error;
+}
+
+export class StructStream<Structure extends Blank, Name extends string> {
+    private readonly emitter = new EventEmitter<StreamEvents<Structure, Name>>();
+    
+    public on = this.emitter.on.bind(this.emitter);
+    public off = this.emitter.off.bind(this.emitter);
+    public emit = this.emitter.emit.bind(this.emitter);
+    public once = this.emitter.once.bind(this.emitter);
+
+    constructor(
+        public readonly struct: Struct<Structure, Name>,
+    ) {}
+
+    add(data: StructData<Structure, Name>) {
+        this.emit('data', data);
+    }
+
+    await() {
+        return new Promise((res, rej) => {
+            const data: StructData<Structure, Name>[] = [];
+            this.on('data', (d) => data.push(d));
+            this.once('end', () => res(data));
+            this.once('close', () => res(data));
+            this.once('error', (e) => rej(e));
+        });
+    }
+
+    pipe(fn: (data: StructData<Structure, Name>) => void) {
+        this.on('data', fn);
+
+        this.once('end', () => this.off('data', fn));
+        this.once('close', () => this.off('data', fn));
+        this.once('error', () => this.off('data', fn));
     }
 }
 
@@ -1875,7 +1918,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                         await Permissions.getRoles(account)
                     ).unwrap();
 
-                    const n = (await this.all()).unwrap();
+                    const n = (await this.all(false)).unwrap();
 
                     const bypasses = this.bypasses.filter(
                         b => b.permission === Permissions.PropertyAction.Read
@@ -1950,6 +1993,16 @@ export class Struct<Structure extends Blank, Name extends string> {
                                 ) === i
                         )
                     );
+
+                    // EXPERIMENTAL:
+                    const stream = this.fromProperty(req.body.property as keyof Structure, req.body.value, true);
+                    stream.pipe((data) => {
+                        res.write(JSON.stringify(data));
+                    });
+
+                    stream.on('end', () => res.end());
+                    stream.on('close', () => res.end());
+                    stream.on('error', () => res.end());
                 });
 
                 this.route.post('/read.archived', async (req, res) => {
@@ -1962,7 +2015,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                         await Permissions.getRoles(account)
                     ).unwrap();
 
-                    const n = (await this.archived()).unwrap();
+                    const n = (await this.archived(false)).unwrap();
 
                     const bypasses = this.bypasses.filter(
                         b =>
@@ -2434,15 +2487,33 @@ export class Struct<Structure extends Blank, Name extends string> {
      */
     fromProperty<Property extends keyof Structure>(
         property: Property,
-        value: TS_Type<Structure[Property]>
-    ) {
+        value: TS_Type<Structure[Property]>,
+        asStream: true
+    ): StructStream<Structure, Name>;
+    fromProperty<Property extends keyof Structure>(
+        property: Property,
+        value: TS_Type<Structure[Property]>,
+        asStream?: false
+    ): Promise<Result<StructData<Structure, Name>[]>>;
+    fromProperty<Property extends keyof Structure>(
+        property: Property,
+        value: TS_Type<Structure[Property]>,
+        asStream?: boolean
+    ): StructStream<Structure, Name> | Promise<Result<StructData<Structure, Name>[]>> {
+        const query = Query.build(
+            `SELECT * FROM ${this.data.name} WHERE ${property as string} = :value`,
+            {
+                value: value as SimpleParameter
+            }
+        );
+        if (asStream) {
+            const stream = this.data.database.unsafe.stream<St<Structure, Name>>(query);
+            const streamer = new StructStream<Structure, Name>(this);
+            stream.pipe((data) => streamer.add(this.Generator(data)));
+            return streamer;
+        }
         return attemptAsync(async () => {
-            const query = Query.build(
-                `SELECT * FROM ${this.data.name} WHERE ${property as string} = :value`,
-                {
-                    value: value as SimpleParameter
-                }
-            );
+
 
             const data = (
                 await this.data.database.unsafe.all<St<Structure, Name>>(query)
@@ -2465,13 +2536,24 @@ export class Struct<Structure extends Blank, Name extends string> {
      * @param {boolean} [includeArchived=false]
      * @returns {*}
      */
-    all(includeArchived: boolean = false) {
+    all(asStream: true, includeArchived?: boolean): StructStream<Structure, Name>;
+    all(asStream: false, includeArchived?: boolean): Promise<Result<StructData<Structure, Name>[]>>;
+    all(asStream: boolean, includeArchived: boolean = false): StructStream<Structure, Name> | Promise<Result<StructData<Structure, Name>[]>>{
+        const query = Query.build(
+            `SELECT * FROM ${this.data.name} WHERE archived = false;`
+        );
+
+        if (asStream) {
+            const stream = this.data.database.unsafe.stream<St<Structure, Name>>(query);
+            const streamer = new StructStream<Structure, Name>(this);
+            stream.pipe((data) => streamer.add(this.Generator(data)));
+            return streamer;
+        }
+        
         if (!this.built)
             throw new FatalStructError(`Struct ${this.data.name} not built`);
         return attemptAsync(async () => {
-            const query = Query.build(
-                `SELECT * FROM ${this.data.name} WHERE archived = false;`
-            );
+
 
             const data = (
                 await this.data.database.unsafe.all<St<Structure, Name>>(query)
@@ -2496,14 +2578,24 @@ export class Struct<Structure extends Blank, Name extends string> {
      * @param {string} universe
      * @returns {*}
      */
-    fromUniverse(universe: string) {
+    fromUniverse(universe: string, asStream: true): StructStream<Structure, Name>;
+    fromUniverse(universe: string, asStream: false): Promise<Result<StructData<Structure, Name>[]>>;
+    fromUniverse(universe: string, asStream: boolean): StructStream<Structure, Name> | Promise<Result<StructData<Structure, Name>[]>> {
+        const query = Query.build(
+            `SELECT * FROM ${this.data.name} WHERE universes LIKE :universe`,
+            {
+                universe: `%${universe}%`
+            }
+        );
+        if (asStream) {
+            const stream = this.data.database.unsafe.stream<St<Structure, Name>>(query);
+            const streamer = new StructStream<Structure, Name>(this);
+            stream.pipe((data) => streamer.add(this.Generator(data)));
+            return streamer;
+        }
+        
         return attemptAsync(async () => {
-            const query = Query.build(
-                `SELECT * FROM ${this.data.name} WHERE universes LIKE :universe`,
-                {
-                    universe: `%${universe}%`
-                }
-            );
+
 
             const data = (
                 await this.data.database.unsafe.all<St<Structure, Name>>(query)
@@ -2525,13 +2617,25 @@ export class Struct<Structure extends Blank, Name extends string> {
      *
      * @returns {*}
      */
-    archived() {
+    archived(asStream: true): StructStream<Structure, Name>;
+    archived(asStream: false): Promise<Result<StructData<Structure, Name>[]>>;
+    archived(asStream: boolean): StructStream<Structure, Name> | Promise<Result<StructData<Structure, Name>[]>> {
         if (!this.built)
             throw new FatalStructError(`Struct ${this.data.name} not built`);
+        
+        const query = Query.build(
+            `SELECT * FROM ${this.data.name} WHERE archived = true`
+        );
+
+        if (asStream) {
+            const stream = this.data.database.unsafe.stream<St<Structure, Name>>(query);
+            const streamer = new StructStream<Structure, Name>(this);
+            stream.pipe((data) => streamer.add(this.Generator(data)));
+            return streamer;
+        }
+        
         return attemptAsync(async () => {
-            const query = Query.build(
-                `SELECT * FROM ${this.data.name} WHERE archived = true`
-            );
+
 
             const data = (
                 await this.data.database.unsafe.all<St<Structure, Name>>(query)
@@ -2606,7 +2710,7 @@ export class Struct<Structure extends Blank, Name extends string> {
      */
     drop() {
         return attemptAsync(async () => {
-            const all = (await this.all(true)).unwrap();
+            const all = (await this.all(false, true)).unwrap();
             if (all.length)
                 throw new FatalStructError('Cannot drop table with data');
         });

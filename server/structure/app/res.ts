@@ -255,6 +255,18 @@ export class Res {
         });
     }
 
+    write(chunk: string) {
+        return attempt(() => {
+            if (!this.isFulfilled()) this.res.write(chunk);
+        });
+    }
+    
+    end() {
+        return attempt(() => {
+            if (!this.isFulfilled()) this.res.end();
+        });
+    }
+
     /**
      * Sends a template (similar to render)
      * @date 3/8/2024 - 6:19:36 AM

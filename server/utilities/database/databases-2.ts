@@ -69,12 +69,21 @@ type StreamEvents<T> = {
 class QueryStreamer<T> {
     private readonly emitter = new EventEmitter<StreamEvents<T>>();
 
+
     on = this.emitter.on.bind(this.emitter);
     off = this.emitter.off.bind(this.emitter);
     once = this.emitter.once.bind(this.emitter);
     emit = this.emitter.emit.bind(this.emitter);
 
     constructor() {}
+
+    public pipe(fn: (data: T) => unknown) {
+        this.on('data', fn);
+        this.once('end', () => this.off('data', fn));
+        this.once('error', () => this.off('data', fn));
+        this.once('close', () => this.off('data', fn));
+        return this;
+    }
 }
 
 /**
@@ -486,6 +495,10 @@ class UnsafeDatabase {
         return attemptAsync(async () => {
             return this.db.query(query);
         });
+    }
+
+    public stream<T extends Record<string, unknown>>(query: Query) {
+        return this.db.stream<T>(query);
     }
 }
 
@@ -1076,6 +1089,13 @@ export class Database {
             return result.rows[0] as Queries[T][1];
         });
     }
+
+    // public stream<T extends keyof Queries>(
+    //     type: T,
+    //     ...args: QueryFileParams<T> extends [undefined]
+    //         ? []
+    //         : QueryFileParams<T>
+    // ) {}
 
     /**
      * Returns all rows from a query

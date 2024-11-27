@@ -3,7 +3,7 @@ import { App } from './app';
 import { FileUpload } from '../../middleware/stream';
 import { Socket } from 'socket.io';
 import { Session } from '../structs/session';
-import { Data } from '../structs/cache-2';
+import { Data } from '../structs/struct';
 
 /**
  * Body type
