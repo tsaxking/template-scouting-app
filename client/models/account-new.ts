@@ -1,6 +1,6 @@
 import { read } from 'fs';
 import { socket } from '../utilities/socket';
-import { Data, StructData, Struct, SingleWritable } from './struct';
+import { Data, StructData, Struct, SingleWritable, Structable } from './struct';
 import { Blank } from '../../shared/struct';
 import { attemptAsync } from '../../shared/check';
 import { Writable } from 'svelte/store';
@@ -64,6 +64,8 @@ export namespace Accounts {
             account: 'text',
             email: 'text',
             key: 'text',
+
+            
             expires: 'text'
         }
     });
@@ -96,4 +98,57 @@ export namespace Accounts {
     });
 
     export type SettingsData = StructData<typeof Settings.data.structure>;
+
+
+    export const signIn = (username: string, password: string) => {
+        return Account.post('/sign-in', { username, password });
+    };
+
+    export const signUp = (data: {
+        username: string;
+        password: string;
+        confirmPassword: string;
+        email: string;
+        firstName: string;
+        lastName: string;
+        // phoneNumber: string;
+    }) => {
+        return Account.post('/sign-up', data);
+    };
+
+    export const signOut = () => {
+        return attemptAsync(async () => {
+            (await Account.post('/sign-out', {})).unwrap();
+            self.set(Account.Generator({
+                username: 'guest',
+                firstName: 'Guest',
+                lastName: 'Guest',
+                key: '',
+                salt: '',
+                email: '',
+                picture: '',
+                verified: false,
+                verification: ''
+            }));
+        });
+    };
+
+    export const getSelf = () => {
+        return attemptAsync(async () => {
+            if (self.get().data.username !== 'guest') return self;
+
+            const a = (await Account.post<Structable<typeof Account.data.structure>>('/self', {})).unwrap();
+            self.set(Account.Generator(a));
+
+            return self;
+        });
+    };
+
+    export const requestPasswordReset = () => {
+        return Account.post('/request-password-reset', { username: self.get().data.username || '' });
+    };
+
+    export const changePassword = (password: string, confirmPassword: string, key: string) => {
+        return Account.post('/change-password', { password, confirmPassword, key });
+    };
 }

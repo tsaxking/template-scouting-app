@@ -3,18 +3,16 @@ import { log } from './utilities/terminal-logging';
 import { App } from './structure/app/app';
 import { getJSON, log as serverLog } from './utilities/files';
 import { homeBuilder } from './utilities/page-builder';
-import Account from './structure/accounts';
 import { router as admin } from './routes/admin';
-import { router as account } from './routes/account';
 import { router as api } from './routes/api';
-import { router as role } from './routes/roles';
-import { router as notifications } from './routes/account-notifications';
 import { FileUpload } from './middleware/stream';
 import { ReqBody } from './structure/app/req';
 import { parseCookie } from '../shared/cookie';
 import path from 'path';
-import { DB } from './utilities/databases';
-import { Session } from './structure/sessions';
+import { Account } from './structure/structs/account';
+import { Permissions } from './structure/structs/permissions';
+import { DB } from './utilities/database';
+import { Struct } from './structure/structs/struct';
 
 if (process.argv.includes('--stats')) {
     const measure = () => {
@@ -29,10 +27,7 @@ if (process.argv.includes('--stats')) {
 
 const port = +(env.PORT || 3000);
 
-// add 2 generics to the App class to specify session.customData and account.customData types
 export const app = new App(port, env.DOMAIN || `http://localhost:${port}`);
-
-Session.setDeleteInterval(1000 * 60 * 10); // delete unused sessions every 10 minutes
 
 app.post('/env', (req, res) => {
     res.json({
@@ -59,6 +54,8 @@ app.static('/client', path.resolve(__root, './client'));
 app.static('/public', path.resolve(__root, './public'));
 app.static('/dist', path.resolve(__root, './dist'));
 app.static('/uploads', path.resolve(__root, './storage/uploads'));
+
+app.route('/api', Struct.router);
 
 app.post('/test/get-socket', (req, res) => {
     res.json({
@@ -134,18 +131,7 @@ app.post('/*', (req, res, next) => {
     next();
 });
 
-// TODO: There is an error with the email validation middleware
-// app.post('/*', emailValidation(['email', 'confirmEmail'], {
-//     onspam: (req, res, next) => {
-//         res.sendStatus('spam:detected');
-//     },
-//     // onerror: (req, res, next) => {
-//     //     // res.sendStatus('unknown:error');
-//     //     next();
-//     // }
-// }));
-
-app.get('/', (req, res) => {
+app.get('/', (_, res) => {
     res.redirect('/home');
 });
 
@@ -169,15 +155,11 @@ app.get('/test/:page', (req, res, next) => {
 });
 
 app.route('/api', api);
-app.route('/account', account);
-app.route('/roles', role);
-app.route('/account-notifications', notifications);
-
-app.use('/*', Account.autoSignIn(env.AUTO_SIGN_IN));
+app.use('/*', Account.autoSignIn(env.AUTO_SIGN_IN || ''));
 
 app.get('/*', (req, res, next) => {
     if (env.ENVIRONMENT === 'test') return next();
-    if (!req.session.accountId) {
+    if (!req.session.data.accountId) {
         if (
             ![
                 '/account/sign-in',
@@ -187,7 +169,9 @@ app.get('/*', (req, res, next) => {
         ) {
             // only save the previous url if it's not a sign-in, sign-up, or forgot-password page
             // this is so that the user can be redirected back to the page they initially were trying to access
-            req.session.prevUrl = req.url;
+            req.session.update({
+                prevUrl: req.url,
+            });
         }
         return res.redirect('/account/sign-in');
     }
@@ -195,7 +179,9 @@ app.get('/*', (req, res, next) => {
     next();
 });
 
-app.get('/dashboard/admin', Account.allowPermissions('admin'), (_req, res) => {
+app.get('/dashboard/admin', Permissions.canAccess((account, roles) => {
+    return !!roles.find(r => r.data.name === 'admin');
+}), (_req, res) => {
     res.sendTemplate('entries/dashboard/admin');
 });
 
@@ -226,7 +212,7 @@ app.final<{
         serverLog('request', {
             date: Date.now(),
             duration: Date.now() - req.start,
-            ip: req.session?.ip,
+            ip: req.session.data.ip,
             method: req.method,
             url: req.pathname,
             status: res._status,
@@ -255,4 +241,12 @@ app.final<{
     }
 });
 
-DB.em.on('connect', () => app.start());
+DB.connect().then((res) => {
+    if (res.isErr()) throw res.error;
+
+    Struct.buildAll().then((res) => {
+        if (res.isErr()) throw res.error;
+
+        app.start();
+    });
+});

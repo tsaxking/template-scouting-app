@@ -8,7 +8,7 @@ import {
 } from '../../../shared/check';
 import { Req } from '../app/req';
 import { Res } from '../app/res';
-import { Next } from '../app/app';
+import { Next, ServerFunction } from '../app/app';
 import crypto from 'crypto';
 import { log } from '../../utilities/terminal-logging';
 import Filter from 'bad-words';
@@ -17,6 +17,7 @@ import { Status } from '../../utilities/status';
 import { Session } from './session';
 import { uuid } from '../../utilities/uuid';
 import { Permissions } from './permissions';
+import env from '../../utilities/env';
 
 export namespace Account {
     export const Account = new Struct({
@@ -58,14 +59,9 @@ export namespace Account {
         structure: {
             account: 'text',
             key: 'text',
-            expires: 'text'
         },
         name: 'PasswordChange',
-        validators: {
-            expires: (val: unknown) => {
-                return new Date(String(val)).toString() !== 'Invalid Date';
-            }
-        }
+        lifetime: 1000 * 60 * 30, // 30 minutes
     });
 
     export const EmailChange = new Struct({
@@ -193,7 +189,12 @@ export namespace Account {
     };
 
     export const fromPasswordChangeKey = async (key: string) => {
-        return PasswordChange.fromProperty('key', key);
+        return attemptAsync(async () => {
+            const pc = (await PasswordChange.fromProperty('key', key)).unwrap()[0];
+            if (!pc) return;
+
+            return (await Account.fromId(pc.data.account)).unwrap();
+        });
     };
 
     export const isSignedIn = async (req: Req, res: Res, next: Next) => {
@@ -659,7 +660,7 @@ export namespace Account {
             }
         );
 
-        Account.listen('/get-account', async (req, res) => {
+        Account.listen('/get-self', async (req, res) => {
             const account = await (
                 await Session.getAccount(req.session)
             ).unwrap();
@@ -688,5 +689,123 @@ export namespace Account {
             // TODO: Test if this will prevent the user from reconnecting in the future
             req.socket?.disconnect();
         });
+
+        Account.listen<{
+            password: string;
+            confirmPassword: string;
+            key: string;
+        }>('/change-password', validate({
+            password: 'string',
+            confirmPassword: 'string',
+            key: 'string',
+        }), async (req, res) => {
+            const { password, confirmPassword, key } = req.body;
+
+            const a = (await fromPasswordChangeKey(key)).unwrap();
+
+            if (!a) return res.sendStatus(
+                new Status({
+                    message: 'Invalid password reset key',
+                    color: 'danger',
+                    code: 400,
+                    instructions: 'Please try again.'
+                },
+                'Account',
+                'Invalid Password Reset Key',
+                JSON.stringify({ password, confirmPassword, key }),
+                req
+            ));
+
+            if (password !== confirmPassword) return res.sendStatus(
+                new Status({
+                    message: 'Passwords do not match',
+                    color: 'danger',
+                    code: 400,
+                    instructions: 'Please try again.'
+                },
+                'Account',
+                'Passwords Do Not Match',
+                JSON.stringify({ password, confirmPassword, key }),
+                req
+            ));
+
+            const { hash, salt } = newHash(password).unwrap();
+
+            a.update({
+                key: hash,
+                salt,
+            });
+
+            res.sendStatus(
+                new Status({
+                    message: 'Password reset',
+                    color: 'success',
+                    code: 200,
+                    instructions: 'Please sign in again.'
+                },
+                'Account',
+                'Password Reset',
+                JSON.stringify({ password, confirmPassword, key }),
+                req
+            ));
+        });
+
+        Account.listen<{
+            username: string;
+        }>('/request-password-reset', validate({
+            username: 'string',
+        }), async (req, res) => {
+            const { username } = req.body;
+
+            const account = (await fromUsername(username)).unwrap();
+
+            if (!account) return res.sendStatus(
+                new Status({
+                    message: 'Account not found',
+                    color: 'danger',
+                    code: 404,
+                    instructions: 'Please try again.'
+                },
+                'Account',
+                'Account Not Found',
+                JSON.stringify({ username }),
+                req
+            ));
+
+            const passwordChange = (await PasswordChange.new({
+                account: account.id,
+                key: uuid(),
+            })).unwrap();
+        
+            // send email
+            // TODO: password reset email
+
+
+            res.sendStatus(
+                new Status({
+                    message: 'Password reset request',
+                    color: 'success',
+                    code: 200,
+                    instructions: 'Please check your email.'
+                },
+                'Account',
+                'Password Reset Request',
+                JSON.stringify({ username }),
+                req
+            ));
+        });
     }
+
+    export const autoSignIn = (username: string): ServerFunction => async (req, res, next) => {
+        if (env.ENVIRONMENT === 'prod') return next();
+
+        const account = (await fromUsername(username)).unwrap();
+        if (!account) return next();
+
+        (await Session.signIn(req.session, account)).unwrap();
+
+        next();
+    };
 }
+
+// TODO: Password reset api

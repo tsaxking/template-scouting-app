@@ -8,6 +8,7 @@ export default new Version(
     [2, 0, 0],
     async (db) => {
         // grouping the different migrations together to avoid memory issues
+        // TODO: remove depedency on query files
 
         // Accounts
         await (async () => {

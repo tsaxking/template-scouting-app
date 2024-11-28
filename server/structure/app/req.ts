@@ -275,4 +275,12 @@ export class Req<
     public set files(files: FileUpload[]) {
         this.$files = files;
     }
+
+    public get metadata(): Record<string, string | undefined> {
+        return JSON.parse(this.headers.get('X-Metadata') || '{}');
+    }
+
+    public get universe() {
+        return this.metadata.universe;
+    }
 }

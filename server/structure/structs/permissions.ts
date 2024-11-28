@@ -26,6 +26,11 @@ import { Account } from './account';
 import { Struct, Data, DataError, PartialStructable } from './struct';
 import { encode, decode } from '../../../shared/text';
 import { Blank } from '../../../shared/struct';
+import { ServerFunction } from '../app/app';
+import { Res } from '../app/res';
+import { Status } from '../../utilities/status';
+import { Req } from '../app/req';
+import { Session } from './session';
 
 export namespace Permissions {
     export enum PropertyAction {
@@ -110,6 +115,8 @@ export namespace Permissions {
         }
     });
 
+    export type RoleData = Data<typeof Role>;
+
     Role.bypass(PropertyAction.Read, (a, r) => {
         const au = a.getUniverses().unwrap();
         const ru = r.data.universe;
@@ -167,7 +174,7 @@ export namespace Permissions {
     ) => {
         return attemptAsync(async () => {
             if (role.data.name !== 'root') {
-                const roles = await (await getRoles(account)).unwrap();
+                const roles = (await getRoles(account)).unwrap();
                 if (roles.find(r => r.id === role.id)) {
                     return;
                 }
@@ -187,9 +194,11 @@ export namespace Permissions {
     };
 
     export const permissionsFromAccount = async (
-        account: Data<typeof Account.Account>
+        account: Account.AccountData,
     ) => {
-        return attemptAsync(async () => {});
+        return attemptAsync(async () => {
+            // TODO: Make permissionsFromAccount()
+        });
     };
 
     export const setPermissions = async (
@@ -312,5 +321,32 @@ export namespace Permissions {
 
             return permissions.length > 0;
         });
+    };
+
+    const cantAccess = (req: Req) => new Status(
+        {
+            code: 403,
+            message: 'You do not have permission to access this resource',
+            color: 'danger',
+            instructions: '',
+        },
+        'Permissions',
+        'Invalid',
+        '{}',
+        req,
+    );
+
+    export const canAccess = (fn: (account: Account.AccountData, roles: Data<typeof Role>[]) => Promise<boolean> | boolean): ServerFunction => async (req, res, next) => {
+        if (!req.session.data.accountId) {
+            return res.sendCustomStatus(cantAccess(req));
+        }
+
+        const account = (await Session.getAccount(req.session)).unwrap();
+
+        if (!account) return res.sendCustomStatus(cantAccess(req));
+
+        const roles = (await getRoles(account)).unwrap();
+
+        if (!(await fn(account, roles))) return res.sendCustomStatus(cantAccess(req));
     };
 }
