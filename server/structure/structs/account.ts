@@ -97,9 +97,19 @@ export namespace Account {
         name: 'Notification'
     });
 
+    export const CustomData = new Struct({
+        database: DB,
+        structure: {
+            accountId: 'text',
+            // flexible based on use-case
+        },
+        name: 'CustomAccountData'
+    });
+
     export type NotificationData = Data<typeof Notification>;
 
-    const bypassNotif = (a: AccountData, notif: NotificationData) => a.id === notif.data.accountId;
+    const bypassNotif = (a: AccountData, notif: NotificationData) =>
+        a.id === notif.data.accountId;
 
     Notification.bypass(Permissions.DataAction.Delete, bypassNotif);
     Notification.bypass(Permissions.PropertyAction.Update, bypassNotif);
@@ -117,13 +127,12 @@ export namespace Account {
 
     export type SettingsData = Data<typeof Settings>;
 
-    const bypassSettings = (a: AccountData, setting: SettingsData) => a.id === setting.data.accountId;
+    const bypassSettings = (a: AccountData, setting: SettingsData) =>
+        a.id === setting.data.accountId;
 
-    
     Settings.bypass(Permissions.DataAction.Delete, bypassSettings);
     Settings.bypass(Permissions.PropertyAction.Update, bypassSettings);
     Settings.bypass(Permissions.PropertyAction.Read, bypassSettings);
-
 
     export const getNotifications = async (account: Data<typeof Account>) => {
         return Notification.fromProperty('accountId', account.id);
@@ -142,20 +151,24 @@ export namespace Account {
     };
 
     export const fromUsername = async (username: string) => {
-        return attemptAsync<AccountData|undefined>(async () => {
-            return (await Account.fromProperty('username', username)).unwrap()[0];
+        return attemptAsync<AccountData | undefined>(async () => {
+            return (
+                await Account.fromProperty('username', username)
+            ).unwrap()[0];
         });
     };
 
     export const fromEmail = async (email: string) => {
-        return attemptAsync<AccountData|undefined>(async () => {
+        return attemptAsync<AccountData | undefined>(async () => {
             return (await Account.fromProperty('email', email)).unwrap()[0];
         });
     };
 
     export const fromVerificationKey = async (key: string) => {
-        return attemptAsync<AccountData|undefined>(async () => {
-            return (await Account.fromProperty('verification', key)).unwrap()[0];
+        return attemptAsync<AccountData | undefined>(async () => {
+            return (
+                await Account.fromProperty('verification', key)
+            ).unwrap()[0];
         });
     };
 
@@ -163,8 +176,8 @@ export namespace Account {
         return attemptAsync(async () => {
             // TODO: Optimize through a join query
             const [accounts, discordLinks] = await Promise.all([
-                Account.all(),
-                DiscordLink.all()
+                Account.all(false),
+                DiscordLink.all(false)
             ]);
             const a = accounts.unwrap();
             const d = discordLinks.unwrap();
@@ -180,11 +193,7 @@ export namespace Account {
     };
 
     export const fromPasswordChangeKey = async (key: string) => {
-        return attemptAsync(async () => {
-            return (await PasswordChange.all())
-                .unwrap()
-                .find(p => p.data.key === key);
-        });
+        return PasswordChange.fromProperty('key', key);
     };
 
     export const isSignedIn = async (req: Req, res: Res, next: Next) => {

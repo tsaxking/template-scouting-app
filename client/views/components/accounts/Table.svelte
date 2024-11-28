@@ -2,14 +2,14 @@
     import { Accounts } from '../../../models/account-new';
     import TableAccountRow from './TableAccountRow.svelte';
 
-    const allStore = Accounts.Account.all();
+    const allStore = Accounts.Account.all(true);
 
     const all = $allStore;
 
     let table: HTMLTableElement;
 </script>
 
-<table bind:this="{table}">
+<table class="table" bind:this="{table}">
     <thead>
         <tr>
             <th>Username</th>

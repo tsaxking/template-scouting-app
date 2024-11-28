@@ -69,7 +69,6 @@ type StreamEvents<T> = {
 class QueryStreamer<T> {
     private readonly emitter = new EventEmitter<StreamEvents<T>>();
 
-
     on = this.emitter.on.bind(this.emitter);
     off = this.emitter.off.bind(this.emitter);
     once = this.emitter.once.bind(this.emitter);
@@ -118,9 +117,7 @@ export interface DatabaseInterface {
      */
     dump(target: string): Promise<Result<void>>;
 
-    stream<T extends Record<string, unknown>>(
-        query: Query
-    ): QueryStreamer<T>;
+    stream<T extends Record<string, unknown>>(query: Query): QueryStreamer<T>;
 }
 
 /**

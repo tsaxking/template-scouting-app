@@ -5,8 +5,8 @@
     import { Modal } from '../../../utilities/modals';
     import Settings from '../../pages/Settings.svelte';
     import AccountNotifications from './Notifications/AccountNotifications.svelte';
-import { Accounts } from '../../../models/account-new';
-import NotificationIcon from './Notifications/NotificationIcon.svelte';
+    import { Accounts } from '../../../models/account-new';
+    import NotificationIcon from './Notifications/NotificationIcon.svelte';
 
     const myAccount = Accounts.self;
     const self = $myAccount;
@@ -95,7 +95,7 @@ import NotificationIcon from './Notifications/NotificationIcon.svelte';
                 <span class="material-icons">person</span>
             {/if}
         </a>
-        <NotificationIcon account={self} />
+        <NotificationIcon account="{self}" />
         <ul
             id="navbarDropdown"
             class="dropdown-menu dropdown-menu-end p-0"

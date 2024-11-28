@@ -4,7 +4,8 @@ import { attemptAsync, Result } from '../../../shared/check';
 import { Database } from './databases-2';
 import path from 'path';
 import { __root } from '../env';
-import { Blank } from '../../structure/structs/struct';
+import { Blank } from '../../../shared/struct';
+
 
 /*
 After a version change, the database will validate the data in the database to ensure

@@ -105,17 +105,25 @@ export namespace Permissions {
         structure: {
             name: 'text',
             universe: 'text',
-            permissions: 'text'
+            permissions: 'text', // DataPermission[]
+            description: 'text',
         }
     });
 
-    Universe.on('create', universe => {
-        Role.new({
-            name: 'root',
-            universe: universe.id,
-            permissions: ''
-        });
+    Role.bypass(PropertyAction.Read, (a, r) => {
+        const au = a.getUniverses().unwrap();
+        const ru = r.data.universe;
+        return au.includes(ru);
     });
+
+    // Universe.on('create', universe => {
+    //     Role.new({
+    //         name: 'root',
+    //         universe: universe.id,
+    //         permissions: '',
+    //         description: 'Root role for the universe'
+    //     });
+    // });
 
     export const RoleAccount = new Struct({
         database: DB,

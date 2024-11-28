@@ -63,6 +63,7 @@ export type Sessions = {
     requests: number;
     created: number;
     prevUrl: string | undefined;
+    customData: string;
 };
 
 export type Blacklist = {

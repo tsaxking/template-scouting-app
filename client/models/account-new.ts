@@ -6,7 +6,6 @@ import { attemptAsync } from '../../shared/check';
 import { Writable } from 'svelte/store';
 
 export namespace Accounts {
-
     export const Account = new Struct({
         name: 'Account',
         socket,
@@ -35,8 +34,8 @@ export namespace Accounts {
             email: '',
             picture: '',
             verified: false,
-            verification: '',
-        }),
+            verification: ''
+        })
     );
 
     export const DiscordLink = new Struct({
@@ -82,7 +81,9 @@ export namespace Accounts {
         }
     });
 
-    export type NotificationData = StructData<typeof Notification.data.structure>;
+    export type NotificationData = StructData<
+        typeof Notification.data.structure
+    >;
 
     export const Settings = new Struct({
         name: 'Settings',
@@ -90,10 +91,9 @@ export namespace Accounts {
         structure: {
             accountId: 'text',
             key: 'text',
-            value: 'text',
+            value: 'text'
         }
     });
 
     export type SettingsData = StructData<typeof Settings.data.structure>;
-
 }

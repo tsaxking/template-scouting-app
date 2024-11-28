@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { Accounts } from "../../../../models/account-new";
-import Notification from "./Notification.svelte";
+    import { Accounts } from '../../../../models/account-new';
+    import Notification from './Notification.svelte';
 
     export let account: Accounts.AccountData;
 

@@ -635,19 +635,19 @@ type StreamEvents<T extends Blank, Name extends string> = {
     end: void;
     close: void;
     error: Error;
-}
+};
 
 export class StructStream<Structure extends Blank, Name extends string> {
-    private readonly emitter = new EventEmitter<StreamEvents<Structure, Name>>();
-    
+    private readonly emitter = new EventEmitter<
+        StreamEvents<Structure, Name>
+    >();
+
     public on = this.emitter.on.bind(this.emitter);
     public off = this.emitter.off.bind(this.emitter);
     public emit = this.emitter.emit.bind(this.emitter);
     public once = this.emitter.once.bind(this.emitter);
 
-    constructor(
-        public readonly struct: Struct<Structure, Name>,
-    ) {}
+    constructor(public readonly struct: Struct<Structure, Name>) {}
 
     add(data: StructData<Structure, Name>) {
         this.emit('data', data);
@@ -656,10 +656,10 @@ export class StructStream<Structure extends Blank, Name extends string> {
     await() {
         return new Promise((res, rej) => {
             const data: StructData<Structure, Name>[] = [];
-            this.on('data', (d) => data.push(d));
+            this.on('data', d => data.push(d));
             this.once('end', () => res(data));
             this.once('close', () => res(data));
-            this.once('error', (e) => rej(e));
+            this.once('error', e => rej(e));
         });
     }
 
@@ -1918,92 +1918,142 @@ export class Struct<Structure extends Blank, Name extends string> {
                         await Permissions.getRoles(account)
                     ).unwrap();
 
-                    const n = (await this.all(false)).unwrap();
+                    // const n = (await this.all(false)).unwrap();
 
                     const bypasses = this.bypasses.filter(
                         b => b.permission === Permissions.PropertyAction.Read
                     );
 
-                    res.json(
-                        [
-                            ...n
-                                .filter(d =>
-                                    bypasses.some(bp => bp.fn(account, d))
-                                )
-                                .map(d => d.data),
-                            ...(
-                                await Permissions.filterAction(
-                                    roles,
-                                    n.filter(d => !d.archived),
-                                    Permissions.PropertyAction.Read
-                                )
+                    // res.json(
+                    //     [
+                    //         ...n
+                    //             .filter(d =>
+                    //                 bypasses.some(bp => bp.fn(account, d))
+                    //             )
+                    //             .map(d => d.data),
+                    //         ...(
+                    //             await Permissions.filterAction(
+                    //                 roles,
+                    //                 n.filter(d => !d.archived),
+                    //                 Permissions.PropertyAction.Read
+                    //             )
+                    //         )
+                    //             .unwrap()
+                    //     ].filter(
+                    //         (v, i, a) =>
+                    //             a.findIndex(
+                    //             // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    //                 t => (t as any).id === (v as any).id
+                    //             ) === i
+                    //     )
+                    // );
+
+                    const stream = this.all(true);
+                    stream.pipe(async data => {
+                        if (bypasses.some(bp => bp.fn(account, data))) {
+                            return res.write(JSON.stringify(data.data));
+                        }
+
+                        const [d] = (
+                            await Permissions.filterAction(
+                                roles,
+                                [data],
+                                Permissions.PropertyAction.Read
                             )
-                                .unwrap()
-                        ].filter(
-                            (v, i, a) =>
-                                a.findIndex(
-                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                    t => (t as any).id === (v as any).id
-                                ) === i
-                        )
-                    );
-                });
-
-                this.route.post<{
-                    property: unknown;
-                    value: unknown;
-                }>('/read.from-property', validate({
-                    property: (v) => Object.keys(this.data.structure).includes(v),
-                    value: (v, self) => typeValidation(this.data.structure[self.property as keyof Structure], v),
-                }), async (req, res) => {
-                    const account = (
-                        await Session.getAccount(req.session)
-                    ).unwrap();
-                    if (!account) return res.sendStatus(notSignedInStatus(req));
-                    const roles = (
-                        await Permissions.getRoles(account)
-                    ).unwrap();
-
-                    const n = (await this.fromProperty(req.body.property as keyof Structure, req.body.value)).unwrap();
-
-                    const bypasses = this.bypasses.filter(
-                        b => b.permission === Permissions.PropertyAction.Read
-                    );
-
-                    res.json(
-                        [
-                            ...n
-                                .filter(d =>
-                                    bypasses.some(bp => bp.fn(account, d))
-                                )
-                                .map(d => d.data),
-                            ...(
-                                await Permissions.filterAction(
-                                    roles,
-                                    n.filter(d => !d.archived),
-                                    Permissions.PropertyAction.Read
-                                )
-                            )
-                                .unwrap()
-                        ].filter(
-                            (v, i, a) =>
-                                a.findIndex(
-                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                    t => (t as any).id === (v as any).id
-                                ) === i
-                        )
-                    );
-
-                    // EXPERIMENTAL:
-                    const stream = this.fromProperty(req.body.property as keyof Structure, req.body.value, true);
-                    stream.pipe((data) => {
-                        res.write(JSON.stringify(data));
+                        ).unwrap();
+                        if (!d) return;
+                        res.write(JSON.stringify(d));
                     });
 
                     stream.on('end', () => res.end());
                     stream.on('close', () => res.end());
                     stream.on('error', () => res.end());
                 });
+
+                this.route.post<{
+                    property: unknown;
+                    value: unknown;
+                }>(
+                    '/read.from-property',
+                    validate({
+                        property: v =>
+                            Object.keys(this.data.structure).includes(v),
+                        value: (v, self) =>
+                            typeValidation(
+                                this.data.structure[
+                                    self.property as keyof Structure
+                                ],
+                                v
+                            )
+                    }),
+                    async (req, res) => {
+                        const account = (
+                            await Session.getAccount(req.session)
+                        ).unwrap();
+                        if (!account)
+                            return res.sendStatus(notSignedInStatus(req));
+                        const roles = (
+                            await Permissions.getRoles(account)
+                        ).unwrap();
+
+                        // const n = (await this.fromProperty(req.body.property as keyof Structure, req.body.value)).unwrap();
+
+                        const bypasses = this.bypasses.filter(
+                            b =>
+                                b.permission === Permissions.PropertyAction.Read
+                        );
+
+                        // res.json(
+                        //     [
+                        //         ...n
+                        //             .filter(d =>
+                        //                 bypasses.some(bp => bp.fn(account, d))
+                        //             )
+                        //             .map(d => d.data),
+                        //         ...(
+                        //             await Permissions.filterAction(
+                        //                 roles,
+                        //                 n.filter(d => !d.archived),
+                        //                 Permissions.PropertyAction.Read
+                        //             )
+                        //         )
+                        //             .unwrap()
+                        //     ].filter(
+                        //         (v, i, a) =>
+                        //             a.findIndex(
+                        //             // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        //                 t => (t as any).id === (v as any).id
+                        //             ) === i
+                        //     )
+                        // );
+
+                        // EXPERIMENTAL:
+                        const stream = this.fromProperty(
+                            req.body.property as keyof Structure,
+                            req.body.value,
+                            true
+                        );
+                        stream.pipe(async data => {
+                            if (bypasses.some(bp => bp.fn(account, data))) {
+                                return res.write(JSON.stringify(data.data));
+                            }
+
+                            const [d] = (
+                                await Permissions.filterAction(
+                                    roles,
+                                    [data],
+                                    Permissions.PropertyAction.Read
+                                )
+                            ).unwrap();
+                            if (!d) return;
+                            res.write(JSON.stringify(d));
+                        });
+
+                        stream.on('end', () => res.end());
+                        stream.on('close', () => res.end());
+                        stream.on('error', () => res.end());
+                    }
+                );
 
                 this.route.post('/read.archived', async (req, res) => {
                     const account = (
@@ -2015,7 +2065,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                         await Permissions.getRoles(account)
                     ).unwrap();
 
-                    const n = (await this.archived(false)).unwrap();
+                    // const n = (await this.archived(false)).unwrap();
 
                     const bypasses = this.bypasses.filter(
                         b =>
@@ -2023,28 +2073,50 @@ export class Struct<Structure extends Blank, Name extends string> {
                             Permissions.PropertyAction.ReadArchive
                     );
 
-                    res.json(
-                        [
-                            ...n.filter(d =>
-                                bypasses.some(bp => bp.fn(account, d))
-                            ),
-                            ...(
-                                await Permissions.filterAction(
-                                    roles,
-                                    n,
-                                    Permissions.PropertyAction.ReadArchive
-                                )
+                    // res.json(
+                    //     [
+                    //         ...n.filter(d =>
+                    //             bypasses.some(bp => bp.fn(account, d))
+                    //         )
+                    //         .map(d => d.data)
+                    //         ,
+                    //         ...(
+                    //             await Permissions.filterAction(
+                    //                 roles,
+                    //                 n,
+                    //                 Permissions.PropertyAction.ReadArchive
+                    //             )
+                    //         )
+                    //             .unwrap()
+                    //     ].filter(
+                    //         (v, i, a) =>
+                    //             a.findIndex(
+                    //             // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    //                 t => (t as any).id === (v as any).id
+                    //             ) === i
+                    //     )
+                    // );
+
+                    const stream = this.archived(true);
+                    stream.pipe(async data => {
+                        if (bypasses.some(bp => bp.fn(account, data))) {
+                            return res.write(JSON.stringify(data.data));
+                        }
+
+                        const [d] = (
+                            await Permissions.filterAction(
+                                roles,
+                                [data],
+                                Permissions.PropertyAction.ReadArchive
                             )
-                                .unwrap()
-                                .map(d => d.data)
-                        ].filter(
-                            (v, i, a) =>
-                                a.findIndex(
-                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                    t => (t as any).id === (v as any).id
-                                ) === i
-                        )
-                    );
+                        ).unwrap();
+                        if (!d) return;
+                        res.write(JSON.stringify(d));
+                    });
+
+                    stream.on('end', () => res.end());
+                    stream.on('close', () => res.end());
+                    stream.on('error', () => res.end());
                 });
 
                 this.route.post<{
@@ -2499,7 +2571,9 @@ export class Struct<Structure extends Blank, Name extends string> {
         property: Property,
         value: TS_Type<Structure[Property]>,
         asStream?: boolean
-    ): StructStream<Structure, Name> | Promise<Result<StructData<Structure, Name>[]>> {
+    ):
+        | StructStream<Structure, Name>
+        | Promise<Result<StructData<Structure, Name>[]>> {
         const query = Query.build(
             `SELECT * FROM ${this.data.name} WHERE ${property as string} = :value`,
             {
@@ -2507,14 +2581,13 @@ export class Struct<Structure extends Blank, Name extends string> {
             }
         );
         if (asStream) {
-            const stream = this.data.database.unsafe.stream<St<Structure, Name>>(query);
+            const stream =
+                this.data.database.unsafe.stream<St<Structure, Name>>(query);
             const streamer = new StructStream<Structure, Name>(this);
-            stream.pipe((data) => streamer.add(this.Generator(data)));
+            stream.pipe(data => streamer.add(this.Generator(data)));
             return streamer;
         }
         return attemptAsync(async () => {
-
-
             const data = (
                 await this.data.database.unsafe.all<St<Structure, Name>>(query)
             ).unwrap();
@@ -2536,25 +2609,35 @@ export class Struct<Structure extends Blank, Name extends string> {
      * @param {boolean} [includeArchived=false]
      * @returns {*}
      */
-    all(asStream: true, includeArchived?: boolean): StructStream<Structure, Name>;
-    all(asStream: false, includeArchived?: boolean): Promise<Result<StructData<Structure, Name>[]>>;
-    all(asStream: boolean, includeArchived: boolean = false): StructStream<Structure, Name> | Promise<Result<StructData<Structure, Name>[]>>{
+    all(
+        asStream: true,
+        includeArchived?: boolean
+    ): StructStream<Structure, Name>;
+    all(
+        asStream: false,
+        includeArchived?: boolean
+    ): Promise<Result<StructData<Structure, Name>[]>>;
+    all(
+        asStream: boolean,
+        includeArchived: boolean = false
+    ):
+        | StructStream<Structure, Name>
+        | Promise<Result<StructData<Structure, Name>[]>> {
         const query = Query.build(
             `SELECT * FROM ${this.data.name} WHERE archived = false;`
         );
 
         if (asStream) {
-            const stream = this.data.database.unsafe.stream<St<Structure, Name>>(query);
+            const stream =
+                this.data.database.unsafe.stream<St<Structure, Name>>(query);
             const streamer = new StructStream<Structure, Name>(this);
-            stream.pipe((data) => streamer.add(this.Generator(data)));
+            stream.pipe(data => streamer.add(this.Generator(data)));
             return streamer;
         }
-        
+
         if (!this.built)
             throw new FatalStructError(`Struct ${this.data.name} not built`);
         return attemptAsync(async () => {
-
-
             const data = (
                 await this.data.database.unsafe.all<St<Structure, Name>>(query)
             ).unwrap();
@@ -2578,9 +2661,20 @@ export class Struct<Structure extends Blank, Name extends string> {
      * @param {string} universe
      * @returns {*}
      */
-    fromUniverse(universe: string, asStream: true): StructStream<Structure, Name>;
-    fromUniverse(universe: string, asStream: false): Promise<Result<StructData<Structure, Name>[]>>;
-    fromUniverse(universe: string, asStream: boolean): StructStream<Structure, Name> | Promise<Result<StructData<Structure, Name>[]>> {
+    fromUniverse(
+        universe: string,
+        asStream: true
+    ): StructStream<Structure, Name>;
+    fromUniverse(
+        universe: string,
+        asStream: false
+    ): Promise<Result<StructData<Structure, Name>[]>>;
+    fromUniverse(
+        universe: string,
+        asStream: boolean
+    ):
+        | StructStream<Structure, Name>
+        | Promise<Result<StructData<Structure, Name>[]>> {
         const query = Query.build(
             `SELECT * FROM ${this.data.name} WHERE universes LIKE :universe`,
             {
@@ -2588,15 +2682,14 @@ export class Struct<Structure extends Blank, Name extends string> {
             }
         );
         if (asStream) {
-            const stream = this.data.database.unsafe.stream<St<Structure, Name>>(query);
+            const stream =
+                this.data.database.unsafe.stream<St<Structure, Name>>(query);
             const streamer = new StructStream<Structure, Name>(this);
-            stream.pipe((data) => streamer.add(this.Generator(data)));
+            stream.pipe(data => streamer.add(this.Generator(data)));
             return streamer;
         }
-        
+
         return attemptAsync(async () => {
-
-
             const data = (
                 await this.data.database.unsafe.all<St<Structure, Name>>(query)
             ).unwrap();
@@ -2619,24 +2712,27 @@ export class Struct<Structure extends Blank, Name extends string> {
      */
     archived(asStream: true): StructStream<Structure, Name>;
     archived(asStream: false): Promise<Result<StructData<Structure, Name>[]>>;
-    archived(asStream: boolean): StructStream<Structure, Name> | Promise<Result<StructData<Structure, Name>[]>> {
+    archived(
+        asStream: boolean
+    ):
+        | StructStream<Structure, Name>
+        | Promise<Result<StructData<Structure, Name>[]>> {
         if (!this.built)
             throw new FatalStructError(`Struct ${this.data.name} not built`);
-        
+
         const query = Query.build(
             `SELECT * FROM ${this.data.name} WHERE archived = true`
         );
 
         if (asStream) {
-            const stream = this.data.database.unsafe.stream<St<Structure, Name>>(query);
+            const stream =
+                this.data.database.unsafe.stream<St<Structure, Name>>(query);
             const streamer = new StructStream<Structure, Name>(this);
-            stream.pipe((data) => streamer.add(this.Generator(data)));
+            stream.pipe(data => streamer.add(this.Generator(data)));
             return streamer;
         }
-        
+
         return attemptAsync(async () => {
-
-
             const data = (
                 await this.data.database.unsafe.all<St<Structure, Name>>(query)
             ).unwrap();

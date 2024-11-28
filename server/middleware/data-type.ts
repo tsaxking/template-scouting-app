@@ -163,7 +163,11 @@ export const validate = <type = unknown>(
                         failed.push(key);
                         emitter.throw(
                             'fail',
-                            [key, (body as any)[key], isValid as IsValid<unknown>],
+                            [
+                                key,
+                                (body as any)[key],
+                                isValid as IsValid<unknown>
+                            ],
                             req,
                             'invalid-primitive-array'
                         );
@@ -182,7 +186,11 @@ export const validate = <type = unknown>(
                         failed.push(key);
                         emitter.throw(
                             'fail',
-                            [key, (body as any)[key], isValid as IsValid<unknown>],
+                            [
+                                key,
+                                (body as any)[key],
+                                isValid as IsValid<unknown>
+                            ],
                             req,
                             'invalid-normal-array'
                         );
@@ -205,7 +213,11 @@ export const validate = <type = unknown>(
                         failed.push(key);
                         emitter.throw(
                             'fail',
-                            [key, (body as any)[key], isValid as IsValid<unknown>],
+                            [
+                                key,
+                                (body as any)[key],
+                                isValid as IsValid<unknown>
+                            ],
                             req,
                             'invalid-primitive'
                         );
@@ -225,7 +237,11 @@ export const validate = <type = unknown>(
                         failed.push(key);
                         emitter.throw(
                             'fail',
-                            [key, (body as any)[key], isValid as IsValid<unknown>],
+                            [
+                                key,
+                                (body as any)[key],
+                                isValid as IsValid<unknown>
+                            ],
                             req,
                             'invalid-non-primitive'
                         );

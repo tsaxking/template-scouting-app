@@ -108,11 +108,25 @@ export class RetrieveStreamEventEmitter<T = string> extends EventEmitter<
      * @type {*}
      * @returns {Promise<T[]>}
      */
-    get promise() {
-        return new Promise<T[]>(res => {
+    // get promise() {
+    //     return new Promise<T[]>(res => {
+    //         if (this.completed) res(this.data);
+    //         else this.on('complete', res);
+    //     });
+    // }
+
+    await(): Promise<Result<T[]>> {
+        return attemptAsync(() => new Promise((res, rej) => {
             if (this.completed) res(this.data);
-            else this.on('complete', res);
-        });
+            else this.on('complete', () => res(this.data));
+            this.on('error', rej);
+        }));
+    }
+
+    pipe(fn: (data: T) => void) {
+        this.on('chunk', fn);
+        this.on('complete', () => this.off('chunk', fn));
+        this.on('error', () => this.off('chunk', fn));
     }
 }
 

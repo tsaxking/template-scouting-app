@@ -10,7 +10,7 @@
 
     const headers = Object.keys(current.data.structure);
 
-    const allStore = current.all();
+    const allStore = current.all(true);
     const all = $allStore;
 
     let table: HTMLTableElement;

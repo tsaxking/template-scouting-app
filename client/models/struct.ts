@@ -136,6 +136,7 @@ export class DataArr<T extends Blank> implements Readable<StructData<T>[]> {
 
     public readonly subscribers = new Set<(data: StructData<T>[]) => void>();
 
+    private _pipe?: (data: StructData<T>) => void;
     private onUnsubscribe: (() => void) | undefined;
 
     subscribe(fn: (data: StructData<T>[]) => void) {
@@ -160,6 +161,9 @@ export class DataArr<T extends Blank> implements Readable<StructData<T>[]> {
     }
 
     add(...data: StructData<T>[]) {
+        if (this._pipe) {
+            for (let i = 0; i < data.length; i++) this._pipe(data[i]);
+        }
         this.data.push(...data);
         this.subscribers.forEach(s => s(this.data));
     }
@@ -180,23 +184,35 @@ export class DataArr<T extends Blank> implements Readable<StructData<T>[]> {
      * // TODO: will this cause a race condition?
      */
     await(time = 1000 * 60) {
-        return attemptAsync(() => new Promise((res, rej) => {
-            const u = this.subscribe((data) => {
-                u();
-                res(data);
-            });
+        return attemptAsync(
+            () =>
+                new Promise((res, rej) => {
+                    const u = this.subscribe(data => {
+                        u();
+                        res(data);
+                    });
 
-            setTimeout(() => {
-                u();
-                rej(new Error('DataArr timed out'));
-            }, time);
-        }));
+                    setTimeout(() => {
+                        u();
+                        rej(new Error('DataArr timed out'));
+                    }, time);
+                })
+        );
+    }
+
+    pipe(fn: (data: StructData<T>) => void) {
+        this._pipe = fn;
+        return () => {
+            this._pipe = undefined;
+        };
     }
 }
 
-export class SingleWritable<T extends Blank> implements Writable<StructData<T>> {
+export class SingleWritable<T extends Blank>
+    implements Writable<StructData<T>>
+{
     private data: StructData<T>;
-    
+
     constructor(defaultData: StructData<T>) {
         this.data = defaultData;
     }
@@ -259,7 +275,8 @@ export class UniverseArr<T extends Blank> implements Readable<string[]> {
     }
 
     onAllUnsubscribe(fn: () => void) {
-        if (this.onUnsubscribe) return console.error(new DataError('onUnsubscribe already set'));
+        if (this.onUnsubscribe)
+            return console.error(new DataError('onUnsubscribe already set'));
         this.onUnsubscribe = fn;
     }
 }
@@ -370,9 +387,11 @@ export class StructData<T extends Blank>
 
         for (const k of keys) {
             if (typeof this.data[k] === 'undefined') {
-                console.error(new DataError(
-                    `User does not have permissions to read ${this.struct.name}.${k as string}`
-                ));
+                console.error(
+                    new DataError(
+                        `User does not have permissions to read ${this.struct.name}.${k as string}`
+                    )
+                );
                 return;
             }
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -381,9 +400,7 @@ export class StructData<T extends Blank>
         class PartialReadable implements Readable<typeof o> {
             constructor(public data: typeof o) {}
 
-            public readonly subscribers = new Set<
-                (data: typeof o) => void
-            >();
+            public readonly subscribers = new Set<(data: typeof o) => void>();
 
             subscribe(fn: (data: typeof o) => void) {
                 this.subscribers.add(fn);
@@ -464,35 +481,29 @@ export class Struct<T extends Blank> {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         Struct.structs.set(this.data.name, this as any);
 
-        this.listen(
-            'create',
-            (data: Structable<T & GlobalCols>) => {
-                const has = this.cache.get(data.id);
-                if (has) return;
-                const d = new StructData(this, data);
+        this.listen('create', (data: Structable<T & GlobalCols>) => {
+            const has = this.cache.get(data.id);
+            if (has) return;
+            const d = new StructData(this, data);
 
-                const all = this.writables.get('all');
-                if (all) all.add(d);
+            const all = this.writables.get('all');
+            if (all) all.add(d);
 
-                for (const [key, value] of Object.entries(data)) {
-                    const str = `${key}=${value}`;
-                    const from = this.writables.get(str);
-                    if (from) from.add(d);
-                }
-
-                this.cache.set(data.id, d);
-                this.emit('new', d);
+            for (const [key, value] of Object.entries(data)) {
+                const str = `${key}=${value}`;
+                const from = this.writables.get(str);
+                if (from) from.add(d);
             }
-        );
-        this.listen(
-            'update',
-            (data: Structable<T & GlobalCols>) => {
-                const has = this.cache.get(data.id);
-                if (!has) return;
-                has.set(data);
-                this.emit('update', has);
-            }
-        );
+
+            this.cache.set(data.id, d);
+            this.emit('new', d);
+        });
+        this.listen('update', (data: Structable<T & GlobalCols>) => {
+            const has = this.cache.get(data.id);
+            if (!has) return;
+            has.set(data);
+            this.emit('update', has);
+        });
         this.listen('delete', (id: string) => {
             const has = this.cache.get(id);
             if (!has) return;
@@ -505,7 +516,7 @@ export class Struct<T extends Blank> {
                 const from = this.writables.get(str);
                 if (from) from.remove(has);
             }
-            
+
             this.cache.delete(id);
             this.emit('delete', has);
         });
@@ -551,24 +562,18 @@ export class Struct<T extends Blank> {
             this.stores.archived.update(d => d.filter(d => d.id !== id));
             this.emit('restore', has);
         });
-        this.listen(
-            'restore-version',
-            (data: Structable<T & GlobalCols>) => {
-                const has = this.cache.get(data.id);
-                if (has) {
-                    has.set(data);
-                    return;
-                }
-                const d = new StructData(this, data);
-                this.cache.set(data.id, d);
+        this.listen('restore-version', (data: Structable<T & GlobalCols>) => {
+            const has = this.cache.get(data.id);
+            if (has) {
+                has.set(data);
+                return;
             }
-        );
-        this.listen(
-            'delete-version',
-            (id: string) => {
-                // should this do anything?
-            }
-        );
+            const d = new StructData(this, data);
+            this.cache.set(data.id, d);
+        });
+        this.listen('delete-version', (id: string) => {
+            // should this do anything?
+        });
 
         this.requester.post('/connect', {
             structure: this.data.structure
@@ -655,97 +660,121 @@ export class Struct<T extends Blank> {
             const has = this.writables.get('all');
             if (has) return has;
 
-        const arr = new DataArr(this, []);
-        const fetcher = async () => {
-            const response = (
-                await this.requester.post<PartialStructable<T & GlobalCols>[]>(
-                    `${this.route}/${this.data.name}/all`
-                )
-            ).unwrap();
+            const arr = new DataArr(this, []);
+            const run = async () => {
+                // const response = (
+                //     await this.requester.post<
+                //         PartialStructable<T & GlobalCols>[]
+                //     >(`${this.route}/${this.data.name}/all`)
+                // ).unwrap();
 
-            const all = response.map(d => {
-                const has = this.cache.get(d.id || '');
-                if (has) return has;
-                const data = new StructData(this, d);
-                if (data.id) this.cache.set(data.id, data);
-                return data;
+                // const all = response.map(d => {
+                //     const has = this.cache.get(d.id || '');
+                //     if (has) return has;
+                //     const data = new StructData(this, d);
+                //     if (data.id) this.cache.set(data.id, data);
+                //     return data;
+                // });
+
+                // this.stores.all.set(all);
+                // arr.add(...all);
+
+                const stream = ServerRequest.retrieveStream(
+                    `${this.route}/${this.data.name}/all`
+                );
+
+                stream.pipe(data => {
+                    arr.add(this.Generator(JSON.parse(data)));
+                });
+            };
+
+            const add = (data: StructData<T>) => {
+                arr.add(data);
+            };
+            const remove = (data: StructData<T>) => {
+                arr.remove(data);
+            };
+
+            this.on('new', add);
+            this.on('archive', remove);
+            this.on('delete', remove);
+
+            arr.onAllUnsubscribe(() => {
+                this.off('new', add);
+                this.off('archive', remove);
+                this.off('delete', remove);
             });
 
-            this.stores.all.set(all);
-            arr.add(...all);
-        };
+            // do not await because we want to return the array immediately
+            // since it's returning a writable, we'll be able to get the changes through subscriptions
+            run();
 
-        const add = (data: StructData<T>) => {
-            arr.add(data);
-        };
-        const remove = (data: StructData<T>) => {
-            arr.remove(data);
-        };
+            this.writables.set('all', arr);
 
-        this.on('new', add);
-        this.on('archive', remove);
-        this.on('delete', remove);
+            arr.onAllUnsubscribe(() => {
+                this.writables.delete('all');
+            });
 
-        arr.onAllUnsubscribe(() => {
-            this.off('new', add);
-            this.off('archive', remove);
-            this.off('delete', remove);
-        });
-
-        // do not await because we want to return the array immediately
-        // since it's returning a writable, we'll be able to get the changes through subscriptions
-        fetcher();
-
-        this.writables.set('all', arr);
-
-        arr.onAllUnsubscribe(() => {
-            this.writables.delete('all');
-        });
-
-        return arr;
-    
-    }
+            return arr;
+        }
         return attemptAsync(async () => {
-            const response = (
-                await this.requester.post<Structable<T & GlobalCols>[]>(
-                    `${this.route}/${this.data.name}/all`
-                )
-            ).unwrap();
+            // const response = (
+            //     await this.requester.post<Structable<T & GlobalCols>[]>(
+            //         `${this.route}/${this.data.name}/all`
+            //     )
+            // ).unwrap();
 
-            return response.map(this.Generator);
+            // return response.map(this.Generator);
+
+            const stream = ServerRequest.retrieveStream(
+                `${this.route}/${this.data.name}/all`
+            );
+
+            return stream.await().then(res => {
+                return res.unwrap().map(d => this.Generator(JSON.parse(d)));
+            });
         });
     }
-
 
     archived(asWritable: true): DataArr<T>;
     archived(asWritable: false): Promise<Result<StructData<T>[]>>;
-    archived(asWritable: boolean): DataArr<T> | Promise<Result<StructData<T>[]>> {
+    archived(
+        asWritable: boolean
+    ): DataArr<T> | Promise<Result<StructData<T>[]>> {
         if (asWritable) {
             const has = this.writables.get('archived');
             if (has) return has;
 
             const arr = new DataArr(this, []);
 
-            const fetcher = async () => {
-                const response = (
-                    await this.requester.post<PartialStructable<T & GlobalCols>[]>(
-                        `${this.route}/${this.data.name}/archived`
-                    )
-                ).unwrap();
+            const run = async () => {
+                // const response = (
+                //     await this.requester.post<
+                //         PartialStructable<T & GlobalCols>[]
+                //     >(`${this.route}/${this.data.name}/archived`)
+                // ).unwrap();
 
-                const all = response.map(d => {
-                    const has = this.cache.get(d.id || '');
-                    if (has) return has;
-                    const data = new StructData(this, d);
-                    if (data.id) this.cache.set(data.id, data);
-                    return data;
+                // const all = response.map(d => {
+                //     const has = this.cache.get(d.id || '');
+                //     if (has) return has;
+                //     const data = new StructData(this, d);
+                //     if (data.id) this.cache.set(data.id, data);
+                //     return data;
+                // });
+
+                // this.stores.archived.set(all);
+                // arr.add(...all);
+
+                const stream = ServerRequest.retrieveStream(
+                    `${this.route}/${this.data.name}/archived`
+                );
+
+                stream.pipe(data => {
+                    arr.add(this.Generator(JSON.parse(data)));
                 });
-
-                this.stores.archived.set(all);
-                arr.add(...all);
             };
 
-            fetcher();
+            run();
 
             this.writables.set('archived', arr);
 
@@ -756,14 +785,22 @@ export class Struct<T extends Blank> {
             return arr;
         }
         return attemptAsync(async () => {
-            const response = (
-                await this.requester.post<Structable<T>[]>(
-                    `${this.route}/${this.data.name}/archived`
-                )
-            ).unwrap();
+            // const response = (
+            //     await this.requester.post<Structable<T>[]>(
+            //         `${this.route}/${this.data.name}/archived`
+            //     )
+            // ).unwrap();
 
-            const data = response.map(this.Generator);
-            return data;
+            // const data = response.map(this.Generator);
+            // return data;
+
+            const stream = ServerRequest.retrieveStream(
+                `${this.route}/${this.data.name}/archived`
+            );
+
+            return stream.await().then(res => {
+                return res.unwrap().map(d => this.Generator(JSON.parse(d)));
+            });
         });
     }
 
@@ -817,46 +854,84 @@ export class Struct<T extends Blank> {
         return this.requester.post<T>(path, data);
     }
 
-
-    fromProperty<prop extends keyof T>(property: prop, value: TS_Type<T[prop]>, asWritable: true): DataArr<T>;
-    fromProperty<prop extends keyof T>(property: prop, value: TS_Type<T[prop]>, asWritable: false): Promise<Result<StructData<T>[]>>;
-    fromProperty<prop extends keyof T>(property: prop, value: TS_Type<T[prop]>, asWritable: boolean): DataArr<T> | Promise<Result<StructData<T>[]>> {
+    fromProperty<prop extends keyof T>(
+        property: prop,
+        value: TS_Type<T[prop]>,
+        asWritable: true
+    ): DataArr<T>;
+    fromProperty<prop extends keyof T>(
+        property: prop,
+        value: TS_Type<T[prop]>,
+        asWritable: false
+    ): Promise<Result<StructData<T>[]>>;
+    fromProperty<prop extends keyof T>(
+        property: prop,
+        value: TS_Type<T[prop]>,
+        asWritable: boolean
+    ): DataArr<T> | Promise<Result<StructData<T>[]>> {
         if (asWritable) {
             const str = `${String(property)}=${value}`;
 
             const has = this.writables.get(str);
             if (has) return has;
 
-
             const w = new DataArr(this, []);
 
             const run = async () => {
-                const res = (await this.post<Structable<T>[]>('/read.from-property', {
-                    property,
-                    value,
-                })).unwrap();
-    
-                const list = res.map(this.Generator);
-                // this is to avoid potential race conditions with the writable.await() method
-                setTimeout(() => w.add(...list));
+                // const res = (
+                //     await this.post<Structable<T>[]>('/read.from-property', {
+                //         property,
+                //         value
+                //     })
+                // ).unwrap();
+
+                // const list = res.map(this.Generator);
+                // // this is to avoid potential race conditions with the writable.await() method
+                // setTimeout(() => w.add(...list));
+
+                const stream = ServerRequest.retrieveStream(
+                    `${this.route}/${this.data.name}/read.from-property`,
+                    {
+                        property,
+                        value
+                    }
+                );
+
+                stream.pipe(data => {
+                    w.add(this.Generator(JSON.parse(data)));
+                });
             };
-    
+
             run();
 
             this.writables.set(str, w);
             w.onAllUnsubscribe(() => {
                 this.writables.delete(str);
             });
-    
+
             return w;
         }
         return attemptAsync(async () => {
-            const res = (await this.post<Structable<T>[]>('/read.from-property', {
-                property,
-                value,
-            })).unwrap();
-    
-            return res.map(this.Generator);
+            // const res = (
+            //     await this.post<Structable<T>[]>('/read.from-property', {
+            //         property,
+            //         value
+            //     })
+            // ).unwrap();
+
+            // return res.map(this.Generator);
+
+            const stream = ServerRequest.retrieveStream(
+                `${this.route}/${this.data.name}/read.from-property`,
+                {
+                    property,
+                    value
+                }
+            );
+
+            return stream.await().then(res => {
+                return res.unwrap().map(d => this.Generator(JSON.parse(d)));
+            });
         });
     }
 }

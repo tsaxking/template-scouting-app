@@ -1,9 +1,7 @@
-import { Subscriber, Writable } from "svelte/store";
+import { Subscriber, Writable } from 'svelte/store';
 
 export class List<T> implements Writable<T[]> {
-    constructor(
-        private _data: T[],
-    ) {}
+    constructor(private _data: T[]) {}
 
     private _onUnsubscribe?: () => void;
 
@@ -14,7 +12,7 @@ export class List<T> implements Writable<T[]> {
     }
 
     add(...data: T[]) {
-        this.update((t) => [...t, ...data]);
+        this.update(t => [...t, ...data]);
     }
 
     update(fn: (current: T[]) => T[]) {

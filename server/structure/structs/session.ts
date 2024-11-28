@@ -18,7 +18,6 @@ export namespace Session {
             userAgent: 'text',
             requests: 'integer',
             prevUrl: 'text',
-            customData: 'text'
         },
         name: 'Session',
         generators: {
@@ -37,13 +36,22 @@ export namespace Session {
         name: 'Blacklist'
     });
 
+    export const CustomData = new Struct({
+        database: DB,
+        structure: {
+            sessionId: 'text',
+            // flexible
+        },
+        name: 'CustomData'
+    });
+
     export const getAccount = async (session: Data<typeof Session>) => {
         return Account.Account.fromId(session.data.accountId);
     };
 
     export const deleteUnused = () => {
         return attemptAsync(async () => {
-            const sessions = (await Session.all()).unwrap();
+            const sessions = (await Session.all(false)).unwrap();
             const notUsed = sessions.filter(s => s.data.accountId === '');
             return resolveAll(
                 await Promise.all(notUsed.map(s => s.delete()))
@@ -76,7 +84,6 @@ export namespace Session {
                     userAgent: req.get('User-Agent') || '',
                     requests: 0,
                     prevUrl: req.url,
-                    customData: '{}'
                 })
             ).unwrap();
         });

@@ -4,6 +4,7 @@
     export let title: string;
     export let message: string = '';
     export let id: string = 'modal-' + Math.random().toString(36);
+    export let show = false;
 
     onMount(() => {
         jQuery(`#${id}`).on('hidden.bs.modal', () => {
@@ -39,10 +40,11 @@
                 />
             </div>
             <div class="modal-body">
-                {#if message}
-                    {message}
-                {/if}
-                <slot />
+                <slot>
+                    {#if message}
+                        {message}
+                    {/if}
+                </slot>
             </div>
             <div class="modal-footer">
                 <button

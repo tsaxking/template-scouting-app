@@ -7,9 +7,9 @@ export namespace Email {
     const transporter = nodemailer.createTransport(
         sgTransport({
             auth: {
-                apiKey: env.SENDGRID_API_KEY || '',
+                apiKey: env.SENDGRID_API_KEY || ''
             }
-        }),
+        })
     );
 
     export const Email = new Struct({

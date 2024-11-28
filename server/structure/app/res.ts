@@ -257,10 +257,11 @@ export class Res {
 
     write(chunk: string) {
         return attempt(() => {
+            // TODO: create a wrapper around this res.write to handle draining
             if (!this.isFulfilled()) this.res.write(chunk);
         });
     }
-    
+
     end() {
         return attempt(() => {
             if (!this.isFulfilled()) this.res.end();

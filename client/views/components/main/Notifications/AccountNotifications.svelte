@@ -1,14 +1,12 @@
 <script lang="ts">
-import { onMount } from "svelte";
-    import { Accounts } from "../../../../models/account-new";
-import NotificationList from "./NotificationList.svelte";
+    import { onMount } from 'svelte';
+    import { Accounts } from '../../../../models/account-new';
+    import NotificationList from './NotificationList.svelte';
 
     let selfStore = Accounts.self;
 
     const self = $selfStore;
 </script>
-
-
 
 <div
     id="notifications-offcanvas"
@@ -20,7 +18,7 @@ import NotificationList from "./NotificationList.svelte";
     </div>
     <div class="offcanvas-body">
         {#if self}
-            <NotificationList account={self} />
+            <NotificationList account="{self}" />
         {/if}
     </div>
 </div>
