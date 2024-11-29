@@ -170,7 +170,7 @@ app.get('/*', (req, res, next) => {
             // only save the previous url if it's not a sign-in, sign-up, or forgot-password page
             // this is so that the user can be redirected back to the page they initially were trying to access
             req.session.update({
-                prevUrl: req.url,
+                prevUrl: req.url
             });
         }
         return res.redirect('/account/sign-in');
@@ -179,11 +179,15 @@ app.get('/*', (req, res, next) => {
     next();
 });
 
-app.get('/dashboard/admin', Permissions.canAccess((account, roles) => {
-    return !!roles.find(r => r.data.name === 'admin');
-}), (_req, res) => {
-    res.sendTemplate('entries/dashboard/admin');
-});
+app.get(
+    '/dashboard/admin',
+    Permissions.canAccess((account, roles) => {
+        return !!roles.find(r => r.data.name === 'admin');
+    }),
+    (_req, res) => {
+        res.sendTemplate('entries/dashboard/admin');
+    }
+);
 
 app.route('/admin', admin);
 
@@ -241,10 +245,10 @@ app.final<{
     }
 });
 
-DB.connect().then((res) => {
+DB.connect().then(res => {
     if (res.isErr()) throw res.error;
 
-    Struct.buildAll().then((res) => {
+    Struct.buildAll().then(res => {
         if (res.isErr()) throw res.error;
 
         app.start();

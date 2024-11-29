@@ -17,7 +17,6 @@ const redirect = (req: Req, res: Res, next: Next) => {
     res.redirect(req.session.data.prevUrl || '/');
 };
 
-
 router.get('/sign-in', redirect, (req, res, next) => {
     if (req.session.data.accountId) return next();
     res.sendTemplate('entries/account/sign-in', {

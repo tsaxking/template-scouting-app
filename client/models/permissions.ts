@@ -21,7 +21,7 @@ export namespace Permissions {
             name: 'text',
             universe: 'text',
             permissions: 'text',
-            description: 'text',
+            description: 'text'
         }
     });
 
@@ -36,11 +36,13 @@ export namespace Permissions {
         }
     });
 
-    export const currentUniverse: SingleWritable<typeof Universe.data.structure> = new SingleWritable(
+    export const currentUniverse: SingleWritable<
+        typeof Universe.data.structure
+    > = new SingleWritable(
         Universe.Generator({
             name: '',
-            description: '',
-        }),
+            description: ''
+        })
     );
 
     export const joinUniverse = (universe: UniverseData) => {

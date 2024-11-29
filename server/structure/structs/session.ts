@@ -17,7 +17,7 @@ export namespace Session {
             ip: 'text',
             userAgent: 'text',
             requests: 'integer',
-            prevUrl: 'text',
+            prevUrl: 'text'
         },
         name: 'Session',
         generators: {
@@ -39,7 +39,7 @@ export namespace Session {
     export const CustomData = new Struct({
         database: DB,
         structure: {
-            sessionId: 'text',
+            sessionId: 'text'
             // flexible
         },
         name: 'CustomData'
@@ -83,7 +83,7 @@ export namespace Session {
                     ip: req.ip || '',
                     userAgent: req.get('User-Agent') || '',
                     requests: 0,
-                    prevUrl: req.url,
+                    prevUrl: req.url
                 })
             ).unwrap();
         });

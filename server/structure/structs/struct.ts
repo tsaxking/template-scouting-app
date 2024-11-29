@@ -647,9 +647,18 @@ export class StructStream<Structure extends Blank, Name extends string> {
     public emit = this.emitter.emit.bind(this.emitter);
     public once = this.emitter.once.bind(this.emitter);
 
-    constructor(public readonly struct: Struct<Structure, Name>) {}
+    private index = 0;
+
+    constructor(
+        public readonly struct: Struct<Structure, Name>,
+        public readonly filter?: (
+            data: StructData<Structure, Name>
+        ) => boolean | Promise<boolean>
+    ) {}
 
     add(data: StructData<Structure, Name>) {
+        if (this.filter && !this.filter(data)) return;
+        this.index++;
         this.emit('data', data);
     }
 
@@ -663,12 +672,17 @@ export class StructStream<Structure extends Blank, Name extends string> {
         });
     }
 
-    pipe(fn: (data: StructData<Structure, Name>) => void) {
-        this.on('data', fn);
+    pipe(fn: (data: StructData<Structure, Name>, index: number) => void) {
+        const run = async (data: StructData<Structure, Name>) => {
+            if (this.filter && !(await this.filter(data))) return;
+            fn(data, this.index);
+        };
 
-        this.once('end', () => this.off('data', fn));
-        this.once('close', () => this.off('data', fn));
-        this.once('error', () => this.off('data', fn));
+        this.on('data', run);
+
+        this.once('end', () => this.off('data', run));
+        this.once('close', () => this.off('data', run));
+        this.once('error', () => this.off('data', run));
     }
 }
 
@@ -1375,7 +1389,10 @@ export class Struct<Structure extends Blank, Name extends string> {
      */
     private readonly emitter = new EventEmitter<{
         // [from, to]
-        update: [Structable<Struct<Structure, Name>>, StructData<Structure, Name>];
+        update: [
+            Structable<Struct<Structure, Name>>,
+            StructData<Structure, Name>
+        ];
         delete: Data<Struct<Structure, Name>>;
         archive: Data<Struct<Structure, Name>>;
         restore: Data<Struct<Structure, Name>>;
@@ -1954,25 +1971,27 @@ export class Struct<Structure extends Blank, Name extends string> {
                     // );
 
                     const stream = this.all(true);
-                    stream.pipe(async data => {
-                        if (bypasses.some(bp => bp.fn(account, data))) {
-                            return res.write(JSON.stringify(data.data));
-                        }
+                    // stream.pipe(async data => {
+                    //     if (bypasses.some(bp => bp.fn(account, data))) {
+                    //         return res.write(JSON.stringify(data.data));
+                    //     }
 
-                        const [d] = (
-                            await Permissions.filterAction(
-                                roles,
-                                [data],
-                                Permissions.PropertyAction.Read
-                            )
-                        ).unwrap();
-                        if (!d) return;
-                        res.write(JSON.stringify(d));
-                    });
+                    //     const [d] = (
+                    //         await Permissions.filterAction(
+                    //             roles,
+                    //             [data],
+                    //             Permissions.PropertyAction.Read
+                    //         )
+                    //     ).unwrap();
+                    //     if (!d) return;
+                    //     res.write(JSON.stringify(d));
+                    // });
 
-                    stream.on('end', () => res.end());
-                    stream.on('close', () => res.end());
-                    stream.on('error', () => res.end());
+                    // stream.on('end', () => res.end());
+                    // stream.on('close', () => res.end());
+                    // stream.on('error', () => res.end());
+
+                    res.stream(stream);
                 });
 
                 this.route.post<{
@@ -2038,25 +2057,27 @@ export class Struct<Structure extends Blank, Name extends string> {
                             req.body.value,
                             true
                         );
-                        stream.pipe(async data => {
-                            if (bypasses.some(bp => bp.fn(account, data))) {
-                                return res.write(JSON.stringify(data.data));
-                            }
+                        // stream.pipe(async data => {
+                        //     if (bypasses.some(bp => bp.fn(account, data))) {
+                        //         return res.write(JSON.stringify(data.data));
+                        //     }
 
-                            const [d] = (
-                                await Permissions.filterAction(
-                                    roles,
-                                    [data],
-                                    Permissions.PropertyAction.Read
-                                )
-                            ).unwrap();
-                            if (!d) return;
-                            res.write(JSON.stringify(d));
-                        });
+                        //     const [d] = (
+                        //         await Permissions.filterAction(
+                        //             roles,
+                        //             [data],
+                        //             Permissions.PropertyAction.Read
+                        //         )
+                        //     ).unwrap();
+                        //     if (!d) return;
+                        //     res.write(JSON.stringify(d));
+                        // });
 
-                        stream.on('end', () => res.end());
-                        stream.on('close', () => res.end());
-                        stream.on('error', () => res.end());
+                        // stream.on('end', () => res.end());
+                        // stream.on('close', () => res.end());
+                        // stream.on('error', () => res.end());
+
+                        res.stream(stream);
                     }
                 );
 
@@ -2103,25 +2124,27 @@ export class Struct<Structure extends Blank, Name extends string> {
                     // );
 
                     const stream = this.archived(true);
-                    stream.pipe(async data => {
-                        if (bypasses.some(bp => bp.fn(account, data))) {
-                            return res.write(JSON.stringify(data.data));
-                        }
+                    // stream.pipe(async data => {
+                    //     if (bypasses.some(bp => bp.fn(account, data))) {
+                    //         return res.write(JSON.stringify(data.data));
+                    //     }
 
-                        const [d] = (
-                            await Permissions.filterAction(
-                                roles,
-                                [data],
-                                Permissions.PropertyAction.ReadArchive
-                            )
-                        ).unwrap();
-                        if (!d) return;
-                        res.write(JSON.stringify(d));
-                    });
+                    //     const [d] = (
+                    //         await Permissions.filterAction(
+                    //             roles,
+                    //             [data],
+                    //             Permissions.PropertyAction.ReadArchive
+                    //         )
+                    //     ).unwrap();
+                    //     if (!d) return;
+                    //     res.write(JSON.stringify(d));
+                    // });
 
-                    stream.on('end', () => res.end());
-                    stream.on('close', () => res.end());
-                    stream.on('error', () => res.end());
+                    // stream.on('end', () => res.end());
+                    // stream.on('close', () => res.end());
+                    // stream.on('error', () => res.end());
+
+                    res.stream(stream);
                 });
 
                 this.route.post<{
@@ -2565,7 +2588,10 @@ export class Struct<Structure extends Blank, Name extends string> {
     fromProperty<Property extends keyof Structure>(
         property: Property,
         value: TS_Type<Structure[Property]>,
-        asStream: true
+        asStream: true,
+        filter?: (
+            data: StructData<Structure, Name>
+        ) => boolean | Promise<boolean>
     ): StructStream<Structure, Name>;
     fromProperty<Property extends keyof Structure>(
         property: Property,
@@ -2575,7 +2601,10 @@ export class Struct<Structure extends Blank, Name extends string> {
     fromProperty<Property extends keyof Structure>(
         property: Property,
         value: TS_Type<Structure[Property]>,
-        asStream?: boolean
+        asStream?: boolean,
+        filter?: (
+            data: StructData<Structure, Name>
+        ) => boolean | Promise<boolean>
     ):
         | StructStream<Structure, Name>
         | Promise<Result<StructData<Structure, Name>[]>> {
@@ -2588,7 +2617,7 @@ export class Struct<Structure extends Blank, Name extends string> {
         if (asStream) {
             const stream =
                 this.data.database.unsafe.stream<St<Structure, Name>>(query);
-            const streamer = new StructStream<Structure, Name>(this);
+            const streamer = new StructStream<Structure, Name>(this, filter);
             stream.pipe(data => streamer.add(this.Generator(data)));
             return streamer;
         }
@@ -2616,7 +2645,10 @@ export class Struct<Structure extends Blank, Name extends string> {
      */
     all(
         asStream: true,
-        includeArchived?: boolean
+        includeArchived?: boolean,
+        filter?: (
+            data: StructData<Structure, Name>
+        ) => boolean | Promise<boolean>
     ): StructStream<Structure, Name>;
     all(
         asStream: false,
@@ -2624,7 +2656,10 @@ export class Struct<Structure extends Blank, Name extends string> {
     ): Promise<Result<StructData<Structure, Name>[]>>;
     all(
         asStream: boolean,
-        includeArchived: boolean = false
+        includeArchived: boolean = false,
+        filter?: (
+            data: StructData<Structure, Name>
+        ) => boolean | Promise<boolean>
     ):
         | StructStream<Structure, Name>
         | Promise<Result<StructData<Structure, Name>[]>> {
@@ -2635,7 +2670,7 @@ export class Struct<Structure extends Blank, Name extends string> {
         if (asStream) {
             const stream =
                 this.data.database.unsafe.stream<St<Structure, Name>>(query);
-            const streamer = new StructStream<Structure, Name>(this);
+            const streamer = new StructStream<Structure, Name>(this, filter);
             stream.pipe(data => streamer.add(this.Generator(data)));
             return streamer;
         }
@@ -2668,7 +2703,10 @@ export class Struct<Structure extends Blank, Name extends string> {
      */
     fromUniverse(
         universe: string,
-        asStream: true
+        asStream: true,
+        filter?: (
+            data: StructData<Structure, Name>
+        ) => boolean | Promise<boolean>
     ): StructStream<Structure, Name>;
     fromUniverse(
         universe: string,
@@ -2676,7 +2714,10 @@ export class Struct<Structure extends Blank, Name extends string> {
     ): Promise<Result<StructData<Structure, Name>[]>>;
     fromUniverse(
         universe: string,
-        asStream: boolean
+        asStream: boolean,
+        filter?: (
+            data: StructData<Structure, Name>
+        ) => boolean | Promise<boolean>
     ):
         | StructStream<Structure, Name>
         | Promise<Result<StructData<Structure, Name>[]>> {
@@ -2689,7 +2730,7 @@ export class Struct<Structure extends Blank, Name extends string> {
         if (asStream) {
             const stream =
                 this.data.database.unsafe.stream<St<Structure, Name>>(query);
-            const streamer = new StructStream<Structure, Name>(this);
+            const streamer = new StructStream<Structure, Name>(this, filter);
             stream.pipe(data => streamer.add(this.Generator(data)));
             return streamer;
         }
@@ -2715,10 +2756,18 @@ export class Struct<Structure extends Blank, Name extends string> {
      *
      * @returns {*}
      */
-    archived(asStream: true): StructStream<Structure, Name>;
+    archived(
+        asStream: true,
+        filter?: (
+            data: StructData<Structure, Name>
+        ) => boolean | Promise<boolean>
+    ): StructStream<Structure, Name>;
     archived(asStream: false): Promise<Result<StructData<Structure, Name>[]>>;
     archived(
-        asStream: boolean
+        asStream: boolean,
+        filter?: (
+            data: StructData<Structure, Name>
+        ) => boolean | Promise<boolean>
     ):
         | StructStream<Structure, Name>
         | Promise<Result<StructData<Structure, Name>[]>> {
@@ -2732,7 +2781,7 @@ export class Struct<Structure extends Blank, Name extends string> {
         if (asStream) {
             const stream =
                 this.data.database.unsafe.stream<St<Structure, Name>>(query);
-            const streamer = new StructStream<Structure, Name>(this);
+            const streamer = new StructStream<Structure, Name>(this, filter);
             stream.pipe(data => streamer.add(this.Generator(data)));
             return streamer;
         }

@@ -23,6 +23,15 @@ type StreamEventData<T> = {
     chunk: T;
 };
 
+interface StreamInterface<T> {
+    on(event: 'error', listener: (error: Error) => void): void;
+    on(event: 'end', listener: () => void): void;
+    on(event: 'close', listener: () => void): void;
+    on(event: 'data', listener: (chunk: T) => void): void;
+
+    pipe(fn: (chunk: T, i: number) => void): void;
+}
+
 /**
  * Response class
  * @date 3/8/2024 - 6:19:36 AM
@@ -216,23 +225,27 @@ export class Res {
      * @param {T[]} content
      * @returns {Result<EventEmitter<keyof StreamEventData<T>>>}
      */
-    stream<T = unknown>(
-        content: T[]
-    ): Result<EventEmitter<StreamEventData<T>>> {
-        return attempt(() => {
-            this.isFulfilled();
+    stream<T>(
+        streamer: StreamInterface<T> | T[],
+        pipe?: (chunk: T) => unknown
+    ) {
+        this.isFulfilled();
+        if (Array.isArray(streamer)) {
             const em = new EventEmitter<StreamEventData<T>>();
 
             const stream = new ReadableStream({
                 start: controller => {
-                    const send = (i: number) => {
-                        if (i < content.length) {
+                    const send = async (i: number) => {
+                        if (i < streamer.length) {
+                            const data = pipe
+                                ? await pipe(streamer[i])
+                                : streamer[i];
                             const buffer = new TextEncoder().encode(
-                                JSON.stringify(bigIntEncode(content[i]))
+                                JSON.stringify(bigIntEncode(data))
                             );
                             controller.enqueue(buffer);
                             setTimeout(() => send(i + 1), 100);
-                            em.emit('chunk', content[i]);
+                            em.emit('chunk', streamer[i]);
                         } else {
                             controller.close();
                             em.emit('end', undefined);
@@ -252,14 +265,39 @@ export class Res {
             this.res.write(stream);
 
             return em;
-        });
-    }
+        } // else {
+        const stream = new ReadableStream({
+            start: c => {
+                // streamer.on('data', (chunk) => {
+                //     c.enqueue(new TextEncoder().encode(
+                //         JSON.stringify(bigIntEncode(chunk)),
+                //     ));
+                // });
 
-    write(chunk: string) {
-        return attempt(() => {
-            // TODO: create a wrapper around this res.write to handle draining
-            if (!this.isFulfilled()) this.res.write(chunk);
+                // streamer.on('end', () => c.close());
+                // streamer.on('close', () => c.close());
+                // streamer.on('error', (error) => c.error(error));
+
+                streamer.pipe(async (chunk, i) => {
+                    const res = pipe ? await pipe(chunk) : chunk;
+                    if (!res) return; // skip empty chunks because there could be a pipe for filtering
+                    c.enqueue(
+                        new TextEncoder().encode(
+                            JSON.stringify(
+                                bigIntEncode(pipe ? pipe(chunk) : chunk)
+                            )
+                        )
+                    );
+                });
+            },
+
+            cancel: () => {},
+
+            type: 'bytes'
         });
+
+        this.res.write(stream);
+        // }
     }
 
     end() {

@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { Permissions } from "../../../../models/permissions";
-import RoleRow from "./RoleRow.svelte";
+    import { Permissions } from '../../../../models/permissions';
+    import RoleRow from './RoleRow.svelte';
 
     const u = Permissions.currentUniverse;
     const universe = $u;

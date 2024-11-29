@@ -9,7 +9,9 @@
     let table: HTMLTableElement;
 </script>
 
-<table class="table" bind:this="{table}">
+<table
+    bind:this="{table}"
+    class="table">
     <thead>
         <tr>
             <th>Username</th>

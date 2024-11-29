@@ -58,10 +58,10 @@ export namespace Account {
         database: DB,
         structure: {
             account: 'text',
-            key: 'text',
+            key: 'text'
         },
         name: 'PasswordChange',
-        lifetime: 1000 * 60 * 30, // 30 minutes
+        lifetime: 1000 * 60 * 30 // 30 minutes
     });
 
     export const EmailChange = new Struct({
@@ -96,7 +96,7 @@ export namespace Account {
     export const CustomData = new Struct({
         database: DB,
         structure: {
-            accountId: 'text',
+            accountId: 'text'
             // flexible based on use-case
         },
         name: 'CustomAccountData'
@@ -190,7 +190,9 @@ export namespace Account {
 
     export const fromPasswordChangeKey = async (key: string) => {
         return attemptAsync(async () => {
-            const pc = (await PasswordChange.fromProperty('key', key)).unwrap()[0];
+            const pc = (
+                await PasswordChange.fromProperty('key', key)
+            ).unwrap()[0];
             if (!pc) return;
 
             return (await Account.fromId(pc.data.account)).unwrap();
@@ -694,118 +696,142 @@ export namespace Account {
             password: string;
             confirmPassword: string;
             key: string;
-        }>('/change-password', validate({
-            password: 'string',
-            confirmPassword: 'string',
-            key: 'string',
-        }), async (req, res) => {
-            const { password, confirmPassword, key } = req.body;
+        }>(
+            '/change-password',
+            validate({
+                password: 'string',
+                confirmPassword: 'string',
+                key: 'string'
+            }),
+            async (req, res) => {
+                const { password, confirmPassword, key } = req.body;
 
-            const a = (await fromPasswordChangeKey(key)).unwrap();
+                const a = (await fromPasswordChangeKey(key)).unwrap();
 
-            if (!a) return res.sendStatus(
-                new Status({
-                    message: 'Invalid password reset key',
-                    color: 'danger',
-                    code: 400,
-                    instructions: 'Please try again.'
-                },
-                'Account',
-                'Invalid Password Reset Key',
-                JSON.stringify({ password, confirmPassword, key }),
-                req
-            ));
+                if (!a)
+                    return res.sendStatus(
+                        new Status(
+                            {
+                                message: 'Invalid password reset key',
+                                color: 'danger',
+                                code: 400,
+                                instructions: 'Please try again.'
+                            },
+                            'Account',
+                            'Invalid Password Reset Key',
+                            JSON.stringify({ password, confirmPassword, key }),
+                            req
+                        )
+                    );
 
-            if (password !== confirmPassword) return res.sendStatus(
-                new Status({
-                    message: 'Passwords do not match',
-                    color: 'danger',
-                    code: 400,
-                    instructions: 'Please try again.'
-                },
-                'Account',
-                'Passwords Do Not Match',
-                JSON.stringify({ password, confirmPassword, key }),
-                req
-            ));
+                if (password !== confirmPassword)
+                    return res.sendStatus(
+                        new Status(
+                            {
+                                message: 'Passwords do not match',
+                                color: 'danger',
+                                code: 400,
+                                instructions: 'Please try again.'
+                            },
+                            'Account',
+                            'Passwords Do Not Match',
+                            JSON.stringify({ password, confirmPassword, key }),
+                            req
+                        )
+                    );
 
-            const { hash, salt } = newHash(password).unwrap();
+                const { hash, salt } = newHash(password).unwrap();
 
-            a.update({
-                key: hash,
-                salt,
-            });
+                a.update({
+                    key: hash,
+                    salt
+                });
 
-            res.sendStatus(
-                new Status({
-                    message: 'Password reset',
-                    color: 'success',
-                    code: 200,
-                    instructions: 'Please sign in again.'
-                },
-                'Account',
-                'Password Reset',
-                JSON.stringify({ password, confirmPassword, key }),
-                req
-            ));
-        });
+                res.sendStatus(
+                    new Status(
+                        {
+                            message: 'Password reset',
+                            color: 'success',
+                            code: 200,
+                            instructions: 'Please sign in again.'
+                        },
+                        'Account',
+                        'Password Reset',
+                        JSON.stringify({ password, confirmPassword, key }),
+                        req
+                    )
+                );
+            }
+        );
 
         Account.listen<{
             username: string;
-        }>('/request-password-reset', validate({
-            username: 'string',
-        }), async (req, res) => {
-            const { username } = req.body;
+        }>(
+            '/request-password-reset',
+            validate({
+                username: 'string'
+            }),
+            async (req, res) => {
+                const { username } = req.body;
 
-            const account = (await fromUsername(username)).unwrap();
+                const account = (await fromUsername(username)).unwrap();
 
-            if (!account) return res.sendStatus(
-                new Status({
-                    message: 'Account not found',
-                    color: 'danger',
-                    code: 404,
-                    instructions: 'Please try again.'
-                },
-                'Account',
-                'Account Not Found',
-                JSON.stringify({ username }),
-                req
-            ));
+                if (!account)
+                    return res.sendStatus(
+                        new Status(
+                            {
+                                message: 'Account not found',
+                                color: 'danger',
+                                code: 404,
+                                instructions: 'Please try again.'
+                            },
+                            'Account',
+                            'Account Not Found',
+                            JSON.stringify({ username }),
+                            req
+                        )
+                    );
 
-            const passwordChange = (await PasswordChange.new({
-                account: account.id,
-                key: uuid(),
-            })).unwrap();
-        
-            // send email
-            // TODO: password reset email
+                const passwordChange = (
+                    await PasswordChange.new({
+                        account: account.id,
+                        key: uuid()
+                    })
+                ).unwrap();
 
+                // send email
+                // TODO: password reset email
 
-            res.sendStatus(
-                new Status({
-                    message: 'Password reset request',
-                    color: 'success',
-                    code: 200,
-                    instructions: 'Please check your email.'
-                },
-                'Account',
-                'Password Reset Request',
-                JSON.stringify({ username }),
-                req
-            ));
-        });
+                res.sendStatus(
+                    new Status(
+                        {
+                            message: 'Password reset request',
+                            color: 'success',
+                            code: 200,
+                            instructions: 'Please check your email.'
+                        },
+                        'Account',
+                        'Password Reset Request',
+                        JSON.stringify({ username }),
+                        req
+                    )
+                );
+            }
+        );
     }
 
-    export const autoSignIn = (username: string): ServerFunction => async (req, res, next) => {
-        if (env.ENVIRONMENT === 'prod') return next();
+    export const autoSignIn =
+        (username: string): ServerFunction =>
+        async (req, res, next) => {
+            if (env.ENVIRONMENT === 'prod') return next();
 
-        const account = (await fromUsername(username)).unwrap();
-        if (!account) return next();
+            const account = (await fromUsername(username)).unwrap();
+            if (!account) return next();
 
-        (await Session.signIn(req.session, account)).unwrap();
+            (await Session.signIn(req.session, account)).unwrap();
 
-        next();
-    };
+            next();
+        };
 }
 
 // TODO: Password reset api

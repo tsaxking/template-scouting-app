@@ -111,7 +111,7 @@ export namespace Permissions {
             name: 'text',
             universe: 'text',
             permissions: 'text', // DataPermission[]
-            description: 'text',
+            description: 'text'
         }
     });
 
@@ -194,7 +194,7 @@ export namespace Permissions {
     };
 
     export const permissionsFromAccount = async (
-        account: Account.AccountData,
+        account: Account.AccountData
     ) => {
         return attemptAsync(async () => {
             // TODO: Make permissionsFromAccount()
@@ -323,30 +323,39 @@ export namespace Permissions {
         });
     };
 
-    const cantAccess = (req: Req) => new Status(
-        {
-            code: 403,
-            message: 'You do not have permission to access this resource',
-            color: 'danger',
-            instructions: '',
-        },
-        'Permissions',
-        'Invalid',
-        '{}',
-        req,
-    );
+    const cantAccess = (req: Req) =>
+        new Status(
+            {
+                code: 403,
+                message: 'You do not have permission to access this resource',
+                color: 'danger',
+                instructions: ''
+            },
+            'Permissions',
+            'Invalid',
+            '{}',
+            req
+        );
 
-    export const canAccess = (fn: (account: Account.AccountData, roles: Data<typeof Role>[]) => Promise<boolean> | boolean): ServerFunction => async (req, res, next) => {
-        if (!req.session.data.accountId) {
-            return res.sendCustomStatus(cantAccess(req));
-        }
+    export const canAccess =
+        (
+            fn: (
+                account: Account.AccountData,
+                roles: Data<typeof Role>[]
+            ) => Promise<boolean> | boolean
+        ): ServerFunction =>
+        async (req, res, next) => {
+            if (!req.session.data.accountId) {
+                return res.sendCustomStatus(cantAccess(req));
+            }
 
-        const account = (await Session.getAccount(req.session)).unwrap();
+            const account = (await Session.getAccount(req.session)).unwrap();
 
-        if (!account) return res.sendCustomStatus(cantAccess(req));
+            if (!account) return res.sendCustomStatus(cantAccess(req));
 
-        const roles = (await getRoles(account)).unwrap();
+            const roles = (await getRoles(account)).unwrap();
 
-        if (!(await fn(account, roles))) return res.sendCustomStatus(cantAccess(req));
-    };
+            if (!(await fn(account, roles)))
+                return res.sendCustomStatus(cantAccess(req));
+        };
 }

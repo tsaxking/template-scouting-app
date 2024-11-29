@@ -65,7 +65,6 @@ export namespace Accounts {
             email: 'text',
             key: 'text',
 
-            
             expires: 'text'
         }
     });
@@ -99,7 +98,6 @@ export namespace Accounts {
 
     export type SettingsData = StructData<typeof Settings.data.structure>;
 
-
     export const signIn = (username: string, password: string) => {
         return Account.post('/sign-in', { username, password });
     };
@@ -119,17 +117,19 @@ export namespace Accounts {
     export const signOut = () => {
         return attemptAsync(async () => {
             (await Account.post('/sign-out', {})).unwrap();
-            self.set(Account.Generator({
-                username: 'guest',
-                firstName: 'Guest',
-                lastName: 'Guest',
-                key: '',
-                salt: '',
-                email: '',
-                picture: '',
-                verified: false,
-                verification: ''
-            }));
+            self.set(
+                Account.Generator({
+                    username: 'guest',
+                    firstName: 'Guest',
+                    lastName: 'Guest',
+                    key: '',
+                    salt: '',
+                    email: '',
+                    picture: '',
+                    verified: false,
+                    verification: ''
+                })
+            );
         });
     };
 
@@ -137,7 +137,12 @@ export namespace Accounts {
         return attemptAsync(async () => {
             if (self.get().data.username !== 'guest') return self;
 
-            const a = (await Account.post<Structable<typeof Account.data.structure>>('/self', {})).unwrap();
+            const a = (
+                await Account.post<Structable<typeof Account.data.structure>>(
+                    '/self',
+                    {}
+                )
+            ).unwrap();
             self.set(Account.Generator(a));
 
             return self;
@@ -145,10 +150,20 @@ export namespace Accounts {
     };
 
     export const requestPasswordReset = () => {
-        return Account.post('/request-password-reset', { username: self.get().data.username || '' });
+        return Account.post('/request-password-reset', {
+            username: self.get().data.username || ''
+        });
     };
 
-    export const changePassword = (password: string, confirmPassword: string, key: string) => {
-        return Account.post('/change-password', { password, confirmPassword, key });
+    export const changePassword = (
+        password: string,
+        confirmPassword: string,
+        key: string
+    ) => {
+        return Account.post('/change-password', {
+            password,
+            confirmPassword,
+            key
+        });
     };
 }

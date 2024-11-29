@@ -6,7 +6,7 @@
     export let classes = '';
     export let stack: Stack;
     // export let onChange: (value: string | number) => void;
-    // export let undo: (prev: string | number) => void;
+// export let undo: (prev: string | number) => void;
 
     let focus = false;
     let input: HTMLInputElement;

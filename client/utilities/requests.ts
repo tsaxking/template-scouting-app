@@ -116,11 +116,14 @@ export class RetrieveStreamEventEmitter<T = string> extends EventEmitter<
     // }
 
     await(): Promise<Result<T[]>> {
-        return attemptAsync(() => new Promise((res, rej) => {
-            if (this.completed) res(this.data);
-            else this.on('complete', () => res(this.data));
-            this.on('error', rej);
-        }));
+        return attemptAsync(
+            () =>
+                new Promise((res, rej) => {
+                    if (this.completed) res(this.data);
+                    else this.on('complete', () => res(this.data));
+                    this.on('error', rej);
+                })
+        );
     }
 
     pipe(fn: (data: T) => void) {
@@ -750,7 +753,7 @@ export class ServerRequest<T = unknown> {
                     //     },
                     //     {} as { [key: string]: string }
                     // )
-                    'X-Metadata': JSON.stringify(ServerRequest.metadata),
+                    'X-Metadata': JSON.stringify(ServerRequest.metadata)
                 },
                 body: JSON.stringify(this.body)
             })

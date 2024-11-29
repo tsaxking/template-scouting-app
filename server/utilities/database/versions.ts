@@ -6,7 +6,6 @@ import path from 'path';
 import { __root } from '../env';
 import { Blank } from '../../../shared/struct';
 
-
 /*
 After a version change, the database will validate the data in the database to ensure
 the schema for a struct is valid.
