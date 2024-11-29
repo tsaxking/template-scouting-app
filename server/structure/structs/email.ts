@@ -6,6 +6,7 @@ import env from '../../utilities/env';
 import { Constructor } from 'node-html-constructor/versions/v4';
 import { attemptAsync } from '../../../shared/check';
 import { getTemplateSync } from '../../utilities/files';
+import { Status } from '../../utilities/status';
 
 class EmailError extends Error {
     constructor(message: string) {
@@ -50,12 +51,35 @@ export namespace Email {
         }
     });
 
+    Email.listen('/:id', async (req, res) => {
+        const { id } = req.req.params;
+        const email = (await Email.fromId(id)).unwrap();
+        if (email) {
+            email.update({
+                clicked: true
+            });
+
+            return res.redirect(email.data.link);
+        }
+
+        return res.redirect('/404');
+    });
+
     export const send = (data: EmailOptions) => {
         return attemptAsync(async () => {
             const { type, to, attachments, constructor, subject } = data;
 
             let template = '';
 
+            const email = (await Email.new({
+                to: [to].flat().join(','),
+                clicked: false,
+                link: constructor.link || '',
+                type
+            })).unwrap();
+
+            constructor.link = `/api/email/${email.id}`;
+            
             switch (type) {
                 case 'link':
                     template = getTemplateSync(
@@ -78,6 +102,7 @@ export namespace Email {
             }
 
             if (!template) throw new EmailError('Template not found');
+
 
             return await transporter.sendMail({
                 from: env.SENDGRID_DEFAULT_FROM,
