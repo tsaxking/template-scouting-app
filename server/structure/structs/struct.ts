@@ -802,7 +802,7 @@ export class StructData<Structure extends Blank, Name extends string>
                     )
                 ).unwrap();
             } else {
-                this.struct.emit('update', this);
+                this.struct.emit('update', [old, this]);
 
                 Object.assign(this.data, data);
             }
@@ -1029,6 +1029,10 @@ export class StructData<Structure extends Blank, Name extends string>
      */
     setAttributes(attrs: string[]) {
         return attemptAsync(async () => {
+            const old = JSON.parse(JSON.stringify(this.data)) as St<
+                Structure & GlobalCols,
+                Name
+            >;
             Object.assign(this.data, {
                 attributes: JSON.stringify(attrs)
             });
@@ -1047,7 +1051,7 @@ export class StructData<Structure extends Blank, Name extends string>
 
             (await this.struct.data.database.unsafe.run(query)).unwrap();
 
-            this.struct.emit('update', this);
+            this.struct.emit('update', [old, this]);
         });
     }
 
@@ -1370,7 +1374,8 @@ export class Struct<Structure extends Blank, Name extends string> {
      * @type {*}
      */
     private readonly emitter = new EventEmitter<{
-        update: Data<Struct<Structure, Name>>;
+        // [from, to]
+        update: [Structable<Struct<Structure, Name>>, StructData<Structure, Name>];
         delete: Data<Struct<Structure, Name>>;
         archive: Data<Struct<Structure, Name>>;
         restore: Data<Struct<Structure, Name>>;
