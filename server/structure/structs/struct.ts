@@ -766,6 +766,10 @@ export class StructData<Structure extends Blank, Name extends string>
         return this.struct.data.database;
     }
 
+    get lifetime() {
+        return Number(this.data.lifetime);
+    }
+
     /**
      * Updates the data in the database
      *
@@ -1286,6 +1290,20 @@ export class Struct<Structure extends Blank, Name extends string> {
         });
     }
 
+    public static generateLifetimeLoop(time: number) {
+        return new Loop(async () => {
+            const data = resolveAll(await Promise.all(
+                Array.from(Struct.structs.values()).map(s => s.getLifetimeItems(false)),
+            )).unwrap().flat();
+
+            await Promise.all(data.map(async d => {
+                if (d.created.getTime() + d.lifetime < Date.now()) {
+                    (await d.delete()).unwrap();
+                }
+            }));
+        }, time);
+    }
+
     /**
      * All the structs in the program
      *
@@ -1316,7 +1334,7 @@ export class Struct<Structure extends Blank, Name extends string> {
      * @static
      * @returns {*}
      */
-    public static buildAll() {
+    public static buildAll(doLoop: boolean) {
         return attemptAsync(async () => {
             resolveAll(
                 await Promise.all(
@@ -1326,6 +1344,10 @@ export class Struct<Structure extends Blank, Name extends string> {
 
             for (const s of this.structs.values()) {
                 Struct.router.route('/' + s.name, s.route);
+            }
+
+            if (doLoop) {
+                Struct.generateLifetimeLoop(1000 * 60 * 60).start();
             }
         });
     }
@@ -3002,5 +3024,43 @@ export class Struct<Structure extends Blank, Name extends string> {
             fn
         });
         return this;
+    }
+
+    getLifetimeItems(asStream: true): StructStream<Structure, Name>;
+    getLifetimeItems(asStream: false): Promise<Result<StructData<Structure, Name>[]>>;
+    getLifetimeItems(asStream: boolean) {
+        const query = Query.build(
+            `SELECT * FROM ${this.data.name} WHERE lifetime > 0;`
+        );
+        
+        if (asStream) {
+            const stream =
+                this.data.database.unsafe.stream<St<Structure, Name>>(query);
+            const streamer = new StructStream<Structure, Name>(this);
+            stream.pipe(data => {
+                if (this.validate(data)) {
+                    streamer.add(this.Generator(data));
+                } else {
+                    throw new StructError(
+                        `Invalid data found in database. ${this.name} is corrupted`
+                    );
+                }
+            });
+            return streamer;
+        }
+        return attemptAsync(async () => {
+            const data = (
+                await this.data.database.unsafe.all<St<Structure, Name>>(query)
+            ).unwrap();
+
+            const invalid = data.filter(d => !this.validate(d));
+            if (invalid.length)
+                throw new StructError(
+                    `Invalid data found in database. ${this.name} is corrupted` +
+                        invalid.map(d => d.id).join(', ')
+                );
+
+            return data.map(d => this.Generator(d));
+        });
     }
 }

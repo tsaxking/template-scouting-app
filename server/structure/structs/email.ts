@@ -6,7 +6,6 @@ import env from '../../utilities/env';
 import { Constructor } from 'node-html-constructor/versions/v4';
 import { attemptAsync } from '../../../shared/check';
 import { getTemplateSync } from '../../utilities/files';
-import { Status } from '../../utilities/status';
 
 class EmailError extends Error {
     constructor(message: string) {
@@ -48,7 +47,8 @@ export namespace Email {
             to: 'text', // string[]
             clicked: 'boolean',
             link: 'text'
-        }
+        },
+        lifetime: 1000 * 60 * 60 * 24 * 7
     });
 
     Email.listen('/:id', async (req, res) => {
@@ -69,7 +69,7 @@ export namespace Email {
         return attemptAsync(async () => {
             const { type, to, attachments, constructor, subject } = data;
 
-            let template = '';
+            let html = '';
 
             const email = (await Email.new({
                 to: [to].flat().join(','),
@@ -82,33 +82,33 @@ export namespace Email {
             
             switch (type) {
                 case 'link':
-                    template = getTemplateSync(
+                    html = getTemplateSync(
                         'emails/link',
                         constructor
                     ).unwrap();
                     break;
                 case 'text':
-                    template = getTemplateSync(
+                    html = getTemplateSync(
                         'emails/text',
                         constructor
                     ).unwrap();
                     break;
                 case 'error':
-                    template = getTemplateSync(
+                    html = getTemplateSync(
                         'emails/error',
                         constructor
                     ).unwrap();
                     break;
             }
 
-            if (!template) throw new EmailError('Template not found');
+            if (!html.length) throw new EmailError('Template not found');
 
 
             return await transporter.sendMail({
                 from: env.SENDGRID_DEFAULT_FROM,
                 to,
                 subject,
-                html: template,
+                html: html,
                 attachments
             });
         });
