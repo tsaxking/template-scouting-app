@@ -20,7 +20,13 @@ import { EventEmitter } from '../../../shared/event-emitter';
 import { Permissions } from './permissions';
 import { Session } from './session';
 import { Req } from '../app/req';
-import { capitalize, decode, encode, fromCamelCase, toSnakeCase } from '../../../shared/text';
+import {
+    capitalize,
+    decode,
+    encode,
+    fromCamelCase,
+    toSnakeCase
+} from '../../../shared/text';
 import { Logs } from './logs';
 import { saveFile } from '../../utilities/files';
 import fs from 'fs';
@@ -1299,15 +1305,23 @@ export class Struct<Structure extends Blank, Name extends string> {
 
     public static generateLifetimeLoop(time: number) {
         return new Loop(async () => {
-            const data = resolveAll(await Promise.all(
-                Array.from(Struct.structs.values()).map(s => s.getLifetimeItems(false)),
-            )).unwrap().flat();
+            const data = resolveAll(
+                await Promise.all(
+                    Array.from(Struct.structs.values()).map(s =>
+                        s.getLifetimeItems(false)
+                    )
+                )
+            )
+                .unwrap()
+                .flat();
 
-            await Promise.all(data.map(async d => {
-                if (d.created.getTime() + d.lifetime < Date.now()) {
-                    (await d.delete()).unwrap();
-                }
-            }));
+            await Promise.all(
+                data.map(async d => {
+                    if (d.created.getTime() + d.lifetime < Date.now()) {
+                        (await d.delete()).unwrap();
+                    }
+                })
+            );
         }, time);
     }
 
@@ -1345,12 +1359,17 @@ export class Struct<Structure extends Blank, Name extends string> {
         return attemptAsync(async () => {
             resolveAll(
                 await Promise.all(
-                    Array.from(Struct.structs.values()).filter(s => !s.built).map(s => s.build())
+                    Array.from(Struct.structs.values())
+                        .filter(s => !s.built)
+                        .map(s => s.build())
                 )
             ).unwrap();
 
             for (const s of this.structs.values()) {
-                Struct.router.route('/' + toSnakeCase(fromCamelCase(s.name), '-'), s.route);
+                Struct.router.route(
+                    '/' + toSnakeCase(fromCamelCase(s.name), '-'),
+                    s.route
+                );
             }
 
             if (doLoop) {
@@ -1759,7 +1778,9 @@ export class Struct<Structure extends Blank, Name extends string> {
                             await Permissions.getRoles(account)
                         ).unwrap();
 
-                        const validators = this.runValidators(req.body).unwrap();
+                        const validators = this.runValidators(
+                            req.body
+                        ).unwrap();
                         if (validators.invalids) {
                             return res.sendStatus(
                                 new Status(
@@ -1767,13 +1788,14 @@ export class Struct<Structure extends Blank, Name extends string> {
                                         code: 400,
                                         message: `Data failed validation: ${validators.invalids.join(', ')}`,
                                         color: 'danger',
-                                        instructions: 'Please check the data and try again'
+                                        instructions:
+                                            'Please check the data and try again'
                                     },
                                     this.data.name,
                                     'Validation Failed',
                                     '{}',
-                                    req,
-                                ),
+                                    req
+                                )
                             );
                         }
 
@@ -1857,8 +1879,9 @@ export class Struct<Structure extends Blank, Name extends string> {
 
                         if (!n) return res.sendStatus(notFoundStatus(req));
 
-                        
-                        const validators = this.runValidators(req.body).unwrap();
+                        const validators = this.runValidators(
+                            req.body
+                        ).unwrap();
                         if (validators.invalids) {
                             return res.sendStatus(
                                 new Status(
@@ -1866,13 +1889,14 @@ export class Struct<Structure extends Blank, Name extends string> {
                                         code: 400,
                                         message: `Data failed validation: ${validators.invalids.join(', ')}`,
                                         color: 'danger',
-                                        instructions: 'Please check the data and try again'
+                                        instructions:
+                                            'Please check the data and try again'
                                     },
                                     this.data.name,
                                     'Validation Failed',
                                     '{}',
-                                    req,
-                                ),
+                                    req
+                                )
                             );
                         }
 
@@ -2638,7 +2662,9 @@ export class Struct<Structure extends Blank, Name extends string> {
                 throw new StructError(`Invalid data for ${this.data.name}`);
             const verification = this.runValidators(data).unwrap();
             if (!verification.valid) {
-                throw new StructError(`Data from ${this.name} failed validation: ${verification.invalids.join(', ')}`);
+                throw new StructError(
+                    `Data from ${this.name} failed validation: ${verification.invalids.join(', ')}`
+                );
             }
 
             const d = this.Generator({
@@ -2709,20 +2735,19 @@ export class Struct<Structure extends Blank, Name extends string> {
     fromProperty<Property extends keyof Structure>(
         property: Property,
         value: TS_Type<Structure[Property]>,
-        asStream: true
-    ) // filter?: (
-    //     data: StructData<Structure, Name>
-    // ) => boolean | Promise<boolean>
+        asStream: true // filter?: (
+        //     data: StructData<Structure, Name>
+    ) // ) => boolean | Promise<boolean>
     : StructStream<Structure, Name>;
     fromProperty<Property extends keyof Structure>(
         property: Property,
         value: TS_Type<Structure[Property]>,
-        asStream?: false
+        asStream: false
     ): Promise<Result<StructData<Structure, Name>[]>>;
     fromProperty<Property extends keyof Structure>(
         property: Property,
         value: TS_Type<Structure[Property]>,
-        asStream?: boolean
+        asStream: boolean
         // filter?: (
         //     data: StructData<Structure, Name>
         // ) => boolean | Promise<boolean>
@@ -2766,10 +2791,9 @@ export class Struct<Structure extends Blank, Name extends string> {
      */
     all(
         asStream: true,
-        includeArchived?: boolean
-    ) // filter?: (
-    //     data: StructData<Structure, Name>
-    // ) => boolean | Promise<boolean>
+        includeArchived?: boolean // filter?: (
+        //     data: StructData<Structure, Name>
+    ) // ) => boolean | Promise<boolean>
     : StructStream<Structure, Name>;
     all(
         asStream: false,
@@ -2824,10 +2848,9 @@ export class Struct<Structure extends Blank, Name extends string> {
      */
     fromUniverse(
         universe: string,
-        asStream: true
-    ) // filter?: (
-    //     data: StructData<Structure, Name>
-    // ) => boolean | Promise<boolean>
+        asStream: true // filter?: (
+        //     data: StructData<Structure, Name>
+    ) // ) => boolean | Promise<boolean>
     : StructStream<Structure, Name>;
     fromUniverse(
         universe: string,
@@ -2877,9 +2900,10 @@ export class Struct<Structure extends Blank, Name extends string> {
      *
      * @returns {*}
      */
-    archived(asStream: true) // filter?: (
-    //     data: StructData<Structure, Name>
-    // ) => boolean | Promise<boolean>
+    archived(
+        asStream: true // filter?: (
+        //     data: StructData<Structure, Name>
+    ) // ) => boolean | Promise<boolean>
     : StructStream<Structure, Name>;
     archived(asStream: false): Promise<Result<StructData<Structure, Name>[]>>;
     archived(
@@ -2933,18 +2957,23 @@ export class Struct<Structure extends Blank, Name extends string> {
 
     runValidators(data: Partial<Structable<Struct<Structure, Name>>>) {
         return attempt(() => {
-            const results = Object.entries(this.data.validators || {}).reduce((acc, [k, v]) => {
-                if (data[k] === undefined) return acc;
-                return {
-                    ...acc,
-                    [k]: v?.(data[k]) || true,
-                };
-            }, {} as Record<keyof Structure, boolean>);
+            const results = Object.entries(this.data.validators || {}).reduce(
+                (acc, [k, v]) => {
+                    if (data[k] === undefined) return acc;
+                    return {
+                        ...acc,
+                        [k]: v?.(data[k]) || true
+                    };
+                },
+                {} as Record<keyof Structure, boolean>
+            );
 
             return {
                 results,
                 valid: Object.values(results).every(v => v),
-                invalids: Object.entries(results).filter(([_, v]) => !v).map(([k]) => k),
+                invalids: Object.entries(results)
+                    .filter(([_, v]) => !v)
+                    .map(([k]) => k)
             };
         });
     }
@@ -3093,12 +3122,14 @@ export class Struct<Structure extends Blank, Name extends string> {
     }
 
     getLifetimeItems(asStream: true): StructStream<Structure, Name>;
-    getLifetimeItems(asStream: false): Promise<Result<StructData<Structure, Name>[]>>;
+    getLifetimeItems(
+        asStream: false
+    ): Promise<Result<StructData<Structure, Name>[]>>;
     getLifetimeItems(asStream: boolean) {
         const query = Query.build(
             `SELECT * FROM ${this.data.name} WHERE lifetime > 0;`
         );
-        
+
         if (asStream) {
             const stream =
                 this.data.database.unsafe.stream<St<Structure, Name>>(query);

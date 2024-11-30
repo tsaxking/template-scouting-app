@@ -26,6 +26,12 @@ export namespace Session {
         universeLimit: 1
     });
 
+    Session.on('delete', s => {
+        CustomData.fromProperty('sessionId', s.id, true).pipe(d => d.delete());
+    });
+
+    export type SessionData = Data<typeof Session>;
+
     export const Blacklist = new Struct({
         database: DB,
         structure: {

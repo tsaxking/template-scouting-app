@@ -3,7 +3,7 @@
     import Password from './Password.svelte';
     import Recaptcha from './Recaptcha.svelte';
     import { prompt } from '../../utilities/notifications';
-import { Accounts } from '../../models/account-new';
+    import { Accounts } from '../../models/account-new';
 
     export let title: string;
 
@@ -27,9 +27,9 @@ import { Accounts } from '../../models/account-new';
         }
 
         // ServerRequest.post('/account/sign-in', {
-        //     username,
-        //     password
-        // });
+    //     username,
+    //     password
+    // });
 
         Accounts.signIn(username, password);
     };
@@ -64,8 +64,8 @@ import { Accounts } from '../../models/account-new';
         if (!data) return;
 
         // ServerRequest.post('/account/request-password-reset', {
-        //     username: data
-        // });
+    //     username: data
+    // });
 
         Accounts.requestPasswordReset(data);
     };

@@ -47,7 +47,7 @@ export namespace Email {
             to: 'text', // string[]
             clicked: 'boolean',
             link: 'text'
-        },
+        }
     });
 
     Email.listen('/:id', async (req, res) => {
@@ -70,28 +70,24 @@ export namespace Email {
             let html = '';
 
             if (type === 'link') {
-                const email = (await Email.new({
-                    to: [to].flat().join(','),
-                    clicked: false,
-                    link: constructor.link || '',
-                    type
-                })).unwrap();
+                const email = (
+                    await Email.new({
+                        to: [to].flat().join(','),
+                        clicked: false,
+                        link: constructor.link || '',
+                        type
+                    })
+                ).unwrap();
 
                 constructor.link = `/api/email/${email.id}`;
             }
-            
+
             switch (type) {
                 case 'link':
-                    html = getTemplateSync(
-                        'emails/link',
-                        constructor
-                    ).unwrap();
+                    html = getTemplateSync('emails/link', constructor).unwrap();
                     break;
                 case 'text':
-                    html = getTemplateSync(
-                        'emails/text',
-                        constructor
-                    ).unwrap();
+                    html = getTemplateSync('emails/text', constructor).unwrap();
                     break;
                 case 'error':
                     html = getTemplateSync(
@@ -102,7 +98,6 @@ export namespace Email {
             }
 
             if (!html.length) throw new EmailError('Template not found');
-
 
             return await transporter.sendMail({
                 from: env.SENDGRID_DEFAULT_FROM,

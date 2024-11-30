@@ -36,10 +36,10 @@ export namespace Account {
         },
         name: 'Account',
         validators: {
-            email: (val) => /\S+@\S+\.\S+/.test(String(val)),
-            username: (val) => String(val).length > 0 && String(val) !== 'guest',
-            firstName: (val) => String(val).length > 0,
-            lastName: (val) => String(val).length > 0,
+            email: val => /\S+@\S+\.\S+/.test(String(val)),
+            username: val => String(val).length > 0 && String(val) !== 'guest',
+            firstName: val => String(val).length > 0,
+            lastName: val => String(val).length > 0
         }
     });
 

@@ -410,34 +410,34 @@ export const runTests = async (env: Env, database: Database) =>
                         price: 100
                     })
                 ).unwrap();
-    
+
                 assertEquals(i.data.name, 'test');
-    
+
                 (
                     await i.update({
                         price: 200
                     })
                 ).unwrap();
-    
+
                 assertEquals(i.data.price, 200);
-    
+
                 const item2 = (await Item.fromId(i.id)).unwrap();
                 assertEquals(item2?.data.price, 200);
 
-                const [item3] = (await Item.fromProperty('name', i.data.name, false)).unwrap();
+                const [item3] = (
+                    await Item.fromProperty('name', i.data.name, false)
+                ).unwrap();
                 assertEquals(item3?.data.price, 200);
 
                 const stream = Item.all(true);
 
-                stream.on('data', (item2) => {
+                stream.on('data', item2 => {
                     assertEquals(item2.data.price, 200);
                 });
-    
+
                 (await i.delete()).unwrap();
             });
-
-
-        }),
+        })
     ]);
 
 type Env = {

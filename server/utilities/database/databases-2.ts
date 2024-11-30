@@ -86,12 +86,15 @@ class QueryStreamer<T> {
     }
 
     await() {
-        return attemptAsync(async () => new Promise<T[]>((res, rej) => {
-            const data: T[] = [];
-            this.on('data', d => data.push(d));
-            this.once('end', () => res(data));
-            this.once('error', e => rej(e));
-        }));
+        return attemptAsync(
+            async () =>
+                new Promise<T[]>((res, rej) => {
+                    const data: T[] = [];
+                    this.on('data', d => data.push(d));
+                    this.once('end', () => res(data));
+                    this.once('error', e => rej(e));
+                })
+        );
     }
 }
 
@@ -537,7 +540,7 @@ class Col {
  * @class TableBackup
  * @typedef {TableBackup}
  */
-class TableBackup {
+export class TableBackup {
     /**
      * Creates an instance of TableBackup.
      *
@@ -766,9 +769,9 @@ class TableBackup {
 
             const query = Query.build(`
                 CREATE TABLE IF NOT EXISTS ${name} (
-                    ${
-                        schema.map(s => `${s.columnName} ${s.dataType}`).join(',')
-                    }
+                    ${schema
+                        .map(s => `${s.columnName} ${s.dataType}`)
+                        .join(',')}
                 );
             `);
 
@@ -858,44 +861,44 @@ class Table {
 
     all() {
         // return attemptAsync(async () => {
-            // if (this.__all.length) return this.__all;
-            // this.__all =
-            return this.database.unsafe.stream<{
-                    [key: string]: unknown;
-                }>(Query.build(`SELECT * FROM ${this.name};`))
-            ;
-            // setTimeout(() => this.__all = []);
-            // return this.__all;
+        // if (this.__all.length) return this.__all;
+        // this.__all =
+        return this.database.unsafe.stream<{
+            [key: string]: unknown;
+        }>(Query.build(`SELECT * FROM ${this.name};`));
+        // setTimeout(() => this.__all = []);
+        // return this.__all;
         // });
     }
 
     getHash() {
-        return attemptAsync(async () => new Promise<string>((res, rej) => {
-            let str = '';
-            const stream = this.all();
-            const run = (d: Record<string, unknown>) => {
-                if (!str.length) {
-                    str = Object.keys(d).join(',');
-                }
+        return attemptAsync(
+            async () =>
+                new Promise<string>((res, rej) => {
+                    let str = '';
+                    const stream = this.all();
+                    const run = (d: Record<string, unknown>) => {
+                        if (!str.length) {
+                            str = Object.keys(d).join(',');
+                        }
 
-                str += JSON.stringify(Object.values(d));
-            };
+                        str += JSON.stringify(Object.values(d));
+                    };
 
-            stream.on('data', run);
+                    stream.on('data', run);
 
-            stream.once('end', () => {
-                res(crypto.pbkdf2Sync(
-                    str,
-                    'salt',
-                    1,
-                    64,
-                    'sha512',
-                ).toString('hex'));
-                stream.off('data', run);
-            });
+                    stream.once('end', () => {
+                        res(
+                            crypto
+                                .pbkdf2Sync(str, 'salt', 1, 64, 'sha512')
+                                .toString('hex')
+                        );
+                        stream.off('data', run);
+                    });
 
-            stream.once('error', rej);
-        }));
+                    stream.once('error', rej);
+                })
+        );
     }
 
     backup(force = false) {
@@ -923,22 +926,20 @@ class Table {
                     __root,
                     './storage/db/backups',
                     `${this.name}-${Date.now()}.backupv2`
-                ),
+                )
             );
 
             let i = 0;
             let headers: string[] = [];
-            stream.pipe((data) => {
+            stream.pipe(data => {
                 if (i === 0) {
                     headers = Object.keys(data);
-                    ws.write(
-                        headers.map(encode).join(',') + '\n',
-                    );
+                    ws.write(headers.map(encode).join(',') + '\n');
                 }
-                
+
                 ws.write(
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    headers.map(h => encode((data as any)[h])).join(',') + '\n',
+                    headers.map(h => encode((data as any)[h])).join(',') + '\n'
                 );
 
                 i++;
@@ -1291,6 +1292,7 @@ export class Database {
      */
     async reset(hard: boolean) {
         return attemptAsync(async () => {
+            (await this.backup()).unwrap();
             const tables = (await this.getTables()).unwrap();
             if (hard) {
                 // drop all tables
@@ -1426,7 +1428,7 @@ export class Database {
                             `,
                                 {
                                     name: table,
-                                    schema: s,
+                                    schema: s
                                 }
                             )
                         );
@@ -1553,22 +1555,38 @@ export class Database {
         });
     }
 
+    public async getBackups() {
+        return attemptAsync(async () => {
+            const files = await fs.promises.readdir(
+                path.resolve(__root, './storage/db/backups')
+            );
+
+            return files
+                .filter(f => f.endsWith('.zip'))
+                .map(f => path.resolve(__root, './storage/db/backups', f));
+        });
+    }
+
     public async restore(zipFile: string) {
         return attemptAsync(async () => {
+            (await this.backup()).unwrap();
+            // may not be good to reset here, because it may not be restoring all of the tables, who knows what's in the zip file
             // This should use workers
             // This function assumes the database is in a fully blank state, tables will need to be built and data will need to be inserted
 
             const zip = new AdmZip(zipFile);
             const dir = path.resolve(zipFile, '..');
-            zip.extractAllTo(zipFile + '', true); // overwrite may not do anything because the files are saved using the date
+            zip.extractAllTo(dir + '', true); // overwrite may not do anything because the files are saved using the date
             const entries = zip.getEntries();
             for (const entry of entries) {
                 const name = entry.name;
 
                 if (name.endsWith('.backupv2')) {
                     const table = new TableBackup(
-                        name.replace('.backupv2', ''),
-                        this,
+                        path
+                            .resolve(__root, './storage/db/backups', name)
+                            .replace('.backupv2', ''),
+                        this
                     );
 
                     (await table.restore()).unwrap();

@@ -1,4 +1,4 @@
-import { Data, BasicStructable, GlobalCols, Struct } from '../../struct';
+import { Data, Struct } from '../../struct';
 import { DB } from '../../../../utilities/database';
 import { attemptAsync, resolveAll } from '../../../../../shared/check';
 import { app } from '../../../../server';
@@ -52,8 +52,8 @@ export namespace Inventory {
 
     export const getItemsFromGroup = async (group: Data<typeof Group>) => {
         return attemptAsync(async () => {
-            const items = (await ItemGroup.all()).unwrap();
-            const itemGroups = (await ItemGroup.all()).unwrap();
+            const items = (await ItemGroup.all(false)).unwrap();
+            const itemGroups = (await ItemGroup.all(false)).unwrap();
 
             return items.filter(i =>
                 itemGroups.some(
@@ -68,7 +68,7 @@ export namespace Inventory {
         group: Data<typeof Group>
     ) => {
         return attemptAsync(async () => {
-            const has = (await ItemGroup.all())
+            const has = (await ItemGroup.all(false))
                 .unwrap()
                 .some(
                     ig => ig.data.item === item.id && ig.data.group === group.id
@@ -82,7 +82,7 @@ export namespace Inventory {
         });
     };
 
-    Struct.buildAll().then(() => {
+    Struct.buildAll(false).then(() => {
         app.route('/structs', Struct.router);
     });
 

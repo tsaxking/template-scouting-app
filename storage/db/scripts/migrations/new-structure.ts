@@ -60,17 +60,6 @@ export default new Version(
                             verification: a.verification || ''
                         })
                     ).unwrap();
-
-                    if (a.passwordChange && a.passwordChangeDate) {
-                        Account.PasswordChange.new({
-                            account: newAccount.id,
-                            key: a.passwordChange,
-                            expires: new Date(
-                                a.passwordChangeDate
-                            ).toISOString()
-                        });
-                    }
-
                     if (a.customData) {
                         const data = JSON.parse(a.customData) || {};
                         (

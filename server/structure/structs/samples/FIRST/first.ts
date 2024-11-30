@@ -1,4 +1,4 @@
-import { Struct } from '../../cache-2';
+import { Struct } from '../../struct';
 import { DB } from '../../../../utilities/database';
 
 export namespace FIRST {

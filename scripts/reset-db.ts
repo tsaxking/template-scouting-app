@@ -1,7 +1,7 @@
 import { Colors } from '../server/utilities/colors';
-import { Version } from '../server/utilities/databases';
 import env from '../server/utilities/env';
 import { sleep } from '../shared/sleep';
+import { DB } from '../server/utilities/database';
 
 const main = async () => {
     if (env.ENVIRONMENT !== 'test')
@@ -16,7 +16,7 @@ const main = async () => {
         await sleep(1000);
     }
 
-    await Version.reset();
+    (await DB.reset(process.argv.includes('--hard'))).unwrap();
     process.exit(0);
 };
 

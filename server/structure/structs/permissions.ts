@@ -93,6 +93,10 @@ export namespace Permissions {
             public readonly struct: string,
             public readonly property?: string // If property is undefined, it means the permission is for the whole struct
         ) {}
+
+        toString() {
+            return `${this.permission}: ${this.struct}.${this.property}`;
+        }
     }
 
     export const Universe = new Struct({
@@ -123,6 +127,10 @@ export namespace Permissions {
         return au.includes(ru);
     });
 
+    Role.on('delete', r => {
+        RoleAccount.fromProperty('role', r.id, true).pipe(d => d.delete());
+    });
+
     // Universe.on('create', universe => {
     //     Role.new({
     //         name: 'root',
@@ -150,13 +158,13 @@ export namespace Permissions {
     export const getRolesFromUniverse = async (
         universe: Data<typeof Universe>
     ) => {
-        return Role.fromProperty('universe', universe.id);
+        return Role.fromProperty('universe', universe.id, false);
     };
 
     export const getRoles = async (account: Data<typeof Account.Account>) => {
         return attemptAsync(async () => {
             const roleAccounts = (
-                await RoleAccount.fromProperty('account', account.id)
+                await RoleAccount.fromProperty('account', account.id, false)
             ).unwrap();
             return resolveAll(
                 await Promise.all(

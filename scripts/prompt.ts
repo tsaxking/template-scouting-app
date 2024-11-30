@@ -212,6 +212,77 @@ export const select = async <T = unknown>(
     return res as T;
 };
 
+export const multiSelect = async <T = unknown>(
+    message: string,
+    data: string[]
+) => {
+    return new Promise<number[]>((res, rej) => {
+        const result: number[] = [];
+        let hovering = 0;
+
+        const stdin = process.stdin as unknown as NodeJS.ReadStream & {
+            off: (event: string, listener: (key: string) => void) => void;
+        };
+
+        stdin.setRawMode(true);
+        stdin.resume();
+        stdin.setEncoding('utf8');
+
+        const run = () => {
+            console.clear();
+            console.log(message);
+            console.log('Use arrow keys to navigate');
+            console.log('Space to select and deselect');
+            console.log('Enter to finish selection\n');
+            for (let i = 0; i < data.length; i++) {
+                const o = data[i];
+                console.log(
+                    result.includes(i) ? '✔️' : ' ',
+                    i === hovering ? '>' : ' ', // do I want chalk?
+                    o
+                );
+            }
+
+            stdin.on('data', handleKey);
+        };
+
+        const handleKey = (key: string) => {
+            if (key === '\u0003') {
+                // Ctrl + C
+                process.exit();
+            } else if (key === '\r') {
+                // Enter
+                stdin.setRawMode(false);
+                stdin.pause();
+                console.log('\n');
+                res(result);
+            } else if (key === '\u001b[A') {
+                // Up
+                hovering++;
+                if (hovering >= data.length) hovering = 0;
+                run();
+            } else if (key === '\u001b[B') {
+                // Down
+                hovering--;
+                if (hovering < 0) hovering = data.length - 1;
+                run();
+            } else if (key === ' ') {
+                // Space
+                if (result.includes(hovering)) {
+                    result.splice(result.indexOf(hovering), 1);
+                } else {
+                    result.push(hovering);
+                }
+                run();
+            }
+
+            stdin.off('data', handleKey);
+        };
+
+        run();
+    });
+};
+
 /**
  * Confirms a message
  * @date 3/8/2024 - 6:52:57 AM

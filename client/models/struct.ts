@@ -376,9 +376,7 @@ export class StructData<T extends Blank>
                                 vhCreated: 'text';
                             }
                     >[]
-                >(
-                    `/${this.struct.data.name}/version-history`
-                )
+                >(`/${this.struct.data.name}/version-history`)
             ).unwrap();
 
             return response.map(d => new DataVersion(this.struct, d));

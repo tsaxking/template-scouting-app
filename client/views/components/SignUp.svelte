@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Accounts } from '../../models/account-new';
+    import { Accounts } from '../../models/account-new';
     import { ServerRequest } from '../../utilities/requests';
     import Password from './Password.svelte';
     import Recaptcha from './Recaptcha.svelte';
@@ -25,13 +25,13 @@ import { Accounts } from '../../models/account-new';
         }
 
         // ServerRequest.post('/account/sign-up', {
-        //     username,
-        //     password,
-        //     confirmPassword,
-        //     email,
-        //     firstName,
-        //     lastName
-        // });
+    //     username,
+    //     password,
+    //     confirmPassword,
+    //     email,
+    //     firstName,
+    //     lastName
+    // });
 
         Accounts.signUp({
             username,
@@ -39,7 +39,7 @@ import { Accounts } from '../../models/account-new';
             confirmPassword,
             email,
             firstName,
-            lastName,
+            lastName
         });
     };
 

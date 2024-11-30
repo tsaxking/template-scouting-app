@@ -15,7 +15,7 @@ import { capitalize, fromCamelCase, removeWhitespace } from '../../shared/text';
 import { SQL_Type, Blank, checkStrType, returnType } from '../../shared/struct';
 import { Permissions } from '../../server/structure/structs/permissions';
 
-const openStructs = () => {
+export const openStructs = () => {
     return attemptAsync<Struct<Blank, string>[]>(async () => {
         const readDir = async (
             dir: string
@@ -44,7 +44,7 @@ const openStructs = () => {
     });
 };
 
-const selectStruct = async (
+export const selectStruct = async (
     message?: string,
     structs?: Struct<Blank, string>[]
 ) => {
@@ -62,8 +62,8 @@ const selectStruct = async (
     );
 };
 
-const selectData = async (
-    data: Data<Struct<Blank, string>>[],
+export const selectData = async <T extends Data<Struct<Blank, string>>>(
+    data: T[],
     message?: string
 ) => {
     const run = async () => {
@@ -83,7 +83,7 @@ const selectData = async (
     return run();
 };
 
-const versionActions = {
+export const versionActions = {
     restore: async (version: DataVersion<Blank, string>) => {
         const res = await confirm(
             'Are you sure you want to restore this version?'
@@ -108,7 +108,9 @@ const versionActions = {
     }
 };
 
-const selectVersionHistory = async (versions: DataVersion<Blank, string>[]) => {
+export const selectVersionHistory = async (
+    versions: DataVersion<Blank, string>[]
+) => {
     const selected = await selectTable(
         'Select a version',
         versions.map(v => v.data)
@@ -117,7 +119,9 @@ const selectVersionHistory = async (versions: DataVersion<Blank, string>[]) => {
     return versions.find(v => v.vhId === selected?.vhId);
 };
 
-const versionHistoryPipe = async (versions: DataVersion<Blank, string>[]) => {
+export const versionHistoryPipe = async (
+    versions: DataVersion<Blank, string>[]
+) => {
     const selected = await selectVersionHistory(versions);
 
     if (selected) {
@@ -134,7 +138,7 @@ const versionHistoryPipe = async (versions: DataVersion<Blank, string>[]) => {
     }
 };
 
-const dataActions: {
+export const dataActions: {
     [key: string]: (data: Data<Struct<Blank, string>>) => unknown;
 } = {
     update: async data => {
@@ -262,7 +266,7 @@ const dataActions: {
         return backToStruct('Attributes were not set');
     },
     addToUniverse: async data => {
-        const universes = (await Permissions.Universe.all()).unwrap();
+        const universes = (await Permissions.Universe.all(false)).unwrap();
         const selected = await select(
             'Select a universe to add',
             universes.map(u => ({
@@ -281,7 +285,7 @@ const dataActions: {
     // getUniverses: async (data) => {},
     setUniverses: async data => {
         // const currentIds = data.getUniverses().unwrap();
-        const universes = (await Permissions.Universe.all()).unwrap();
+        const universes = (await Permissions.Universe.all(false)).unwrap();
         // const current = universes.filter(u => currentIds.includes(u.id));
 
         const toSet: string[] = [];
@@ -320,7 +324,7 @@ const dataActions: {
     },
     removeFromUniverse: async data => {
         const currentIds = data.getUniverses().unwrap();
-        const has = (await Permissions.Universe.all())
+        const has = (await Permissions.Universe.all(false))
             .unwrap()
             .filter(u => currentIds.includes(u.id));
 
@@ -347,7 +351,7 @@ const dataActions: {
     }
 };
 
-const selectDataAction = async (data: Data<Struct<Blank, string>>) => {
+export const selectDataAction = async (data: Data<Struct<Blank, string>>) => {
     const actions = Object.entries(dataActions);
     const selected = await select(
         'Select an action for this data',
@@ -360,12 +364,12 @@ const selectDataAction = async (data: Data<Struct<Blank, string>>) => {
     if (selected) return selected(data);
 };
 
-const dataSelectPipe = async (data: Data<Struct<Blank, string>>[]) => {
+export const dataSelectPipe = async (data: Data<Struct<Blank, string>>[]) => {
     const selected = await selectData(data);
     if (selected) return selectDataAction(selected);
 };
 
-const structActions: {
+export const structActions: {
     [key: string]: (struct: Struct<Blank, string>) => unknown;
 } = {
     new: async struct => {
@@ -425,7 +429,7 @@ const structActions: {
         return backToStruct('Did not delete image');
     },
     all: async struct => {
-        const all = (await struct.all()).unwrap();
+        const all = (await struct.all(false)).unwrap();
         const selected = await selectData(all, `Select a(n) ${struct.name}`);
         if (selected) return selectDataAction(selected);
     },
@@ -445,13 +449,13 @@ const structActions: {
                 checkStrType(v, type)
             );
 
-            const data = (await struct.fromProperty(name, res)).unwrap();
+            const data = (await struct.fromProperty(name, res, false)).unwrap();
 
             dataSelectPipe(data);
         }
     },
     fromUniverse: async struct => {
-        const universes = (await Permissions.Universe.all()).unwrap();
+        const universes = (await Permissions.Universe.all(false)).unwrap();
         const universe = await select(
             'Select a universe',
             universes.map(u => ({
@@ -460,11 +464,11 @@ const structActions: {
             }))
         );
 
-        const data = (await struct.fromUniverse(universe.id)).unwrap();
+        const data = (await struct.fromUniverse(universe.id, false)).unwrap();
         dataSelectPipe(data);
     },
     archived: async struct => {
-        const data = (await struct.archived()).unwrap();
+        const data = (await struct.archived(false)).unwrap();
         dataSelectPipe(data);
     },
     drop: async struct => {
@@ -494,7 +498,7 @@ const structActions: {
     }
 };
 
-const selectStructAction = async (struct: Struct<Blank, string>) => {
+export const selectStructAction = async (struct: Struct<Blank, string>) => {
     const actions = Object.entries(structActions);
 
     const selected = await select(
