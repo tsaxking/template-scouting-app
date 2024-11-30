@@ -43,11 +43,11 @@ export namespace Account {
         }
     });
 
-    const bypassAccount = (a1: AccountData, a2: AccountData) => a1.id === a2.id;
+    const isSelf = (a1: AccountData, a2: AccountData) => a1.id === a2.id;
 
-    Account.bypass(Permissions.DataAction.Delete, bypassAccount);
-    Account.bypass(Permissions.PropertyAction.Update, bypassAccount);
-    Account.bypass(Permissions.PropertyAction.Read, bypassAccount);
+    Account.bypass(Permissions.DataAction.Delete, isSelf);
+    Account.bypass(Permissions.PropertyAction.Update, isSelf);
+    Account.bypass(Permissions.PropertyAction.Read, isSelf);
 
     export type AccountData = Data<typeof Account>;
 

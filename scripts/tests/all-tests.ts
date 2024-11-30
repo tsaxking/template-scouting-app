@@ -19,7 +19,7 @@ import {
 import fs from 'fs';
 import path from 'path';
 import { spawn } from 'child_process';
-import { Struct } from '../../server/structure/structs/cache-2';
+import { Struct } from '../../server/structure/structs/struct';
 
 /**
  * The name of the main database
@@ -391,7 +391,7 @@ export const runTests = async (env: Env, database: Database) =>
         //     (await backup.delete()).unwrap();
         // }),
 
-        test('Struct Building', async () => {
+        test('Structs', async () => {
             const Item = new Struct({
                 name: 'Item',
                 structure: {
@@ -403,28 +403,41 @@ export const runTests = async (env: Env, database: Database) =>
 
             (await Item.build()).unwrap();
 
-            const i = (
-                await Item.new({
-                    name: 'test',
-                    price: 100
-                })
-            ).unwrap();
+            test('Struct Generator', async () => {
+                const i = (
+                    await Item.new({
+                        name: 'test',
+                        price: 100
+                    })
+                ).unwrap();
+    
+                assertEquals(i.data.name, 'test');
+    
+                (
+                    await i.update({
+                        price: 200
+                    })
+                ).unwrap();
+    
+                assertEquals(i.data.price, 200);
+    
+                const item2 = (await Item.fromId(i.id)).unwrap();
+                assertEquals(item2?.data.price, 200);
 
-            assertEquals(i.data.name, 'test');
+                const [item3] = (await Item.fromProperty('name', i.data.name, false)).unwrap();
+                assertEquals(item3?.data.price, 200);
 
-            (
-                await i.update({
-                    price: 200
-                })
-            ).unwrap();
+                const stream = Item.all(true);
 
-            assertEquals(i.data.price, 200);
+                stream.on('data', (item2) => {
+                    assertEquals(item2.data.price, 200);
+                });
+    
+                (await i.delete()).unwrap();
+            });
 
-            const item2 = (await Item.fromId(i.id)).unwrap();
-            assertEquals(item2?.data.price, 200);
 
-            (await i.delete()).unwrap();
-        })
+        }),
     ]);
 
 type Env = {
