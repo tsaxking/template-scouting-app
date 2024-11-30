@@ -48,7 +48,6 @@ export namespace Email {
             clicked: 'boolean',
             link: 'text'
         },
-        lifetime: 1000 * 60 * 60 * 24 * 7
     });
 
     Email.listen('/:id', async (req, res) => {
