@@ -35,8 +35,4 @@ export namespace Inventory {
         },
         socket
     });
-
-    const sample = ItemGroup.sample;
-
-    const data = sample.pull('item', 'group', 'test').unwrap();
 }

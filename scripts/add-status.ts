@@ -189,7 +189,7 @@ ${Object.keys(groups)
     fs.writeFileSync('./shared/status-messages.ts', newFile);
 
     if (data.code.toString().startsWith('2')) {
-        addSocket(value);
+        addSocket(String(value));
     }
 };
 

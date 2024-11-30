@@ -136,40 +136,26 @@ export namespace Account {
     Settings.bypass(Permissions.PropertyAction.Update, bypassSettings);
     Settings.bypass(Permissions.PropertyAction.Read, bypassSettings);
 
-    export const getNotifications = async (account: Data<typeof Account>) => {
-        return Notification.fromProperty('accountId', account.id);
-    };
-
-    export const getSettings = async (account: Data<typeof Account>) => {
-        return Settings.fromProperty('accountId', account.id);
-    };
-
-    export const getVerifiedAccounts = async () => {
-        return Account.fromProperty('verified', true);
-    };
-
-    export const getUnverifiedAccounts = async () => {
-        return Account.fromProperty('verified', false);
-    };
-
     export const fromUsername = async (username: string) => {
         return attemptAsync<AccountData | undefined>(async () => {
             return (
-                await Account.fromProperty('username', username)
+                await Account.fromProperty('username', username, false)
             ).unwrap()[0];
         });
     };
 
     export const fromEmail = async (email: string) => {
         return attemptAsync<AccountData | undefined>(async () => {
-            return (await Account.fromProperty('email', email)).unwrap()[0];
+            return (
+                await Account.fromProperty('email', email, false)
+            ).unwrap()[0];
         });
     };
 
     export const fromVerificationKey = async (key: string) => {
         return attemptAsync<AccountData | undefined>(async () => {
             return (
-                await Account.fromProperty('verification', key)
+                await Account.fromProperty('verification', key, false)
             ).unwrap()[0];
         });
     };
@@ -197,7 +183,7 @@ export namespace Account {
     export const fromPasswordChangeKey = async (key: string) => {
         return attemptAsync(async () => {
             const pc = (
-                await PasswordChange.fromProperty('key', key)
+                await PasswordChange.fromProperty('key', key, false)
             ).unwrap()[0];
             if (!pc) return;
 

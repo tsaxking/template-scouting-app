@@ -16,7 +16,7 @@ import { general } from './manager/general';
 import { serverController } from './manager/server-controller';
 import fs from 'fs';
 import path from 'path';
-import { DB } from '../server/utilities/databases';
+import { DB } from '../server/utilities/database';
 const { resolve, relative } = path;
 
 /**
@@ -342,7 +342,7 @@ export const main = async () => {
 
         const map = (s: {
             icon: string;
-            value: () => Promise<void>;
+            value: () => Promise<unknown>;
             description?: string;
         }): string => {
             return `  ${s.icon} ${name(
@@ -354,7 +354,7 @@ export const main = async () => {
         const doMap = (
             data: {
                 icon: string;
-                value: () => Promise<void>;
+                value: () => Promise<unknown>;
                 description?: string;
             }[]
         ) => data.map(map);
@@ -455,4 +455,4 @@ export const main = async () => {
     await fn();
 };
 
-DB.em.on('connect', main);
+DB.connect().then(main);
