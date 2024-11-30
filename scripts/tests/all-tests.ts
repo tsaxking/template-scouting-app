@@ -106,8 +106,6 @@ export const runTests = async (env: Env, database: Database) =>
             const invalid: [string, any][] = [];
             const missing: string[] = [];
 
-            JSON.parse;
-
             // simulate a request
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             validate<any>(

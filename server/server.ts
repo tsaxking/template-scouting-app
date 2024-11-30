@@ -157,9 +157,10 @@ app.get('/test/:page', (req, res, next) => {
 app.route('/api', api);
 app.use('/*', Account.autoSignIn(env.AUTO_SIGN_IN || ''));
 
-app.get('/*', (req, res, next) => {
+app.get('/*', async (req, res, next) => {
     if (env.ENVIRONMENT === 'test') return next();
-    if (!req.session.data.accountId) {
+    const s = (await req.getSession()).unwrap();
+    if (!s.data.accountId) {
         if (
             ![
                 '/account/sign-in',
@@ -169,9 +170,11 @@ app.get('/*', (req, res, next) => {
         ) {
             // only save the previous url if it's not a sign-in, sign-up, or forgot-password page
             // this is so that the user can be redirected back to the page they initially were trying to access
-            req.session.update({
-                prevUrl: req.url
-            });
+            (
+                await s.update({
+                    prevUrl: req.url
+                })
+            ).unwrap();
         }
         return res.redirect('/account/sign-in');
     }
@@ -209,14 +212,14 @@ app.final<{
     $$files?: FileUpload;
     password?: string;
     confirmPassword?: string;
-}>((req, res) => {
+}>(async (req, res) => {
     // req.session.save();
 
     if (res.fulfilled) {
         serverLog('request', {
             date: Date.now(),
             duration: Date.now() - req.start,
-            ip: req.session.data.ip,
+            ip: (await req.getSession()).unwrap().data.ip,
             method: req.method,
             url: req.pathname,
             status: res._status,

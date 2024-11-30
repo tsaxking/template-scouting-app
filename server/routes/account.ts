@@ -11,21 +11,22 @@ router.get('/*', (req, res, next) => {
     next();
 });
 
-const redirect = (req: Req, res: Res, next: Next) => {
-    if (!req.session.data.accountId) return next();
+const redirect = async (req: Req, res: Res, next: Next) => {
+    const s = (await req.getSession()).unwrap();
+    if (!s.data.accountId) return next();
 
-    res.redirect(req.session.data.prevUrl || '/');
+    res.redirect(s.data.prevUrl || '/');
 };
 
-router.get('/sign-in', redirect, (req, res, next) => {
-    if (req.session.data.accountId) return next();
+router.get('/sign-in', redirect, async (req, res, next) => {
+    if ((await req.getSession()).unwrap().data.accountId) return next();
     res.sendTemplate('entries/account/sign-in', {
         RECAPTCHA_SITE_KEY: env.RECAPTCHA_SITE_KEY
     });
 });
 
-router.get('/sign-up', redirect, (req, res, next) => {
-    if (req.session.data.accountId) return next();
+router.get('/sign-up', redirect, async (req, res, next) => {
+    if ((await req.getSession()).unwrap().data.accountId) return next();
     res.sendTemplate('entries/account/sign-up', {
         RECAPTCHA_SITE_KEY: env.RECAPTCHA_SITE_KEY
     });

@@ -1,36 +1,36 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
-    import { Blank } from '../../../../shared/struct';
-    import { Struct } from '../../../models/struct';
-    import Row from './Row.svelte';
-    import jQuery from 'jquery';
-    import { capitalize, fromCamelCase } from '../../../../shared/text';
+import { onMount } from 'svelte';
+import { type Blank } from '../../../../shared/struct';
+import { Struct } from '../../../models/struct';
+import Row from './Row.svelte';
+import jQuery from 'jquery';
+import { capitalize, fromCamelCase } from '../../../../shared/text';
 
-    export let current: Struct<Blank>;
+export let current: Struct<Blank>;
 
-    const headers = Object.keys(current.data.structure);
+const headers = Object.keys(current.data.structure);
 
-    const allStore = current.all(true);
-    const all = $allStore;
+const allStore = current.all(true);
+const all = $allStore;
 
-    let table: HTMLTableElement;
+let table: HTMLTableElement;
 
-    onMount(() => {
-        // TODO: is jquery datatables good?
+onMount(() => {
+    // TODO: is jquery datatables good?
     // I don't know if it will work with editable cells
     // are there other packages that would be better?
-        jQuery(table).dataTable();
+    jQuery(table).dataTable();
 
-        table.querySelectorAll('.tt').forEach(el => {
-            jQuery(el).tooltip();
-        });
-        return () => {
-            // jQuery(table).dataTable().destroy();
-            table.querySelectorAll('.tt').forEach(el => {
-                jQuery(el).tooltip('dispose');
-            });
-        };
+    table.querySelectorAll('.tt').forEach(el => {
+        jQuery(el).tooltip();
     });
+    return () => {
+        // jQuery(table).dataTable().destroy();
+        table.querySelectorAll('.tt').forEach(el => {
+            jQuery(el).tooltip('dispose');
+        });
+    };
+});
 </script>
 
 <table bind:this="{table}">
@@ -55,7 +55,7 @@
                 class="tt"
                 data-bs-tooltip="How long (in milliseconds) the row will exist since it was created"
                 title="How long (in milliseconds) the row will exist since it was created"
-            >Lifetime</th
+                >Lifetime</th
             >
             <th
                 class="tt"
@@ -66,9 +66,7 @@
     </thead>
     <tbody>
         {#each all as row (row.id)}
-            <Row
-                {headers}
-                bind:data="{row}" />
+            <Row {headers} bind:data="{row}" />
         {/each}
     </tbody>
 </table>

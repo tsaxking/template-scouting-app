@@ -1,17 +1,15 @@
 <script lang="ts">
-    import { Accounts } from '../../../models/account';
-    import TableAccountRow from './TableAccountRow.svelte';
+import { Accounts } from '../../../models/account';
+import TableAccountRow from './TableAccountRow.svelte';
 
-    const allStore = Accounts.Account.all(true);
+const allStore = Accounts.Account.all(true);
 
-    const all = $allStore;
+const all = $allStore;
 
-    let table: HTMLTableElement;
+let table: HTMLTableElement;
 </script>
 
-<table
-    bind:this="{table}"
-    class="table">
+<table bind:this="{table}" class="table">
     <thead>
         <tr>
             <th>Username</th>

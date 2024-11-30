@@ -1,15 +1,15 @@
 <script lang="ts">
-    import { Stack } from '../../../utilities/stack';
+import { Stack } from '../../../utilities/stack';
 
-    export let name: string;
-    export let value: string | number;
-    export let classes = '';
-    export let stack: Stack;
-    // export let onChange: (value: string | number) => void;
+export let name: string;
+export let value: string | number;
+export let classes = '';
+export let stack: Stack;
+// export let onChange: (value: string | number) => void;
 // export let undo: (prev: string | number) => void;
 
-    let focus = false;
-    let input: HTMLInputElement;
+let focus = false;
+let input: HTMLInputElement;
 </script>
 
 <input

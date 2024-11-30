@@ -1,43 +1,41 @@
 <script lang="ts">
-    import { capitalize, fromSnakeCase } from '../../../../shared/text';
-    export let title: string;
-    export let navItems: string[] = [];
-    import { Modal } from '../../../utilities/modals';
-    import Settings from '../../pages/Settings.svelte';
-    import AccountNotifications from './Notifications/AccountNotifications.svelte';
-    import { Accounts } from '../../../models/account';
-    import NotificationIcon from './Notifications/NotificationIcon.svelte';
+import { capitalize, fromSnakeCase } from '../../../../shared/text';
+export let title: string;
+export let navItems: string[] = [];
+import { Modal } from '../../../utilities/modals';
+import Settings from '../../pages/Settings.svelte';
+import AccountNotifications from './Notifications/AccountNotifications.svelte';
+import { Accounts } from '../../../models/account';
+import NotificationIcon from './Notifications/NotificationIcon.svelte';
 
-    const myAccount = Accounts.self;
-    const self = $myAccount;
+const myAccount = Accounts.self;
+const self = $myAccount;
 
-    export let active: string = '';
+export let active: string = '';
 
-    export let accountLinks: (string | null)[] = [];
+export let accountLinks: (string | null)[] = [];
 
-    const openSettings = () => {
-        const m = new Modal();
-        const body = document.createElement('div');
-        new Settings({
-            target: body,
-            props: {
-                settings: []
-            }
-        });
+const openSettings = () => {
+    const m = new Modal();
+    const body = document.createElement('div');
+    new Settings({
+        target: body,
+        props: {
+            settings: []
+        }
+    });
 
-        m.setTitle('Settings');
-        m.setBody(body);
-        m.show();
-    };
+    m.setTitle('Settings');
+    m.setBody(body);
+    m.show();
+};
 </script>
 
 <nav
     id="top-navbar"
     class="navbar navbar-expand-lg fixed-top shadow text-light bg-dark d-flex justify-content-between"
 >
-    <div
-        style:height="42px"
-        class="d-inline-flex p-0">
+    <div style:height="42px" class="d-inline-flex p-0">
         <button
             class="btn btn-dark border-0"
             aria-controls="sidebar-nav"
@@ -45,16 +43,14 @@
             data-bs-toggle="offcanvas"
             type="button"
         >
-            <i class="bi bi-layout-sidebar" />
+            <i class="bi bi-layout-sidebar"></i>
         </button>
         <a
             class="ps-3 pt-2 navbar-brand fw-bold no-select h-100 align-middle text-light"
             href="/home">{title}</a
         >
 
-        <div
-            id="nav-items"
-            class="collapse navbar-collapse bg-dark rounded">
+        <div id="nav-items" class="collapse navbar-collapse bg-dark rounded">
             <ul class="navbar-nav mr-auto">
                 {#each navItems as item}
                     <li class="nav-item">
@@ -113,10 +109,8 @@
             {#each accountLinks as link}
                 {#if link}
                     <li>
-                        <a
-                            class="dropdown-item"
-                            href="{link}"
-                        >{capitalize(fromSnakeCase(link, '-'))}</a
+                        <a class="dropdown-item" href="{link}"
+                            >{capitalize(fromSnakeCase(link, '-'))}</a
                         >
                     </li>
                 {:else}
@@ -130,9 +124,7 @@
             <hr class="dropdown-divider">
         </li> -->
             <li class="p-1">
-                <a
-                    class="dropdown-item"
-                    href="/account/sign-out">Sign Out</a>
+                <a class="dropdown-item" href="/account/sign-out">Sign Out</a>
             </li>
         </ul>
         <button
@@ -143,7 +135,7 @@
             data-bs-toggle="collapse"
             type="button"
         >
-            <i class="bi bi-box-arrow-up-left" />
+            <i class="bi bi-box-arrow-up-left"></i>
         </button>
     </div>
 </nav>

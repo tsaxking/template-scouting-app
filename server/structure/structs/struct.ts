@@ -38,6 +38,7 @@ import {
     Blank
 } from '../../../shared/struct';
 import { Loop } from '../../../shared/loop';
+import { log } from '../../utilities/terminal-logging';
 
 export enum PropertyAction {
     Read = 'read',
@@ -289,7 +290,7 @@ const newGlobalCols = (struct: Struct<Blank, string>) => {
                 .map(a => a.replaceAll(',', ''))
                 .join(',') || '',
         universes: '',
-        liftetime: struct.data.lifetime || 0
+        lifetime: struct.data.lifetime || 0
     };
 };
 
@@ -1220,6 +1221,8 @@ export class Struct<Structure extends Blank, Name extends string> {
                 )
             ).unwrap();
 
+            // log('Has current', current);
+
             if (current) {
                 const cols = Object.keys(structure).map(k => k.toLowerCase());
                 const currentCols = Object.keys(JSON.parse(current.schema)).map(
@@ -1268,6 +1271,8 @@ export class Struct<Structure extends Blank, Name extends string> {
                 ).unwrap();
             }
 
+            // log('Creating new table');
+
             const query = Query.build(
                 `
                     CREATE TABLE IF NOT EXISTS ${name} (
@@ -1286,6 +1291,8 @@ export class Struct<Structure extends Blank, Name extends string> {
                     );
                 `
             );
+
+            // log('Query', query);
 
             (await database.unsafe.run(query)).unwrap();
 
@@ -1581,7 +1588,7 @@ export class Struct<Structure extends Blank, Name extends string> {
      */
     get sample(): StructData<Structure, Name> {
         throw new FatalStructError(
-            `${this.name}.sample should never be run. It is only used for testing the typesystm. Remove this in order for the program to run.`
+            `${this.name}.sample should never be run. It is only used for testing the typesystem. Remove this in order for the program to run.`
         );
     }
 
@@ -3061,7 +3068,7 @@ export class Struct<Structure extends Blank, Name extends string> {
             throw new FatalStructError(
                 `${this.name}.imagize() run after struct is built`
             );
-        if (this.sample)
+        if (this.data.sample)
             throw new FatalStructError(
                 `${this.name}.imagize() run on sample struct`
             );
@@ -3077,13 +3084,21 @@ export class Struct<Structure extends Blank, Name extends string> {
                 } as StructImage)
             );
 
+            await fs.promises.mkdir(
+                path.resolve(__dirname, './struct-images'),
+                { recursive: true }
+            );
+
             const exists = fs.existsSync(
-                path.resolve(__dirname, `./images/${this.name}.imagev1`)
+                path.resolve(__dirname, `./struct-images/${this.name}.imagev1`)
             );
 
             if (!exists) {
                 await fs.promises.writeFile(
-                    path.resolve(__dirname, `./images${this.name}.imagev1`),
+                    path.resolve(
+                        __dirname,
+                        `./struct-images/${this.name}.imagev1`
+                    ),
                     image
                 );
             }

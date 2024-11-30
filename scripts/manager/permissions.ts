@@ -3,21 +3,19 @@ import { backToMain } from '../manager';
 import { select, multiSelect } from '../prompt';
 import { selectRole } from './roles';
 import { selectStruct } from './structs';
+import { DataAction, PropertyAction } from '../../shared/struct';
 
 export const selectPermission = async () => {
-    return select<Permissions.DataAction | Permissions.PropertyAction>(
-        'Select a permission...',
-        [
-            Permissions.DataAction.Create,
-            Permissions.DataAction.Delete,
-            Permissions.DataAction.Archive,
-            Permissions.DataAction.RestoreArchive,
-            Permissions.DataAction.DeleteVersion,
-            Permissions.DataAction.RestoreVersion,
-            Permissions.PropertyAction.Read,
-            Permissions.PropertyAction.Update
-        ]
-    );
+    return select<DataAction | PropertyAction>('Select a permission...', [
+        DataAction.Create,
+        DataAction.Delete,
+        DataAction.Archive,
+        DataAction.RestoreArchive,
+        DataAction.DeleteVersion,
+        DataAction.RestoreVersion,
+        PropertyAction.Read,
+        PropertyAction.Update
+    ]);
 };
 
 export const addPermissions = async () => {
@@ -36,8 +34,8 @@ export const addPermissions = async () => {
     const permission = await selectPermission();
 
     if (
-        permission === Permissions.PropertyAction.Read ||
-        permission === Permissions.PropertyAction.Update
+        permission === PropertyAction.Read ||
+        permission === PropertyAction.Update
     ) {
         // select properties to apply
         const keys = Object.keys(struct.data.structure);

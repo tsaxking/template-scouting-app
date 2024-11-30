@@ -874,7 +874,7 @@ class Table {
                     FROM INFORMATION_SCHEMA.COLUMNS WHERE tableName = :tableName
                 `,
                 {
-                    tableName: this.name
+                    tableName: toSnakeCase(fromCamelCase(this.name))
                 }
             )
         );
@@ -1352,8 +1352,9 @@ export class Database {
                 resolveAll(
                     await Promise.all(
                         tables.map(table => {
+                            console.log(`Dropping table ${table.name}`);
                             return this.unsafe.run(
-                                Query.build(`DROP TABLE ${table};`)
+                                Query.build(`DROP TABLE ${table.name};`)
                             );
                         })
                     )
@@ -1364,8 +1365,9 @@ export class Database {
                 resolveAll(
                     await Promise.all(
                         tables.map(table => {
+                            console.log(`Clearing table ${table.name}`);
                             return this.unsafe.run(
-                                Query.build(`DELETE FROM ${table};`)
+                                Query.build(`DELETE FROM ${table.name};`)
                             );
                         })
                     )
@@ -1383,9 +1385,13 @@ export class Database {
      * @async
      * @returns {unknown}
      */
-    async init() {
+    async init(doVersions = true) {
         return attemptAsync(async () => {
             if (this.initialized) return;
+
+            // log('Initializing database');
+
+            // log('Creating default tables: Structs, Git, Version');
             // this query must be safe from repeated calls
             (
                 await this.unsafe.run(
@@ -1409,6 +1415,8 @@ export class Database {
                 )
             ).unwrap();
 
+            // log('Created default tables');
+
             let currentGit = (
                 await this.unsafe.get<{
                     branch: string;
@@ -1427,6 +1435,9 @@ export class Database {
 
             const b = branch.unwrap();
             const c = commit.unwrap();
+
+            // log(`Current branch: ${b}`);
+            // log(`Current commit: ${c}`);
 
             if (!currentGit) {
                 currentGit = {
@@ -1458,54 +1469,56 @@ export class Database {
                 )
             ).unwrap();
 
-            const versions = (await getVersions()).unwrap();
+            // const versions = (await getVersions()).unwrap();
 
-            for (const version of versions) {
-                const backup = (await this.backup()).unwrap();
+            // for (const version of versions) {
+            //     const backup = (await this.backup()).unwrap();
 
-                // The schema for each table must be stored with the backup
-                try {
-                    log(`Running version update: ${version.versionStr}`);
-                    log(version.description);
-                    await version.update(this);
+            //     // The schema for each table must be stored with the backup
+            //     try {
+            //         log(`Running version update: ${version.versionStr}`);
+            //         log(version.description);
+            //         await version.update(this);
 
-                    const schemas = Object.entries(version.newSchemas);
-                    for (const [table, schema] of schemas) {
-                        const s = JSON.stringify(schema);
-                        await this.unsafe.run(
-                            Query.build(
-                                `
-                                INSERT INTO Structs (name, schema)
-                                VALUES (:name, :schema)
-                                ON CONFLICT (name) DO UPDATE SET schema = :schema;
-                            `,
-                                {
-                                    name: table,
-                                    schema: s
-                                }
-                            )
-                        );
-                    }
-                } catch (e) {
-                    (await this.restore(backup)).unwrap();
-                    throw new DatabaseError(
-                        `Error running version update: ${version.versionStr}`
-                    );
-                }
+            //         const schemas = Object.entries(version.newSchemas);
+            //         for (const [table, schema] of schemas) {
+            //             const s = JSON.stringify(schema);
+            //             await this.unsafe.run(
+            //                 Query.build(
+            //                     `
+            //                     INSERT INTO Structs (name, schema)
+            //                     VALUES (:name, :schema)
+            //                     ON CONFLICT (name) DO UPDATE SET schema = :schema;
+            //                 `,
+            //                     {
+            //                         name: table,
+            //                         schema: s
+            //                     }
+            //                 )
+            //             );
+            //         }
+            //     } catch (e) {
+            //         (await this.restore(backup)).unwrap();
+            //         error('Version update error:', e);
+            //         throw new DatabaseError(
+            //             `Error running version update: ${version.versionStr}`
+            //         );
+            //     }
 
-                // this can't be outside the for loop because it's assumed the schema will change after the update
-                // const structs = (await this.getStructs()).unwrap();
-                // const valid = resolveAll(await Promise.all(structs.map(s => s.verifyData()))).unwrap();
+            //     // this can't be outside the for loop because it's assumed the schema will change after the update
+            //     // const structs = (await this.getStructs()).unwrap();
+            //     // const valid = resolveAll(await Promise.all(structs.map(s => s.verifyData()))).unwrap();
 
-                // const invalidStructs = structs.filter((s, i) => !valid[i]);
+            //     // const invalidStructs = structs.filter((s, i) => !valid[i]);
 
-                // if (invalidStructs.length) {
-                // (await this.restore(backup)).unwrap();
-                // throw new DatabaseError(`After updating, the data inside the struct(s): ${invalidStructs.join(', ')} had invalid data. The database has been restored to the previous state and the version has been undone.`);
-                // }
+            //     // if (invalidStructs.length) {
+            //     // (await this.restore(backup)).unwrap();
+            //     // throw new DatabaseError(`After updating, the data inside the struct(s): ${invalidStructs.join(', ')} had invalid data. The database has been restored to the previous state and the version has been undone.`);
+            //     // }
 
-                (await this.setVersion(version.version)).unwrap();
-            }
+            //     (await this.setVersion(version.version)).unwrap();
+
+            // }
 
             this.initialized = true;
         });
@@ -1583,12 +1596,13 @@ export class Database {
                 .unwrap()
                 .filter(Boolean);
 
-
             const dir = (await this.makeCurrentBackupDir()).unwrap();
             resolveAll(
                 await Promise.all(backups.map(b => b.copy(dir)))
             ).unwrap();
-            resolveAll(await Promise.all(backups.map(b => b.deleteFiles()))).unwrap();
+            resolveAll(
+                await Promise.all(backups.map(b => b.deleteFiles()))
+            ).unwrap();
             const parent = dir.split('/').pop() as string;
 
             // when extracting the backup, we need to handle the potential name conflicts
@@ -1625,7 +1639,11 @@ export class Database {
             );
 
             return files
-                .filter(f => new Date(f.replace('.zip', '')).toString() !== 'Invalid Date')
+                .filter(
+                    f =>
+                        new Date(f.replace('.zip', '')).toString() !==
+                        'Invalid Date'
+                )
                 .map(f => path.resolve(__root, './storage/db/backups', f));
         });
     }
@@ -1670,10 +1688,14 @@ export class Database {
                 }
             } else {
                 const files = await fs.promises.readdir(backupDir);
-                await Promise.all(files.map(f => fs.promises.copyFile(path.resolve(
-                    backupDir,
-                    f
-                ), path.resolve(__root, './storage/db/backups', f))));
+                await Promise.all(
+                    files.map(f =>
+                        fs.promises.copyFile(
+                            path.resolve(backupDir, f),
+                            path.resolve(__root, './storage/db/backups', f)
+                        )
+                    )
+                );
                 for (const file of files) {
                     if (file.endsWith('.backupv2')) {
                         const table = new TableBackup(

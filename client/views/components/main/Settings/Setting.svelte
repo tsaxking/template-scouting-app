@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { Accounts } from '../../../../models/account';
+import { Accounts } from '../../../../models/account';
 
-    export let setting: Accounts.SettingsData;
+export let setting: Accounts.SettingsData;
 
-    const s = $setting;
+const s = $setting;
 </script>

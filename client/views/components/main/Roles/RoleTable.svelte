@@ -1,13 +1,13 @@
 <script lang="ts">
-    import { Permissions } from '../../../../models/permissions';
-    import RoleRow from './RoleRow.svelte';
+import { Permissions } from '../../../../models/permissions';
+import RoleRow from './RoleRow.svelte';
 
-    const u = Permissions.currentUniverse;
-    const universe = $u;
+const u = Permissions.currentUniverse;
+const universe = $u;
 
-    const roleStore = Permissions.Role.fromProperty('universe', universe.id, true);
+const roleStore = Permissions.Role.fromProperty('universe', universe.id, true);
 
-    const roles = $roleStore;
+const roles = $roleStore;
 </script>
 
 <table class="table">
