@@ -679,16 +679,24 @@ export class StructStream<Structure extends Blank, Name extends string> {
     }
 
     pipe(fn: (data: StructData<Structure, Name>, index: number) => void) {
-        const run = async (data: StructData<Structure, Name>) => {
-            // if (this.filter && !(await this.filter(data))) return;
-            fn(data, this.index);
-        };
+        return attemptAsync(async () => new Promise<void>((res, rej) => {
+            const run = async (data: StructData<Structure, Name>) => {
+                // if (this.filter && !(await this.filter(data))) return;
+                fn(data, this.index);
+            };
+    
+            const end = (error?: Error) => {
+                this.off('data', run);
+                if(error) rej(error);
+                else res();
+            };
 
-        this.on('data', run);
-
-        this.once('end', () => this.off('data', run));
-        this.once('close', () => this.off('data', run));
-        this.once('error', () => this.off('data', run));
+            this.on('data', run);
+    
+            this.once('end', () => end);
+            this.once('close', () => end);
+            this.once('error', end);
+        }));
     }
 }
 
