@@ -4,8 +4,6 @@ import { Account } from './account';
 import { attemptAsync, resolveAll } from '../../../shared/check';
 import { Loop } from '../../../shared/loop';
 import { App, CookieOptions, Next, ServerFunction } from '../app/app';
-import { Req } from '../app/req';
-import { Res } from '../app/res';
 import express from 'express';
 import { uuid } from '../../utilities/uuid';
 
@@ -51,8 +49,13 @@ export namespace Session {
         name: 'CustomData'
     });
 
-    export const getAccount = async (session: Data<typeof Session>) => {
-        return Account.Account.fromId(session.data.accountId);
+    export const getAccount = async (session: string) => {
+        return attemptAsync(async () => {
+            const s = (await Session.fromId(session)).unwrap();
+            if (!s) return;
+            if (s.data.accountId === '') return;
+            return (await Account.Account.fromId(s.data.accountId)).unwrap();
+        });
     };
 
     export const deleteUnused = () => {

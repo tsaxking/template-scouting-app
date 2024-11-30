@@ -2,8 +2,7 @@ import express from 'express';
 import { App } from './app';
 import { FileUpload } from '../../middleware/stream';
 import { Socket } from 'socket.io';
-import { Session } from '../structs/session';
-import { Data } from '../structs/struct';
+import { attemptAsync } from '../../../shared/check';
 
 /**
  * Body type
@@ -78,9 +77,17 @@ export class Req<
     constructor(
         public readonly app: App,
         public readonly req: express.Request,
-        public readonly session: Data<typeof Session.Session>,
+        public readonly sessionId: string,
         public readonly socket?: Socket
     ) {}
+
+    async getSession() {
+        return attemptAsync(async () => {
+            const res = (await (await import('../structs/session')).Session.Session.fromId(this.sessionId)).unwrap();
+            if (!res) throw new Error('Session not found');
+            return res;
+        });
+    }
 
     /**
      * Params of the request

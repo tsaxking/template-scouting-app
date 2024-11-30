@@ -1,4 +1,4 @@
-import { Data, Struct, StructData } from './struct';
+import { Data, Struct, StructData, DataAction, PropertyAction } from './struct';
 import { DB } from '../../utilities/database';
 import {
     attempt,
@@ -45,9 +45,9 @@ export namespace Account {
 
     const isSelf = (a1: AccountData, a2: AccountData) => a1.id === a2.id;
 
-    Account.bypass(Permissions.DataAction.Delete, isSelf);
-    Account.bypass(Permissions.PropertyAction.Update, isSelf);
-    Account.bypass(Permissions.PropertyAction.Read, isSelf);
+    Account.bypass(DataAction.Delete, isSelf);
+    Account.bypass(PropertyAction.Update, isSelf);
+    Account.bypass(PropertyAction.Read, isSelf);
 
     export type AccountData = Data<typeof Account>;
 
@@ -113,9 +113,9 @@ export namespace Account {
     const bypassNotif = (a: AccountData, notif: NotificationData) =>
         a.id === notif.data.accountId;
 
-    Notification.bypass(Permissions.DataAction.Delete, bypassNotif);
-    Notification.bypass(Permissions.PropertyAction.Update, bypassNotif);
-    Notification.bypass(Permissions.PropertyAction.Read, bypassNotif);
+    Notification.bypass(DataAction.Delete, bypassNotif);
+    Notification.bypass(PropertyAction.Update, bypassNotif);
+    Notification.bypass(PropertyAction.Read, bypassNotif);
 
     export const Settings = new Struct({
         database: DB,
@@ -132,9 +132,9 @@ export namespace Account {
     const bypassSettings = (a: AccountData, setting: SettingsData) =>
         a.id === setting.data.accountId;
 
-    Settings.bypass(Permissions.DataAction.Delete, bypassSettings);
-    Settings.bypass(Permissions.PropertyAction.Update, bypassSettings);
-    Settings.bypass(Permissions.PropertyAction.Read, bypassSettings);
+    Settings.bypass(DataAction.Delete, bypassSettings);
+    Settings.bypass(PropertyAction.Update, bypassSettings);
+    Settings.bypass(PropertyAction.Read, bypassSettings);
 
     export const fromUsername = async (username: string) => {
         return attemptAsync<AccountData | undefined>(async () => {
@@ -192,17 +192,17 @@ export namespace Account {
     };
 
     export const isSignedIn = async (req: Req, res: Res, next: Next) => {
-        if (!req.session.data.accountId) {
+        if (!(await req.getSession()).unwrap().data.accountId) {
             return res.sendStatus('account:not-logged-in');
         }
         next();
     };
 
     export const notSignedIn = async (req: Req, res: Res, next: Next) => {
-        if (req.session.data.accountId) {
-            return res.sendStatus('account:logged-in');
+        if (!(await req.getSession()).unwrap().data.accountId) {
+            return next();
         }
-        next();
+        return res.sendStatus('account:logged-in');
     };
 
     export const newHash = (password: string) => {
@@ -393,7 +393,7 @@ export namespace Account {
             },
             'Account',
             'Not Signed In',
-            JSON.stringify(req.session.data),
+            '{}',
             req
         );
 
@@ -466,7 +466,7 @@ export namespace Account {
                 if (!account.data.verified)
                     return res.sendStatus(notVerifiedStatus);
 
-                (await Session.signIn(req.session, account)).unwrap();
+                (await Session.signIn((await req.getSession()).unwrap(), account)).unwrap();
 
                 res.sendStatus(signedInStatus);
 
@@ -510,6 +510,7 @@ export namespace Account {
                     firstName,
                     lastName
                 } = req.body;
+                const session = await req.getSession();
 
                 if (password !== confirmPassword) {
                     return res.sendStatus(
@@ -553,7 +554,7 @@ export namespace Account {
                                 color: 'success',
                                 code: 201,
                                 instructions: 'Please verify your account.',
-                                redirect: req.session.data.prevUrl || '/'
+                                redirect: (await req.getSession()).unwrap().data.prevUrl || '/'
                             },
                             'Account',
                             'Account Created',
@@ -656,7 +657,7 @@ export namespace Account {
 
         Account.listen('/get-self', async (req, res) => {
             const account = await (
-                await Session.getAccount(req.session)
+                await Session.getAccount(req.sessionId)
             ).unwrap();
             if (!account) return res.sendStatus(notSignedInStatus(req));
 
@@ -664,7 +665,7 @@ export namespace Account {
         });
 
         Account.listen('/sign-out', isSignedIn, async (req, res) => {
-            await Session.signOut(req.session);
+            await Session.signOut((await req.getSession()).unwrap());
             res.sendStatus(
                 new Status(
                     {
@@ -675,7 +676,7 @@ export namespace Account {
                     },
                     'Account',
                     'Signed Out',
-                    JSON.stringify(req.session.data),
+                    JSON.stringify((await req.getSession()).unwrap().data),
                     req
                 )
             );
@@ -820,7 +821,7 @@ export namespace Account {
             const account = (await fromUsername(username)).unwrap();
             if (!account) return next();
 
-            (await Session.signIn(req.session, account)).unwrap();
+            (await Session.signIn((await req.getSession()).unwrap(), account)).unwrap();
 
             next();
         };

@@ -1,11 +1,6 @@
 /* 
 General concept:
 - RBAC (Role Based Access Control) is used to manage permissions
-- Each role is a child of a parent role, except for the root role
-- The higher the role (parent), the fewer permissions it has
-- A child inherits all the permissions of its parent
-- The root role has no permissions
-
 
 - A universe is a collection of data, a data can only be inside one universe
 
@@ -23,34 +18,16 @@ import {
 } from '../../../shared/check';
 import { DB } from '../../utilities/database';
 import { Account } from './account';
-import { Struct, Data, DataError, PartialStructable } from './struct';
+import { Struct, Data, DataError, PartialStructable, PropertyAction, DataAction } from './struct';
 import { encode, decode } from '../../../shared/text';
 import { Blank } from '../../../shared/struct';
 import { ServerFunction } from '../app/app';
-import { Res } from '../app/res';
 import { Status } from '../../utilities/status';
 import { Req } from '../app/req';
 import { Session } from './session';
 
 export namespace Permissions {
-    export enum PropertyAction {
-        Read = 'read',
-        Update = 'update',
 
-        // anyone who can read version history or archives can read only the properties that they can read using their respective read permission
-        ReadVersionHistory = 'read-version-history',
-        ReadArchive = 'read-archive'
-    }
-
-    // these are not property specific
-    export enum DataAction {
-        Create = 'create',
-        Delete = 'delete',
-        Archive = 'archive',
-        RestoreArchive = 'restore-archive',
-        RestoreVersion = 'restore-version',
-        DeleteVersion = 'delete-version'
-    }
 
     export class DataPermission {
         static stringify(permissions: DataPermission[]): Result<string> {
@@ -353,11 +330,11 @@ export namespace Permissions {
             ) => Promise<boolean> | boolean
         ): ServerFunction =>
         async (req, res, next) => {
-            if (!req.session.data.accountId) {
+            if (!(await req.getSession()).unwrap().data.accountId) {
                 return res.sendCustomStatus(cantAccess(req));
             }
 
-            const account = (await Session.getAccount(req.session)).unwrap();
+            const account = (await Session.getAccount(req.sessionId)).unwrap();
 
             if (!account) return res.sendCustomStatus(cantAccess(req));
 

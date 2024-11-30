@@ -17,8 +17,6 @@ import { match } from '../../../shared/match';
 import { validate } from '../../middleware/data-type';
 import { Status } from '../../utilities/status';
 import { EventEmitter } from '../../../shared/event-emitter';
-import { Permissions } from './permissions';
-import { Session } from './session';
 import { Req } from '../app/req';
 import {
     capitalize,
@@ -27,25 +25,39 @@ import {
     fromCamelCase,
     toSnakeCase
 } from '../../../shared/text';
-import { Logs } from './logs';
-import { saveFile } from '../../utilities/files';
 import fs from 'fs';
 import path from 'path';
 import {
     SQL_Type,
     TS_Type,
-    TS_Types,
     type,
     typeValidation,
     TS_TypeStr,
     TS_TypeActual,
     GlobalCols,
-    TS_GlobalCols,
     Blank
 } from '../../../shared/struct';
 import { Loop } from '../../../shared/loop';
-import { Account } from './account';
-import { Permission } from '../../../shared/permissions';
+
+export enum PropertyAction {
+    Read = 'read',
+    Update = 'update',
+
+    // anyone who can read version history or archives can read only the properties that they can read using their respective read permission
+    ReadVersionHistory = 'read-version-history',
+    ReadArchive = 'read-archive'
+}
+
+// these are not property specific
+export enum DataAction {
+    Create = 'create',
+    Delete = 'delete',
+    Archive = 'archive',
+    RestoreArchive = 'restore-archive',
+    RestoreVersion = 'restore-version',
+    DeleteVersion = 'delete-version'
+}
+
 
 /**
  * Prove that the data matches the structure
@@ -1598,6 +1610,9 @@ export class Struct<Structure extends Blank, Name extends string> {
                 `Sample struct: ${this.data.name}. Not built`
             );
         return attemptAsync(async () => {
+            const { Permissions } = await import('./permissions');
+            const { Session } = await import('./session');
+
             const image = (await this.imagize()).unwrap();
             (await Struct.initImage(this, image)).unwrap();
 
@@ -1771,7 +1786,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                     this.validator(false),
                     async (req, res) => {
                         const account = (
-                            await Session.getAccount(req.session)
+                            await Session.getAccount(req.sessionId)
                         ).unwrap();
                         if (!account)
                             return res.sendStatus(notSignedInStatus(req));
@@ -1806,7 +1821,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                                 .filter(
                                     b =>
                                         b.permission ===
-                                        Permissions.DataAction.Create
+                                        DataAction.Create
                                 )
                                 .some(bp => bp.fn(account))
                         ) {
@@ -1814,7 +1829,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                                 !Permissions.canDo(
                                     roles,
                                     this,
-                                    Permissions.DataAction.Create
+                                    DataAction.Create
                                 ).unwrap()
                             ) {
                                 return res.sendStatus(
@@ -1832,7 +1847,7 @@ export class Struct<Structure extends Blank, Name extends string> {
 
                         (
                             await n.setUniverses(
-                                req.session.getUniverses().unwrap()
+                                (await req.getSession()).unwrap().getUniverses().unwrap() || []
                             )
                         ).unwrap();
 
@@ -1857,7 +1872,7 @@ export class Struct<Structure extends Blank, Name extends string> {
 
                         // (await Logs.Log.new({
                         //     account: account.id,
-                        //     action: Permissions.DataAction.Create,
+                        //     action: DataAction.Create,
                         //     struct: this.name,
                         //     properties: n.id,
                         // })).unwrap();
@@ -1869,7 +1884,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                     this.validator(true),
                     async (req, res) => {
                         const account = (
-                            await Session.getAccount(req.session)
+                            await Session.getAccount(req.sessionId)
                         ).unwrap();
                         if (!account)
                             return res.sendStatus(notSignedInStatus(req));
@@ -1905,7 +1920,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                         const bypasses = this.bypasses.filter(
                             b =>
                                 b.permission ===
-                                Permissions.PropertyAction.Update
+                                PropertyAction.Update
                         );
 
                         let doBypass = false;
@@ -1926,7 +1941,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                                 await Permissions.filterAction(
                                     roles,
                                     [n],
-                                    Permissions.PropertyAction.Update
+                                    PropertyAction.Update
                                 )
                             ).unwrap();
 
@@ -1964,7 +1979,7 @@ export class Struct<Structure extends Blank, Name extends string> {
 
                         // (await Logs.Log.new({
                         //     account: account.id,
-                        //     action: Permissions.PropertyAction.Update,
+                        //     action: PropertyAction.Update,
                         //     struct: this.name,
                         //     properties: JSON.stringify({
                         //         id: n.id,
@@ -1983,7 +1998,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                     }),
                     async (req, res) => {
                         const account = (
-                            await Session.getAccount(req.session)
+                            await Session.getAccount(req.sessionId)
                         ).unwrap();
                         if (!account)
                             return res.sendStatus(notSignedInStatus(req));
@@ -2000,7 +2015,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                                 .filter(
                                     b =>
                                         b.permission ===
-                                        Permissions.PropertyAction.Read
+                                        PropertyAction.Read
                                 )
                                 .some(bp => bp.fn(account, n))
                         ) {
@@ -2010,7 +2025,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                                 await Permissions.filterAction(
                                     roles,
                                     [n],
-                                    Permissions.PropertyAction.Read
+                                    PropertyAction.Read
                                 )
                             ).unwrap();
                             if (!readable)
@@ -2025,7 +2040,7 @@ export class Struct<Structure extends Blank, Name extends string> {
 
                 this.route.post('/read.all', async (req, res) => {
                     const account = (
-                        await Session.getAccount(req.session)
+                        await Session.getAccount(req.sessionId)
                     ).unwrap();
                     if (!account) return res.sendStatus(notSignedInStatus(req));
                     const roles = (
@@ -2035,7 +2050,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                     // const n = (await this.all(false)).unwrap();
 
                     const bypasses = this.bypasses.filter(
-                        b => b.permission === Permissions.PropertyAction.Read
+                        b => b.permission === PropertyAction.Read
                     );
 
                     // res.json(
@@ -2049,7 +2064,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                     //             await Permissions.filterAction(
                     //                 roles,
                     //                 n.filter(d => !d.archived),
-                    //                 Permissions.PropertyAction.Read
+                    //                 PropertyAction.Read
                     //             )
                     //         )
                     //             .unwrap()
@@ -2072,7 +2087,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                     //         await Permissions.filterAction(
                     //             roles,
                     //             [data],
-                    //             Permissions.PropertyAction.Read
+                    //             PropertyAction.Read
                     //         )
                     //     ).unwrap();
                     //     if (!d) return;
@@ -2094,7 +2109,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                                 await Permissions.filterAction(
                                     roles,
                                     [data],
-                                    Permissions.PropertyAction.Read
+                                    PropertyAction.Read
                                 )
                             ).unwrap();
                             return d;
@@ -2120,7 +2135,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                     }),
                     async (req, res) => {
                         const account = (
-                            await Session.getAccount(req.session)
+                            await Session.getAccount(req.sessionId)
                         ).unwrap();
                         if (!account)
                             return res.sendStatus(notSignedInStatus(req));
@@ -2132,7 +2147,7 @@ export class Struct<Structure extends Blank, Name extends string> {
 
                         const bypasses = this.bypasses.filter(
                             b =>
-                                b.permission === Permissions.PropertyAction.Read
+                                b.permission === PropertyAction.Read
                         );
 
                         // res.json(
@@ -2146,7 +2161,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                         //             await Permissions.filterAction(
                         //                 roles,
                         //                 n.filter(d => !d.archived),
-                        //                 Permissions.PropertyAction.Read
+                        //                 PropertyAction.Read
                         //             )
                         //         )
                         //             .unwrap()
@@ -2174,7 +2189,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                         //         await Permissions.filterAction(
                         //             roles,
                         //             [data],
-                        //             Permissions.PropertyAction.Read
+                        //             PropertyAction.Read
                         //         )
                         //     ).unwrap();
                         //     if (!d) return;
@@ -2196,7 +2211,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                                     await Permissions.filterAction(
                                         roles,
                                         [data],
-                                        Permissions.PropertyAction.Read
+                                        PropertyAction.Read
                                     )
                                 ).unwrap();
                                 return d;
@@ -2207,7 +2222,7 @@ export class Struct<Structure extends Blank, Name extends string> {
 
                 this.route.post('/read.archived', async (req, res) => {
                     const account = (
-                        await Session.getAccount(req.session)
+                        await Session.getAccount(req.sessionId)
                     ).unwrap();
                     if (!account) return res.sendStatus(notSignedInStatus(req));
 
@@ -2220,7 +2235,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                     const bypasses = this.bypasses.filter(
                         b =>
                             b.permission ===
-                            Permissions.PropertyAction.ReadArchive
+                            PropertyAction.ReadArchive
                     );
 
                     // res.json(
@@ -2234,7 +2249,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                     //             await Permissions.filterAction(
                     //                 roles,
                     //                 n,
-                    //                 Permissions.PropertyAction.ReadArchive
+                    //                 PropertyAction.ReadArchive
                     //             )
                     //         )
                     //             .unwrap()
@@ -2257,7 +2272,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                     //         await Permissions.filterAction(
                     //             roles,
                     //             [data],
-                    //             Permissions.PropertyAction.ReadArchive
+                    //             PropertyAction.ReadArchive
                     //         )
                     //     ).unwrap();
                     //     if (!d) return;
@@ -2279,7 +2294,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                                 await Permissions.filterAction(
                                     roles,
                                     [data],
-                                    Permissions.PropertyAction.ReadArchive
+                                    PropertyAction.ReadArchive
                                 )
                             ).unwrap();
                             return d;
@@ -2299,7 +2314,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                     }),
                     async (req, res) => {
                         const account = (
-                            await Session.getAccount(req.session)
+                            await Session.getAccount(req.sessionId)
                         ).unwrap();
                         if (!account)
                             return res.sendStatus(notSignedInStatus(req));
@@ -2312,7 +2327,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                                 .filter(
                                     b =>
                                         b.permission ===
-                                        Permissions.PropertyAction
+                                        PropertyAction
                                             .ReadVersionHistory
                                 )
                                 .some(bp => bp.fn(account, n))
@@ -2325,7 +2340,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                                     await Permissions.filterAction(
                                         roles,
                                         [n],
-                                        Permissions.PropertyAction
+                                        PropertyAction
                                             .ReadVersionHistory
                                     )
                                 ).unwrap().length
@@ -2362,7 +2377,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                     }),
                     async (req, res) => {
                         const account = (
-                            await Session.getAccount(req.session)
+                            await Session.getAccount(req.sessionId)
                         ).unwrap();
                         if (!account)
                             return res.sendStatus(notSignedInStatus(req));
@@ -2379,14 +2394,14 @@ export class Struct<Structure extends Blank, Name extends string> {
                                 .filter(
                                     bp =>
                                         bp.permission ===
-                                        Permissions.DataAction.RestoreVersion
+                                        DataAction.RestoreVersion
                                 )
                                 .some(bp => bp.fn(account, n))
                         ) {
                             const doable = Permissions.canDo(
                                 roles,
                                 n.struct,
-                                Permissions.DataAction.RestoreVersion
+                                DataAction.RestoreVersion
                             );
 
                             if (!doable)
@@ -2442,7 +2457,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                     }),
                     async (req, res) => {
                         const account = (
-                            await Session.getAccount(req.session)
+                            await Session.getAccount(req.sessionId)
                         ).unwrap();
                         if (!account)
                             return res.sendStatus(notSignedInStatus(req));
@@ -2466,14 +2481,14 @@ export class Struct<Structure extends Blank, Name extends string> {
                                 .filter(
                                     bp =>
                                         bp.permission ===
-                                        Permissions.DataAction.DeleteVersion
+                                        DataAction.DeleteVersion
                                 )
                                 .some(bp => bp.fn(account, n))
                         ) {
                             const doable = Permissions.canDo(
                                 roles,
                                 n.struct,
-                                Permissions.DataAction.DeleteVersion
+                                DataAction.DeleteVersion
                             );
 
                             if (doable)
@@ -2524,7 +2539,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                     }),
                     async (req, res) => {
                         const account = (
-                            await Session.getAccount(req.session)
+                            await Session.getAccount(req.sessionId)
                         ).unwrap();
                         if (!account)
                             return res.sendStatus(notSignedInStatus(req));
@@ -2541,7 +2556,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                                 .filter(
                                     bp =>
                                         bp.permission ===
-                                        Permissions.DataAction.Delete
+                                        DataAction.Delete
                                 )
                                 .some(bp => bp.fn(account, n))
                         ) {
@@ -2549,7 +2564,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                                 !Permissions.canDo(
                                     roles,
                                     this,
-                                    Permissions.DataAction.Delete
+                                    DataAction.Delete
                                 ).unwrap()
                             )
                                 return res.sendStatus(
@@ -2591,7 +2606,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                     }),
                     async (req, res) => {
                         const account = (
-                            await Session.getAccount(req.session)
+                            await Session.getAccount(req.sessionId)
                         ).unwrap();
                         if (!account)
                             return res.sendStatus(notSignedInStatus(req));
@@ -2607,14 +2622,14 @@ export class Struct<Structure extends Blank, Name extends string> {
                             !this.bypasses.filter(
                                 bp =>
                                     bp.permission ===
-                                    Permissions.DataAction.Archive
+                                    DataAction.Archive
                             )
                         ) {
                             if (
                                 !Permissions.canDo(
                                     roles,
                                     this,
-                                    Permissions.DataAction.Archive
+                                    DataAction.Archive
                                 ).unwrap()
                             )
                                 return res.sendStatus(
@@ -3101,17 +3116,18 @@ export class Struct<Structure extends Blank, Name extends string> {
     }
 
     private readonly bypasses: {
-        permission: Permissions.DataAction | Permissions.PropertyAction;
+        permission: DataAction | PropertyAction;
         // I don't understand why when I force the type it causes errors, so I'm using any to bypass it
+        fn: (account: Account, 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        fn: (account: Account.AccountData, data?: any) => boolean;
+        data?: any) => boolean;
     }[] = [];
 
-    bypass<Action extends Permissions.DataAction | Permissions.PropertyAction>(
+    bypass<Action extends DataAction | PropertyAction>(
         permission: Action,
         fn: (
-            account: Account.AccountData,
-            data: Action extends Permissions.DataAction.Create
+            account: Account,
+            data: Action extends DataAction.Create
                 ? undefined
                 : Data<Struct<Structure, Name>>
         ) => boolean
@@ -3168,3 +3184,15 @@ export class Struct<Structure extends Blank, Name extends string> {
         stream.pipe(fn);
     }
 }
+
+type Account = Data<Struct<{
+    username: 'text';
+    key: 'text';
+    salt: 'text';
+    firstName: 'text';
+    lastName: 'text';
+    email: 'text';
+    picture: 'text';
+    verified: 'boolean';
+    verification: 'text';
+}, 'Account'>>;

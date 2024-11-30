@@ -77,12 +77,29 @@ class QueryStreamer<T> {
 
     constructor() {}
 
-    public pipe(fn: (data: T) => unknown) {
-        this.on('data', fn);
-        this.once('end', () => this.off('data', fn));
-        this.once('error', () => this.off('data', fn));
-        this.once('close', () => this.off('data', fn));
-        return this;
+    public async pipe(fn: (data: T) => unknown) {
+        return new Promise<void>((res, rej) => {
+            this.on('data', fn);
+
+            const end = () => {
+                this.off('data', fn);
+                this.off('end', end);
+                this.off('close', end);
+                this.off('error', error);
+                res();
+            };
+
+            const error = (err: Error) => {
+                this.off('data', fn);
+                this.off('end', end);
+                this.off('close', end);
+                this.off('error', error);
+                rej(err);
+            };
+            this.once('end', end);
+            this.once('error', error);
+            this.once('close', end);
+        });
     }
 
     await() {
@@ -408,26 +425,37 @@ export class PgDatabase implements DatabaseInterface {
         });
     }
 
-    stream<T>(query: Query) {
+    stream<T extends Record<string, unknown>>(query: Query) {
         const streamer = new QueryStreamer<T>();
-        const q = new QueryStream(query.sql, query.args);
-        const stream = this.client.query(q);
 
-        stream.on('data', (data: T) => {
-            streamer.emit('data', data as T);
-        });
+        (async() => {
+            const res = (await this.query<T>(query));
+            if (res.isErr()) return streamer.emit('error', res.error);
+            for (let i = 0; i < res.value.rows.length; i++) {
+                streamer.emit('data', res.value.rows[i]);
+            }
 
-        stream.on('end', () => {
             streamer.emit('end', undefined);
-        });
-
-        stream.on('close', () => {
             streamer.emit('close', undefined);
-        });
+        })();
+        // const q = new QueryStream(query.sql, query.args);
+        // const stream = this.client.query(q);
 
-        stream.on('error', (error: Error) => {
-            streamer.emit('error', error);
-        });
+        // stream.on('data', (data: T) => {
+        //     streamer.emit('data', data as T);
+        // });
+
+        // stream.on('end', () => {
+        //     streamer.emit('end', undefined);
+        // });
+
+        // stream.on('close', () => {
+        //     streamer.emit('close', undefined);
+        // });
+
+        // stream.on('error', (error: Error) => {
+        //     streamer.emit('error', error);
+        // });
 
         return streamer;
     }
@@ -502,9 +530,7 @@ class UnsafeDatabase {
      * @returns {Promise<Result<unknown>>}
      */
     public async run(query: Query): Promise<Result<unknown>> {
-        return attemptAsync(async () => {
-            return this.db.query(query);
-        });
+        return this.db.query(query);
     }
 
     public stream<T extends Record<string, unknown>>(query: Query) {
@@ -919,41 +945,44 @@ class Table {
             // const all = (await this.all().await()).unwrap();
             // if (!all.length) return;
 
-            const stream = this.all();
+            await new Promise<void>((res, rej) => {
+                const stream = this.all();
 
-            const ws = fs.createWriteStream(
-                path.resolve(
-                    __root,
-                    './storage/db/backups',
-                    `${this.name}-${Date.now()}.backupv2`
-                )
-            );
-
-            let i = 0;
-            let headers: string[] = [];
-            stream.pipe(data => {
-                if (i === 0) {
-                    headers = Object.keys(data);
-                    ws.write(headers.map(encode).join(',') + '\n');
-                }
-
-                ws.write(
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    headers.map(h => encode((data as any)[h])).join(',') + '\n'
+                const ws = fs.createWriteStream(
+                    path.resolve(
+                        __root,
+                        './storage/db/backups',
+                        `${this.name}-${Date.now()}.backupv2`
+                    )
                 );
-
-                i++;
-            });
-
-            const end = () => {
-                ws.close();
-            };
-
-            stream.once('end', end);
-            stream.once('close', end);
-            stream.once('error', e => {
-                ws.close();
-                throw e;
+    
+                let i = 0;
+                let headers: string[] = [];
+                stream.pipe(data => {
+                    if (i === 0) {
+                        headers = Object.keys(data);
+                        ws.write(headers.map(encode).join(',') + '\n');
+                    }
+    
+                    ws.write(
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        headers.map(h => encode((data as any)[h])).join(',') + '\n'
+                    );
+    
+                    i++;
+                });
+    
+                const end = () => {
+                    ws.close();
+                    res();
+                };
+    
+                stream.once('end', end);
+                stream.once('close', end);
+                stream.once('error', e => {
+                    ws.close();
+                    rej(e);
+                });
             });
 
             const date = new Date().toISOString();
@@ -1583,9 +1612,11 @@ export class Database {
 
                 if (name.endsWith('.backupv2')) {
                     const table = new TableBackup(
-                        path
-                            .resolve(__root, './storage/db/backups', name)
-                            .replace('.backupv2', ''),
+                        path.resolve(
+                            __root,
+                            './storage/db/backups',
+                            name,
+                        ).replace('.backupv2', ''),
                         this
                     );
 

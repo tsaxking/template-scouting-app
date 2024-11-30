@@ -3,7 +3,7 @@ import { Colors } from '../server/utilities/colors';
 import { attemptAsync, Result } from '../shared/check';
 import prompts from 'prompts';
 import Table from 'cli-table';
-import chalk from 'chalk';
+// import chalk from 'chalk';
 // import {choose} from '@putout/cli-choose';
 
 /**
@@ -395,7 +395,7 @@ export const selectTable = <T extends Record<string, unknown>>(
                 ...data.map((o, i) =>
                     headers.map(h => {
                         if (i === selected) {
-                            return chalk.blue(String(o[h]));
+                            return `${Colors.FgBlue}${o[h]}${Colors.Reset}`;
                         }
                         return String(o[h]);
                     })

@@ -2,12 +2,7 @@ import { App } from './app/app';
 import { EventEmitter } from '../../shared/event-emitter';
 import { Server, Socket } from 'socket.io';
 import { parseCookie } from '../../shared/cookie';
-import { validate } from '../middleware/data-type';
-import { uuid } from '../utilities/uuid';
 import env from '../utilities/env';
-import { Session } from './structs/session';
-import { Account } from './structs/account';
-import { Permissions } from './structs/permissions';
 import { Loop } from '../../shared/loop';
 
 type Cache = {
@@ -45,6 +40,7 @@ class SocketSession {
         this.socket.to(this.id).emit(event, data);
     }
 }
+
 // let num = 0;
 /**
  * Wrapper class around the socket.io server
@@ -96,12 +92,16 @@ export class SocketWrapper {
         // cb?: (socket: Socket) => void
     ) {
         const getSession = async (socket: Socket) => {
+            const { Session } = await import('./structs/session');
             return Session.Session.fromId(
                 parseCookie(socket.handshake.headers.cookie || '').ssid || ''
             );
         };
 
         io.on('connection', async socket => {
+            const { Account } = await import('./structs/account');
+            const { Permissions } = await import('./structs/permissions');
+
             if (socket.recovered) console.log('recovered connection');
             if (env.ENVIRONMENT === 'dev') {
                 if (performance.now() < 10000) {
@@ -141,6 +141,9 @@ export class SocketWrapper {
 
         new Loop(
             async () => {
+                const { Account } = await import('./structs/account');
+                const { Permissions } = await import('./structs/permissions');
+
                 const sockets = io.sockets.sockets;
                 for (const s of sockets.values()) {
                     if (s.connected) {

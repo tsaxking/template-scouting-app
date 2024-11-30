@@ -1,5 +1,5 @@
 import { FileError, getTemplateSync, log } from './files';
-import { Session } from '../structure/structs/session';
+// import { Session } from '../structure/structs/session';
 import {
     messages,
     StatusCode,
@@ -33,19 +33,19 @@ export class Status {
      * @param {(session: Session) => boolean} test
      * @returns {ServerFunction}
      */
-    static middleware(
-        id: StatusId,
-        test: (session: Session.SessionData) => boolean
-    ): ServerFunction {
-        return (req: Req, res: Res, next: Next) => {
-            if (test(req.session)) {
-                next();
-            } else {
-                const status = Status.from(id, req);
-                status.send(res);
-            }
-        };
-    }
+    // static middleware(
+    //     id: StatusId,
+    //     test: (session: Session.SessionData) => boolean
+    // ): ServerFunction {
+    //     return (req: Req, res: Res, next: Next) => {
+    //         if (test(req.session)) {
+    //             next();
+    //         } else {
+    //             const status = Status.from(id, req);
+    //             status.send(res);
+    //         }
+    //     };
+    // }
 
     /**
      * Generates a status object from a status id and a request object
@@ -176,7 +176,9 @@ export class Status {
         this.request = req;
         // Log the status message in the ./storage/logs/status.csv file
         setTimeout(async () => {
-            const a = await Session.getAccount(req.session);
+            const { Session } = await import('../structure/structs/session');
+
+            const a = await Session.getAccount(req.sessionId);
             if (a.isErr()) return console.error(a.error);
             log('status', {
                 title: String(this.title),
@@ -186,9 +188,9 @@ export class Status {
                 instructions: String(message.instructions),
                 redirect: String(message.redirect),
                 data: data ? JSON.stringify(data) : 'No data provided.',
-                ip: req.session.data.ip,
+                ip: (await req.getSession()).unwrap().data.ip,
                 username: a.value?.data.username,
-                sessionId: req.session.id
+                sessionId: (await req.getSession()).unwrap().id
             });
         });
 
