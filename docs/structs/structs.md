@@ -8,6 +8,9 @@ Structs create default properties for all the data they store. They are as follo
 - created: string
 - updated: string
 - archived: boolean
+- universes: string[] // After JSON.parse()
+- attributes: string[] // After custom parser
+- lifetime: number
 
 Samples can be found in /server/structure/structs/samples.
 
