@@ -279,12 +279,16 @@ export class SocketWrapper {
 
     /**
      * Emits an event to a specific room
+     * If the room is empty, the emit function will be a no-op
      * @date 3/8/2024 - 6:04:16 AM
      *
      * @param {string} room
      * @returns {*}
      */
     to(room: string | string[]) {
+        if (!room.length) return ({
+            emit: () => {},
+        });
         // return {
         //     emit: (event: string, data?: unknown) => {
         //         num++;

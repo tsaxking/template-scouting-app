@@ -80,7 +80,21 @@ export const removeAccount = async () => {
 };
 
 export const createAccount = async () => {
-    return structActions.create(Account.Account);
+    return structActions.new(Account.Account);
+};
+
+export const createNewHash = async () => {
+    const password = await repeatPrompt('Enter a new password');
+    if (!password) return backToMain('No password entered');
+    const confirmPassword = await repeatPrompt('Confirm the new password');
+    if (!confirmPassword) return backToMain('No password entered');
+
+    if (password !== confirmPassword)
+        return backToMain('Passwords do not match');
+
+    const { hash, salt } = Account.newHash(password).unwrap();
+
+    return backToMain(`Hash: ${hash}\nSalt: ${salt}`);
 };
 
 export const accounts = [
@@ -93,6 +107,11 @@ export const accounts = [
         icon: '🗑️',
         value: removeAccount,
         description: 'Remove an account'
+    },
+    {
+        icon: '🔑',
+        value: createNewHash,
+        description: 'Create a new hash'
     },
     {
         icon: '📝',

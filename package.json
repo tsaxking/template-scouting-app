@@ -1,6 +1,6 @@
 {
     "scripts": {
-        "start": "ts-node ./server/server.ts",
+        "start": "npm run build && ts-node ./server/server.ts",
         "start:watch": "nodemon ./server/server.ts",
         "manager": "ts-node -P tsconfig.json ./scripts/manager.ts",
         "build:watch": "nodemon ./scripts/esbuild.ts",

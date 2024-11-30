@@ -341,7 +341,7 @@ export class StructData<T extends Blank>
             const response = await fn(this.data);
             (
                 await this.struct.post(
-                    `/${this.struct.data.name}/update`,
+                    `/update`,
                     response
                 )
             ).unwrap();
@@ -352,23 +352,27 @@ export class StructData<T extends Blank>
     }
 
     delete() {
-        return this.struct.requester.post(
+        return this.struct.post(
             `/${this.struct.data.name}/delete`,
-            this.data
+            {
+                id: this.id
+            }
         );
     }
 
     setArchive(archived: boolean) {
-        return this.struct.requester.post(
-            `/${this.struct.data.name}/${archived ? 'archive' : 'unarchive'}`,
-            this.data
+        return this.struct.post(
+            `/${archived ? 'archive' : 'unarchive'}`,
+            {
+                id: this.data.id,
+            }
         );
     }
 
     getVersionHistory() {
         return attemptAsync(async () => {
             const response = (
-                await this.struct.requester.post<
+                await this.struct.post<
                     Structable<
                         T &
                             GlobalCols & {
@@ -376,7 +380,9 @@ export class StructData<T extends Blank>
                                 vhCreated: 'text';
                             }
                     >[]
-                >(`/${this.struct.data.name}/version-history`)
+                >(`/version-history`, {
+                    id: this.data.id,
+                })
             ).unwrap();
 
             return response.map(d => new DataVersion(this.struct, d));
@@ -465,7 +471,7 @@ type StructEvents<T extends Blank> = {
 };
 
 export class Struct<T extends Blank> {
-    public static route = '/api';
+    public static route = '/API';
 
     public static readonly structs = new Map<string, Struct<Blank>>();
 
@@ -580,7 +586,7 @@ export class Struct<T extends Blank> {
             // should this do anything?
         });
 
-        this.requester.post('/connect', {
+        this.post('/connect', {
             structure: this.data.structure
         });
     }
@@ -642,8 +648,8 @@ export class Struct<T extends Blank> {
     };
 
     new(data: Structable<T>) {
-        return this.requester.post(
-            `${Struct.route}/${this.route}/${this.data.name}/create`,
+        return this.post(
+            `/create`,
             data
         );
     }
@@ -653,8 +659,11 @@ export class Struct<T extends Blank> {
             const current = this.cache.get(id);
             if (current) return current;
             const response = (
-                await this.requester.post<Structable<T>>(
-                    `${this.route}/${this.data.name}/`
+                await this.post<Structable<T>>(
+                    `/read.from-id`,
+                    {
+                        id,
+                    }
                 )
             ).unwrap();
             // TODO: Prove this is a valid response
@@ -688,8 +697,8 @@ export class Struct<T extends Blank> {
                 // this.stores.all.set(all);
                 // arr.add(...all);
 
-                const stream = ServerRequest.retrieveStream(
-                    `${this.routeName}/${this.data.name}/all`
+                const stream = this.retrieveStream(
+                    `/read.all`
                 );
 
                 stream.pipe(data => {
@@ -735,8 +744,8 @@ export class Struct<T extends Blank> {
 
             // return response.map(this.Generator);
 
-            const stream = ServerRequest.retrieveStream(
-                `${this.routeName}/${this.data.name}/all`
+            const stream = this.retrieveStream(
+                `/read.all`
             );
 
             return stream.await().then(res => {
@@ -774,8 +783,8 @@ export class Struct<T extends Blank> {
                 // this.stores.archived.set(all);
                 // arr.add(...all);
 
-                const stream = ServerRequest.retrieveStream(
-                    `${this.routeName}/${this.data.name}/archived`
+                const stream = this.retrieveStream(
+                    `/read.archived`
                 );
 
                 stream.pipe(data => {
@@ -803,8 +812,8 @@ export class Struct<T extends Blank> {
             // const data = response.map(this.Generator);
             // return data;
 
-            const stream = ServerRequest.retrieveStream(
-                `${Struct.route}/${this.route}/${this.data.name}/archived`
+            const stream = this.retrieveStream(
+                `/read.archived`
             );
 
             return stream.await().then(res => {
@@ -860,7 +869,19 @@ export class Struct<T extends Blank> {
     }
 
     post<T = unknown>(path: string, data: unknown) {
-        return this.requester.post<T>(path, data);
+        if (path.startsWith('/')) path = path.slice(1);
+        return this.requester.post<T>(
+            `${Struct.route}/${this.route}/${path}`,
+            data
+        );
+    }
+
+    retrieveStream(path: string, data: unknown = {}) {
+        if (path.startsWith('/')) path = path.slice(1);
+        return ServerRequest.retrieveStream(
+            `${Struct.route}/${this.route}/${path}`,
+            data
+        );
     }
 
     fromProperty<prop extends keyof T>(
@@ -898,8 +919,8 @@ export class Struct<T extends Blank> {
                 // // this is to avoid potential race conditions with the writable.await() method
                 // setTimeout(() => w.add(...list));
 
-                const stream = ServerRequest.retrieveStream(
-                    `${this.routeName}/${this.data.name}/read.from-property`,
+                const stream = this.retrieveStream(
+                    `/read.from-property`,
                     {
                         property,
                         value
@@ -930,8 +951,8 @@ export class Struct<T extends Blank> {
 
             // return res.map(this.Generator);
 
-            const stream = ServerRequest.retrieveStream(
-                `${this.routeName}/${this.data.name}/read.from-property`,
+            const stream = this.retrieveStream(
+                `/read.from-property`,
                 {
                     property,
                     value

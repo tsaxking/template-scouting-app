@@ -9,10 +9,16 @@ import { FileUpload } from './middleware/stream';
 import { ReqBody } from './structure/app/req';
 import { parseCookie } from '../shared/cookie';
 import path from 'path';
-import { Account } from './structure/structs/account';
-import { Permissions } from './structure/structs/permissions';
 import { DB } from './utilities/database';
 import { Struct } from './structure/structs/struct';
+import { Account } from './structure/structs/account';
+import { Permissions } from './structure/structs/permissions';
+
+import './structure/structs/account';
+import './structure/structs/permissions';
+import './structure/structs/session';
+import './structure/structs/email';
+import './structure/structs/test';
 
 if (process.argv.includes('--stats')) {
     const measure = () => {
@@ -154,6 +160,7 @@ app.get('/test/:page', (req, res, next) => {
     }
 });
 
+app.route('/API', Struct.router);
 app.route('/api', api);
 app.use('/*', Account.autoSignIn(env.AUTO_SIGN_IN || ''));
 
@@ -248,12 +255,12 @@ app.final<{
     }
 });
 
-DB.connect().then(res => {
-    if (res.isErr()) throw res.error;
+DB.connect().then(async res => {
+    res.unwrap();
+    (await DB.init()).unwrap();
 
     Struct.buildAll(true).then(res => {
         if (res.isErr()) throw res.error;
-
         app.start();
     });
 });

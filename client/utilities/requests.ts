@@ -531,54 +531,37 @@ export class ServerRequest<T = unknown> {
             body: JSON.stringify(body)
         })
             .then(res => {
-                const dataLength = parseInt(
-                    res.headers.get('x-data-length') || '0'
-                );
-
                 const reader = res.body?.getReader();
-                if (!reader) {
-                    return emitter.emit('error', new Error('No reader found'));
-                }
+                if (!reader) throw new Error('No reader');
 
-                let i = 0;
-                let last: string | undefined;
-                reader.read().then(async function process({
-                    done,
-                    value
-                }): Promise<ReadableStreamReadResult<Uint8Array> | undefined> {
+                let cache = '';
+
+                reader.read().then(({ done, value }) => {
+                    if (value) {
+                        const text = new TextDecoder().decode(value);
+                        const chunks = text.split(streamDelimiter);
+
+                        if (cache) {
+                            chunks[chunks.length - 1] += cache;
+                            cache = '';
+                        }
+                        if (!text.endsWith(streamDelimiter)) {
+                            cache = chunks.pop() || '';
+                        }
+
+                        for (const chunk of chunks) {
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            const data = parser ? parser(chunk) : (chunk as any);
+                            if (!data) continue;
+                            emitter.emit('chunk', data);
+                            output.push(data);
+                        }
+                    }
+
                     if (done) {
-                        console.log('Stream complete, received', i, 'chunks');
                         emitter.emit('complete', output);
                         return;
                     }
-
-                    if (value) {
-                        const d = new TextDecoder().decode(value);
-                        // log(done, d);
-                        const split = d.split(streamDelimiter);
-                        if (last) split[0] = last + split[0];
-                        last = split.pop();
-
-                        for (let s of split) {
-                            s = decodeURI(s);
-                            if (s) {
-                                i++;
-                                if (parser) {
-                                    output.push(parser(s));
-                                    emitter.emit('chunk', parser(s));
-                                } else {
-                                    output.push(s as K);
-                                    emitter.emit('chunk', s as K);
-                                }
-
-                                if (i >= dataLength) {
-                                    emitter.emit('complete', output);
-                                }
-                            }
-                        }
-                    }
-                    i++;
-                    return reader.read().then(process);
                 });
             })
             .catch(e => emitter.emit('error', new Error(e)));

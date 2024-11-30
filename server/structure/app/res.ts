@@ -9,6 +9,7 @@ import render, { Constructor } from 'node-html-constructor/versions/v4';
 import { EventEmitter } from '../../../shared/event-emitter';
 import { getTemplateSync } from '../../utilities/files';
 import { ReadableStream } from 'stream/web';
+import { streamDelimiter } from '../../../shared/text';
 
 /**
  * The event types for the stream
@@ -241,7 +242,7 @@ export class Res {
                                 ? await pipe(streamer[i])
                                 : streamer[i];
                             const buffer = new TextEncoder().encode(
-                                JSON.stringify(bigIntEncode(data))
+                                JSON.stringify(bigIntEncode(data)) + streamDelimiter
                             );
                             controller.enqueue(buffer);
                             setTimeout(() => send(i + 1), 100);
@@ -266,38 +267,49 @@ export class Res {
 
             return em;
         } // else {
-        const stream = new ReadableStream({
-            start: c => {
-                // streamer.on('data', (chunk) => {
-                //     c.enqueue(new TextEncoder().encode(
-                //         JSON.stringify(bigIntEncode(chunk)),
-                //     ));
-                // });
+        // const stream = new ReadableStream({
+        //     start: c => {
+        //         // streamer.on('data', (chunk) => {
+        //         //     c.enqueue(new TextEncoder().encode(
+        //         //         JSON.stringify(bigIntEncode(chunk)),
+        //         //     ));
+        //         // });
 
-                // streamer.on('end', () => c.close());
-                // streamer.on('close', () => c.close());
-                // streamer.on('error', (error) => c.error(error));
+        //         // streamer.on('end', () => c.close());
+        //         // streamer.on('close', () => c.close());
+        //         // streamer.on('error', (error) => c.error(error));
 
-                streamer.pipe(async (chunk, i) => {
-                    const res = pipe ? await pipe(chunk) : chunk;
-                    if (!res) return; // skip empty chunks because there could be a pipe for filtering
-                    c.enqueue(
-                        new TextEncoder().encode(
-                            JSON.stringify(
-                                bigIntEncode(pipe ? pipe(chunk) : chunk)
-                            )
-                        )
-                    );
-                });
-            },
+        //         streamer.pipe(async (chunk, i) => {
+        //             const res = pipe ? await pipe(chunk) : chunk;
+        //             if (!res) return; // skip empty chunks because there could be a pipe for filtering
+        //             c.enqueue(
+        //                 new TextEncoder().encode(
+        //                     JSON.stringify(
+        //                         bigIntEncode(res)
+        //                     )
+        //                 )
+        //             );
+        //         });
+        //     },
 
-            cancel: () => {},
+        //     cancel: () => {},
 
-            type: 'bytes'
+        //     type: 'bytes'
+        // });
+
+        // const cache = new Set<T>();
+        // let writing = true;
+
+        streamer.on('data', chunk => {
+            // writing = this.res.write()
+            this.res.write(
+                JSON.stringify(bigIntEncode(pipe ? pipe(chunk) : chunk)) + streamDelimiter
+            );
         });
 
-        this.res.write(stream);
-        // }
+        streamer.on('end', () => this.res.end());
+        streamer.on('close', () => this.res.end());
+        streamer.on('error', error => this.res.end());
     }
 
     end() {

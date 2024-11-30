@@ -418,6 +418,8 @@ export const structActions: {
                 }
             };
         }
+
+        return backToStruct('New data created');
     },
     deleteImage: async struct => {
         const sure = await confirm(

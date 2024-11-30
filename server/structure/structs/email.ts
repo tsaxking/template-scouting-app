@@ -44,7 +44,7 @@ export namespace Email {
         name: 'Email',
         structure: {
             type: 'text',
-            to: 'text', // string[]
+            recipient: 'text', // string[]
             clicked: 'boolean',
             link: 'text'
         }
@@ -72,7 +72,7 @@ export namespace Email {
             if (type === 'link') {
                 const email = (
                     await Email.new({
-                        to: [to].flat().join(','),
+                        recipient: [to].flat().join(','),
                         clicked: false,
                         link: constructor.link || '',
                         type

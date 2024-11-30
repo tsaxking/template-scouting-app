@@ -17,6 +17,13 @@ import { serverController } from './manager/server-controller';
 import fs from 'fs';
 import path from 'path';
 import { DB } from '../server/utilities/database';
+import '../server/structure/structs/account';
+import '../server/structure/structs/permissions';
+import '../server/structure/structs/session';
+import '../server/structure/structs/email';
+import '../server/structure/structs/test';
+import { Struct } from '../server/structure/structs/struct';
+
 const { resolve, relative } = path;
 
 /**
@@ -455,4 +462,11 @@ export const main = async () => {
     await fn();
 };
 
-DB.connect().then(main);
+DB.connect().then(async (res) => {
+    res.unwrap();
+
+    (await DB.init()).unwrap();
+    (await Struct.buildAll(false)).unwrap();
+
+    main();
+});

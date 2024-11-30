@@ -379,9 +379,14 @@ export class PgDatabase implements DatabaseInterface {
         query: Query
     ): Promise<Result<QueryResult<T>>> {
         return attemptAsync(async () => {
-            const result = await this.client.query(query.sql, query.args);
-            if (!result.rows) result.rows = [];
-            return new QueryResult<T>(result.rows, query);
+            try {
+                const result = await this.client.query(query.sql, query.args);
+                if (!result.rows) result.rows = [];
+                return new QueryResult<T>(result.rows, query);
+            } catch (e) {
+                error('Query Error', query, e);
+                throw new DatabaseError((e as Error).message);
+            }
         });
     }
 

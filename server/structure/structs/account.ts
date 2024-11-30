@@ -823,14 +823,21 @@ export namespace Account {
     export const autoSignIn =
         (username: string): ServerFunction =>
         async (req, res, next) => {
+            if ((await req.getSession()).unwrap().data.accountId) return next();
+
             if (env.ENVIRONMENT === 'prod') return next();
 
             const account = (await fromUsername(username)).unwrap();
-            if (!account) return next();
+            if (!account) {
+                console.log(`Account not found, cannot auto sign in. (${username})`);
+                return next();
+            }
 
             (
                 await Session.signIn((await req.getSession()).unwrap(), account)
             ).unwrap();
+
+            console.log('Auto signed in:', account.data.username);
 
             next();
         };

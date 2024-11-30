@@ -289,7 +289,7 @@ const newGlobalCols = (struct: Struct<Blank, string>) => {
                 ?.attributes?.()
                 .map(a => a.replaceAll(',', ''))
                 .join(',') || '',
-        universes: '',
+        universes: '[]',
         lifetime: struct.data.lifetime || 0
     };
 };
@@ -634,8 +634,9 @@ export class DataVersion<T extends Blank, Name extends string>
      */
     getUniverses() {
         return attempt(() => {
-            const { universes } = this.data;
-            if (!universes) throw new FatalDataError('No universes found');
+            let { universes } = this.data;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            if (!universes) universes = '[]' as any;
 
             const parsed = JSON.parse(universes);
             if (!Array.isArray(parsed))
@@ -1111,8 +1112,9 @@ export class StructData<Structure extends Blank, Name extends string>
      */
     getUniverses() {
         return attempt(() => {
-            const { universes } = this.data;
-            if (!universes) throw new FatalDataError('No universes found');
+            let { universes } = this.data;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            if (!universes) universes = '[]' as any;
 
             const parsed = JSON.parse(universes);
             if (!Array.isArray(parsed))
@@ -1215,7 +1217,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                     schema: string;
                     name: string;
                 }>(
-                    Query.build('SELECT * FROM Structs WHERE name = :name', {
+                    Query.build('SELECT * FROM Structs WHERE name = :name;', {
                         name: name
                     })
                 )
@@ -1340,9 +1342,7 @@ export class Struct<Structure extends Blank, Name extends string> {
     }
 
     public static forEach(fn: (struct: Struct<Blank, string>) => void) {
-        for (const s of Struct.structs.values()) {
-            fn(s);
-        }
+        return Array.from(Struct.structs).map(([_, s]) => fn(s));
     }
 
     /**
@@ -1377,20 +1377,20 @@ export class Struct<Structure extends Blank, Name extends string> {
      */
     public static buildAll(doLoop: boolean) {
         return attemptAsync(async () => {
-            resolveAll(
-                await Promise.all(
-                    Array.from(Struct.structs.values())
-                        .filter(s => !s.built)
-                        .map(s => s.build())
-                )
-            ).unwrap();
+            Struct.router.post('/*', (req, _, next) => {
+                log('Struct', req.pathname);
 
-            for (const s of this.structs.values()) {
-                Struct.router.route(
-                    '/' + toSnakeCase(fromCamelCase(s.name), '-'),
-                    s.route
-                );
-            }
+                next();
+            });
+
+            Struct.forEach(async s => {
+                (await s.build()).unwrap();
+
+                // Struct.router.route(
+                //     '/' + s.name,
+                //     s.route
+                // );
+            });
 
             if (doLoop) {
                 Struct.generateLifetimeLoop(1000 * 60 * 60).start();
@@ -1405,7 +1405,7 @@ export class Struct<Structure extends Blank, Name extends string> {
      * @readonly
      * @type {*}
      */
-    private readonly route = new Route();
+    // private readonly route = new Route();
 
     /**
      * Default data for the struct (applied when building)
@@ -1535,7 +1535,7 @@ export class Struct<Structure extends Blank, Name extends string> {
             {} as ColMap<Structure, Name>
         );
 
-        // this.route.post<{
+        // this.listen<{
         //     id: 'string';
         // }>('/*', validate({
         //     id: 'string',
@@ -1693,11 +1693,15 @@ export class Struct<Structure extends Blank, Name extends string> {
                 );
 
             {
-                this.route.post<{
+                this.listen<{
                     name: string;
                     structure: Record<string, string>;
                 }>(
                     '/connect',
+                    // (req, res, next) => {
+                    //     log('Connect:', req.body);
+                    //     next();
+                    // },
                     validate({
                         structure: (s: unknown) => {
                             if (typeof s !== 'object' || !s) return true;
@@ -1787,7 +1791,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                     }
                 );
 
-                this.route.post<St<Structure & GlobalCols, Name>>(
+                this.listen<St<Structure & GlobalCols, Name>>(
                     '/create',
                     this.validator(false),
                     async (req, res) => {
@@ -1804,7 +1808,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                         const validators = this.runValidators(
                             req.body
                         ).unwrap();
-                        if (validators.invalids) {
+                        if (validators.invalids.length) {
                             return res.sendStatus(
                                 new Status(
                                     {
@@ -1840,11 +1844,6 @@ export class Struct<Structure extends Blank, Name extends string> {
                             }
                         }
 
-                        // delete attributes from body so they aren't added to the data improperly
-                        Object.assign(req.body, {
-                            attributes: undefined
-                        });
-
                         const n = (await this.new(req.body)).unwrap();
 
                         (
@@ -1872,7 +1871,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                         );
 
                         req.io
-                            .to(roles.map(r => r.id))
+                            .to(n.getUniverses().unwrap())
                             .emit(`struct:${this.data.name}:create`, n.data);
 
                         // (await Logs.Log.new({
@@ -1884,7 +1883,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                     }
                 );
 
-                this.route.post<St<Structure & GlobalCols, Name>>(
+                this.listen<St<Structure & GlobalCols, Name>>(
                     '/update',
                     this.validator(true),
                     async (req, res) => {
@@ -1904,7 +1903,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                         const validators = this.runValidators(
                             req.body
                         ).unwrap();
-                        if (validators.invalids) {
+                        if (validators.invalids.length) {
                             return res.sendStatus(
                                 new Status(
                                     {
@@ -1959,7 +1958,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                             (await n.update(updated)).unwrap();
 
                             req.io
-                                .to(roles.map(r => r.id))
+                                .to(n.getUniverses().unwrap())
                                 .emit(
                                     `struct:${this.data.name}:update`,
                                     updated
@@ -1992,7 +1991,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                     }
                 );
 
-                this.route.post<{
+                this.listen<{
                     id: string;
                 }>(
                     '/read.from-id',
@@ -2039,7 +2038,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                     }
                 );
 
-                this.route.post('/read.all', async (req, res) => {
+                this.listen('/read.all', async (req, res) => {
                     const account = (
                         await Session.getAccount(req.sessionId)
                     ).unwrap();
@@ -2118,7 +2117,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                     );
                 });
 
-                this.route.post<{
+                this.listen<{
                     property: unknown;
                     value: unknown;
                 }>(
@@ -2220,7 +2219,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                     }
                 );
 
-                this.route.post('/read.archived', async (req, res) => {
+                this.listen('/read.archived', async (req, res) => {
                     const account = (
                         await Session.getAccount(req.sessionId)
                     ).unwrap();
@@ -2303,7 +2302,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                     );
                 });
 
-                this.route.post<{
+                this.listen<{
                     id: string;
                 }>(
                     '/read.version-history',
@@ -2362,7 +2361,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                     }
                 );
 
-                this.route.post<{
+                this.listen<{
                     id: string;
                     vId: string;
                 }>(
@@ -2437,12 +2436,12 @@ export class Struct<Structure extends Blank, Name extends string> {
                         );
 
                         req.io
-                            .to(roles.map(r => r.id))
+                            .to(n.getUniverses().unwrap())
                             .emit(`struct:${this.data.name}:restore`, n.data);
                     }
                 );
 
-                this.route.post<{
+                this.listen<{
                     id: string;
                     vhId: string;
                 }>(
@@ -2518,7 +2517,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                         );
 
                         req.io
-                            .to(roles.map(r => r.id))
+                            .to(n.getUniverses().unwrap())
                             .emit(
                                 `struct:${this.data.name}:delete-version`,
                                 n.data
@@ -2526,7 +2525,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                     }
                 );
 
-                this.route.post<{
+                this.listen<{
                     id: string;
                 }>(
                     '/delete',
@@ -2584,12 +2583,12 @@ export class Struct<Structure extends Blank, Name extends string> {
                         );
 
                         req.io
-                            .to(roles.map(r => r.id))
+                            .to(n.getUniverses().unwrap())
                             .emit(`struct:${this.data.name}:delete`, n.data);
                     }
                 );
 
-                this.route.post<{
+                this.listen<{
                     id: string;
                     archive: boolean;
                 }>(
@@ -2647,7 +2646,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                         );
 
                         req.io
-                            .to(roles.map(r => r.id))
+                            .to(n.getUniverses().unwrap())
                             .emit(`struct:${this.data.name}:archive`, n.data);
                     }
                 );
@@ -2966,6 +2965,12 @@ export class Struct<Structure extends Blank, Name extends string> {
 
     runValidators(data: Partial<Structable<Struct<Structure, Name>>>) {
         return attempt(() => {
+            if (!this.data.validators) return {
+                valid: true,
+                results: {},
+                invalids: []
+            };
+
             const results = Object.entries(this.data.validators || {}).reduce(
                 (acc, [k, v]) => {
                     if (data[k] === undefined) return acc;
@@ -3022,7 +3027,15 @@ export class Struct<Structure extends Blank, Name extends string> {
      * @returns {this}
      */
     listen<data>(path: string, ...fns: ServerFunction<data>[]) {
-        this.route.post(path, ...fns);
+        if (path.startsWith('/')) path = path.slice(1);
+        // log('Routing: ', `/${this.name}/${path}`);
+        Struct.router.post(
+            `/${this.name}/${path}`,
+            (_req, _res, next) => {
+                log('Request: ', `/${this.name}/${path}`);
+                next();
+            },
+         ...fns);
         return this;
     }
 
