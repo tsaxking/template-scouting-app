@@ -248,7 +248,7 @@ app.final<{
 DB.connect().then(res => {
     if (res.isErr()) throw res.error;
 
-    Struct.buildAll().then(res => {
+    Struct.buildAll(true).then(res => {
         if (res.isErr()) throw res.error;
 
         app.start();

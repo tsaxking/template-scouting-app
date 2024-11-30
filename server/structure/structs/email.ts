@@ -54,11 +54,10 @@ export namespace Email {
         const { id } = req.req.params;
         const email = (await Email.fromId(id)).unwrap();
         if (email) {
-            email.update({
+            res.redirect(email.data.link);
+            return email.update({
                 clicked: true
             });
-
-            return res.redirect(email.data.link);
         }
 
         return res.redirect('/404');
@@ -70,14 +69,16 @@ export namespace Email {
 
             let html = '';
 
-            const email = (await Email.new({
-                to: [to].flat().join(','),
-                clicked: false,
-                link: constructor.link || '',
-                type
-            })).unwrap();
+            if (type === 'link') {
+                const email = (await Email.new({
+                    to: [to].flat().join(','),
+                    clicked: false,
+                    link: constructor.link || '',
+                    type
+                })).unwrap();
 
-            constructor.link = `/api/email/${email.id}`;
+                constructor.link = `/api/email/${email.id}`;
+            }
             
             switch (type) {
                 case 'link':

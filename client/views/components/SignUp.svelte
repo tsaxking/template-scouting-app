@@ -1,4 +1,5 @@
 <script lang="ts">
+import { Accounts } from '../../models/account-new';
     import { ServerRequest } from '../../utilities/requests';
     import Password from './Password.svelte';
     import Recaptcha from './Recaptcha.svelte';
@@ -23,13 +24,22 @@
             console.log('Is not valid');
         }
 
-        ServerRequest.post('/account/sign-up', {
+        // ServerRequest.post('/account/sign-up', {
+        //     username,
+        //     password,
+        //     confirmPassword,
+        //     email,
+        //     firstName,
+        //     lastName
+        // });
+
+        Accounts.signUp({
             username,
             password,
             confirmPassword,
             email,
             firstName,
-            lastName
+            lastName,
         });
     };
 

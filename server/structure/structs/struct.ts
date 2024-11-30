@@ -20,7 +20,7 @@ import { EventEmitter } from '../../../shared/event-emitter';
 import { Permissions } from './permissions';
 import { Session } from './session';
 import { Req } from '../app/req';
-import { capitalize, decode, encode } from '../../../shared/text';
+import { capitalize, decode, encode, fromCamelCase, toSnakeCase } from '../../../shared/text';
 import { Logs } from './logs';
 import { saveFile } from '../../utilities/files';
 import fs from 'fs';
@@ -785,6 +785,13 @@ export class StructData<Structure extends Blank, Name extends string>
                     `Invalid data recieved for ${this.struct.name}`
                 );
 
+            const validators = this.struct.runValidators(data).unwrap();
+            if (!validators.valid) {
+                throw new DataError(
+                    `Data failed vaildation: ${validators.invalids.join(', ')}, `
+                );
+            }
+
             const old = this.data;
 
             const sql = `
@@ -1338,12 +1345,12 @@ export class Struct<Structure extends Blank, Name extends string> {
         return attemptAsync(async () => {
             resolveAll(
                 await Promise.all(
-                    Array.from(Struct.structs.values()).map(s => s.build())
+                    Array.from(Struct.structs.values()).filter(s => !s.built).map(s => s.build())
                 )
             ).unwrap();
 
             for (const s of this.structs.values()) {
-                Struct.router.route('/' + s.name, s.route);
+                Struct.router.route('/' + toSnakeCase(fromCamelCase(s.name), '-'), s.route);
             }
 
             if (doLoop) {
@@ -1752,6 +1759,24 @@ export class Struct<Structure extends Blank, Name extends string> {
                             await Permissions.getRoles(account)
                         ).unwrap();
 
+                        const validators = this.runValidators(req.body).unwrap();
+                        if (validators.invalids) {
+                            return res.sendStatus(
+                                new Status(
+                                    {
+                                        code: 400,
+                                        message: `Data failed validation: ${validators.invalids.join(', ')}`,
+                                        color: 'danger',
+                                        instructions: 'Please check the data and try again'
+                                    },
+                                    this.data.name,
+                                    'Validation Failed',
+                                    '{}',
+                                    req,
+                                ),
+                            );
+                        }
+
                         if (
                             !this.bypasses
                                 .filter(
@@ -1831,6 +1856,25 @@ export class Struct<Structure extends Blank, Name extends string> {
                         ).unwrap();
 
                         if (!n) return res.sendStatus(notFoundStatus(req));
+
+                        
+                        const validators = this.runValidators(req.body).unwrap();
+                        if (validators.invalids) {
+                            return res.sendStatus(
+                                new Status(
+                                    {
+                                        code: 400,
+                                        message: `Data failed validation: ${validators.invalids.join(', ')}`,
+                                        color: 'danger',
+                                        instructions: 'Please check the data and try again'
+                                    },
+                                    this.data.name,
+                                    'Validation Failed',
+                                    '{}',
+                                    req,
+                                ),
+                            );
+                        }
 
                         const bypasses = this.bypasses.filter(
                             b =>
@@ -2592,6 +2636,10 @@ export class Struct<Structure extends Blank, Name extends string> {
         return attemptAsync(async () => {
             if (!this.validate(data))
                 throw new StructError(`Invalid data for ${this.data.name}`);
+            const verification = this.runValidators(data).unwrap();
+            if (!verification.valid) {
+                throw new StructError(`Data from ${this.name} failed validation: ${verification.invalids.join(', ')}`);
+            }
 
             const d = this.Generator({
                 ...newGlobalCols(this),
@@ -2881,6 +2929,24 @@ export class Struct<Structure extends Blank, Name extends string> {
      */
     validate(data: unknown) {
         return prove(data, this.data.structure);
+    }
+
+    runValidators(data: Partial<Structable<Struct<Structure, Name>>>) {
+        return attempt(() => {
+            const results = Object.entries(this.data.validators || {}).reduce((acc, [k, v]) => {
+                if (data[k] === undefined) return acc;
+                return {
+                    ...acc,
+                    [k]: v?.(data[k]) || true,
+                };
+            }, {} as Record<keyof Structure, boolean>);
+
+            return {
+                results,
+                valid: Object.values(results).every(v => v),
+                invalids: Object.entries(results).filter(([_, v]) => !v).map(([k]) => k),
+            };
+        });
     }
 
     /**

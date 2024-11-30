@@ -26,6 +26,7 @@ import {
     Blank
 } from '../../shared/struct';
 import { EventEmitter } from '../../shared/event-emitter';
+import { fromCamelCase, toSnakeCase } from '../../shared/text';
 
 export class DataError extends Error {
     constructor(message: string) {
@@ -339,8 +340,8 @@ export class StructData<T extends Blank>
             const prev = { ...this.data };
             const response = await fn(this.data);
             (
-                await this.struct.requester.post(
-                    `${Struct.route}/${this.struct.route}/${this.struct.data.name}/update`,
+                await this.struct.post(
+                    `/${this.struct.data.name}/update`,
                     response
                 )
             ).unwrap();
@@ -352,14 +353,14 @@ export class StructData<T extends Blank>
 
     delete() {
         return this.struct.requester.post(
-            `${Struct.route}/${this.struct.route}/${this.struct.data.name}/delete`,
+            `/${this.struct.data.name}/delete`,
             this.data
         );
     }
 
     setArchive(archived: boolean) {
         return this.struct.requester.post(
-            `${Struct.route}/${this.struct.route}/${this.struct.data.name}/${archived ? 'archive' : 'unarchive'}`,
+            `/${this.struct.data.name}/${archived ? 'archive' : 'unarchive'}`,
             this.data
         );
     }
@@ -376,7 +377,7 @@ export class StructData<T extends Blank>
                             }
                     >[]
                 >(
-                    `${Struct.route}/${this.struct.route}/${this.struct.data.name}/version-history`
+                    `/${this.struct.data.name}/version-history`
                 )
             ).unwrap();
 
@@ -602,6 +603,10 @@ export class Struct<T extends Blank> {
         return this.data.socket;
     }
 
+    public get routeName() {
+        return `${Struct.route}/${toSnakeCase(fromCamelCase(this.name))}`;
+    }
+
     public listen<T>(event: string, fn: (data: T) => void) {
         this.socket.on(`struct:${this.name}:${event}`, fn);
         return () => {
@@ -686,7 +691,7 @@ export class Struct<T extends Blank> {
                 // arr.add(...all);
 
                 const stream = ServerRequest.retrieveStream(
-                    `${Struct.route}/${this.route}/${this.data.name}/all`
+                    `${this.routeName}/${this.data.name}/all`
                 );
 
                 stream.pipe(data => {
@@ -733,7 +738,7 @@ export class Struct<T extends Blank> {
             // return response.map(this.Generator);
 
             const stream = ServerRequest.retrieveStream(
-                `${Struct.route}/${this.route}/${this.data.name}/all`
+                `${this.routeName}/${this.data.name}/all`
             );
 
             return stream.await().then(res => {
@@ -772,7 +777,7 @@ export class Struct<T extends Blank> {
                 // arr.add(...all);
 
                 const stream = ServerRequest.retrieveStream(
-                    `${Struct.route}/${this.route}/${this.data.name}/archived`
+                    `${this.routeName}/${this.data.name}/archived`
                 );
 
                 stream.pipe(data => {
@@ -896,7 +901,7 @@ export class Struct<T extends Blank> {
                 // setTimeout(() => w.add(...list));
 
                 const stream = ServerRequest.retrieveStream(
-                    `${Struct.route}/${this.route}/${this.data.name}/read.from-property`,
+                    `${this.routeName}/${this.data.name}/read.from-property`,
                     {
                         property,
                         value
@@ -928,7 +933,7 @@ export class Struct<T extends Blank> {
             // return res.map(this.Generator);
 
             const stream = ServerRequest.retrieveStream(
-                `${Struct.route}/${this.route}/${this.data.name}/read.from-property`,
+                `${this.routeName}/${this.data.name}/read.from-property`,
                 {
                     property,
                     value

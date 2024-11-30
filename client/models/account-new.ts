@@ -149,9 +149,9 @@ export namespace Accounts {
         });
     };
 
-    export const requestPasswordReset = () => {
+    export const requestPasswordReset = (username: string) => {
         return Account.post('/request-password-reset', {
-            username: self.get().data.username || ''
+            username
         });
     };
 
