@@ -1305,24 +1305,20 @@ export class Struct<Structure extends Blank, Name extends string> {
 
     public static generateLifetimeLoop(time: number) {
         return new Loop(async () => {
-            const data = resolveAll(
-                await Promise.all(
-                    Array.from(Struct.structs.values()).map(s =>
-                        s.getLifetimeItems(false)
-                    )
-                )
-            )
-                .unwrap()
-                .flat();
-
-            await Promise.all(
-                data.map(async d => {
+            Struct.forEach(s => {
+                s.getLifetimeItems(true).pipe(async d => {
                     if (d.created.getTime() + d.lifetime < Date.now()) {
                         (await d.delete()).unwrap();
                     }
-                })
-            );
+                });
+            });
         }, time);
+    }
+
+    public static forEach(fn: (struct: Struct<Blank, string>) => void) {
+        for (const s of Struct.structs.values()) {
+            fn(s);
+        }
     }
 
     /**
@@ -3159,5 +3155,10 @@ export class Struct<Structure extends Blank, Name extends string> {
 
             return data.map(d => this.Generator(d));
         });
+    }
+
+    forEach(fn: (data: StructData<Structure, Name>) => void) {
+        const stream = this.all(true);
+        stream.pipe(fn);
     }
 }
