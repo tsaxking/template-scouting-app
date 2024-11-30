@@ -702,6 +702,27 @@ export class TableBackup {
         });
     }
 
+    deleteFiles() {
+        return attemptAsync(async () => {
+            return Promise.all([
+                fs.promises.unlink(
+                    path.resolve(
+                        __root,
+                        './storage/db/backups',
+                        `${this.filename}.backupv2`
+                    )
+                ),
+                fs.promises.unlink(
+                    path.resolve(
+                        __root,
+                        './storage/db/backups',
+                        `${this.filename}.metadatav2`
+                    )
+                )
+            ]);
+        });
+    }
+
     /**
      * Creates a read stream of the backup
      *
@@ -762,7 +783,7 @@ export class TableBackup {
         });
     }
 
-    moveTo(dir: string) {
+    copy(dir: string) {
         return attemptAsync(async () => {
             // TODO: Ensure dir is an absolute path
             await Promise.all([
@@ -784,22 +805,22 @@ export class TableBackup {
                 )
             ]);
 
-            await Promise.all([
-                fs.promises.unlink(
-                    path.resolve(
-                        __root,
-                        './storage/db/backups',
-                        `${this.filename}.backupv2`
-                    )
-                ),
-                fs.promises.unlink(
-                    path.resolve(
-                        __root,
-                        './storage/db/backups',
-                        `${this.filename}.metadatav2`
-                    )
-                )
-            ]);
+            // await Promise.all([
+            //     fs.promises.unlink(
+            //         path.resolve(
+            //             __root,
+            //             './storage/db/backups',
+            //             `${this.filename}.backupv2`
+            //         )
+            //     ),
+            //     fs.promises.unlink(
+            //         path.resolve(
+            //             __root,
+            //             './storage/db/backups',
+            //             `${this.filename}.metadatav2`
+            //         )
+            //     )
+            // ]);
         });
     }
 
@@ -1562,10 +1583,12 @@ export class Database {
                 .unwrap()
                 .filter(Boolean);
 
+
             const dir = (await this.makeCurrentBackupDir()).unwrap();
             resolveAll(
-                await Promise.all(backups.map(b => b.moveTo(dir)))
+                await Promise.all(backups.map(b => b.copy(dir)))
             ).unwrap();
+            resolveAll(await Promise.all(backups.map(b => b.deleteFiles()))).unwrap();
             const parent = dir.split('/').pop() as string;
 
             // when extracting the backup, we need to handle the potential name conflicts
@@ -1661,7 +1684,7 @@ export class Database {
                         (await table.restore()).unwrap();
                     }
 
-                    await fs.promises.rm(path.resolve(backupDir, file), {
+                    await fs.promises.rm(path.resolve(backupDir, '..', file), {
                         recursive: true
                     });
                 }
