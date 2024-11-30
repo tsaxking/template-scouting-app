@@ -1413,6 +1413,24 @@ export class Database {
                     log(`Running version update: ${version.versionStr}`);
                     log(version.description);
                     await version.update(this);
+
+                    const schemas = Object.entries(version.newSchemas);
+                    for (const [table, schema] of schemas) {
+                        const s = JSON.stringify(schema);
+                        await this.unsafe.run(
+                            Query.build(
+                                `
+                                INSERT INTO Structs (name, schema)
+                                VALUES (:name, :schema)
+                                ON CONFLICT (name) DO UPDATE SET schema = :schema;
+                            `,
+                                {
+                                    name: table,
+                                    schema: s,
+                                }
+                            )
+                        );
+                    }
                 } catch (e) {
                     (await this.restore(backup)).unwrap();
                     throw new DatabaseError(
