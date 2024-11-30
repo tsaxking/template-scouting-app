@@ -4,10 +4,10 @@ Structs are a way to create custom data types in this project. Once initialized,
 
 Structs create default properties for all the data they store. They are as follows:
 
--   id: string
--   created: string
--   updated: string
--   archived: boolean
+- id: string
+- created: string
+- updated: string
+- archived: boolean
 
 Samples can be found in /server/structure/structs/samples.
 

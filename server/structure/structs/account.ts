@@ -466,7 +466,12 @@ export namespace Account {
                 if (!account.data.verified)
                     return res.sendStatus(notVerifiedStatus);
 
-                (await Session.signIn((await req.getSession()).unwrap(), account)).unwrap();
+                (
+                    await Session.signIn(
+                        (await req.getSession()).unwrap(),
+                        account
+                    )
+                ).unwrap();
 
                 res.sendStatus(signedInStatus);
 
@@ -554,7 +559,9 @@ export namespace Account {
                                 color: 'success',
                                 code: 201,
                                 instructions: 'Please verify your account.',
-                                redirect: (await req.getSession()).unwrap().data.prevUrl || '/'
+                                redirect:
+                                    (await req.getSession()).unwrap().data
+                                        .prevUrl || '/'
                             },
                             'Account',
                             'Account Created',
@@ -821,7 +828,9 @@ export namespace Account {
             const account = (await fromUsername(username)).unwrap();
             if (!account) return next();
 
-            (await Session.signIn((await req.getSession()).unwrap(), account)).unwrap();
+            (
+                await Session.signIn((await req.getSession()).unwrap(), account)
+            ).unwrap();
 
             next();
         };

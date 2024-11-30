@@ -83,7 +83,11 @@ export class Req<
 
     async getSession() {
         return attemptAsync(async () => {
-            const res = (await (await import('../structs/session')).Session.Session.fromId(this.sessionId)).unwrap();
+            const res = (
+                await (
+                    await import('../structs/session')
+                ).Session.Session.fromId(this.sessionId)
+            ).unwrap();
             if (!res) throw new Error('Session not found');
             return res;
         });

@@ -58,7 +58,6 @@ export enum DataAction {
     DeleteVersion = 'delete-version'
 }
 
-
 /**
  * Prove that the data matches the structure
  *
@@ -1818,11 +1817,7 @@ export class Struct<Structure extends Blank, Name extends string> {
 
                         if (
                             !this.bypasses
-                                .filter(
-                                    b =>
-                                        b.permission ===
-                                        DataAction.Create
-                                )
+                                .filter(b => b.permission === DataAction.Create)
                                 .some(bp => bp.fn(account))
                         ) {
                             if (
@@ -1847,7 +1842,10 @@ export class Struct<Structure extends Blank, Name extends string> {
 
                         (
                             await n.setUniverses(
-                                (await req.getSession()).unwrap().getUniverses().unwrap() || []
+                                (await req.getSession())
+                                    .unwrap()
+                                    .getUniverses()
+                                    .unwrap() || []
                             )
                         ).unwrap();
 
@@ -1918,9 +1916,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                         }
 
                         const bypasses = this.bypasses.filter(
-                            b =>
-                                b.permission ===
-                                PropertyAction.Update
+                            b => b.permission === PropertyAction.Update
                         );
 
                         let doBypass = false;
@@ -2013,9 +2009,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                         if (
                             this.bypasses
                                 .filter(
-                                    b =>
-                                        b.permission ===
-                                        PropertyAction.Read
+                                    b => b.permission === PropertyAction.Read
                                 )
                                 .some(bp => bp.fn(account, n))
                         ) {
@@ -2146,8 +2140,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                         // const n = (await this.fromProperty(req.body.property as keyof Structure, req.body.value)).unwrap();
 
                         const bypasses = this.bypasses.filter(
-                            b =>
-                                b.permission === PropertyAction.Read
+                            b => b.permission === PropertyAction.Read
                         );
 
                         // res.json(
@@ -2233,9 +2226,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                     // const n = (await this.archived(false)).unwrap();
 
                     const bypasses = this.bypasses.filter(
-                        b =>
-                            b.permission ===
-                            PropertyAction.ReadArchive
+                        b => b.permission === PropertyAction.ReadArchive
                     );
 
                     // res.json(
@@ -2327,8 +2318,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                                 .filter(
                                     b =>
                                         b.permission ===
-                                        PropertyAction
-                                            .ReadVersionHistory
+                                        PropertyAction.ReadVersionHistory
                                 )
                                 .some(bp => bp.fn(account, n))
                         ) {
@@ -2340,8 +2330,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                                     await Permissions.filterAction(
                                         roles,
                                         [n],
-                                        PropertyAction
-                                            .ReadVersionHistory
+                                        PropertyAction.ReadVersionHistory
                                     )
                                 ).unwrap().length
                             ) {
@@ -2554,9 +2543,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                         if (
                             !this.bypasses
                                 .filter(
-                                    bp =>
-                                        bp.permission ===
-                                        DataAction.Delete
+                                    bp => bp.permission === DataAction.Delete
                                 )
                                 .some(bp => bp.fn(account, n))
                         ) {
@@ -2620,9 +2607,7 @@ export class Struct<Structure extends Blank, Name extends string> {
 
                         if (
                             !this.bypasses.filter(
-                                bp =>
-                                    bp.permission ===
-                                    DataAction.Archive
+                                bp => bp.permission === DataAction.Archive
                             )
                         ) {
                             if (
@@ -2753,8 +2738,8 @@ export class Struct<Structure extends Blank, Name extends string> {
         property: Property,
         value: TS_Type<Structure[Property]>,
         asStream: true // filter?: (
-        // ) => boolean | Promise<boolean>
-    ) //     data: StructData<Structure, Name>
+        //     data: StructData<Structure, Name>
+    ) // ) => boolean | Promise<boolean>
     : StructStream<Structure, Name>;
     fromProperty<Property extends keyof Structure>(
         property: Property,
@@ -2809,8 +2794,8 @@ export class Struct<Structure extends Blank, Name extends string> {
     all(
         asStream: true,
         includeArchived?: boolean // filter?: (
-        // ) => boolean | Promise<boolean>
-    ) //     data: StructData<Structure, Name>
+        //     data: StructData<Structure, Name>
+    ) // ) => boolean | Promise<boolean>
     : StructStream<Structure, Name>;
     all(
         asStream: false,
@@ -2866,8 +2851,8 @@ export class Struct<Structure extends Blank, Name extends string> {
     fromUniverse(
         universe: string,
         asStream: true // filter?: (
-        // ) => boolean | Promise<boolean>
-    ) //     data: StructData<Structure, Name>
+        //     data: StructData<Structure, Name>
+    ) // ) => boolean | Promise<boolean>
     : StructStream<Structure, Name>;
     fromUniverse(
         universe: string,
@@ -2919,8 +2904,8 @@ export class Struct<Structure extends Blank, Name extends string> {
      */
     archived(
         asStream: true // filter?: (
-        // ) => boolean | Promise<boolean>
-    ) //     data: StructData<Structure, Name>
+        //     data: StructData<Structure, Name>
+    ) // ) => boolean | Promise<boolean>
     : StructStream<Structure, Name>;
     archived(asStream: false): Promise<Result<StructData<Structure, Name>[]>>;
     archived(
@@ -3118,9 +3103,11 @@ export class Struct<Structure extends Blank, Name extends string> {
     private readonly bypasses: {
         permission: DataAction | PropertyAction;
         // I don't understand why when I force the type it causes errors, so I'm using any to bypass it
-        fn: (account: Account, 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        data?: any) => boolean;
+        fn: (
+            account: Account,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            data?: any
+        ) => boolean;
     }[] = [];
 
     bypass<Action extends DataAction | PropertyAction>(
@@ -3185,14 +3172,19 @@ export class Struct<Structure extends Blank, Name extends string> {
     }
 }
 
-type Account = Data<Struct<{
-    username: 'text';
-    key: 'text';
-    salt: 'text';
-    firstName: 'text';
-    lastName: 'text';
-    email: 'text';
-    picture: 'text';
-    verified: 'boolean';
-    verification: 'text';
-}, 'Account'>>;
+type Account = Data<
+    Struct<
+        {
+            username: 'text';
+            key: 'text';
+            salt: 'text';
+            firstName: 'text';
+            lastName: 'text';
+            email: 'text';
+            picture: 'text';
+            verified: 'boolean';
+            verification: 'text';
+        },
+        'Account'
+    >
+>;

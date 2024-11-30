@@ -18,7 +18,14 @@ import {
 } from '../../../shared/check';
 import { DB } from '../../utilities/database';
 import { Account } from './account';
-import { Struct, Data, DataError, PartialStructable, PropertyAction, DataAction } from './struct';
+import {
+    Struct,
+    Data,
+    DataError,
+    PartialStructable,
+    PropertyAction,
+    DataAction
+} from './struct';
 import { encode, decode } from '../../../shared/text';
 import { Blank } from '../../../shared/struct';
 import { ServerFunction } from '../app/app';
@@ -27,8 +34,6 @@ import { Req } from '../app/req';
 import { Session } from './session';
 
 export namespace Permissions {
-
-
     export class DataPermission {
         static stringify(permissions: DataPermission[]): Result<string> {
             return attempt(() => {

@@ -419,7 +419,9 @@ export class App<
             //     req,
             //     res
             // );
-            const s = (await (await session).Session.fromApp(this, req, res)).unwrap();
+            const s = (
+                await (await session).Session.fromApp(this, req, res)
+            ).unwrap();
             const request = new Req<unknown, SessionCustomData>(
                 this as App,
                 req,

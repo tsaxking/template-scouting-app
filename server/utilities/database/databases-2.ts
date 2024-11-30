@@ -428,8 +428,8 @@ export class PgDatabase implements DatabaseInterface {
     stream<T extends Record<string, unknown>>(query: Query) {
         const streamer = new QueryStreamer<T>();
 
-        (async() => {
-            const res = (await this.query<T>(query));
+        (async () => {
+            const res = await this.query<T>(query);
             if (res.isErr()) return streamer.emit('error', res.error);
             for (let i = 0; i < res.value.rows.length; i++) {
                 streamer.emit('data', res.value.rows[i]);
@@ -744,19 +744,17 @@ export class TableBackup {
             );
 
             const parsed = JSON.parse(data);
-            const error = new DatabaseError(
-                `${this.filename}.metadatav2 is malformed`
-            );
-            if (!parsed) throw error;
-            if (Array.isArray(parsed)) throw error;
-            if (!Object.hasOwn(parsed, 'name')) throw error;
-            if (!Object.hasOwn(parsed, 'branch')) throw error;
-            if (!Object.hasOwn(parsed, 'commit')) throw error;
-            if (!Object.hasOwn(parsed, 'date')) throw error;
-            if (!Object.hasOwn(parsed, 'hash')) throw error;
-
-            if (!Object.values(parsed).every(k => typeof k === 'string'))
-                throw error;
+            const error = (reason: string) =>
+                new DatabaseError(
+                    `${this.filename}.metadatav2 is malformed: ${reason}`
+                );
+            if (!parsed) throw error('Is empty');
+            if (Array.isArray(parsed)) throw error('Expected object');
+            if (!Object.hasOwn(parsed, 'name')) throw error('Missing name');
+            if (!Object.hasOwn(parsed, 'branch')) throw error('Missing branch');
+            if (!Object.hasOwn(parsed, 'commit')) throw error('Missing commit');
+            if (!Object.hasOwn(parsed, 'date')) throw error('Missing date');
+            if (!Object.hasOwn(parsed, 'hash')) throw error('Missing hash');
 
             this.metadata = parsed as TableMetadata;
 
@@ -764,10 +762,10 @@ export class TableBackup {
         });
     }
 
-    copy(dir: string) {
+    moveTo(dir: string) {
         return attemptAsync(async () => {
             // TODO: Ensure dir is an absolute path
-            return await Promise.all([
+            await Promise.all([
                 fs.promises.copyFile(
                     path.resolve(
                         __root,
@@ -783,6 +781,23 @@ export class TableBackup {
                         `${this.filename}.metadatav2`
                     ),
                     path.resolve(dir, `${this.filename}.metadatav2`)
+                )
+            ]);
+
+            await Promise.all([
+                fs.promises.unlink(
+                    path.resolve(
+                        __root,
+                        './storage/db/backups',
+                        `${this.filename}.backupv2`
+                    )
+                ),
+                fs.promises.unlink(
+                    path.resolve(
+                        __root,
+                        './storage/db/backups',
+                        `${this.filename}.metadatav2`
+                    )
                 )
             ]);
         });
@@ -945,48 +960,38 @@ class Table {
             // const all = (await this.all().await()).unwrap();
             // if (!all.length) return;
 
-            await new Promise<void>((res, rej) => {
-                const stream = this.all();
+            const stream = this.all();
 
-                const ws = fs.createWriteStream(
-                    path.resolve(
-                        __root,
-                        './storage/db/backups',
-                        `${this.name}-${Date.now()}.backupv2`
-                    )
+            const { name } = this;
+            const filename = `${name}-${Date.now()}`;
+
+            const ws = fs.createWriteStream(
+                path.resolve(
+                    __root,
+                    './storage/db/backups',
+                    `${filename}.backupv2`
+                )
+            );
+            stream.on('end', () => ws.close());
+            stream.on('close', () => ws.close());
+
+            let i = 0;
+            let headers: string[] = [];
+            await stream.pipe(data => {
+                if (i === 0) {
+                    headers = Object.keys(data);
+                    ws.write(headers.map(encode).join(',') + '\n');
+                }
+
+                ws.write(
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    headers.map(h => encode((data as any)[h])).join(',') + '\n'
                 );
-    
-                let i = 0;
-                let headers: string[] = [];
-                stream.pipe(data => {
-                    if (i === 0) {
-                        headers = Object.keys(data);
-                        ws.write(headers.map(encode).join(',') + '\n');
-                    }
-    
-                    ws.write(
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        headers.map(h => encode((data as any)[h])).join(',') + '\n'
-                    );
-    
-                    i++;
-                });
-    
-                const end = () => {
-                    ws.close();
-                    res();
-                };
-    
-                stream.once('end', end);
-                stream.once('close', end);
-                stream.once('error', e => {
-                    ws.close();
-                    rej(e);
-                });
+
+                i++;
             });
 
             const date = new Date().toISOString();
-            const { name } = this;
             const [branch, commit] = await Promise.all([
                 gitBranch(),
                 gitCommit()
@@ -1005,9 +1010,7 @@ class Table {
                 schema: (await this.getSchema()).unwrap()
             });
 
-            const filename = `${name}-${Date.now()}`;
-
-            fs.promises.writeFile(
+            await fs.promises.writeFile(
                 path.resolve(
                     __root,
                     './storage/db/backups',
@@ -1549,7 +1552,7 @@ export class Database {
      * @async
      * @returns {unknown}
      */
-    public async backup() {
+    public async backup(doZip = false) {
         return attemptAsync<string>(async () => {
             const tables = (await this.getTables()).unwrap();
 
@@ -1561,13 +1564,11 @@ export class Database {
 
             const dir = (await this.makeCurrentBackupDir()).unwrap();
             resolveAll(
-                await Promise.all(backups.map(b => b.copy(dir)))
+                await Promise.all(backups.map(b => b.moveTo(dir)))
             ).unwrap();
-            const parent = dir.split('/').slice(0, -1).join('/');
+            const parent = dir.split('/').pop() as string;
 
-            // TODO: Create zip file
-
-            // TODO: when extracting the backup, we need to handle the potential name conflicts
+            // when extracting the backup, we need to handle the potential name conflicts
             // This should be alleviated by using Date.now(), so the backup should be the same,
             // However, it is a good idea to compare the hashes
 
@@ -1578,7 +1579,17 @@ export class Database {
                 zip.addLocalFile(path.resolve(dir, file));
             }
 
-            zip.writeZipPromise(path.resolve(dir, parent + '.zip'));
+            if (doZip) {
+                await zip.writeZipPromise(
+                    path.resolve(
+                        __root,
+                        './storage/db/backups',
+                        `${parent}.zip`
+                    )
+                );
+
+                await fs.promises.rm(dir, { recursive: true });
+            }
 
             return dir;
         });
@@ -1591,36 +1602,68 @@ export class Database {
             );
 
             return files
-                .filter(f => f.endsWith('.zip'))
+                .filter(f => new Date(f.replace('.zip', '')).toString() !== 'Invalid Date')
                 .map(f => path.resolve(__root, './storage/db/backups', f));
         });
     }
 
-    public async restore(zipFile: string) {
+    public async restore(backupDir: string) {
         return attemptAsync(async () => {
             (await this.backup()).unwrap();
             // may not be good to reset here, because it may not be restoring all of the tables, who knows what's in the zip file
             // This should use workers
             // This function assumes the database is in a fully blank state, tables will need to be built and data will need to be inserted
 
-            const zip = new AdmZip(zipFile);
-            const dir = path.resolve(zipFile, '..');
-            zip.extractAllTo(dir + '', true); // overwrite may not do anything because the files are saved using the date
-            const entries = zip.getEntries();
-            for (const entry of entries) {
-                const name = entry.name;
+            if (backupDir.endsWith('.zip')) {
+                const zip = new AdmZip(backupDir);
+                const dir = path.resolve(backupDir, '..');
+                zip.extractAllTo(dir + '', true); // overwrite may not do anything because the files are saved using the date
+                const entries = zip.getEntries();
 
-                if (name.endsWith('.backupv2')) {
-                    const table = new TableBackup(
-                        path.resolve(
-                            __root,
-                            './storage/db/backups',
-                            name,
-                        ).replace('.backupv2', ''),
-                        this
-                    );
+                // TODO: parallelize this loop
+                for (const entry of entries) {
+                    const name = entry.name;
 
-                    (await table.restore()).unwrap();
+                    if (name.endsWith('.backupv2')) {
+                        const table = new TableBackup(
+                            name.replace('.backupv2', ''),
+                            this
+                        );
+
+                        (await table.restore()).unwrap();
+
+                        await fs.promises.rm(path.resolve(dir, name), {
+                            recursive: true
+                        });
+
+                        await fs.promises.rm(
+                            path.resolve(
+                                dir,
+                                name.replace('.backupv2', '.metadatav2')
+                            ),
+                            { recursive: true }
+                        );
+                    }
+                }
+            } else {
+                const files = await fs.promises.readdir(backupDir);
+                await Promise.all(files.map(f => fs.promises.copyFile(path.resolve(
+                    backupDir,
+                    f
+                ), path.resolve(__root, './storage/db/backups', f))));
+                for (const file of files) {
+                    if (file.endsWith('.backupv2')) {
+                        const table = new TableBackup(
+                            file.replace('.backupv2', ''),
+                            this
+                        );
+
+                        (await table.restore()).unwrap();
+                    }
+
+                    await fs.promises.rm(path.resolve(backupDir, file), {
+                        recursive: true
+                    });
                 }
             }
         });

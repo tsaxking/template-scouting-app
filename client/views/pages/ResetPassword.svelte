@@ -6,7 +6,11 @@
 
     const submit = () => {
         if (i.value) return;
-        Accounts.changePassword(password, confirmPassword, window.location.pathname.split('/').pop() || '');
+        Accounts.changePassword(
+            password,
+            confirmPassword,
+            window.location.pathname.split('/').pop() || ''
+        );
     };
 
     const isPasswordValid = (password: string): string[] => {
