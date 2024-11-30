@@ -1,13 +1,13 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import { Account } from '../../models/account';
+    import { Accounts } from '../../models/account';
+    import { Permissions } from '../../models/permissions';
     import type { Permission as P } from '../../../shared/permissions';
     import { confirm, select } from '../../utilities/notifications';
-    import { Role } from '../../models/roles';
     import RoleBadge from '../components/accounts/RoleBadge.svelte';
     import { prompt } from '../../utilities/notifications';
 
-    let accounts: Account[] = [];
+    let accounts: Accounts.AccountData[] = [];
 
     let accountObjs: {
         id: string;
@@ -19,7 +19,7 @@
         created: number;
         phoneNumber: string;
         picture?: string;
-        roles: Role[];
+        roles: Permissions.RoleData[];
         permissions: P[];
     }[] = [];
 

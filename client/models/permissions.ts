@@ -1,5 +1,7 @@
+import { attemptAsync } from '../../shared/check';
 import { ServerRequest } from '../utilities/requests';
 import { socket } from '../utilities/socket';
+import { Accounts } from './account';
 import { SingleWritable, Struct, StructData } from './struct';
 
 export namespace Permissions {
@@ -49,5 +51,19 @@ export namespace Permissions {
         currentUniverse.set(universe);
 
         ServerRequest.metadata.set('universe', universe.id || '');
+    };
+
+    export const removeRole = (
+        account: Accounts.AccountData,
+        role: RoleData
+    ) => {
+        return attemptAsync(async () => {
+            const ra = (
+                await RoleAccount.fromProperty('account', account.id, false)
+            ).unwrap();
+            const roleAccount = ra.find(i => i.data.role === role.id);
+            if (!roleAccount) return;
+            (await roleAccount.delete()).unwrap();
+        });
     };
 }

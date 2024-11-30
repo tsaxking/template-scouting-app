@@ -1,7 +1,7 @@
 <script lang="ts">
     import { date } from '../../../../../shared/clock';
     import { capitalize } from '../../../../../shared/text';
-    import { Accounts } from '../../../../models/account-new';
+    import { Accounts } from '../../../../models/account';
     import { Structable } from '../../../../models/struct';
 
     export let notification: Accounts.NotificationData;

@@ -1,16 +1,12 @@
 <script lang="ts">
     import Password from '../components/Password.svelte';
-    import { ServerRequest } from '../../utilities/requests';
+    import { Accounts } from '../../models/account';
 
     export let title: string = 'My App';
 
     const submit = () => {
         if (i.value) return;
-        ServerRequest.post('/account/reset-password', {
-            password,
-            confirmPassword,
-            key: window.location.pathname.split('/').pop()
-        });
+        Accounts.changePassword(password, confirmPassword, window.location.pathname.split('/').pop() || '');
     };
 
     const isPasswordValid = (password: string): string[] => {

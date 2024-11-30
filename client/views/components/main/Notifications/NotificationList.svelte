@@ -1,10 +1,14 @@
 <script lang="ts">
-    import { Accounts } from '../../../../models/account-new';
+    import { Accounts } from '../../../../models/account';
     import Notification from './Notification.svelte';
 
     export let account: Accounts.AccountData;
 
-    const list = Accounts.Notification.fromProperty('accountId', account.id || '');
+    const list = Accounts.Notification.fromProperty(
+        'accountId',
+        account.id || '',
+        true
+    );
     const notifs = $list;
 </script>
 

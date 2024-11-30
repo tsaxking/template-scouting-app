@@ -2,8 +2,8 @@
     import Main from '../components/main/Main.svelte';
     import Page from '../components/main/Page.svelte';
     import Dashboard from '../pages/Dashboard.svelte';
-    import Accounts from '../pages/Accounts.svelte';
-    import Roles from '../pages/Roles.svelte';
+    import Accounts from '../pages/Accounts.svelte.old';
+    import Roles from '../pages/Roles.old';
     import type { PageGroup } from '../../utilities/general-types';
     import { getOpenPage } from '../../utilities/page';
 

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import { Accounts } from '../../../../models/account-new';
+    import { Accounts } from '../../../../models/account';
     import NotificationList from './NotificationList.svelte';
 
     let selfStore = Accounts.self;

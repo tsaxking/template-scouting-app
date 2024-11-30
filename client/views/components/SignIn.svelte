@@ -1,9 +1,9 @@
 <script lang="ts">
     import { ServerRequest } from '../../utilities/requests';
     import Password from './Password.svelte';
-    import Recaptcha from './Recaptcha.svelte';
+    // import Recaptcha from './Recaptcha.svelte';
     import { prompt } from '../../utilities/notifications';
-    import { Accounts } from '../../models/account-new';
+    import { Accounts } from '../../models/account';
 
     export let title: string;
 

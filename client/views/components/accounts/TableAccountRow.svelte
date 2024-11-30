@@ -1,7 +1,7 @@
 <script lang="ts">
     import { SQL_Type, typeValidation } from '../../../../shared/struct';
     import { capitalize } from '../../../../shared/text';
-    import { Accounts } from '../../../models/account-new';
+    import { Accounts } from '../../../models/account';
     import { StructData } from '../../../models/struct';
     import ButtonGroup from '../bootstrap/ButtonGroup.svelte';
     import RowInput from '../structs/RowInput.svelte';
@@ -139,7 +139,24 @@
     <td>
         <ButtonGroup>
             <!-- <button class="btn btn-info">Add Universe</button> -->
-            <button class="btn btn-danger">Delete</button>
+            <button
+                class="btn btn-danger"
+                type="button">
+                <i class="material-icons"> delete </i>
+            </button>
+            {#if a.verified}
+                <button
+                    class="btn btn-warning"
+                    type="button">
+                    <i class="material-icons"> warning </i>
+                </button>
+            {:else}
+                <button
+                    class="btn btn-success"
+                    type="button">
+                    <i class="material-icons"> verified </i>
+                </button>
+            {/if}
         </ButtonGroup>
     </td>
 </tr>

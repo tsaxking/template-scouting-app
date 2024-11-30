@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Accounts } from '../../../models/account-new';
+    import { Accounts } from '../../../models/account';
     import TableAccountRow from './TableAccountRow.svelte';
 
     const allStore = Accounts.Account.all(true);

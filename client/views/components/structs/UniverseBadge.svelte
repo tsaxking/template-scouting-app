@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Accounts } from '../../../models/account-new';
+    import { Accounts } from '../../../models/account';
     import { Permissions } from '../../../models/permissions';
     import RemovableBadge from '../main/RemovableBadge.svelte';
     import { onMount } from 'svelte';

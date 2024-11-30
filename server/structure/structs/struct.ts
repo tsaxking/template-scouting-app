@@ -655,12 +655,7 @@ export class StructStream<Structure extends Blank, Name extends string> {
 
     private index = 0;
 
-    constructor(
-        public readonly struct: Struct<Structure, Name>
-        // public readonly filter?: (
-        //     data: StructData<Structure, Name>
-        // ) => boolean | Promise<boolean>
-    ) {}
+    constructor(public readonly struct: Struct<Structure, Name>) {}
 
     add(data: StructData<Structure, Name>) {
         // if (this.filter && !this.filter(data)) return;
@@ -679,24 +674,27 @@ export class StructStream<Structure extends Blank, Name extends string> {
     }
 
     pipe(fn: (data: StructData<Structure, Name>, index: number) => void) {
-        return attemptAsync(async () => new Promise<void>((res, rej) => {
-            const run = async (data: StructData<Structure, Name>) => {
-                // if (this.filter && !(await this.filter(data))) return;
-                fn(data, this.index);
-            };
-    
-            const end = (error?: Error) => {
-                this.off('data', run);
-                if(error) rej(error);
-                else res();
-            };
+        return attemptAsync(
+            async () =>
+                new Promise<void>((res, rej) => {
+                    const run = async (data: StructData<Structure, Name>) => {
+                        // if (this.filter && !(await this.filter(data))) return;
+                        fn(data, this.index);
+                    };
 
-            this.on('data', run);
-    
-            this.once('end', () => end);
-            this.once('close', () => end);
-            this.once('error', end);
-        }));
+                    const end = (error?: Error) => {
+                        this.off('data', run);
+                        if (error) rej(error);
+                        else res();
+                    };
+
+                    this.on('data', run);
+
+                    this.once('end', () => end);
+                    this.once('close', () => end);
+                    this.once('error', end);
+                })
+        );
     }
 }
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Accounts } from '../../../../models/account-new';
+    import { Accounts } from '../../../../models/account';
 
     const selfStore = Accounts.self;
     const self = $selfStore;

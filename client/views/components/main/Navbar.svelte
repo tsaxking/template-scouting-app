@@ -5,7 +5,7 @@
     import { Modal } from '../../../utilities/modals';
     import Settings from '../../pages/Settings.svelte';
     import AccountNotifications from './Notifications/AccountNotifications.svelte';
-    import { Accounts } from '../../../models/account-new';
+    import { Accounts } from '../../../models/account';
     import NotificationIcon from './Notifications/NotificationIcon.svelte';
 
     const myAccount = Accounts.self;
