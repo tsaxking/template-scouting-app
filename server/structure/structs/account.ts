@@ -31,7 +31,7 @@ export namespace Account {
             email: 'text',
             picture: 'text',
             verified: 'boolean',
-            verification: 'text'
+            verification: 'text',
             // phoneNumber: 'text'
         },
         name: 'Account',
@@ -43,13 +43,18 @@ export namespace Account {
         }
     });
 
+
+    // these will bypass all permissions, bypasses, and everything else that would normally be applied to data, pages, etc.
+    // There will be no front end for these structs
+    // The only way an account can become an admin is through the manager
+    // Only the senior developer should be able to access the manager
     export const Admins = new Struct({
         database: DB,
         structure: {
             accountId: 'text'
         },
         name: 'Admins',
-        frontend: false
+        frontend: false // there will be no front end for this struct
     });
 
     const isSelf = (a1: AccountData, a2: AccountData) => a1.id === a2.id;
@@ -384,7 +389,7 @@ export namespace Account {
                     lastName,
                     picture,
                     verified: false,
-                    verification
+                    verification,
                 })
             ).unwrap();
 

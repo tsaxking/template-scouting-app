@@ -90,6 +90,8 @@ export namespace Permissions {
         }
     });
 
+    export enum LinkAccess {}
+
     export type UniverseData = Data<typeof Universe>;
 
     export const Role = new Struct({
@@ -99,8 +101,19 @@ export namespace Permissions {
             name: 'text',
             universe: 'text',
             permissions: 'text', // DataPermission[]
-            description: 'text'
+            description: 'text',
+            linkAccess: 'text', // used on the front end to show/hide links
         }
+    });
+
+    // Used on the front end to allow accounts to access pages
+    export const PageAccess = new Struct({
+        database: DB,
+        structure: {
+            accoutnId: 'text',
+            link: 'text',
+        },
+        name: 'PageAccess',
     });
 
     export type RoleData = Data<typeof Role>;
