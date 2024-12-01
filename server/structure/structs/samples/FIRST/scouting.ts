@@ -13,12 +13,12 @@ export namespace Scouting {
             scoutGroup: 'integer',
             prescouting: 'boolean',
             trace: 'text',
-            checks: 'text',
+            checks: 'text'
         },
         versionHistory: {
             type: 'versions',
             amount: 3
-        },
+        }
     });
 
     export const TeamComments = new Struct({
@@ -31,8 +31,8 @@ export namespace Scouting {
             team: 'integer',
             comment: 'text',
             type: 'text',
-            eventKey: 'text',
-        },
+            eventKey: 'text'
+        }
     });
 
     export const PitScoutingSections = new Struct({
@@ -42,8 +42,8 @@ export namespace Scouting {
         structure: {
             name: 'text',
             multiple: 'boolean',
-            accountId: 'text',
-        },
+            accountId: 'text'
+        }
     });
 
     export const PitScoutingGroups = new Struct({
@@ -54,8 +54,8 @@ export namespace Scouting {
             eventKey: 'text',
             sectionId: 'text',
             name: 'text',
-            accountId: 'text',
-        },
+            accountId: 'text'
+        }
     });
 
     export const PitScoutingQuestions = new Struct({
@@ -68,10 +68,18 @@ export namespace Scouting {
             description: 'text',
             type: 'text',
             groupId: 'text',
-            accountId: 'text',
+            accountId: 'text'
         },
         validators: {
-            type: (val) => ['boolean', 'number', 'textarea', 'text', 'radio', 'checkbox'].includes(String(val)),
+            type: val =>
+                [
+                    'boolean',
+                    'number',
+                    'textarea',
+                    'text',
+                    'radio',
+                    'checkbox'
+                ].includes(String(val))
         }
     });
 
@@ -82,8 +90,8 @@ export namespace Scouting {
         database: DB,
         structure: {
             questionId: 'text',
-            option: 'text',
-        },
+            option: 'text'
+        }
     });
 
     export const PitScoutingAnswers = new Struct({
@@ -94,7 +102,7 @@ export namespace Scouting {
             questionId: 'text',
             answer: 'text',
             teamNumber: 'integer',
-            accountId: 'text',
-        },
+            accountId: 'text'
+        }
     });
 }

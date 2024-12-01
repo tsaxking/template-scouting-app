@@ -49,7 +49,7 @@ export namespace Account {
             accountId: 'text'
         },
         name: 'Admins',
-        frontend: false,
+        frontend: false
     });
 
     const isSelf = (a1: AccountData, a2: AccountData) => a1.id === a2.id;
@@ -838,7 +838,9 @@ export namespace Account {
 
             const account = (await fromUsername(username)).unwrap();
             if (!account) {
-                console.log(`Account not found, cannot auto sign in. (${username})`);
+                console.log(
+                    `Account not found, cannot auto sign in. (${username})`
+                );
                 return next();
             }
 
@@ -853,7 +855,9 @@ export namespace Account {
 
     export const isAdmin = async (account: AccountData) => {
         return attemptAsync(async () => {
-            return !!(await Admins.fromProperty('accountId', account.id, false)).unwrap()[0];
+            return !!(
+                await Admins.fromProperty('accountId', account.id, false)
+            ).unwrap()[0];
         });
     };
 }

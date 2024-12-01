@@ -1,7 +1,7 @@
 <script lang="ts">
-export let data: string;
-export let header: string;
-export let onChange: (value: string) => void;
+    export let data: string;
+    export let header: string;
+    export let onChange: (value: string) => void;
 </script>
 
 <input

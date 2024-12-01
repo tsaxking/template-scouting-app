@@ -339,12 +339,7 @@ export class StructData<T extends Blank>
         return attemptAsync(async () => {
             const prev = { ...this.data };
             const response = await fn(this.data);
-            (
-                await this.struct.post(
-                    `/update`,
-                    response
-                )
-            ).unwrap();
+            (await this.struct.post(`/update`, response)).unwrap();
             return async () => {
                 return this.update(() => prev);
             };
@@ -352,21 +347,15 @@ export class StructData<T extends Blank>
     }
 
     delete() {
-        return this.struct.post(
-            `/${this.struct.data.name}/delete`,
-            {
-                id: this.id
-            }
-        );
+        return this.struct.post(`/${this.struct.data.name}/delete`, {
+            id: this.id
+        });
     }
 
     setArchive(archived: boolean) {
-        return this.struct.post(
-            `/${archived ? 'archive' : 'unarchive'}`,
-            {
-                id: this.data.id,
-            }
-        );
+        return this.struct.post(`/${archived ? 'archive' : 'unarchive'}`, {
+            id: this.data.id
+        });
     }
 
     getVersionHistory() {
@@ -381,7 +370,7 @@ export class StructData<T extends Blank>
                             }
                     >[]
                 >(`/version-history`, {
-                    id: this.data.id,
+                    id: this.data.id
                 })
             ).unwrap();
 
@@ -648,10 +637,7 @@ export class Struct<T extends Blank> {
     };
 
     new(data: Structable<T>) {
-        return this.post(
-            `/create`,
-            data
-        );
+        return this.post(`/create`, data);
     }
 
     fromId(id: string) {
@@ -659,12 +645,9 @@ export class Struct<T extends Blank> {
             const current = this.cache.get(id);
             if (current) return current;
             const response = (
-                await this.post<Structable<T>>(
-                    `/read.from-id`,
-                    {
-                        id,
-                    }
-                )
+                await this.post<Structable<T>>(`/read.from-id`, {
+                    id
+                })
             ).unwrap();
             // TODO: Prove this is a valid response
             return this.Generator(response);
@@ -697,9 +680,7 @@ export class Struct<T extends Blank> {
                 // this.stores.all.set(all);
                 // arr.add(...all);
 
-                const stream = this.retrieveStream(
-                    `/read.all`
-                );
+                const stream = this.retrieveStream(`/read.all`);
 
                 stream.pipe(data => {
                     arr.add(this.Generator(JSON.parse(data)));
@@ -744,9 +725,7 @@ export class Struct<T extends Blank> {
 
             // return response.map(this.Generator);
 
-            const stream = this.retrieveStream(
-                `/read.all`
-            );
+            const stream = this.retrieveStream(`/read.all`);
 
             return stream.await().then(res => {
                 return res.unwrap().map(d => this.Generator(JSON.parse(d)));
@@ -783,9 +762,7 @@ export class Struct<T extends Blank> {
                 // this.stores.archived.set(all);
                 // arr.add(...all);
 
-                const stream = this.retrieveStream(
-                    `/read.archived`
-                );
+                const stream = this.retrieveStream(`/read.archived`);
 
                 stream.pipe(data => {
                     arr.add(this.Generator(JSON.parse(data)));
@@ -812,9 +789,7 @@ export class Struct<T extends Blank> {
             // const data = response.map(this.Generator);
             // return data;
 
-            const stream = this.retrieveStream(
-                `/read.archived`
-            );
+            const stream = this.retrieveStream(`/read.archived`);
 
             return stream.await().then(res => {
                 return res.unwrap().map(d => this.Generator(JSON.parse(d)));
@@ -919,13 +894,10 @@ export class Struct<T extends Blank> {
                 // // this is to avoid potential race conditions with the writable.await() method
                 // setTimeout(() => w.add(...list));
 
-                const stream = this.retrieveStream(
-                    `/read.from-property`,
-                    {
-                        property,
-                        value
-                    }
-                );
+                const stream = this.retrieveStream(`/read.from-property`, {
+                    property,
+                    value
+                });
 
                 stream.pipe(data => {
                     w.add(this.Generator(JSON.parse(data)));
@@ -951,13 +923,10 @@ export class Struct<T extends Blank> {
 
             // return res.map(this.Generator);
 
-            const stream = this.retrieveStream(
-                `/read.from-property`,
-                {
-                    property,
-                    value
-                }
-            );
+            const stream = this.retrieveStream(`/read.from-property`, {
+                property,
+                value
+            });
 
             return stream.await().then(res => {
                 return res.unwrap().map(d => this.Generator(JSON.parse(d)));

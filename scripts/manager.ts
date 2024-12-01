@@ -462,7 +462,7 @@ export const main = async () => {
     await fn();
 };
 
-DB.connect().then(async (res) => {
+DB.connect().then(async res => {
     res.unwrap();
 
     (await DB.init()).unwrap();

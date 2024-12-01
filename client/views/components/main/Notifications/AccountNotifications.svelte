@@ -1,11 +1,11 @@
 <script lang="ts">
-import { onMount } from 'svelte';
-import { Accounts } from '../../../../models/account';
-import NotificationList from './NotificationList.svelte';
+    import { onMount } from 'svelte';
+    import { Accounts } from '../../../../models/account';
+    import NotificationList from './NotificationList.svelte';
 
-let selfStore = Accounts.self;
+    let selfStore = Accounts.self;
 
-const self = $selfStore;
+    const self = $selfStore;
 </script>
 
 <div

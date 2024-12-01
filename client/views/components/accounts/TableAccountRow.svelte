@@ -1,38 +1,38 @@
 <script lang="ts">
-import { typeValidation } from '../../../../shared/struct';
-import { capitalize } from '../../../../shared/text';
-import { Accounts } from '../../../models/account';
-import { StructData } from '../../../models/struct';
-import ButtonGroup from '../bootstrap/ButtonGroup.svelte';
-import RowInput from '../structs/RowInput.svelte';
-import UniverseBadge from '../structs/UniverseBadge.svelte';
+    import { typeValidation } from '../../../../shared/struct';
+    import { capitalize } from '../../../../shared/text';
+    import { Accounts } from '../../../models/account';
+    import { StructData } from '../../../models/struct';
+    import ButtonGroup from '../bootstrap/ButtonGroup.svelte';
+    import RowInput from '../structs/RowInput.svelte';
+    import UniverseBadge from '../structs/UniverseBadge.svelte';
 
-export let account: Accounts.AccountData;
+    export let account: Accounts.AccountData;
 
-const a = $account;
+    const a = $account;
 
-const universeRes = account.getUniverses();
-let universes: string[] | undefined = [];
+    const universeRes = account.getUniverses();
+    let universes: string[] | undefined = [];
 
-universes = $universeRes || undefined;
+    universes = $universeRes || undefined;
 
-const onDataChange = (
-    header: keyof typeof account.struct.data.structure,
-    d: unknown
-) => {
-    const type = account.struct.data.structure[header];
-    if (!typeValidation(type, d)) {
-        console.error('Invalid type. Needs', type, 'but recieved', d);
-        return;
-    }
+    const onDataChange = (
+        header: keyof typeof account.struct.data.structure,
+        d: unknown
+    ) => {
+        const type = account.struct.data.structure[header];
+        if (!typeValidation(type, d)) {
+            console.error('Invalid type. Needs', type, 'but recieved', d);
+            return;
+        }
 
-    account.update({
-        [header]: d
+        account.update({
+            [header]: d
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any);
-};
+        } as any);
+    };
 
-const cantRead = '[Invalid Permissions]';
+    const cantRead = '[Invalid Permissions]';
 </script>
 
 <tr>
@@ -91,7 +91,9 @@ const cantRead = '[Invalid Permissions]';
     <td>
         <!-- TODO: Account picture change -->
         {#if a.picture !== undefined}
-            <img alt="Cannot display Image" src="{a.picture}" />
+            <img
+                alt="Cannot display Image"
+                src="{a.picture}" />
         {:else}
             {cantRead}
         {/if}
@@ -100,7 +102,9 @@ const cantRead = '[Invalid Permissions]';
         {#if universes}
             {#if universes.length > 0}
                 {#each universes as universe}
-                    <UniverseBadge {account} {universe} />
+                    <UniverseBadge
+                        {account}
+                        {universe} />
                 {/each}
             {:else}
                 No Universes
@@ -135,15 +139,21 @@ const cantRead = '[Invalid Permissions]';
     <td>
         <ButtonGroup>
             <!-- <button class="btn btn-info">Add Universe</button> -->
-            <button class="btn btn-danger" type="button">
+            <button
+                class="btn btn-danger"
+                type="button">
                 <i class="material-icons"> delete </i>
             </button>
             {#if a.verified}
-                <button class="btn btn-warning" type="button">
+                <button
+                    class="btn btn-warning"
+                    type="button">
                     <i class="material-icons"> warning </i>
                 </button>
             {:else}
-                <button class="btn btn-success" type="button">
+                <button
+                    class="btn btn-success"
+                    type="button">
                     <i class="material-icons"> verified </i>
                 </button>
             {/if}

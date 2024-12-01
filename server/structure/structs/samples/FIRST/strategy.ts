@@ -1,5 +1,5 @@
-import { DB } from "../../../../utilities/database";
-import { Struct } from "../../struct";
+import { DB } from '../../../../utilities/database';
+import { Struct } from '../../struct';
 
 export namespace Strategy {
     export const Strategy = new Struct({
@@ -11,7 +11,7 @@ export namespace Strategy {
             accountId: 'text',
             matchId: 'text',
             customMatch: 'boolean',
-            comment: 'text',
+            comment: 'text'
         },
         versionHistory: {
             type: 'versions',
@@ -27,7 +27,7 @@ export namespace Strategy {
         structure: {
             name: 'text',
             strategyId: 'text',
-            board: 'text', // JSON
+            board: 'text' // JSON
         },
         versionHistory: {
             type: 'versions',

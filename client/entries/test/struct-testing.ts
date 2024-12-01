@@ -1,13 +1,13 @@
-import { Struct } from "../../models/struct";
-import { socket } from "../../utilities/socket";
+import { Struct } from '../../models/struct';
+import { socket } from '../../utilities/socket';
 
 const s = new Struct({
     socket,
     name: 'TestStruct',
     structure: {
         name: 'text',
-        age: 'integer',
-    },
+        age: 'integer'
+    }
 });
 
 console.log(s);

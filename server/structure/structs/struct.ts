@@ -1832,7 +1832,12 @@ export class Struct<Structure extends Blank, Name extends string> {
                         if (!(await Account.isAdmin(account)).unwrap()) {
                             if (
                                 !this.bypasses
-                                    .filter(b => b.permission === DataAction.Create || b.permission === '*')
+                                    .filter(
+                                        b =>
+                                            b.permission ===
+                                                DataAction.Create ||
+                                            b.permission === '*'
+                                    )
                                     .some(bp => bp.fn(account))
                             ) {
                                 if (
@@ -1846,7 +1851,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                                         notPermittedStatus(req, 'create')
                                     );
                                 }
-                            } 
+                            }
                         }
 
                         const n = (await this.new(req.body)).unwrap();
@@ -1927,7 +1932,9 @@ export class Struct<Structure extends Blank, Name extends string> {
                         }
 
                         const bypasses = this.bypasses.filter(
-                            b => b.permission === PropertyAction.Update || b.permission === '*'
+                            b =>
+                                b.permission === PropertyAction.Update ||
+                                b.permission === '*'
                         );
 
                         let doBypass = false;
@@ -2027,7 +2034,9 @@ export class Struct<Structure extends Blank, Name extends string> {
                         if (
                             this.bypasses
                                 .filter(
-                                    b => b.permission === PropertyAction.Read || b.permission === '*'
+                                    b =>
+                                        b.permission === PropertyAction.Read ||
+                                        b.permission === '*'
                                 )
                                 .some(bp => bp.fn(account, n))
                         ) {
@@ -2058,11 +2067,9 @@ export class Struct<Structure extends Blank, Name extends string> {
 
                     if ((await Account.isAdmin(account)).unwrap()) {
                         log('Account is an admin');
-                        return res.stream<
-                            StructData<Structure, Name>
-                        >(
+                        return res.stream<StructData<Structure, Name>>(
                             this.all(true, false),
-                            async data => data.data,
+                            async data => data.data
                         );
                     }
 
@@ -2073,7 +2080,9 @@ export class Struct<Structure extends Blank, Name extends string> {
                     // const n = (await this.all(false)).unwrap();
 
                     const bypasses = this.bypasses.filter(
-                        b => b.permission === PropertyAction.Read || b.permission === '*'
+                        b =>
+                            b.permission === PropertyAction.Read ||
+                            b.permission === '*'
                     );
 
                     // res.json(
@@ -2164,15 +2173,15 @@ export class Struct<Structure extends Blank, Name extends string> {
                             return res.sendStatus(notSignedInStatus(req));
 
                         if ((await Account.isAdmin(account)).unwrap()) {
-                            return res.stream<
-                                StructData<Structure, Name>
-                                >(this.fromProperty(
+                            return res.stream<StructData<Structure, Name>>(
+                                this.fromProperty(
                                     req.body.property as keyof Structure,
                                     req.body.value,
                                     true
-                                ), async data => data.data);
+                                ),
+                                async data => data.data
+                            );
                         }
-
 
                         const roles = (
                             await Permissions.getRoles(account)
@@ -2181,7 +2190,9 @@ export class Struct<Structure extends Blank, Name extends string> {
                         // const n = (await this.fromProperty(req.body.property as keyof Structure, req.body.value)).unwrap();
 
                         const bypasses = this.bypasses.filter(
-                            b => b.permission === PropertyAction.Read || b.permission === '*'
+                            b =>
+                                b.permission === PropertyAction.Read ||
+                                b.permission === '*'
                         );
 
                         // res.json(
@@ -2261,9 +2272,10 @@ export class Struct<Structure extends Blank, Name extends string> {
                     if (!account) return res.sendStatus(notSignedInStatus(req));
 
                     if ((await Account.isAdmin(account)).unwrap()) {
-                        return res.stream<
-                            StructData<Structure, Name>
-                            >(this.archived(true), async data => data.data);
+                        return res.stream<StructData<Structure, Name>>(
+                            this.archived(true),
+                            async data => data.data
+                        );
                     }
 
                     const roles = (
@@ -2273,7 +2285,9 @@ export class Struct<Structure extends Blank, Name extends string> {
                     // const n = (await this.archived(false)).unwrap();
 
                     const bypasses = this.bypasses.filter(
-                        b => b.permission === PropertyAction.ReadArchive || b.permission === '*'
+                        b =>
+                            b.permission === PropertyAction.ReadArchive ||
+                            b.permission === '*'
                     );
 
                     // res.json(
@@ -2361,7 +2375,9 @@ export class Struct<Structure extends Blank, Name extends string> {
                             const n = (await this.fromId(req.body.id)).unwrap();
                             if (!n) return res.sendStatus(notFoundStatus(req));
 
-                            const versions = (await n.getVersionHistory()).unwrap();
+                            const versions = (
+                                await n.getVersionHistory()
+                            ).unwrap();
 
                             if (versions === 'not-enabled') {
                                 return res.sendStatus(
@@ -2380,7 +2396,8 @@ export class Struct<Structure extends Blank, Name extends string> {
                                 .filter(
                                     b =>
                                         b.permission ===
-                                        PropertyAction.ReadVersionHistory || b.permission === '*'
+                                            PropertyAction.ReadVersionHistory ||
+                                        b.permission === '*'
                                 )
                                 .some(bp => bp.fn(account, n))
                         ) {
@@ -2436,8 +2453,6 @@ export class Struct<Structure extends Blank, Name extends string> {
                         const n = (await this.fromId(req.body.id)).unwrap();
                         if (!n) return res.sendStatus(notFoundStatus(req));
 
-
-
                         if (!(await Account.isAdmin(account)).unwrap()) {
                             const roles = (
                                 await Permissions.getRoles(account)
@@ -2447,7 +2462,8 @@ export class Struct<Structure extends Blank, Name extends string> {
                                     .filter(
                                         bp =>
                                             bp.permission ===
-                                            DataAction.RestoreVersion || bp.permission === '*'
+                                                DataAction.RestoreVersion ||
+                                            bp.permission === '*'
                                     )
                                     .some(bp => bp.fn(account, n))
                             ) {
@@ -2459,7 +2475,10 @@ export class Struct<Structure extends Blank, Name extends string> {
 
                                 if (!doable)
                                     return res.sendStatus(
-                                        notPermittedStatus(req, 'version restore')
+                                        notPermittedStatus(
+                                            req,
+                                            'version restore'
+                                        )
                                     );
                             }
                         }
@@ -2536,7 +2555,8 @@ export class Struct<Structure extends Blank, Name extends string> {
                                     .filter(
                                         bp =>
                                             bp.permission ===
-                                            DataAction.DeleteVersion || bp.permission === '*'
+                                                DataAction.DeleteVersion ||
+                                            bp.permission === '*'
                                     )
                                     .some(bp => bp.fn(account, n))
                             ) {
@@ -2548,7 +2568,10 @@ export class Struct<Structure extends Blank, Name extends string> {
 
                                 if (doable)
                                     return res.sendStatus(
-                                        notPermittedStatus(req, 'delete version')
+                                        notPermittedStatus(
+                                            req,
+                                            'delete version'
+                                        )
                                     );
                             }
                         }
@@ -2611,7 +2634,10 @@ export class Struct<Structure extends Blank, Name extends string> {
                             if (
                                 !this.bypasses
                                     .filter(
-                                        bp => bp.permission === DataAction.Delete || bp.permission === '*'
+                                        bp =>
+                                            bp.permission ===
+                                                DataAction.Delete ||
+                                            bp.permission === '*'
                                     )
                                     .some(bp => bp.fn(account, n))
                             ) {
@@ -2677,7 +2703,9 @@ export class Struct<Structure extends Blank, Name extends string> {
 
                             if (
                                 !this.bypasses.filter(
-                                    bp => bp.permission === DataAction.Archive || bp.permission === '*'
+                                    bp =>
+                                        bp.permission === DataAction.Archive ||
+                                        bp.permission === '*'
                                 )
                             ) {
                                 if (
@@ -2809,8 +2837,8 @@ export class Struct<Structure extends Blank, Name extends string> {
         property: Property,
         value: TS_Type<Structure[Property]>,
         asStream: true // filter?: (
-        //     data: StructData<Structure, Name>
-    ) // ) => boolean | Promise<boolean>
+        // ) => boolean | Promise<boolean>
+    ) //     data: StructData<Structure, Name>
     : StructStream<Structure, Name>;
     fromProperty<Property extends keyof Structure>(
         property: Property,
@@ -2865,8 +2893,8 @@ export class Struct<Structure extends Blank, Name extends string> {
     all(
         asStream: true,
         includeArchived?: boolean // filter?: (
-        //     data: StructData<Structure, Name>
-    ) // ) => boolean | Promise<boolean>
+        // ) => boolean | Promise<boolean>
+    ) //     data: StructData<Structure, Name>
     : StructStream<Structure, Name>;
     all(
         asStream: false,
@@ -2922,8 +2950,8 @@ export class Struct<Structure extends Blank, Name extends string> {
     fromUniverse(
         universe: string,
         asStream: true // filter?: (
-        //     data: StructData<Structure, Name>
-    ) // ) => boolean | Promise<boolean>
+        // ) => boolean | Promise<boolean>
+    ) //     data: StructData<Structure, Name>
     : StructStream<Structure, Name>;
     fromUniverse(
         universe: string,
@@ -2975,8 +3003,8 @@ export class Struct<Structure extends Blank, Name extends string> {
      */
     archived(
         asStream: true // filter?: (
-        //     data: StructData<Structure, Name>
-    ) // ) => boolean | Promise<boolean>
+        // ) => boolean | Promise<boolean>
+    ) //     data: StructData<Structure, Name>
     : StructStream<Structure, Name>;
     archived(asStream: false): Promise<Result<StructData<Structure, Name>[]>>;
     archived(
@@ -3030,11 +3058,12 @@ export class Struct<Structure extends Blank, Name extends string> {
 
     runValidators(data: Partial<Structable<Struct<Structure, Name>>>) {
         return attempt(() => {
-            if (!this.data.validators) return {
-                valid: true,
-                results: {},
-                invalids: []
-            };
+            if (!this.data.validators)
+                return {
+                    valid: true,
+                    results: {},
+                    invalids: []
+                };
 
             const results = Object.entries(this.data.validators || {}).reduce(
                 (acc, [k, v]) => {
@@ -3100,7 +3129,8 @@ export class Struct<Structure extends Blank, Name extends string> {
                 log('Request: ', `/${this.name}/${path}`);
                 next();
             },
-         ...fns);
+            ...fns
+        );
         return this;
     }
 

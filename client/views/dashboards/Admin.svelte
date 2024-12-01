@@ -1,46 +1,46 @@
 <script lang="ts">
-import Main from '../components/main/Main.svelte';
-import Page from '../components/main/Page.svelte';
-import Dashboard from '../pages/Dashboard.svelte';
-import Accounts from '../pages/Accounts.svelte';
-import type { PageGroup } from '../../utilities/general-types';
-import { getOpenPage } from '../../utilities/page';
+    import Main from '../components/main/Main.svelte';
+    import Page from '../components/main/Page.svelte';
+    import Dashboard from '../pages/Dashboard.svelte';
+    import Accounts from '../pages/Accounts.svelte';
+    import type { PageGroup } from '../../utilities/general-types';
+    import { getOpenPage } from '../../utilities/page';
 
-const groups: PageGroup[] = [
-    {
-        name: 'Home',
-        pages: [
-            {
-                name: 'dashboard',
-                icon: 'home',
-                iconType: 'material'
-            },
-            {
-                name: 'accounts',
-                icon: 'person',
-                iconType: 'material'
-            },
-            {
-                name: 'roles',
-                icon: 'admin_panel_settings',
-                iconType: 'material'
-            }
-        ]
-    }
-];
+    const groups: PageGroup[] = [
+        {
+            name: 'Home',
+            pages: [
+                {
+                    name: 'dashboard',
+                    icon: 'home',
+                    iconType: 'material'
+                },
+                {
+                    name: 'accounts',
+                    icon: 'person',
+                    iconType: 'material'
+                },
+                {
+                    name: 'roles',
+                    icon: 'admin_panel_settings',
+                    iconType: 'material'
+                }
+            ]
+        }
+    ];
 
-let active: string = getOpenPage() || 'dashboard';
-const domain = '';
+    let active: string = getOpenPage() || 'dashboard';
+    const domain = '';
 
-const navItems: string[] = [];
+    const navItems: string[] = [];
 
-const accountLinks: string[] = [
+    const accountLinks: string[] = [
     // 'account',
     // 'contact',
     // null
-];
+    ];
 
-let loading = false;
+    let loading = false;
 </script>
 
 <Main
@@ -51,6 +51,14 @@ let loading = false;
     bind:active
     on:openPage="{e => (active = e.detail)}"
 >
-    <Page {active} {domain} title="dashboard" bind:loading><Dashboard /></Page>
-    <Page {active} {domain} title="accounts" bind:loading><Accounts /></Page>
+    <Page
+        {active}
+        {domain}
+        title="dashboard"
+        bind:loading><Dashboard /></Page>
+    <Page
+        {active}
+        {domain}
+        title="accounts"
+        bind:loading><Accounts /></Page>
 </Main>

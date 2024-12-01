@@ -371,7 +371,10 @@ export const dataSelectPipe = async (data: Data<Struct<Blank, string>>[]) => {
 };
 
 export const structActions: {
-    [key: string]: <T extends Struct<Blank, string>>(struct: T, params?: Partial<Structable<T>>) => unknown;
+    [key: string]: <T extends Struct<Blank, string>>(
+        struct: T,
+        params?: Partial<Structable<T>>
+    ) => unknown;
 } = {
     new: async (struct, additions) => {
         const properties = Object.entries(struct.data.structure);

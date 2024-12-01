@@ -86,13 +86,15 @@ export namespace Session {
                 const s = (await Session.fromId(id)).unwrap();
                 if (s) return s;
             }
-            const s= (await Session.new({
-                accountId: '',
-                ip: req.ip || '',
-                userAgent: req.get('User-Agent') || '',
-                requests: 0,
-                prevUrl: req.url
-            })).unwrap();
+            const s = (
+                await Session.new({
+                    accountId: '',
+                    ip: req.ip || '',
+                    userAgent: req.get('User-Agent') || '',
+                    requests: 0,
+                    prevUrl: req.url
+                })
+            ).unwrap();
             res.cookie('ssid', s.id);
             return s;
         });

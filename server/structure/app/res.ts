@@ -304,11 +304,11 @@ export class Res {
         streamer.on('data', async chunk => {
             // writing = this.res.write()
             // log(chunk);
-            const res = JSON.stringify(pipe ? await pipe(chunk) : chunk) + streamDelimiter;
+            const res =
+                JSON.stringify(pipe ? await pipe(chunk) : chunk) +
+                streamDelimiter;
             // log(res);
-            this.res.write(
-                res
-            );
+            this.res.write(res);
         });
 
         streamer.on('end', () => this.res.end());

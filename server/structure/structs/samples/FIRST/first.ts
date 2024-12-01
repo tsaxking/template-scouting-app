@@ -1,6 +1,6 @@
 import { Struct } from '../../struct';
 import { DB } from '../../../../utilities/database';
-import { EventEmitter } from '../../../../../shared/event-emitter';
+// import { EventEmitter } from '../../../../../shared/event-emitter';
 
 export namespace FIRST {
     export const Events = new Struct({
@@ -21,7 +21,7 @@ export namespace FIRST {
             number: 'integer',
             eventKey: 'text',
             watchPriority: 'integer',
-            picture: 'text',
+            picture: 'text'
         },
         sample: true
     });
@@ -65,7 +65,7 @@ export namespace FIRST {
             name: 'text',
             team1: 'integer',
             team2: 'integer',
-            team3: 'integer',
+            team3: 'integer'
         },
         sample: true
     });
@@ -76,9 +76,9 @@ export namespace FIRST {
         structure: {
             url: 'text',
             response: 'text',
-            update: 'integer', // loop (minutes)
+            update: 'integer' // loop (minutes)
         },
-        sample: true,
+        sample: true
         // loop: {
         //     fn: (s) => {
         //         const now = Date.now();
@@ -98,5 +98,5 @@ export namespace FIRST {
     //     }>();
     // }
 
-    export const TBARequest = (url: string) => {};
+    // export const TBARequest = (url: string) => {};
 }

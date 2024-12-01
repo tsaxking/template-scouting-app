@@ -1,15 +1,15 @@
 <script lang="ts">
-import { Permissions } from '../../../../models/permissions';
-import ButtonGroup from '../../bootstrap/ButtonGroup.svelte';
-import Modal from '../../bootstrap/Modal.svelte';
+    import { Permissions } from '../../../../models/permissions';
+    import ButtonGroup from '../../bootstrap/ButtonGroup.svelte';
+    import Modal from '../../bootstrap/Modal.svelte';
 
-export let role: Permissions.RoleData;
+    export let role: Permissions.RoleData;
 
-const data = $role;
+    const data = $role;
 
-const np = '[Not Permitted]';
+    const np = '[Not Permitted]';
 
-let edit = false;
+    let edit = false;
 </script>
 
 <tr on:click="{() => (edit = true)}">
@@ -21,13 +21,17 @@ let edit = false;
     </td>
     <td>
         <ButtonGroup>
-            <button class="btn btn-danger" type="button">
+            <button
+                class="btn btn-danger"
+                type="button">
                 <i class="material-icons">delete</i>
             </button>
         </ButtonGroup>
     </td>
 </tr>
 
-<Modal title="{`Edit ${role.data.name}`}" bind:show="{edit}">
-    <div slot="buttons"></div>
+<Modal
+    title="{`Edit ${role.data.name}`}"
+    bind:show="{edit}">
+    <div slot="buttons" />
 </Modal>

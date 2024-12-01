@@ -550,8 +550,10 @@ export class ServerRequest<T = unknown> {
                         }
 
                         for (const chunk of chunks) {
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            const data = parser ? parser(chunk) : (chunk as any);
+                            const data = parser
+                                ? parser(chunk)
+                                : // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                  (chunk as any);
                             if (!data) continue;
                             // console.log({ data });
                             emitter.emit('chunk', data);

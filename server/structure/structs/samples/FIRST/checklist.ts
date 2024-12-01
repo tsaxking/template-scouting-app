@@ -1,5 +1,5 @@
-import { DB } from "../../../../utilities/database";
-import { Struct } from "../../struct";
+import { DB } from '../../../../utilities/database';
+import { Struct } from '../../struct';
 
 export namespace Checklist {
     export const Checklist = new Struct({
@@ -8,9 +8,9 @@ export namespace Checklist {
         structure: {
             name: 'text',
             eventKey: 'text',
-            description: 'text',
+            description: 'text'
         },
-        sample: true,
+        sample: true
     });
 
     export const ChecklistItem = new Struct({
@@ -19,9 +19,9 @@ export namespace Checklist {
         structure: {
             checklistId: 'text',
             name: 'text',
-            interval: 'text', // in matches
+            interval: 'text' // in matches
         },
-        sample: true,
+        sample: true
     });
 
     export const ChecklistAssignment = new Struct({
@@ -29,9 +29,9 @@ export namespace Checklist {
         name: 'ChecklistAssignment',
         structure: {
             itemId: 'text',
-            accountId: 'text',
+            accountId: 'text'
         },
-        sample: true,
+        sample: true
     });
 
     export const ChecklistResponses = new Struct({
@@ -40,10 +40,13 @@ export namespace Checklist {
         structure: {
             itemId: 'text',
             matchId: 'text',
-            accountId: 'text',
+            accountId: 'text'
         },
-        sample: true,
+        sample: true
     });
 
-    ChecklistResponses.bypass('*', (account, data) => account.id === data?.data.accountId);
+    ChecklistResponses.bypass(
+        '*',
+        (account, data) => account.id === data?.data.accountId
+    );
 }

@@ -81,22 +81,18 @@ export const removeAccount = async () => {
 };
 
 export const createAccount = async () => {
-    const username = await repeatPrompt(
-        'Enter a username',
-        undefined,
-        v => checkStrType(v, 'text'),
+    const username = await repeatPrompt('Enter a username', undefined, v =>
+        checkStrType(v, 'text')
     );
     if (!username) return backToMain('No username entered');
-    const password = await repeatPrompt(
-        'Enter a password',
-        undefined,
-        v => checkStrType(v, 'text'),
+    const password = await repeatPrompt('Enter a password', undefined, v =>
+        checkStrType(v, 'text')
     );
     if (!password) return backToMain('No password entered');
     const confirmPassword = await repeatPrompt(
         'Confirm the password',
         undefined,
-        v => checkStrType(v, 'text'),
+        v => checkStrType(v, 'text')
     );
     if (!confirmPassword) return backToMain('No password entered');
 
@@ -110,7 +106,7 @@ export const createAccount = async () => {
         username,
         key: hash,
         salt,
-        verified: false,
+        verified: false
     });
 };
 
@@ -123,9 +119,11 @@ export const makeAdmin = async () => {
     );
 
     if (isGood) {
-        (await Account.Admins.new({
-            accountId: account.id,
-        })).unwrap();
+        (
+            await Account.Admins.new({
+                accountId: account.id
+            })
+        ).unwrap();
         return backToMain(`Account ${account.data.username} is now an admin`);
     }
 
@@ -134,11 +132,15 @@ export const makeAdmin = async () => {
 
 export const removeAdmin = async () => {
     const allAccounts = (await Account.Account.all(false)).unwrap();
-    const admins = (await Account.Admins.all(false)).unwrap()
+    const admins = (await Account.Admins.all(false))
+        .unwrap()
         .map(a => allAccounts.find(ac => ac.id === a.data.accountId))
         .filter(Boolean);
 
-    const account = await selectData(admins, 'Select an account to remove admin');
+    const account = await selectData(
+        admins,
+        'Select an account to remove admin'
+    );
     if (!account) return backToMain('No account selected');
 
     const isGood = await confirm(
@@ -146,8 +148,20 @@ export const removeAdmin = async () => {
     );
 
     if (isGood) {
-        (await Account.Admins.fromProperty('accountId', account.id, false)).unwrap()[0].delete().unwrap();
-        return backToMain(`Account ${account.data.username} is no longer an admin`);
+        (
+            await (
+                await Account.Admins.fromProperty(
+                    'accountId',
+                    account.id,
+                    false
+                )
+            )
+                .unwrap()[0]
+                .delete()
+        ).unwrap();
+        return backToMain(
+            `Account ${account.data.username} is no longer an admin`
+        );
     }
 
     return backToMain('Account not removed as an admin');
@@ -192,7 +206,8 @@ export const accounts = [
         icon: '👑',
         value: makeAdmin,
         description: 'Make an account an admin'
-    },{
+    },
+    {
         icon: '🚫',
         value: removeAdmin,
         description: 'Remove an account as an admin'

@@ -1,5 +1,5 @@
-import { DB } from "../../utilities/database";
-import { DataAction, PropertyAction, Struct } from "./struct";
+import { DB } from '../../utilities/database';
+import { DataAction, PropertyAction, Struct } from './struct';
 
 export namespace Testing {
     export const TestStruct = new Struct({
@@ -7,8 +7,8 @@ export namespace Testing {
         name: 'TestStruct',
         structure: {
             name: 'text',
-            age: 'integer',
-        },
+            age: 'integer'
+        }
     });
 
     TestStruct.bypass(DataAction.Create, () => true);
