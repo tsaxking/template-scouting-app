@@ -1832,7 +1832,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                         if (!(await Account.isAdmin(account)).unwrap()) {
                             if (
                                 !this.bypasses
-                                    .filter(b => b.permission === DataAction.Create)
+                                    .filter(b => b.permission === DataAction.Create || b.permission === '*')
                                     .some(bp => bp.fn(account))
                             ) {
                                 if (
@@ -1927,7 +1927,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                         }
 
                         const bypasses = this.bypasses.filter(
-                            b => b.permission === PropertyAction.Update
+                            b => b.permission === PropertyAction.Update || b.permission === '*'
                         );
 
                         let doBypass = false;
@@ -2027,7 +2027,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                         if (
                             this.bypasses
                                 .filter(
-                                    b => b.permission === PropertyAction.Read
+                                    b => b.permission === PropertyAction.Read || b.permission === '*'
                                 )
                                 .some(bp => bp.fn(account, n))
                         ) {
@@ -2073,7 +2073,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                     // const n = (await this.all(false)).unwrap();
 
                     const bypasses = this.bypasses.filter(
-                        b => b.permission === PropertyAction.Read
+                        b => b.permission === PropertyAction.Read || b.permission === '*'
                     );
 
                     // res.json(
@@ -2181,7 +2181,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                         // const n = (await this.fromProperty(req.body.property as keyof Structure, req.body.value)).unwrap();
 
                         const bypasses = this.bypasses.filter(
-                            b => b.permission === PropertyAction.Read
+                            b => b.permission === PropertyAction.Read || b.permission === '*'
                         );
 
                         // res.json(
@@ -2273,7 +2273,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                     // const n = (await this.archived(false)).unwrap();
 
                     const bypasses = this.bypasses.filter(
-                        b => b.permission === PropertyAction.ReadArchive
+                        b => b.permission === PropertyAction.ReadArchive || b.permission === '*'
                     );
 
                     // res.json(
@@ -2380,7 +2380,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                                 .filter(
                                     b =>
                                         b.permission ===
-                                        PropertyAction.ReadVersionHistory
+                                        PropertyAction.ReadVersionHistory || b.permission === '*'
                                 )
                                 .some(bp => bp.fn(account, n))
                         ) {
@@ -2447,7 +2447,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                                     .filter(
                                         bp =>
                                             bp.permission ===
-                                            DataAction.RestoreVersion
+                                            DataAction.RestoreVersion || bp.permission === '*'
                                     )
                                     .some(bp => bp.fn(account, n))
                             ) {
@@ -2536,7 +2536,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                                     .filter(
                                         bp =>
                                             bp.permission ===
-                                            DataAction.DeleteVersion
+                                            DataAction.DeleteVersion || bp.permission === '*'
                                     )
                                     .some(bp => bp.fn(account, n))
                             ) {
@@ -2611,7 +2611,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                             if (
                                 !this.bypasses
                                     .filter(
-                                        bp => bp.permission === DataAction.Delete
+                                        bp => bp.permission === DataAction.Delete || bp.permission === '*'
                                     )
                                     .some(bp => bp.fn(account, n))
                             ) {
@@ -2677,7 +2677,7 @@ export class Struct<Structure extends Blank, Name extends string> {
 
                             if (
                                 !this.bypasses.filter(
-                                    bp => bp.permission === DataAction.Archive
+                                    bp => bp.permission === DataAction.Archive || bp.permission === '*'
                                 )
                             ) {
                                 if (
@@ -3194,7 +3194,7 @@ export class Struct<Structure extends Blank, Name extends string> {
     }
 
     private readonly bypasses: {
-        permission: DataAction | PropertyAction;
+        permission: DataAction | PropertyAction | '*';
         // I don't understand why when I force the type it causes errors, so I'm using any to bypass it
         fn: (
             account: Account,
@@ -3203,7 +3203,7 @@ export class Struct<Structure extends Blank, Name extends string> {
         ) => boolean;
     }[] = [];
 
-    bypass<Action extends DataAction | PropertyAction>(
+    bypass<Action extends DataAction | PropertyAction | '*'>(
         permission: Action,
         fn: (
             account: Account,
