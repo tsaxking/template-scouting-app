@@ -362,6 +362,8 @@ export namespace Permissions {
 
             if (!(await fn(account, roles)))
                 return res.sendCustomStatus(cantAccess(req));
+
+            next();
         };
 
     // export const emitToUniverse = async (
