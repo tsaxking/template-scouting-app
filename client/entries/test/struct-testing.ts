@@ -16,7 +16,7 @@ console.log(s);
     const all = s.all(true);
     const u = all.subscribe(console.log);
 
-    console.log((await all.await()).unwrap());
+    // console.log((await all.await()).unwrap());
 
     // (await s.new({
     //     name: 'John',

@@ -301,10 +301,10 @@ export class Res {
         // const cache = new Set<T>();
         // let writing = true;
 
-        streamer.on('data', chunk => {
+        streamer.on('data', async chunk => {
             // writing = this.res.write()
             // log(chunk);
-            const res = JSON.stringify(pipe ? pipe(chunk) : chunk) + streamDelimiter;
+            const res = JSON.stringify(pipe ? await pipe(chunk) : chunk) + streamDelimiter;
             // log(res);
             this.res.write(
                 res

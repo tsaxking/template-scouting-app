@@ -2057,11 +2057,12 @@ export class Struct<Structure extends Blank, Name extends string> {
                     if (!account) return res.sendStatus(notSignedInStatus(req));
 
                     if ((await Account.isAdmin(account)).unwrap()) {
+                        log('Account is an admin');
                         return res.stream<
                             StructData<Structure, Name>
                         >(
                             this.all(true, false),
-                            data => data.data,
+                            async data => data.data,
                         );
                     }
 
