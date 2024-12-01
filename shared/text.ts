@@ -121,26 +121,45 @@ export const cost = (amount: number | string): string => {
         : `-$${Math.abs(+amount).toFixed(2)}`;
 };
 
+// each character is 3 digits long, 0-999
+const encodingChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-=!@#$%^&*()_+[]{}|;:\'",.<>?/`~\\\n ';
+
 export const encode = (str: string) => {
-    const chars =
-        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-=!@#$%^&*()_+[]{}|;:\'",.<>?/`~\\\n ';
     let result = '';
     for (let i = 0; i < str.length; i++) {
         const char = str[i];
-        result += chars.indexOf(char).toString().padStart(2, '0');
+        result += encodingChars.indexOf(char).toString().padStart(3, '0');
     }
 
     return result;
 };
 
 export const decode = (str: string) => {
-    const chars =
-        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-=!@#$%^&*()_+[]{}|;:\'",.<>?/`~\\\n ';
     let result = '';
-    for (let i = 0; i < str.length; i++) {
+    for (let i = 0; i < str.length; i+=3) {
         const char = str.slice(i, i + 2);
-        result += chars[parseInt(char)];
-        i++;
+        result += encodingChars[parseInt(char)];
+    }
+
+    return result;
+};
+
+export const flattenEncode = (encoded: string) => {
+    let result = '';
+    for (let i = 0; i < encoded.length; i+=3) {
+        const char = encoded.slice(i, i + 3);
+        result += '-' + +char; // remove leading zeros, add a dash
+    }
+
+    return result;
+};
+
+export const expandEncode = (flattened: string) => {
+    let result = '';
+    for (let i = 0; i < flattened.length; i++) {
+        const char = flattened[i];
+        if (char === '-') continue;
+        result += encodingChars[parseInt(char)];
     }
 
     return result;
