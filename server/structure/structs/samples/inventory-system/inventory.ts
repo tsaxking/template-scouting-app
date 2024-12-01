@@ -82,9 +82,6 @@ export namespace Inventory {
         });
     };
 
-    Struct.buildAll(false).then(() => {
-        app.route('/structs', Struct.router);
-    });
 
     // export const createItems = async (data: BasicStructable<typeof Item>, num: number) => {
     //     return attemptAsync(async () => {

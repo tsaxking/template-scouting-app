@@ -34,14 +34,41 @@ export const openStructs = () => {
             return res.flat();
         };
         const readFile = async (file: string) => {
+            if (file.includes('.image')) return [];
+            // console.log('Opening file:', file);
             const data = await import(path.relative(__dirname, file));
+            // console.log(data);
 
-            return Object.entries(data)
-                .filter(([, value]) => value instanceof Struct)
-                .map(([key, value]) => value as Struct<Blank, string>);
+            const structs: Struct<Blank, string>[] = [];
+
+            const openObj = (obj: Record<string, unknown>) => {
+                for (const value of Object.values(obj)) {
+                    if (value instanceof Struct) {
+                        structs.push(value);
+                        continue;
+                    }
+
+                    if (typeof value === 'object') {
+                        openObj(value as Record<string, unknown>);
+                    }
+                }
+            };
+
+            // return Object.entries(data)
+            //     .filter(([, value]) => value instanceof Struct)
+            //     .map(([key, value]) => value as Struct<Blank, string>);
+
+            openObj(data);
+
+            return structs;
         };
 
-        return await readDir(path.resolve(__root, 'server/structure/structs'));
+        const res = await readDir(path.resolve(__root, 'server/structure/structs'));
+
+        // console.log(res);
+        // throw new Error('Close');
+
+        return res;
     });
 };
 
@@ -58,20 +85,34 @@ export const selectStruct = async (
         })),
         {
             return: true,
-            clear: true
+            clear: true,
+            exit: true,
         }
     );
 };
 
 export const selectData = async <T extends Data<Struct<Blank, string>>>(
     data: T[],
-    message?: string
+    message?: string,
+    options?: {
+        omit?: (keyof T['data'])[];
+    }
 ) => {
     const run = async () => {
         const res = await selectTable(
             message || 'Select a data',
-            data.map(d => d.data)
+            data.map(d => d.data),
+            {
+                omit: options?.omit as string[],
+                // return: true,
+                // exit: true,
+            }
         );
+
+        if (!res) {
+            // console.log('No data selected');
+            return undefined;
+        }
 
         const d = data.find(d => d.id === res.id);
         if (!d) {
@@ -139,10 +180,8 @@ export const versionHistoryPipe = async (
     }
 };
 
-export const dataActions: {
-    [key: string]: (data: Data<Struct<Blank, string>>) => unknown;
-} = {
-    update: async data => {
+export const dataActions = {
+    update: async (data: Data<Struct<Blank, string>>) => {
         const properties = Object.entries(data.data)
             // ignore global cols
             .filter(
@@ -181,7 +220,7 @@ export const dataActions: {
 
         return backToStruct(`Updated ${data.struct.name} ${data.id}`);
     },
-    delete: async data => {
+    delete: async (data: Data<Struct<Blank, string>>) => {
         const res = await confirm('Are you sure you want to delete this?');
         if (res) {
             (await data.delete()).unwrap();
@@ -189,7 +228,7 @@ export const dataActions: {
         }
         return backToStruct('Data not deleted');
     },
-    archive: async data => {
+    archive: async (data: Data<Struct<Blank, string>>) => {
         const res = await confirm('Are you sure you want to archive this?');
         if (res) {
             (await data.setArchive(true)).unwrap();
@@ -197,7 +236,7 @@ export const dataActions: {
         }
         return backToStruct('Data not archived');
     },
-    restore: async data => {
+    restore: async (data: Data<Struct<Blank, string>>) => {
         const res = await confirm('Are you sure you want to restore this?');
         if (res) {
             (await data.setArchive(false)).unwrap();
@@ -205,7 +244,7 @@ export const dataActions: {
         }
         return backToStruct('Data not restored');
     },
-    versionHistory: async data => {
+    versionHistory: async (data: Data<Struct<Blank, string>>) => {
         const history = (await data.getVersionHistory()).unwrap();
         if (history === 'not-enabled') {
             return backToStruct(
@@ -214,7 +253,7 @@ export const dataActions: {
         }
         return versionHistoryPipe(history);
     },
-    addAttributes: async data => {
+    addAttributes: async (data: Data<Struct<Blank, string>>) => {
         const attributes = await prompt(
             'Enter attributes to add (comma separated, no spaces)'
         );
@@ -224,7 +263,7 @@ export const dataActions: {
             .map(d => removeWhitespace(d.trim()));
         data.addAttributes(...separated);
     },
-    removeAttribute: async data => {
+    removeAttribute: async (data: Data<Struct<Blank, string>>) => {
         const attributes = data.getAttributes().unwrap();
 
         const attribute = await select<string>(
@@ -246,7 +285,7 @@ export const dataActions: {
 
         return backToStruct('Attribute not deleted');
     },
-    setAttributes: async data => {
+    setAttributes: async (data: Data<Struct<Blank, string>>) => {
         const attributes = await prompt(
             'Enter attributes to set (comma separated, no space)'
         );
@@ -266,7 +305,7 @@ export const dataActions: {
 
         return backToStruct('Attributes were not set');
     },
-    addToUniverse: async data => {
+    addToUniverse: async (data: Data<Struct<Blank, string>>) => {
         const universes = (await Permissions.Universe.all(false)).unwrap();
         const selected = await select(
             'Select a universe to add',
@@ -284,7 +323,7 @@ export const dataActions: {
         return backToStruct('Universe not added');
     },
     // getUniverses: async (data) => {},
-    setUniverses: async data => {
+    setUniverses: async (data: Data<Struct<Blank, string>>) => {
         // const currentIds = data.getUniverses().unwrap();
         const universes = (await Permissions.Universe.all(false)).unwrap();
         // const current = universes.filter(u => currentIds.includes(u.id));
@@ -323,7 +362,7 @@ export const dataActions: {
 
         return await run();
     },
-    removeFromUniverse: async data => {
+    removeFromUniverse: async (data: Data<Struct<Blank, string>>) => {
         const currentIds = data.getUniverses().unwrap();
         const has = (await Permissions.Universe.all(false))
             .unwrap()
@@ -368,15 +407,11 @@ export const selectDataAction = async (data: Data<Struct<Blank, string>>) => {
 export const dataSelectPipe = async (data: Data<Struct<Blank, string>>[]) => {
     const selected = await selectData(data);
     if (selected) return selectDataAction(selected);
+    return backToStruct('No data selected');
 };
 
-export const structActions: {
-    [key: string]: <T extends Struct<Blank, string>>(
-        struct: T,
-        params?: Partial<Structable<T>>
-    ) => unknown;
-} = {
-    new: async (struct, additions) => {
+export const structActions = {
+    new: async  <T extends Struct<Blank, string>>(struct:T , additions?: Partial<Structable<T>>) => {
         const properties = Object.entries(struct.data.structure);
 
         console.log(
@@ -429,7 +464,7 @@ export const structActions: {
 
         return backToStruct('New data created');
     },
-    deleteImage: async struct => {
+    deleteImage: async (struct: Struct<Blank, string>) => {
         const sure = await confirm(
             `Are you sure you want to delete the image for ${struct.name}?`
         );
@@ -438,12 +473,12 @@ export const structActions: {
         }
         return backToStruct('Did not delete image');
     },
-    all: async struct => {
+    all: async (struct: Struct<Blank, string>) => {
         const all = (await struct.all(false)).unwrap();
         const selected = await selectData(all, `Select a(n) ${struct.name}`);
         if (selected) return selectDataAction(selected);
     },
-    fromProperty: async struct => {
+    fromProperty: async (struct: Struct<Blank, string>) => {
         const properties = Object.entries(struct.data.structure);
         const selected = await select(
             'Filter property',
@@ -455,7 +490,7 @@ export const structActions: {
 
         if (selected) {
             const [name, type] = selected;
-            const res = await repeatPrompt(`${name}:`, undefined, v =>
+            const res = await repeatPrompt(`${name}`, undefined, v =>
                 checkStrType(v, type)
             );
 
@@ -464,7 +499,7 @@ export const structActions: {
             dataSelectPipe(data);
         }
     },
-    fromUniverse: async struct => {
+    fromUniverse: async (struct: Struct<Blank, string>) => {
         const universes = (await Permissions.Universe.all(false)).unwrap();
         const universe = await select(
             'Select a universe',
@@ -477,11 +512,11 @@ export const structActions: {
         const data = (await struct.fromUniverse(universe.id, false)).unwrap();
         dataSelectPipe(data);
     },
-    archived: async struct => {
+    archived: async (struct: Struct<Blank, string>) => {
         const data = (await struct.archived(false)).unwrap();
         dataSelectPipe(data);
     },
-    drop: async struct => {
+    drop: async (struct: Struct<Blank, string>) => {
         const sure = await confirm(
             `Are you sure you want to delete ${struct.name}?`
         );
@@ -494,7 +529,7 @@ export const structActions: {
 
         return backToStruct('Did not delete struct');
     },
-    clear: async struct => {
+    clear: async (struct: Struct<Blank, string>) => {
         const sure = await confirm(
             `Are you sure you want to clear ${struct.name}?`
         );
@@ -526,7 +561,7 @@ export const selectStructAction = async (struct: Struct<Blank, string>) => {
     if (selected) return selected(struct);
 };
 
-export const struct = async () => {
+export const struct = async (): Promise<((...data: unknown[]) => unknown) | void> => {
     const selected = await selectStruct('Select a struct');
     return selectStructAction(selected);
 };
@@ -536,3 +571,11 @@ export const backToStruct = async (message: string) => {
 
     return struct();
 };
+
+export const structs = [
+    {
+        icon: '🏗️',
+        description: 'Manage structures',
+        value: struct,
+    }
+];

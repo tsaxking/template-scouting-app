@@ -23,6 +23,7 @@ import '../server/structure/structs/session';
 import '../server/structure/structs/email';
 import '../server/structure/structs/test';
 import { Struct } from '../server/structure/structs/struct';
+import { structs } from './manager/structs';
 
 const { resolve, relative } = path;
 
@@ -453,6 +454,7 @@ export const main = async () => {
         ...makeObj('Statuses', statuses, icons.status),
         ...makeObj('Permissions', permissions, icons.permission),
         ...makeObj('Databases', databases, icons.database),
+        ...makeObj('Structs', structs, '🏗️'),
         {
             name: `${icons.exit} Exit`,
             value: exit

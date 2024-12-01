@@ -9,7 +9,10 @@ import { checkStrType } from '../../shared/struct';
 export const selectAccount = async () => {
     const accounts = (await Account.Account.all(false)).unwrap();
 
-    return selectData(accounts, 'Select an account...');
+    return selectData(accounts, 'Select an account...',
+        {
+            omit: ['id', 'key', 'salt', 'verification']
+        });
 };
 
 export const verifyAccount = async () => {
@@ -18,7 +21,10 @@ export const verifyAccount = async () => {
     ).unwrap();
     const account = await selectData(
         accounts,
-        'Select an account to verify...'
+        'Select an account to verify...',
+        {
+            omit: ['id', 'key', 'salt', 'verification']
+        }
     );
     if (!account) return backToMain('No account selected');
 
@@ -44,7 +50,10 @@ export const unverifyAccount = async () => {
     ).unwrap();
     const account = await selectData(
         accounts,
-        'Select an account to unverify...'
+        'Select an account to unverify...',
+        {
+            omit: ['id', 'key', 'salt', 'verification']
+        }
     );
     if (!account) return backToMain('No account selected');
 
@@ -106,7 +115,9 @@ export const createAccount = async () => {
         username,
         key: hash,
         salt,
-        verified: false
+        verified: false,
+        verification: '',
+        picture: '',
     });
 };
 
@@ -139,7 +150,10 @@ export const removeAdmin = async () => {
 
     const account = await selectData(
         admins,
-        'Select an account to remove admin'
+        'Select an account to remove admin',
+        {
+            omit: ['id', 'key', 'salt', 'verification']
+        }
     );
     if (!account) return backToMain('No account selected');
 

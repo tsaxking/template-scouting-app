@@ -14,13 +14,28 @@ import Table from 'cli-table';
  * @param {string} message
  * @returns {Promise<string>}
  */
-export const prompt = async (message: string): Promise<string> => {
+export const prompt = async (message: string): Promise<string> => {    
+    const stdin = process.stdin as unknown as NodeJS.ReadStream & {
+        off: (event: string, listener: (key: string) => void) => void;
+    };
+
+    // listen for ctrl c
+    stdin.resume();
+    stdin.setEncoding('utf8');
+    const onData = (key: string) => {
+        if (key === '\u0003') { // ctrl + c
+            process.exit();
+        }
+    };
+
+    stdin.on('data', onData);
     const res = await prompts({
         type: 'text',
         name: 'value',
         message: message
     });
 
+    stdin.off('data', onData);
     return res.value;
 };
 
@@ -42,6 +57,9 @@ export const repeatPrompt = async (
     allowBlank = false
 ): Promise<string> => {
     if (!original) original = message;
+
+
+
     const i = await prompt(message + ':');
 
     if (i === null) {
@@ -65,6 +83,8 @@ export const repeatPrompt = async (
             allowBlank
         );
     }
+
+
     return i;
 };
 
@@ -369,10 +389,21 @@ export const search = async <T extends string | Option>(
 
 export const selectTable = <T extends Record<string, unknown>>(
     message: string,
-    data: T[]
+    data: T[],
+    options?: {
+        omit?: (keyof T)[];
+        goBack?: (message: string) => void;
+        // exit?: boolean;
+        // return?: boolean;
+    }
 ) => {
-    return new Promise<T>((res, rej) => {
-        const headers = Object.keys(data[0]);
+    return new Promise<T | undefined>((res, rej) => {
+        if (!data.length) {
+            console.log('No data to select from');
+            return res(undefined);
+        }
+
+        const headers = Object.keys(data[0]).filter(h => !options?.omit?.includes(h));
 
         const stdin = process.stdin as unknown as NodeJS.ReadStream & {
             off: (event: string, listener: (key: string) => void) => void;
