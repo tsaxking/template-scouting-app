@@ -10,6 +10,7 @@ import { EventEmitter } from '../../../shared/event-emitter';
 import { getTemplateSync } from '../../utilities/files';
 import { ReadableStream } from 'stream/web';
 import { streamDelimiter } from '../../../shared/text';
+import { log } from 'console';
 
 /**
  * The event types for the stream
@@ -242,7 +243,7 @@ export class Res {
                                 ? await pipe(streamer[i])
                                 : streamer[i];
                             const buffer = new TextEncoder().encode(
-                                JSON.stringify(bigIntEncode(data)) + streamDelimiter
+                                JSON.stringify(data) + streamDelimiter
                             );
                             controller.enqueue(buffer);
                             setTimeout(() => send(i + 1), 100);
@@ -302,8 +303,11 @@ export class Res {
 
         streamer.on('data', chunk => {
             // writing = this.res.write()
+            // log(chunk);
+            const res = JSON.stringify(pipe ? pipe(chunk) : chunk) + streamDelimiter;
+            // log(res);
             this.res.write(
-                JSON.stringify(bigIntEncode(pipe ? pipe(chunk) : chunk)) + streamDelimiter
+                res
             );
         });
 

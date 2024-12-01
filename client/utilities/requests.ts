@@ -553,6 +553,7 @@ export class ServerRequest<T = unknown> {
                             // eslint-disable-next-line @typescript-eslint/no-explicit-any
                             const data = parser ? parser(chunk) : (chunk as any);
                             if (!data) continue;
+                            // console.log({ data });
                             emitter.emit('chunk', data);
                             output.push(data);
                         }

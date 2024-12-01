@@ -90,6 +90,8 @@ export namespace Permissions {
         }
     });
 
+    export type UniverseData = Data<typeof Universe>;
+
     export const Role = new Struct({
         database: DB,
         name: 'Role',
@@ -348,4 +350,12 @@ export namespace Permissions {
             if (!(await fn(account, roles)))
                 return res.sendCustomStatus(cantAccess(req));
         };
+
+    // export const emitToUniverse = async (
+    //     universe: UniverseData,
+    //     event: string,
+    //     ...data: Data<Struct<Blank, string>>[]
+    // ) => {
+
+    // };
 }

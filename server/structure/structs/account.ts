@@ -43,6 +43,15 @@ export namespace Account {
         }
     });
 
+    export const Admins = new Struct({
+        database: DB,
+        structure: {
+            accountId: 'text'
+        },
+        name: 'Admins',
+        frontend: false,
+    });
+
     const isSelf = (a1: AccountData, a2: AccountData) => a1.id === a2.id;
 
     Account.bypass(DataAction.Delete, isSelf);
@@ -841,6 +850,12 @@ export namespace Account {
 
             next();
         };
+
+    export const isAdmin = async (account: AccountData) => {
+        return attemptAsync(async () => {
+            return !!(await Admins.fromProperty('accountId', account.id, false)).unwrap()[0];
+        });
+    };
 }
 
 // TODO: Password reset api

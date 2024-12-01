@@ -4,6 +4,7 @@ import fs from 'fs';
 import {
     Data,
     DataVersion,
+    PartialStructable,
     Struct,
     Structable
 } from '../../server/structure/structs/struct';
@@ -370,9 +371,9 @@ export const dataSelectPipe = async (data: Data<Struct<Blank, string>>[]) => {
 };
 
 export const structActions: {
-    [key: string]: (struct: Struct<Blank, string>) => unknown;
+    [key: string]: <T extends Struct<Blank, string>>(struct: T, params?: Partial<Structable<T>>) => unknown;
 } = {
-    new: async struct => {
+    new: async (struct, additions) => {
         const properties = Object.entries(struct.data.structure);
 
         console.log(
@@ -395,6 +396,10 @@ export const structActions: {
 
         for (const p of properties) {
             const [key, type] = p;
+            if (additions && additions[key]) {
+                data[key] = additions[key];
+                continue;
+            }
             const res = await repeatPrompt(
                 `Value for ${key} (${type})`,
                 undefined,

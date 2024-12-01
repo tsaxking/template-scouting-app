@@ -258,6 +258,7 @@ type StructBuilder<T extends Blank, Name extends string> = {
         fn: (struct: Struct<T, Name>) => void;
         time: number;
     };
+    frontend?: boolean;
 };
 
 type Validator<T extends SQL_Type> = (data: TS_Type<T>) => boolean;
@@ -1618,6 +1619,7 @@ export class Struct<Structure extends Blank, Name extends string> {
         return attemptAsync(async () => {
             const { Permissions } = await import('./permissions');
             const { Session } = await import('./session');
+            const { Account } = await import('./account');
 
             const image = (await this.imagize()).unwrap();
             (await Struct.initImage(this, image)).unwrap();
@@ -1692,7 +1694,8 @@ export class Struct<Structure extends Blank, Name extends string> {
                     req
                 );
 
-            {
+            // if it's undefined, or true, this should run
+            if (this.data.frontend !== false) {
                 this.listen<{
                     name: string;
                     structure: Record<string, string>;
@@ -1826,22 +1829,24 @@ export class Struct<Structure extends Blank, Name extends string> {
                             );
                         }
 
-                        if (
-                            !this.bypasses
-                                .filter(b => b.permission === DataAction.Create)
-                                .some(bp => bp.fn(account))
-                        ) {
+                        if (!(await Account.isAdmin(account)).unwrap()) {
                             if (
-                                !Permissions.canDo(
-                                    roles,
-                                    this,
-                                    DataAction.Create
-                                ).unwrap()
+                                !this.bypasses
+                                    .filter(b => b.permission === DataAction.Create)
+                                    .some(bp => bp.fn(account))
                             ) {
-                                return res.sendStatus(
-                                    notPermittedStatus(req, 'create')
-                                );
-                            }
+                                if (
+                                    !Permissions.canDo(
+                                        roles,
+                                        this,
+                                        DataAction.Create
+                                    ).unwrap()
+                                ) {
+                                    return res.sendStatus(
+                                        notPermittedStatus(req, 'create')
+                                    );
+                                }
+                            } 
                         }
 
                         const n = (await this.new(req.body)).unwrap();
@@ -1929,6 +1934,9 @@ export class Struct<Structure extends Blank, Name extends string> {
                         if (bypasses) {
                             doBypass = bypasses.some(bp => bp.fn(account, n));
                         }
+                        if ((await Account.isAdmin(account)).unwrap()) {
+                            doBypass = true;
+                        }
 
                         if (doBypass) {
                             (await n.update(req.body)).unwrap();
@@ -2008,6 +2016,10 @@ export class Struct<Structure extends Blank, Name extends string> {
                         const n = (await this.fromId(req.body.id)).unwrap();
                         if (!n) return res.sendStatus(notFoundStatus(req));
 
+                        if ((await Account.isAdmin(account)).unwrap()) {
+                            return res.json(n.data);
+                        }
+
                         const roles = (
                             await Permissions.getRoles(account)
                         ).unwrap();
@@ -2043,6 +2055,16 @@ export class Struct<Structure extends Blank, Name extends string> {
                         await Session.getAccount(req.sessionId)
                     ).unwrap();
                     if (!account) return res.sendStatus(notSignedInStatus(req));
+
+                    if ((await Account.isAdmin(account)).unwrap()) {
+                        return res.stream<
+                            StructData<Structure, Name>
+                        >(
+                            this.all(true, false),
+                            data => data.data,
+                        );
+                    }
+
                     const roles = (
                         await Permissions.getRoles(account)
                     ).unwrap();
@@ -2139,6 +2161,18 @@ export class Struct<Structure extends Blank, Name extends string> {
                         ).unwrap();
                         if (!account)
                             return res.sendStatus(notSignedInStatus(req));
+
+                        if ((await Account.isAdmin(account)).unwrap()) {
+                            return res.stream<
+                                StructData<Structure, Name>
+                                >(this.fromProperty(
+                                    req.body.property as keyof Structure,
+                                    req.body.value,
+                                    true
+                                ), async data => data.data);
+                        }
+
+
                         const roles = (
                             await Permissions.getRoles(account)
                         ).unwrap();
@@ -2224,6 +2258,12 @@ export class Struct<Structure extends Blank, Name extends string> {
                         await Session.getAccount(req.sessionId)
                     ).unwrap();
                     if (!account) return res.sendStatus(notSignedInStatus(req));
+
+                    if ((await Account.isAdmin(account)).unwrap()) {
+                        return res.stream<
+                            StructData<Structure, Name>
+                            >(this.archived(true), async data => data.data);
+                    }
 
                     const roles = (
                         await Permissions.getRoles(account)
@@ -2316,6 +2356,21 @@ export class Struct<Structure extends Blank, Name extends string> {
                         if (!account)
                             return res.sendStatus(notSignedInStatus(req));
 
+                        if ((await Account.isAdmin(account)).unwrap()) {
+                            const n = (await this.fromId(req.body.id)).unwrap();
+                            if (!n) return res.sendStatus(notFoundStatus(req));
+
+                            const versions = (await n.getVersionHistory()).unwrap();
+
+                            if (versions === 'not-enabled') {
+                                return res.sendStatus(
+                                    versionHistoryNotEnabledStatus(req)
+                                );
+                            }
+
+                            return res.json(versions.map(d => d.data));
+                        }
+
                         const n = (await this.fromId(req.body.id)).unwrap();
                         if (!n) return res.sendStatus(notFoundStatus(req));
 
@@ -2380,29 +2435,32 @@ export class Struct<Structure extends Blank, Name extends string> {
                         const n = (await this.fromId(req.body.id)).unwrap();
                         if (!n) return res.sendStatus(notFoundStatus(req));
 
-                        const roles = (
-                            await Permissions.getRoles(account)
-                        ).unwrap();
 
-                        if (
-                            !this.bypasses
-                                .filter(
-                                    bp =>
-                                        bp.permission ===
-                                        DataAction.RestoreVersion
-                                )
-                                .some(bp => bp.fn(account, n))
-                        ) {
-                            const doable = Permissions.canDo(
-                                roles,
-                                n.struct,
-                                DataAction.RestoreVersion
-                            );
 
-                            if (!doable)
-                                return res.sendStatus(
-                                    notPermittedStatus(req, 'version restore')
+                        if (!(await Account.isAdmin(account)).unwrap()) {
+                            const roles = (
+                                await Permissions.getRoles(account)
+                            ).unwrap();
+                            if (
+                                !this.bypasses
+                                    .filter(
+                                        bp =>
+                                            bp.permission ===
+                                            DataAction.RestoreVersion
+                                    )
+                                    .some(bp => bp.fn(account, n))
+                            ) {
+                                const doable = Permissions.canDo(
+                                    roles,
+                                    n.struct,
+                                    DataAction.RestoreVersion
                                 );
+
+                                if (!doable)
+                                    return res.sendStatus(
+                                        notPermittedStatus(req, 'version restore')
+                                    );
+                            }
                         }
 
                         const versions = (await n.getVersionHistory()).unwrap();
@@ -2467,29 +2525,31 @@ export class Struct<Structure extends Blank, Name extends string> {
                             );
                         }
 
-                        const roles = (
-                            await Permissions.getRoles(account)
-                        ).unwrap();
+                        if (!(await Account.isAdmin(account)).unwrap()) {
+                            const roles = (
+                                await Permissions.getRoles(account)
+                            ).unwrap();
 
-                        if (
-                            !this.bypasses
-                                .filter(
-                                    bp =>
-                                        bp.permission ===
-                                        DataAction.DeleteVersion
-                                )
-                                .some(bp => bp.fn(account, n))
-                        ) {
-                            const doable = Permissions.canDo(
-                                roles,
-                                n.struct,
-                                DataAction.DeleteVersion
-                            );
-
-                            if (doable)
-                                return res.sendStatus(
-                                    notPermittedStatus(req, 'delete version')
+                            if (
+                                !this.bypasses
+                                    .filter(
+                                        bp =>
+                                            bp.permission ===
+                                            DataAction.DeleteVersion
+                                    )
+                                    .some(bp => bp.fn(account, n))
+                            ) {
+                                const doable = Permissions.canDo(
+                                    roles,
+                                    n.struct,
+                                    DataAction.DeleteVersion
                                 );
+
+                                if (doable)
+                                    return res.sendStatus(
+                                        notPermittedStatus(req, 'delete version')
+                                    );
+                            }
                         }
 
                         const version = versions.find(
@@ -2542,30 +2602,32 @@ export class Struct<Structure extends Blank, Name extends string> {
                         const n = (await this.fromId(req.body.id)).unwrap();
                         if (!n) return res.sendStatus(notFoundStatus(req));
 
-                        const roles = (
-                            await Permissions.getRoles(account)
-                        ).unwrap();
+                        if ((await Account.isAdmin(account)).unwrap()) {
+                            const roles = (
+                                await Permissions.getRoles(account)
+                            ).unwrap();
 
-                        if (
-                            !this.bypasses
-                                .filter(
-                                    bp => bp.permission === DataAction.Delete
-                                )
-                                .some(bp => bp.fn(account, n))
-                        ) {
                             if (
-                                !Permissions.canDo(
-                                    roles,
-                                    this,
-                                    DataAction.Delete
-                                ).unwrap()
-                            )
-                                return res.sendStatus(
-                                    notPermittedStatus(req, 'delete')
-                                );
+                                !this.bypasses
+                                    .filter(
+                                        bp => bp.permission === DataAction.Delete
+                                    )
+                                    .some(bp => bp.fn(account, n))
+                            ) {
+                                if (
+                                    !Permissions.canDo(
+                                        roles,
+                                        this,
+                                        DataAction.Delete
+                                    ).unwrap()
+                                )
+                                    return res.sendStatus(
+                                        notPermittedStatus(req, 'delete')
+                                    );
+                            }
                         }
 
-                        n.delete();
+                        (await n.delete()).unwrap();
 
                         res.sendStatus(
                             new Status(
@@ -2607,28 +2669,30 @@ export class Struct<Structure extends Blank, Name extends string> {
                         const n = (await this.fromId(req.body.id)).unwrap();
                         if (!n) return res.sendStatus(notFoundStatus(req));
 
-                        const roles = (
-                            await Permissions.getRoles(account)
-                        ).unwrap();
+                        if ((await Account.isAdmin(account)).unwrap()) {
+                            const roles = (
+                                await Permissions.getRoles(account)
+                            ).unwrap();
 
-                        if (
-                            !this.bypasses.filter(
-                                bp => bp.permission === DataAction.Archive
-                            )
-                        ) {
                             if (
-                                !Permissions.canDo(
-                                    roles,
-                                    this,
-                                    DataAction.Archive
-                                ).unwrap()
-                            )
-                                return res.sendStatus(
-                                    notPermittedStatus(req, 'archive')
-                                );
+                                !this.bypasses.filter(
+                                    bp => bp.permission === DataAction.Archive
+                                )
+                            ) {
+                                if (
+                                    !Permissions.canDo(
+                                        roles,
+                                        this,
+                                        DataAction.Archive
+                                    ).unwrap()
+                                )
+                                    return res.sendStatus(
+                                        notPermittedStatus(req, 'archive')
+                                    );
+                            }
                         }
 
-                        n.setArchive(req.body.archive);
+                        (await n.setArchive(req.body.archive)).unwrap();
 
                         res.sendStatus(
                             new Status(
