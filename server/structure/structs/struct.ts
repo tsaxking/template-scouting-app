@@ -35,29 +35,13 @@ import {
     TS_TypeStr,
     TS_TypeActual,
     GlobalCols,
-    Blank
+    Blank,
+    PropertyAction,
+    DataAction,
 } from '../../../shared/struct';
 import { Loop } from '../../../shared/loop';
 import { log } from '../../utilities/terminal-logging';
 
-export enum PropertyAction {
-    Read = 'read',
-    Update = 'update',
-
-    // anyone who can read version history or archives can read only the properties that they can read using their respective read permission
-    ReadVersionHistory = 'read-version-history',
-    ReadArchive = 'read-archive'
-}
-
-// these are not property specific
-export enum DataAction {
-    Create = 'create',
-    Delete = 'delete',
-    Archive = 'archive',
-    RestoreArchive = 'restore-archive',
-    RestoreVersion = 'restore-version',
-    DeleteVersion = 'delete-version'
-}
 
 /**
  * Prove that the data matches the structure
@@ -3293,6 +3277,10 @@ export class Struct<Structure extends Blank, Name extends string> {
         const stream = this.all(true);
         stream.pipe(fn);
     }
+
+    // TODO: What would a migration look like?
+    // Is this how they should be handled instead of in a version?
+    migration() {}
 }
 
 type Account = Data<

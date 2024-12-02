@@ -23,11 +23,9 @@ import {
     Data,
     DataError,
     PartialStructable,
-    PropertyAction,
-    DataAction
 } from './struct';
 import { encode, decode } from '../../../shared/text';
-import { Blank } from '../../../shared/struct';
+import { Blank, PropertyAction, DataAction } from '../../../shared/struct';
 import { ServerFunction } from '../app/app';
 import { Status } from '../../utilities/status';
 import { Req } from '../app/req';

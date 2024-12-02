@@ -1,4 +1,4 @@
-import { Data, Struct, StructData, DataAction, PropertyAction } from './struct';
+import { Data, Struct, StructData } from './struct';
 import { DB } from '../../utilities/database';
 import {
     attempt,
@@ -18,6 +18,7 @@ import { Session } from './session';
 import { uuid } from '../../utilities/uuid';
 import { Permissions } from './permissions';
 import env from '../../utilities/env';
+import { PropertyAction, DataAction } from '../../../shared/struct';
 
 export namespace Account {
     export const Account = new Struct({

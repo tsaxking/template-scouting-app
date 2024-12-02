@@ -1,5 +1,6 @@
 import { DB } from '../../utilities/database';
-import { DataAction, PropertyAction, Struct } from './struct';
+import { Struct } from './struct';
+import { PropertyAction, DataAction } from '../../../shared/struct';
 
 export namespace Testing {
     export const TestStruct = new Struct({

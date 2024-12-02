@@ -66,4 +66,8 @@ export namespace Permissions {
             (await roleAccount.delete()).unwrap();
         });
     };
+
+    export const givePermissions = async (role: RoleData, permissions: unknown[]) => {
+        return attemptAsync(async () => {});
+    };
 }
