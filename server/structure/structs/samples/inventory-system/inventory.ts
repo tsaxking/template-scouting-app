@@ -82,7 +82,6 @@ export namespace Inventory {
         });
     };
 
-
     // export const createItems = async (data: BasicStructable<typeof Item>, num: number) => {
     //     return attemptAsync(async () => {
     //         const items = await Promise.all(

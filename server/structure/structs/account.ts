@@ -32,7 +32,7 @@ export namespace Account {
             email: 'text',
             picture: 'text',
             verified: 'boolean',
-            verification: 'text',
+            verification: 'text'
             // phoneNumber: 'text'
         },
         name: 'Account',
@@ -43,7 +43,6 @@ export namespace Account {
             lastName: val => String(val).length > 0
         }
     });
-
 
     // these will bypass all permissions, bypasses, and everything else that would normally be applied to data, pages, etc.
     // There will be no front end for these structs
@@ -390,7 +389,7 @@ export namespace Account {
                     lastName,
                     picture,
                     verified: false,
-                    verification,
+                    verification
                 })
             ).unwrap();
 

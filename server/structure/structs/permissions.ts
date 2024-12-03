@@ -18,12 +18,7 @@ import {
 } from '../../../shared/check';
 import { DB } from '../../utilities/database';
 import { Account } from './account';
-import {
-    Struct,
-    Data,
-    DataError,
-    PartialStructable,
-} from './struct';
+import { Struct, Data, DataError, PartialStructable } from './struct';
 import { encode, decode } from '../../../shared/text';
 import { Blank, PropertyAction, DataAction } from '../../../shared/struct';
 import { ServerFunction } from '../app/app';
@@ -74,9 +69,9 @@ export namespace Permissions {
             public readonly property?: string // If property is undefined, it means the permission is for the whole struct
         ) {}
 
-        toString() {
-            return `${this.permission}: ${this.struct}.${this.property}`;
-        }
+        // toString() {
+        //     return `${this.permission}: ${this.struct}.${this.property}`;
+        // }
     }
 
     export const Universe = new Struct({
@@ -100,7 +95,7 @@ export namespace Permissions {
             universe: 'text',
             permissions: 'text', // DataPermission[]
             description: 'text',
-            linkAccess: 'text', // used on the front end to show/hide links
+            linkAccess: 'text' // used on the front end to show/hide links
         }
     });
 
@@ -109,9 +104,9 @@ export namespace Permissions {
         database: DB,
         structure: {
             accoutnId: 'text',
-            link: 'text',
+            link: 'text'
         },
-        name: 'PageAccess',
+        name: 'PageAccess'
     });
 
     export type RoleData = Data<typeof Role>;

@@ -194,13 +194,7 @@ export const returnType = (str: string, type: SQL_Type) => {
 
 export enum PropertyAction {
     Read = 'read',
-    Update = 'update',
-
-    // anyone who can read version history or archives can read only the properties that they can read using their respective read permission
-    // So are these even necessary?
-    // Or are these really like "Are you allowed to see the version history/archives of the data"
-    ReadVersionHistory = 'read-version-history',
-    ReadArchive = 'read-archive'
+    Update = 'update'
 }
 
 // these are not property specific
@@ -210,5 +204,7 @@ export enum DataAction {
     Archive = 'archive',
     RestoreArchive = 'restore-archive',
     RestoreVersion = 'restore-version',
-    DeleteVersion = 'delete-version'
+    DeleteVersion = 'delete-version',
+    ReadVersionHistory = 'read-version-history',
+    ReadArchive = 'read-archive'
 }

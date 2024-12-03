@@ -1,5 +1,5 @@
-import { DB } from "../../../../utilities/database";
-import { Struct } from "../../struct";
+import { DB } from '../../../../utilities/database';
+import { Struct } from '../../struct';
 import Filter from 'bad-words';
 
 export namespace Potato {
@@ -8,15 +8,15 @@ export namespace Potato {
         structure: {
             accountId: 'text',
             level: 'integer',
-            name: 'text',
+            name: 'text'
         },
         sample: true,
         database: DB,
         validators: {
-            name: (name) => {
+            name: name => {
                 const f = new Filter();
                 return f.isProfane(String(name));
-            },
+            }
         }
     });
 }

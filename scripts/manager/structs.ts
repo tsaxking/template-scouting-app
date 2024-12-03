@@ -63,7 +63,9 @@ export const openStructs = () => {
             return structs;
         };
 
-        const res = await readDir(path.resolve(__root, 'server/structure/structs'));
+        const res = await readDir(
+            path.resolve(__root, 'server/structure/structs')
+        );
 
         // console.log(res);
         // throw new Error('Close');
@@ -86,7 +88,7 @@ export const selectStruct = async (
         {
             return: true,
             clear: true,
-            exit: true,
+            exit: true
         }
     );
 };
@@ -103,7 +105,7 @@ export const selectData = async <T extends Data<Struct<Blank, string>>>(
             message || 'Select a data',
             data.map(d => d.data),
             {
-                omit: options?.omit as string[],
+                omit: options?.omit as string[]
                 // return: true,
                 // exit: true,
             }
@@ -411,7 +413,10 @@ export const dataSelectPipe = async (data: Data<Struct<Blank, string>>[]) => {
 };
 
 export const structActions = {
-    new: async  <T extends Struct<Blank, string>>(struct:T , additions?: Partial<Structable<T>>) => {
+    new: async <T extends Struct<Blank, string>>(
+        struct: T,
+        additions?: Partial<Structable<T>>
+    ) => {
         const properties = Object.entries(struct.data.structure);
 
         console.log(
@@ -561,7 +566,9 @@ export const selectStructAction = async (struct: Struct<Blank, string>) => {
     if (selected) return selected(struct);
 };
 
-export const struct = async (): Promise<((...data: unknown[]) => unknown) | void> => {
+export const struct = async (): Promise<
+    ((...data: unknown[]) => unknown) | void
+> => {
     const selected = await selectStruct('Select a struct');
     return selectStructAction(selected);
 };
@@ -576,6 +583,6 @@ export const structs = [
     {
         icon: '🏗️',
         description: 'Manage structures',
-        value: struct,
+        value: struct
     }
 ];

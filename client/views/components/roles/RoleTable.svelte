@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { Permissions } from "../../../models/permissions";
-import RoleEditor from "./RoleEditor.svelte";
-import Modal from "../bootstrap/Modal.svelte";
+    import { Permissions } from '../../../models/permissions';
+    import RoleEditor from './RoleEditor.svelte';
+    import Modal from '../bootstrap/Modal.svelte';
 
     const rolesStore = Permissions.Role.all(true);
 
@@ -21,9 +21,11 @@ import Modal from "../bootstrap/Modal.svelte";
     </thead>
     <tbody>
         {#each roles as role (role.id)}
-            <tr on:click={() => {
-                selected = role;
-            }}>
+            <tr
+                on:click="{() => {
+                    selected = role;
+                }}"
+            >
                 <td>{role.data.name}</td>
                 <td>{role.data.description}</td>
             </tr>
@@ -31,11 +33,10 @@ import Modal from "../bootstrap/Modal.svelte";
     </tbody>
 </table>
 
-{#if selected} 
-    <Modal 
-        bind:show={showEditor}
-        title={'Role: ' + selected.data.name} 
-    >
-        <RoleEditor role={selected} />
+{#if selected}
+    <Modal
+        title="{'Role: ' + selected.data.name}"
+        bind:show="{showEditor}">
+        <RoleEditor role="{selected}" />
     </Modal>
 {/if}

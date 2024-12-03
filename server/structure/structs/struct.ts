@@ -37,11 +37,11 @@ import {
     GlobalCols,
     Blank,
     PropertyAction,
-    DataAction,
+    DataAction
 } from '../../../shared/struct';
 import { Loop } from '../../../shared/loop';
 import { log } from '../../utilities/terminal-logging';
-
+import { Version } from '../../utilities/database/versions';
 
 /**
  * Prove that the data matches the structure
@@ -176,6 +176,13 @@ export class FatalDataError extends DataError {
     }
 }
 
+export class StructMigrationError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = 'StructMigrationError';
+    }
+}
+
 /*
 Questions:
 - Say I want to emit only to a specific room, how would this be configured?
@@ -247,9 +254,9 @@ type StructBuilder<T extends Blank, Name extends string> = {
 
 type Validator<T extends SQL_Type> = (data: TS_Type<T>) => boolean;
 
-type StructImage = {
+type StructImage<T extends Blank> = {
     name: string;
-    structure: Blank;
+    structure: T;
     defaults?: Structable<Struct<Blank, string>>[];
     versionHistory?: {
         type: 'days' | 'versions';
@@ -1193,7 +1200,7 @@ export class Struct<Structure extends Blank, Name extends string> {
             // TODO: Type checking for image
             const { name, defaults, structure, versionHistory } = JSON.parse(
                 decode(image)
-            ) as StructImage;
+            ) as StructImage<(typeof struct)['data']['structure']>;
 
             const { database } = struct.data;
 
@@ -2270,7 +2277,7 @@ export class Struct<Structure extends Blank, Name extends string> {
 
                     const bypasses = this.bypasses.filter(
                         b =>
-                            b.permission === PropertyAction.ReadArchive ||
+                            b.permission === DataAction.ReadArchive ||
                             b.permission === '*'
                     );
 
@@ -2330,7 +2337,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                                 await Permissions.filterAction(
                                     roles,
                                     [data],
-                                    PropertyAction.ReadArchive
+                                    PropertyAction.Read
                                 )
                             ).unwrap();
                             return d;
@@ -2380,7 +2387,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                                 .filter(
                                     b =>
                                         b.permission ===
-                                            PropertyAction.ReadVersionHistory ||
+                                            DataAction.ReadVersionHistory ||
                                         b.permission === '*'
                                 )
                                 .some(bp => bp.fn(account, n))
@@ -2393,7 +2400,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                                     await Permissions.filterAction(
                                         roles,
                                         [n],
-                                        PropertyAction.ReadVersionHistory
+                                        PropertyAction.Read
                                     )
                                 ).unwrap().length
                             ) {
@@ -2821,8 +2828,8 @@ export class Struct<Structure extends Blank, Name extends string> {
         property: Property,
         value: TS_Type<Structure[Property]>,
         asStream: true // filter?: (
-        // ) => boolean | Promise<boolean>
-    ) //     data: StructData<Structure, Name>
+        //     data: StructData<Structure, Name>
+    ) // ) => boolean | Promise<boolean>
     : StructStream<Structure, Name>;
     fromProperty<Property extends keyof Structure>(
         property: Property,
@@ -2877,8 +2884,8 @@ export class Struct<Structure extends Blank, Name extends string> {
     all(
         asStream: true,
         includeArchived?: boolean // filter?: (
-        // ) => boolean | Promise<boolean>
-    ) //     data: StructData<Structure, Name>
+        //     data: StructData<Structure, Name>
+    ) // ) => boolean | Promise<boolean>
     : StructStream<Structure, Name>;
     all(
         asStream: false,
@@ -2934,8 +2941,8 @@ export class Struct<Structure extends Blank, Name extends string> {
     fromUniverse(
         universe: string,
         asStream: true // filter?: (
-        // ) => boolean | Promise<boolean>
-    ) //     data: StructData<Structure, Name>
+        //     data: StructData<Structure, Name>
+    ) // ) => boolean | Promise<boolean>
     : StructStream<Structure, Name>;
     fromUniverse(
         universe: string,
@@ -2987,8 +2994,8 @@ export class Struct<Structure extends Blank, Name extends string> {
      */
     archived(
         asStream: true // filter?: (
-        // ) => boolean | Promise<boolean>
-    ) //     data: StructData<Structure, Name>
+        //     data: StructData<Structure, Name>
+    ) // ) => boolean | Promise<boolean>
     : StructStream<Structure, Name>;
     archived(asStream: false): Promise<Result<StructData<Structure, Name>[]>>;
     archived(
@@ -3173,7 +3180,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                     structure,
                     name,
                     defaults
-                } as StructImage)
+                } as StructImage<Structure>)
             );
 
             await fs.promises.mkdir(
@@ -3182,14 +3189,18 @@ export class Struct<Structure extends Blank, Name extends string> {
             );
 
             const exists = fs.existsSync(
-                path.resolve(__dirname, `./struct-images/${this.name}.imagev1`)
+                path.resolve(
+                    __dirname,
+                    `./struct-images/${this.name}[init].imagev1`
+                )
             );
 
             if (!exists) {
+                // if it doesn't exist, assume this is the initial state of the struct with no migrations
                 await fs.promises.writeFile(
                     path.resolve(
                         __dirname,
-                        `./struct-images/${this.name}.imagev1`
+                        `./struct-images/${this.name}[init].imagev1`
                     ),
                     image
                 );
@@ -3278,10 +3289,329 @@ export class Struct<Structure extends Blank, Name extends string> {
         stream.pipe(fn);
     }
 
-    // TODO: What would a migration look like?
-    // Is this how they should be handled instead of in a version?
-    migration() {}
+    createMigration<From extends Blank, To extends Blank>(
+        from: Migration<From>,
+        to: Migration<To>,
+        fn: (
+            from: Structable<Struct<From, Name>>
+        ) => Structable<Struct<To, Name>>
+    ) {
+        if (this.built) throw new StructMigrationError(`Struct ${this.name} was built before a migration. Migrations are designed to be run on an unbuilt struct.`);
+        // create an image file for the new schema
+
+        // check to see if migration image exists
+        // if so, check schema, if they don't match prompt user to overwrite
+        return attemptAsync(async () => {
+            const version = (await this.database.getVersion()).unwrap();
+            if (version.join('.') !== from.dbVersion.join('.')) {
+                throw new StructMigrationError(`Database version does not match migration "from" version`);
+            }
+
+            if (Version.compare(version, to.dbVersion) == 'equal') {
+                // this is where we need to look at the schemas and see if there are any inconsistencies
+                // If the version is equal, and the schemas are different, we need to prompt the user to destroy the database and restore the correct backup
+                return;
+            }
+
+            {
+                const current = (await this.database.unsafe.get<{
+                    name: string;
+                    schema: string;
+                }>(Query.build(`
+                    SELECT * FROM Structs
+                    WHERE name = :name;
+                    `, {
+                        name: this.name,
+                    }))).unwrap();
+                
+                if (!current) throw new StructMigrationError(`Struct ${this.name} does not exist in database`);
+
+                const noMatch = new StructMigrationError(`Struct ${this.name} schema does not match migration schema`);
+
+                const currentSchema = JSON.parse(current.schema) as Blank;
+
+                if (!Object.keys(currentSchema).every(k => Object.keys(from.schema).includes(k))) {
+                    throw noMatch;
+                }
+
+                if (!Object.keys(from.schema).every(k => Object.keys(currentSchema).includes(k))) {
+                    throw noMatch;
+                }
+
+                if (!Object.entries(currentSchema).every(([k, v]) => from.schema[k] === v)) {
+                    throw noMatch;
+                }
+            }
+
+            const all = (
+                await this.database.unsafe.all<
+                    Structable<Struct<From, Name>>
+                >(
+                    Query.build(`
+                SELECT * FROM ${this.name};
+            `)
+                )
+            ).unwrap();
+
+            const versionHistory = (
+                await this.database.unsafe.all<
+                    Structable<
+                        Struct<
+                            From & {
+                                vhId: string;
+                                vhCreated: string;
+                            },
+                            Name
+                        >
+                    >
+                >(
+                    Query.build(`
+                SELECT * FROM ${this.name}History;
+            `)
+                )
+            ).unwrap();
+
+            const revert = async () => {
+                await this.database.unsafe.run(
+                    Query.build(`
+                    DROP TABLE ${this.name};
+                    DROP TABLE ${this.name}History;
+
+                    CREATE TABLE IF NOT EXISTS ${this.name} (
+                        id TEXT PRIMARY KEY,
+                        created TEXT,
+                        updated TEXT,
+                        archived BOOLEAN,
+                        lifetime INTEGER,
+                        universes TEXT,
+                        ${Object.entries(from.schema)
+                            .map(([k, v]) => `${k} ${v}`)
+                            .join(', ')}
+                    );
+
+                    CREATE TABLE IF NOT EXISTS ${this.name}History (
+                        id TEXT PRIMARY KEY,
+                        created TEXT,
+                        updated TEXT,
+                        archived BOOLEAN,
+                        lifetime INTEGER,
+                        universes TEXT,
+                        vhId TEXT,
+                        vhCreated TEXT,
+                        ${Object.entries(from.schema)
+                            .map(([k, v]) => `${k} ${v}`)
+                            .join(', ')}
+                    );
+                `)
+                );
+
+                await Promise.all(
+                    all.map(async data => {
+                        if (!prove(data, to.schema).unwrap())
+                            throw new StructMigrationError(
+                                `Failed to revert. Data from ${this.name} does not match from schema`
+                            );
+
+                        const res = fn(data);
+                        if (!prove(res, from.schema).unwrap())
+                            throw new StructMigrationError(
+                                `Failed to revert. Data from migration does not match to schema`
+                            );
+
+                        await this.database.unsafe.run(
+                            Query.build(
+                                `
+                        INSERT INTO ${this.name} (${Object.keys(res).join(', ')})
+                        VALUES (${Object.keys(res)
+                            .map(k => `:${k}`)
+                            .join(', ')})
+                    `,
+                                res
+                            )
+                        );
+                    })
+                );
+
+                await Promise.all(
+                    versionHistory.map(async data => {
+                        if (
+                            !prove(data, {
+                                ...to.schema,
+                                vhId: 'text',
+                                vhCreated: 'text'
+                            }).unwrap()
+                        )
+                            throw new StructMigrationError(
+                                `Failed to revert. Data from ${this.name}History does not match from schema`
+                            );
+
+                        const res = fn(data);
+                        // for prove function to work
+                        delete res.vhId;
+                        delete res.vhCreated;
+                        if (!prove(res, from.schema).unwrap())
+                            throw new StructMigrationError(
+                                `Failed to revert. Data from migration does not match to schema`
+                            );
+
+                        Object.assign(res, {
+                            vhId: data.vhId,
+                            vhCreated: data.vhCreated
+                        });
+
+                        (
+                            await this.database.unsafe.run(
+                                Query.build(
+                                    `
+                        INSERT INTO ${this.name}History (${Object.keys(res).join(', ')})
+                        VALUES (${Object.keys(res)
+                            .map(k => `:${k}`)
+                            .join(', ')})
+                    `,
+                                    res
+                                )
+                            )
+                        ).unwrap();
+                    })
+                );
+
+                (await this.database.unsafe.run(Query.build(`
+                    UPDATE Structs
+                    SET schema = :schema
+                    WHERE name = :name;
+                `, {
+                    schema: JSON.stringify(from.schema),
+                    name: this.name
+                }))).unwrap();
+            };
+            try {
+                (
+                    await this.database.unsafe.run(
+                        Query.build(`
+                    DROP TABLE ${this.name};
+
+                    CREATE TABLE IF NOT EXISTS ${this.name} (
+                        id TEXT PRIMARY KEY,
+                        created TEXT,
+                        updated TEXT,
+                        archived BOOLEAN,
+                        lifetime INTEGER,
+                        universes TEXT,
+                        ${Object.entries(to.schema)
+                            .map(([k, v]) => `${k} ${v}`)
+                            .join(', ')}
+                    );
+
+                    DROP TABLE ${this.name}History;
+
+                    CREATE TABLE IF NOT EXISTS ${this.name}History (
+                        id TEXT PRIMARY KEY,
+                        created TEXT,
+                        updated TEXT,
+                        archived BOOLEAN,
+                        lifetime INTEGER,
+                        universes TEXT,
+                        vhId TEXT,
+                        vhCreated TEXT,
+                        ${Object.entries(to.schema)
+                            .map(([k, v]) => `${k} ${v}`)
+                            .join(', ')}
+                    );
+                `)
+                    )
+                ).unwrap();
+
+                await Promise.all(
+                    all.map(async data => {
+                        if (!prove(data, from.schema).unwrap())
+                            throw new StructMigrationError(
+                                `Data from ${this.name} does not match from schema`
+                            );
+
+                        const res = fn(data);
+                        if (!prove(res, to.schema).unwrap())
+                            throw new StructMigrationError(
+                                `Data from migration does not match to schema`
+                            );
+
+                        await this.database.unsafe.run(
+                            Query.build(
+                                `
+                        INSERT INTO ${this.name} (${Object.keys(res).join(', ')})
+                        VALUES (${Object.keys(res)
+                            .map(k => `:${k}`)
+                            .join(', ')})
+                        `,
+                                res
+                            )
+                        );
+                    })
+                );
+
+                await Promise.all(
+                    versionHistory.map(async data => {
+                        if (
+                            !prove(data, {
+                                ...from.schema,
+                                vhId: 'text',
+                                vhCreated: 'text'
+                            }).unwrap()
+                        )
+                            throw new StructMigrationError(
+                                `Data from ${this.name}History does not match from schema`
+                            );
+
+                        const res = fn(data);
+                        // for prove function to work
+                        delete res.vhId;
+                        delete res.vhCreated;
+                        if (!prove(res, to.schema).unwrap())
+                            throw new StructMigrationError(
+                                `Data from migration does not match to schema`
+                            );
+
+                        Object.assign(res, {
+                            vhId: data.vhId,
+                            vhCreated: data.vhCreated
+                        });
+
+                        (
+                            await this.database.unsafe.run(
+                                Query.build(
+                                    `
+                        INSERT INTO ${this.name}History (${Object.keys(res).join(', ')})
+                        VALUES (${Object.keys(res)
+                            .map(k => `:${k}`)
+                            .join(', ')})
+                    `,
+                                    res
+                                )
+                            )
+                        ).unwrap();
+                    })
+                );
+
+                (await this.database.unsafe.run(Query.build(`
+                    UPDATE Structs
+                    SET schema = :schema
+                    WHERE name = :name;
+                `, {
+                    schema: JSON.stringify(to.schema),
+                    name: this.name
+                }))).unwrap();
+            } catch (error) {
+                await revert();
+                throw error;
+            }
+        });
+    }
 }
+
+type Migration<T extends Blank> = {
+    dbVersion: [number, number, number];
+    schema: T;
+};
+
 
 type Account = Data<
     Struct<

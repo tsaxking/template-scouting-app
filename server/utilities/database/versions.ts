@@ -6,6 +6,13 @@ import path from 'path';
 import { __root } from '../env';
 import { Blank } from '../../../shared/struct';
 
+export class VersionError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = 'VersionError';
+    }
+}
+
 /*
 After a version change, the database will validate the data in the database to ensure
 the schema for a struct is valid.
@@ -32,14 +39,25 @@ export class Version {
     // TODO: Set up cache
     // static readonly all: Version[] = [];
 
+    public readonly update: (database: Database) => Promise<void>;
+
     constructor(
         public readonly description: string,
+        // version the database is going to
         public readonly version: [number, number, number],
-        public readonly update: (database: Database) => Promise<void>,
-        public readonly newSchemas: {
-            [table: string]: Blank;
-        } = {}
-    ) {}
+        update: (database: Database) => Promise<void>
+    ) {
+        this.update = async (db) => {
+            const version = (await db.getVersion()).unwrap();
+            if (Version.compare(version, this.version) === 'greater') {
+                throw new VersionError(
+                    `Database version is greater than the version being updated to`
+                );
+            }
+
+            await update(db);
+        };
+    }
 
     get major() {
         return this.version[0];

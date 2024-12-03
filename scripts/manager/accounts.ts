@@ -9,10 +9,9 @@ import { checkStrType } from '../../shared/struct';
 export const selectAccount = async () => {
     const accounts = (await Account.Account.all(false)).unwrap();
 
-    return selectData(accounts, 'Select an account...',
-        {
-            omit: ['id', 'key', 'salt', 'verification']
-        });
+    return selectData(accounts, 'Select an account...', {
+        omit: ['id', 'key', 'salt', 'verification']
+    });
 };
 
 export const verifyAccount = async () => {
@@ -117,7 +116,7 @@ export const createAccount = async () => {
         salt,
         verified: false,
         verification: '',
-        picture: '',
+        picture: ''
     });
 };
 

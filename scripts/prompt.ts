@@ -14,7 +14,7 @@ import Table from 'cli-table';
  * @param {string} message
  * @returns {Promise<string>}
  */
-export const prompt = async (message: string): Promise<string> => {    
+export const prompt = async (message: string): Promise<string> => {
     const stdin = process.stdin as unknown as NodeJS.ReadStream & {
         off: (event: string, listener: (key: string) => void) => void;
     };
@@ -23,7 +23,8 @@ export const prompt = async (message: string): Promise<string> => {
     stdin.resume();
     stdin.setEncoding('utf8');
     const onData = (key: string) => {
-        if (key === '\u0003') { // ctrl + c
+        if (key === '\u0003') {
+            // ctrl + c
             process.exit();
         }
     };
@@ -58,8 +59,6 @@ export const repeatPrompt = async (
 ): Promise<string> => {
     if (!original) original = message;
 
-
-
     const i = await prompt(message + ':');
 
     if (i === null) {
@@ -83,7 +82,6 @@ export const repeatPrompt = async (
             allowBlank
         );
     }
-
 
     return i;
 };
@@ -403,7 +401,9 @@ export const selectTable = <T extends Record<string, unknown>>(
             return res(undefined);
         }
 
-        const headers = Object.keys(data[0]).filter(h => !options?.omit?.includes(h));
+        const headers = Object.keys(data[0]).filter(
+            h => !options?.omit?.includes(h)
+        );
 
         const stdin = process.stdin as unknown as NodeJS.ReadStream & {
             off: (event: string, listener: (key: string) => void) => void;
