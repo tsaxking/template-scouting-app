@@ -7,7 +7,7 @@ import { selectData, structActions } from './structs';
 import { selectAccount } from './accounts';
 
 export const createRole = async () => {
-    return structActions.create(Permissions.Role);
+    return structActions.new(Permissions.Role);
 };
 
 export const selectRole = async () => {

@@ -6,7 +6,7 @@ import { confirm } from '../prompt';
 import { selectData, structActions } from './structs';
 
 const createUniverse = async () => {
-    return structActions.create(Permissions.Universe);
+    return structActions.new(Permissions.Universe);
 };
 
 const deleteUniverse = async () => {

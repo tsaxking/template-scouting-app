@@ -2828,8 +2828,8 @@ export class Struct<Structure extends Blank, Name extends string> {
         property: Property,
         value: TS_Type<Structure[Property]>,
         asStream: true // filter?: (
-        //     data: StructData<Structure, Name>
-    ) // ) => boolean | Promise<boolean>
+        // ) => boolean | Promise<boolean>
+    ) //     data: StructData<Structure, Name>
     : StructStream<Structure, Name>;
     fromProperty<Property extends keyof Structure>(
         property: Property,
@@ -2884,8 +2884,8 @@ export class Struct<Structure extends Blank, Name extends string> {
     all(
         asStream: true,
         includeArchived?: boolean // filter?: (
-        //     data: StructData<Structure, Name>
-    ) // ) => boolean | Promise<boolean>
+        // ) => boolean | Promise<boolean>
+    ) //     data: StructData<Structure, Name>
     : StructStream<Structure, Name>;
     all(
         asStream: false,
@@ -2941,8 +2941,8 @@ export class Struct<Structure extends Blank, Name extends string> {
     fromUniverse(
         universe: string,
         asStream: true // filter?: (
-        //     data: StructData<Structure, Name>
-    ) // ) => boolean | Promise<boolean>
+        // ) => boolean | Promise<boolean>
+    ) //     data: StructData<Structure, Name>
     : StructStream<Structure, Name>;
     fromUniverse(
         universe: string,
@@ -2994,8 +2994,8 @@ export class Struct<Structure extends Blank, Name extends string> {
      */
     archived(
         asStream: true // filter?: (
-        //     data: StructData<Structure, Name>
-    ) // ) => boolean | Promise<boolean>
+        // ) => boolean | Promise<boolean>
+    ) //     data: StructData<Structure, Name>
     : StructStream<Structure, Name>;
     archived(asStream: false): Promise<Result<StructData<Structure, Name>[]>>;
     archived(
@@ -3296,7 +3296,10 @@ export class Struct<Structure extends Blank, Name extends string> {
             from: Structable<Struct<From, Name>>
         ) => Structable<Struct<To, Name>>
     ) {
-        if (this.built) throw new StructMigrationError(`Struct ${this.name} was built before a migration. Migrations are designed to be run on an unbuilt struct.`);
+        if (this.built)
+            throw new StructMigrationError(
+                `Struct ${this.name} was built before a migration. Migrations are designed to be run on an unbuilt struct.`
+            );
         // create an image file for the new schema
 
         // check to see if migration image exists
@@ -3304,7 +3307,9 @@ export class Struct<Structure extends Blank, Name extends string> {
         return attemptAsync(async () => {
             const version = (await this.database.getVersion()).unwrap();
             if (version.join('.') !== from.dbVersion.join('.')) {
-                throw new StructMigrationError(`Database version does not match migration "from" version`);
+                throw new StructMigrationError(
+                    `Database version does not match migration "from" version`
+                );
             }
 
             if (Version.compare(version, to.dbVersion) == 'equal') {
@@ -3314,39 +3319,61 @@ export class Struct<Structure extends Blank, Name extends string> {
             }
 
             {
-                const current = (await this.database.unsafe.get<{
-                    name: string;
-                    schema: string;
-                }>(Query.build(`
+                const current = (
+                    await this.database.unsafe.get<{
+                        name: string;
+                        schema: string;
+                    }>(
+                        Query.build(
+                            `
                     SELECT * FROM Structs
                     WHERE name = :name;
-                    `, {
-                        name: this.name,
-                    }))).unwrap();
-                
-                if (!current) throw new StructMigrationError(`Struct ${this.name} does not exist in database`);
+                    `,
+                            {
+                                name: this.name
+                            }
+                        )
+                    )
+                ).unwrap();
 
-                const noMatch = new StructMigrationError(`Struct ${this.name} schema does not match migration schema`);
+                if (!current)
+                    throw new StructMigrationError(
+                        `Struct ${this.name} does not exist in database`
+                    );
+
+                const noMatch = new StructMigrationError(
+                    `Struct ${this.name} schema does not match migration schema`
+                );
 
                 const currentSchema = JSON.parse(current.schema) as Blank;
 
-                if (!Object.keys(currentSchema).every(k => Object.keys(from.schema).includes(k))) {
+                if (
+                    !Object.keys(currentSchema).every(k =>
+                        Object.keys(from.schema).includes(k)
+                    )
+                ) {
                     throw noMatch;
                 }
 
-                if (!Object.keys(from.schema).every(k => Object.keys(currentSchema).includes(k))) {
+                if (
+                    !Object.keys(from.schema).every(k =>
+                        Object.keys(currentSchema).includes(k)
+                    )
+                ) {
                     throw noMatch;
                 }
 
-                if (!Object.entries(currentSchema).every(([k, v]) => from.schema[k] === v)) {
+                if (
+                    !Object.entries(currentSchema).every(
+                        ([k, v]) => from.schema[k] === v
+                    )
+                ) {
                     throw noMatch;
                 }
             }
 
             const all = (
-                await this.database.unsafe.all<
-                    Structable<Struct<From, Name>>
-                >(
+                await this.database.unsafe.all<Structable<Struct<From, Name>>>(
                     Query.build(`
                 SELECT * FROM ${this.name};
             `)
@@ -3475,14 +3502,21 @@ export class Struct<Structure extends Blank, Name extends string> {
                     })
                 );
 
-                (await this.database.unsafe.run(Query.build(`
+                (
+                    await this.database.unsafe.run(
+                        Query.build(
+                            `
                     UPDATE Structs
                     SET schema = :schema
                     WHERE name = :name;
-                `, {
-                    schema: JSON.stringify(from.schema),
-                    name: this.name
-                }))).unwrap();
+                `,
+                            {
+                                schema: JSON.stringify(from.schema),
+                                name: this.name
+                            }
+                        )
+                    )
+                ).unwrap();
             };
             try {
                 (
@@ -3591,14 +3625,21 @@ export class Struct<Structure extends Blank, Name extends string> {
                     })
                 );
 
-                (await this.database.unsafe.run(Query.build(`
+                (
+                    await this.database.unsafe.run(
+                        Query.build(
+                            `
                     UPDATE Structs
                     SET schema = :schema
                     WHERE name = :name;
-                `, {
-                    schema: JSON.stringify(to.schema),
-                    name: this.name
-                }))).unwrap();
+                `,
+                            {
+                                schema: JSON.stringify(to.schema),
+                                name: this.name
+                            }
+                        )
+                    )
+                ).unwrap();
             } catch (error) {
                 await revert();
                 throw error;
@@ -3611,7 +3652,6 @@ type Migration<T extends Blank> = {
     dbVersion: [number, number, number];
     schema: T;
 };
-
 
 type Account = Data<
     Struct<

@@ -47,7 +47,7 @@ export class Version {
         public readonly version: [number, number, number],
         update: (database: Database) => Promise<void>
     ) {
-        this.update = async (db) => {
+        this.update = async db => {
             const version = (await db.getVersion()).unwrap();
             if (Version.compare(version, this.version) === 'greater') {
                 throw new VersionError(
