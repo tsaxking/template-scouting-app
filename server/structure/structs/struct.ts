@@ -1317,16 +1317,18 @@ export class Struct<Structure extends Blank, Name extends string> {
             if (defaults) {
                 // doesn't matter if this throws an error. It most likely is due duplicate data, which is fine since it's the default values.
                 // TODO: should we await this? It could be better to just let it run in the background
-                await Promise.all(defaults.map(async d => {
-                    const res = await struct.new(d);
-                    if (res.isErr()) {
-                        const current = await struct.fromId(d.id);
-                        if (current.isOk()) {
-                            // update if there is a conflict. This is useful if there are changes to the default data
-                            await current.value?.update(d);
+                await Promise.all(
+                    defaults.map(async d => {
+                        const res = await struct.new(d);
+                        if (res.isErr()) {
+                            const current = await struct.fromId(d.id);
+                            if (current.isOk()) {
+                                // update if there is a conflict. This is useful if there are changes to the default data
+                                await current.value?.update(d);
+                            }
                         }
-                    }
-                }));
+                    })
+                );
             }
         });
     }
@@ -2838,8 +2840,8 @@ export class Struct<Structure extends Blank, Name extends string> {
         property: Property,
         value: TS_Type<Structure[Property]>,
         asStream: true // filter?: (
-        //     data: StructData<Structure, Name>
-    ) // ) => boolean | Promise<boolean>
+        // ) => boolean | Promise<boolean>
+    ) //     data: StructData<Structure, Name>
     : StructStream<Structure, Name>;
     fromProperty<Property extends keyof Structure>(
         property: Property,
@@ -2894,8 +2896,8 @@ export class Struct<Structure extends Blank, Name extends string> {
     all(
         asStream: true,
         includeArchived?: boolean // filter?: (
-        //     data: StructData<Structure, Name>
-    ) // ) => boolean | Promise<boolean>
+        // ) => boolean | Promise<boolean>
+    ) //     data: StructData<Structure, Name>
     : StructStream<Structure, Name>;
     all(
         asStream: false,
@@ -2951,8 +2953,8 @@ export class Struct<Structure extends Blank, Name extends string> {
     fromUniverse(
         universe: string,
         asStream: true // filter?: (
-        //     data: StructData<Structure, Name>
-    ) // ) => boolean | Promise<boolean>
+        // ) => boolean | Promise<boolean>
+    ) //     data: StructData<Structure, Name>
     : StructStream<Structure, Name>;
     fromUniverse(
         universe: string,
@@ -3004,8 +3006,8 @@ export class Struct<Structure extends Blank, Name extends string> {
      */
     archived(
         asStream: true // filter?: (
-        //     data: StructData<Structure, Name>
-    ) // ) => boolean | Promise<boolean>
+        // ) => boolean | Promise<boolean>
+    ) //     data: StructData<Structure, Name>
     : StructStream<Structure, Name>;
     archived(asStream: false): Promise<Result<StructData<Structure, Name>[]>>;
     archived(

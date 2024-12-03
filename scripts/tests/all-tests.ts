@@ -606,8 +606,10 @@ const main = async () => {
     (await database.reset(true)).unwrap();
     (await database.init()).unwrap();
 
-    runTests(env, database).then(val =>{
-        console.log(`Tests completed with ${passing}/${numTests} passing (${(passing / numTests) * 100}%)`);
+    runTests(env, database).then(val => {
+        console.log(
+            `Tests completed with ${passing}/${numTests} passing (${(passing / numTests) * 100}%)`
+        );
         process.exit(val.some(v => v === 1) ? 1 : 0);
     });
 };

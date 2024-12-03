@@ -263,7 +263,9 @@ export const dataActions = {
         const separated = attributes
             .split(',')
             .map(d => removeWhitespace(d.trim()));
-        data.addAttributes(...separated);
+        (await data.addAttributes(...separated)).unwrap();
+
+        return backToStruct('Attributes added');
     },
     removeAttribute: async (data: Data<Struct<Blank, string>>) => {
         const attributes = data.getAttributes().unwrap();
@@ -390,6 +392,8 @@ export const dataActions = {
 
             return backToStruct('Data not removed from universe');
         }
+
+        return backToStruct('No universe selected');
     }
 };
 
@@ -404,6 +408,8 @@ export const selectDataAction = async (data: Data<Struct<Blank, string>>) => {
     );
 
     if (selected) return selected(data);
+
+    return backToStruct('No action selected');
 };
 
 export const dataSelectPipe = async (data: Data<Struct<Blank, string>>[]) => {
@@ -482,6 +488,7 @@ export const structActions = {
         const all = (await struct.all(false)).unwrap();
         const selected = await selectData(all, `Select a(n) ${struct.name}`);
         if (selected) return selectDataAction(selected);
+        return backToStruct('No data selected');
     },
     fromProperty: async (struct: Struct<Blank, string>) => {
         const properties = Object.entries(struct.data.structure);
@@ -503,6 +510,8 @@ export const structActions = {
 
             dataSelectPipe(data);
         }
+
+        return backToStruct('No data selected');
     },
     fromUniverse: async (struct: Struct<Blank, string>) => {
         const universes = (await Permissions.Universe.all(false)).unwrap();
