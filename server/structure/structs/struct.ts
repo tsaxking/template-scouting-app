@@ -250,6 +250,7 @@ type StructBuilder<T extends Blank, Name extends string> = {
         time: number;
     };
     frontend?: boolean;
+    makeImage?: boolean; // default true
 };
 
 type Validator<T extends SQL_Type> = (data: TS_Type<T>) => boolean;
@@ -3191,6 +3192,8 @@ export class Struct<Structure extends Blank, Name extends string> {
                     defaults
                 } as StructImage<Structure>)
             );
+
+            if (this.data.makeImage === false) return image;
 
             await fs.promises.mkdir(
                 path.resolve(__dirname, './struct-images'),
