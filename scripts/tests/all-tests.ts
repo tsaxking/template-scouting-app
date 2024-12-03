@@ -43,18 +43,36 @@ const assertEquals = (a: unknown, b: unknown) => {
         throw e;
     }
 };
+const ok = '✅';
+const fail = '❌';
+
+let numTests = 0;
+let passing = 0;
 
 const test = async (name: string, fn: () => void | Promise<void>) => {
-    const ok = '✅';
-    const fail = '❌';
+    numTests++;
     try {
         await fn();
         console.log(ok, name);
+        passing++;
         return 0;
     } catch (e) {
         console.log(fail, name);
         console.error(e);
         return 1;
+    }
+};
+
+const invert = async (name: string, fn: () => void | Promise<void>) => {
+    numTests++;
+    try {
+        await fn();
+        console.log(fail, name);
+        return 1;
+    } catch (e) {
+        console.log(ok, name);
+        passing++;
+        return 0;
     }
 };
 
@@ -401,7 +419,7 @@ export const runTests = async (env: Env, database: Database) =>
 
             (await Item.build()).unwrap();
 
-            test('Struct Generator', async () => {
+            await test('Struct Generator', async () => {
                 const i = (
                     await Item.new({
                         name: 'test',
@@ -434,6 +452,52 @@ export const runTests = async (env: Env, database: Database) =>
                 });
 
                 (await i.delete()).unwrap();
+            });
+
+            await test('Build Setup', async () => {
+                const s = new Struct({
+                    name: 'StructBuildSetup',
+                    structure: {
+                        name: 'text',
+                        price: 'integer'
+                    },
+                    database
+                });
+
+                await invert('Use before build', async () => {
+                    (
+                        await s.new({
+                            name: 'test',
+                            price: 100
+                        })
+                    ).unwrap();
+                });
+
+                await invert('Build twice', async () => {
+                    (await s.build()).unwrap();
+                    (await s.build()).unwrap();
+                });
+
+                await invert('Migration', async () => {
+                    await s.createMigration(
+                        {
+                            dbVersion: [1, 0, 0],
+                            schema: {}
+                        },
+                        {
+                            dbVersion: [1, 0, 1],
+                            schema: {
+                                name: 'text',
+                                price: 'integer'
+                            }
+                        },
+                        d => ({
+                            ...d,
+                            name: 'test',
+                            price: 0
+                        })
+                    );
+                });
             });
         })
     ]);
@@ -542,9 +606,10 @@ const main = async () => {
     (await database.reset(true)).unwrap();
     (await database.init()).unwrap();
 
-    runTests(env, database).then(val =>
-        process.exit(val.some(v => v === 1) ? 1 : 0)
-    );
+    runTests(env, database).then(val =>{
+        console.log(`Tests completed with ${passing}/${numTests} passing (${(passing / numTests) * 100}%)`);
+        process.exit(val.some(v => v === 1) ? 1 : 0);
+    });
 };
 
 if (require.main === module) main();
