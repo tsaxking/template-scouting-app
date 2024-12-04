@@ -180,6 +180,8 @@ export const versionHistoryPipe = async (
 
         if (action) return action(selected);
     }
+
+    return backToStruct('No version selected');
 };
 
 export const dataActions = {

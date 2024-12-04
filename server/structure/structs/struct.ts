@@ -153,6 +153,7 @@ export class FatalStructError extends StructError {
      */
     constructor(message: string) {
         super(message);
+        this.name = 'FatalStructError';
     }
 }
 
@@ -173,6 +174,7 @@ export class FatalDataError extends DataError {
      */
     constructor(message: string) {
         super(message);
+        this.name = 'FatalDataError';
     }
 }
 
