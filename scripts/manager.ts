@@ -318,6 +318,19 @@ export const selectDir = async (
     return data;
 };
 
+export const managerFn = async (fn: () => Promise<unknown>, done?: (message: string) => void) => {
+    try {
+        await fn();
+    } catch (e) {
+        console.error(e);
+        await select('', ['[Ok]']);
+    }
+
+    if (done) done('Task completed');
+
+    backToMain('Task completed');
+};
+
 /**
  * Returns a colorized string
  * @date 3/8/2024 - 6:49:57 AM

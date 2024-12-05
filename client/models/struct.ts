@@ -129,7 +129,7 @@ class DataVersion<T extends Blank> {
     }
 }
 
-export class DataArr<T extends Blank> implements Readable<StructData<T>[]> {
+export class DataArr<T extends Blank> implements Writable<StructData<T>[]> {
     constructor(
         public readonly struct: Struct<T>,
         public readonly data: StructData<T>[]
@@ -142,6 +142,7 @@ export class DataArr<T extends Blank> implements Readable<StructData<T>[]> {
 
     subscribe(fn: (data: StructData<T>[]) => void) {
         this.subscribers.add(fn);
+        fn(this.data); // initial run
         return () => {
             this.subscribers.delete(fn);
             if (this.subscribers.size === 0) {
@@ -154,6 +155,19 @@ export class DataArr<T extends Blank> implements Readable<StructData<T>[]> {
         return this.data.find(d => d.id === id);
     }
 
+    set(data: StructData<T>[]) {
+        this.data.splice(0, this.data.length, ...data);
+        this.subscribers.forEach(s => s(this.data));
+    }
+
+    has(data: StructData<T>) {
+        return this.data.includes(data);
+    }
+
+    update(fn: (data: StructData<T>[]) => StructData<T>[]) {
+        this.set(fn(this.data));
+    }
+
     fromProperty<Key extends keyof StructData<T>['data']>(
         key: Key,
         value: StructData<T>['data'][Key]
@@ -162,10 +176,11 @@ export class DataArr<T extends Blank> implements Readable<StructData<T>[]> {
     }
 
     add(...data: StructData<T>[]) {
+        const filtered = data.filter(d => !this.has(d));
         if (this._pipe) {
-            for (let i = 0; i < data.length; i++) this._pipe(data[i]);
+            for (let i = 0; i < filtered.length; i++) this._pipe(filtered[i]);
         }
-        this.data.push(...data);
+        this.data.push(...filtered);
         this.subscribers.forEach(s => s(this.data));
     }
 
@@ -223,6 +238,7 @@ export class SingleWritable<T extends Blank>
 
     subscribe(fn: (data: StructData<T>) => void) {
         this.subscribers.add(fn);
+        fn(this.data);
         return () => {
             this.subscribers.delete(fn);
             if (!this.subscribers.size) this._onUnsubscribe?.();
@@ -257,10 +273,11 @@ export class UniverseArr<T extends Blank> implements Readable<string[]> {
 
     private onUnsubscribe: (() => void) | undefined;
 
-    subscribe(run: Subscriber<string[]>): Unsubscriber {
-        this.subscribers.add(run);
+    subscribe(fn: Subscriber<string[]>): Unsubscriber {
+        this.subscribers.add(fn);
+        fn(this.universes);
         return () => {
-            this.subscribers.delete(run);
+            this.subscribers.delete(fn);
             if (this.subscribers.size === 0) {
                 this.onUnsubscribe?.();
             }
@@ -327,6 +344,7 @@ export class StructData<T extends Blank>
 
     subscribe(fn: (data: PartialStructable<T>) => void) {
         this.subscribers.add(fn);
+        fn(this.data);
         return () => this.subscribers.delete(fn);
     }
 
@@ -347,7 +365,7 @@ export class StructData<T extends Blank>
     }
 
     delete() {
-        return this.struct.post(`/${this.struct.data.name}/delete`, {
+        return this.struct.post(`/delete`, {
             id: this.id
         });
     }
@@ -402,6 +420,7 @@ export class StructData<T extends Blank>
 
             subscribe(fn: (data: typeof o) => void) {
                 this.subscribers.add(fn);
+                fn(this.data);
                 return () => {
                     this.subscribers.delete(fn);
                     if (this.subscribers.size === 0) {
@@ -482,6 +501,7 @@ export class Struct<T extends Blank> {
         Struct.structs.set(this.data.name, this as any);
 
         this.listen('create', (data: Structable<T & GlobalCols>) => {
+            console.log('create', data);
             const has = this.cache.get(data.id);
             if (has) return;
             const d = new StructData(this, data);
@@ -505,6 +525,7 @@ export class Struct<T extends Blank> {
             this.emit('update', has);
         });
         this.listen('delete', (id: string) => {
+            console.log('delete', id);
             const has = this.cache.get(id);
             if (!has) return;
 

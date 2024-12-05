@@ -42,6 +42,7 @@ import {
 import { Loop } from '../../../shared/loop';
 import { log } from '../../utilities/terminal-logging';
 import { Version } from '../../utilities/database/versions';
+import env from '../../utilities/env';
 
 /**
  * Prove that the data matches the structure
@@ -253,6 +254,7 @@ type StructBuilder<T extends Blank, Name extends string> = {
     };
     frontend?: boolean;
     makeImage?: boolean; // default true
+    defaultUniverses?: string[];
 };
 
 type Validator<T extends SQL_Type> = (data: TS_Type<T>) => boolean;
@@ -671,13 +673,25 @@ export class StructStream<Structure extends Blank, Name extends string> {
         this.emit('data', data);
     }
 
+    end() {
+        log('Ending stream');
+        this.emit('end', undefined);
+        this.emitter.destroyEvents();
+    }
+
+    close() {
+        log('Closing stream');
+        this.emit('close', undefined);
+        this.emitter.destroyEvents();
+    }
+
     await() {
         return new Promise((res, rej) => {
             const data: StructData<Structure, Name>[] = [];
             this.on('data', d => data.push(d));
-            this.once('end', () => res(data));
-            this.once('close', () => res(data));
-            this.once('error', e => rej(e));
+            this.on('end', () => res(data));
+            this.on('close', () => res(data));
+            this.on('error', e => rej(e));
         });
     }
 
@@ -698,9 +712,9 @@ export class StructStream<Structure extends Blank, Name extends string> {
 
                     this.on('data', run);
 
-                    this.once('end', () => end);
-                    this.once('close', () => end);
-                    this.once('error', end);
+                    this.on('end', () => end);
+                    this.on('close', () => end);
+                    this.on('error', end);
                 })
         );
     }
@@ -1151,6 +1165,10 @@ export class StructData<Structure extends Blank, Name extends string>
             );
 
             (await this.struct.data.database.unsafe.run(query)).unwrap();
+
+            Object.assign(this.data, {
+                universes: str
+            });
         });
     }
 
@@ -2071,10 +2089,9 @@ export class Struct<Structure extends Blank, Name extends string> {
                     if (!account) return res.sendStatus(notSignedInStatus(req));
 
                     if ((await Account.isAdmin(account)).unwrap()) {
-                        log('Account is an admin');
                         return res.stream<StructData<Structure, Name>>(
                             this.all(true, false),
-                            async data => data.data
+                            data => data.data,
                         );
                     }
 
@@ -2678,7 +2695,7 @@ export class Struct<Structure extends Blank, Name extends string> {
 
                         req.io
                             .to(n.getUniverses().unwrap())
-                            .emit(`struct:${this.data.name}:delete`, n.data);
+                            .emit(`struct:${this.data.name}:delete`, n.data.id);
                     }
                 );
 
@@ -2792,6 +2809,11 @@ export class Struct<Structure extends Blank, Name extends string> {
             );
 
             (await this.data.database.unsafe.run(query)).unwrap();
+
+            if (this.data.defaultUniverses?.length) {
+                // log('adding to default universes', this.data.defaultUniverses);
+                (await d.addUniverses(...this.data.defaultUniverses)).unwrap();
+            }
 
             this.emit('create', d);
 
@@ -2918,16 +2940,19 @@ export class Struct<Structure extends Blank, Name extends string> {
             `SELECT * FROM ${this.data.name} WHERE archived = false;`
         );
 
+        if (!this.built)
+            throw new FatalStructError(`Struct ${this.data.name} not built`);
         if (asStream) {
             const stream =
                 this.data.database.unsafe.stream<St<Structure, Name>>(query);
             const streamer = new StructStream<Structure, Name>(this /*filter*/);
             stream.pipe(data => streamer.add(this.Generator(data)));
+            // stream.on('data', () => log('Stream data'));
+            stream.once('end', () => streamer.end());
+            stream.once('close', () => streamer.close());
             return streamer;
         }
 
-        if (!this.built)
-            throw new FatalStructError(`Struct ${this.data.name} not built`);
         return attemptAsync(async () => {
             const data = (
                 await this.data.database.unsafe.all<St<Structure, Name>>(query)

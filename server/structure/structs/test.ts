@@ -9,7 +9,11 @@ export namespace Testing {
         structure: {
             name: 'text',
             age: 'integer'
-        }
+        },
+    });
+
+    TestStruct.on('create', (d) => {
+        d.addUniverses('54105da1-5367-473a-bb53-7815927aa346');
     });
 
     TestStruct.bypass(DataAction.Create, () => true);

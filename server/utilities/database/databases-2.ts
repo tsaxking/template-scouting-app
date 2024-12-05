@@ -75,7 +75,13 @@ class QueryStreamer<T> {
     once = this.emitter.once.bind(this.emitter);
     emit = this.emitter.emit.bind(this.emitter);
 
-    constructor() {}
+    constructor() {
+        // log('QueryStreamer created');
+        // this.on('close', () => log('QueryStreamer closed'));
+        // this.on('data', () => log('QueryStreamer data'));
+        // this.on('end', () => log('QueryStreamer ended'));
+        // this.on('error', e => log('QueryStreamer error', e));
+    }
 
     public async pipe(fn: (data: T) => unknown) {
         return new Promise<void>((res, rej) => {
@@ -96,9 +102,9 @@ class QueryStreamer<T> {
                 this.off('error', error);
                 rej(err);
             };
-            this.once('end', end);
-            this.once('error', error);
-            this.once('close', end);
+            this.on('end', end);
+            this.on('error', error);
+            this.on('close', end);
         });
     }
 

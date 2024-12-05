@@ -1,7 +1,10 @@
-import { Struct } from '../../models/struct';
+import { GlobalCols } from '../../../shared/struct';
+import { Data, Struct, StructData } from '../../models/struct';
+import { globalize } from '../../utilities/global';
 import { socket } from '../../utilities/socket';
+import Test from '../../views/pages/test/Test.svelte';
 
-const s = new Struct({
+export const testStruct = new Struct({
     socket,
     name: 'TestStruct',
     structure: {
@@ -10,16 +13,10 @@ const s = new Struct({
     }
 });
 
-console.log(s);
+export type SType = StructData<typeof testStruct['data']['structure']>;
 
-(async () => {
-    const all = s.all(true);
-    const u = all.subscribe(console.log);
+new Test({
+    target: document.body,
+});
 
-    // console.log((await all.await()).unwrap());
-
-    // (await s.new({
-    //     name: 'John',
-    //     age: 25,
-    // })).unwrap();
-})();
+globalize(testStruct, 'Test');

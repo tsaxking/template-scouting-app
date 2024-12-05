@@ -237,6 +237,13 @@ const createEnv = async () => {
         i => +i > 0,
         true
     );
+    await setKey(
+        'SINGLE_UNIVERSE',
+        'Universal Universe: (no default)',
+        undefined,
+        undefined,
+        true
+    );
 
     const e = Object.keys(values)
         .map(key => `${key} = '${values[key]}'`)

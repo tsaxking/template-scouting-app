@@ -11,6 +11,7 @@ import { getTemplateSync } from '../../utilities/files';
 import { ReadableStream } from 'stream/web';
 import { streamDelimiter } from '../../../shared/text';
 import { log } from 'console';
+import { error } from '../../utilities/terminal-logging';
 
 /**
  * The event types for the stream
@@ -307,13 +308,38 @@ export class Res {
             const res =
                 JSON.stringify(pipe ? await pipe(chunk) : chunk) +
                 streamDelimiter;
-            // log(res);
-            this.res.write(res);
+            // log(res);            
+            try {
+                this.res.write(res);
+            } catch (e) {
+                // error(e);
+            }
         });
 
-        streamer.on('end', () => this.res.end());
-        streamer.on('close', () => this.res.end());
-        streamer.on('error', error => this.res.end());
+        streamer.on('end', () => {
+            try {
+                this.isFulfilled();
+                this.res.end();
+            } catch (e) {
+                // error(e);
+            }
+        });
+        streamer.on('close', () => {
+            try {
+                this.isFulfilled();
+                this.res.end();
+            } catch (e) {
+                // error(e);
+            }
+        });
+        streamer.on('error', error => {
+            try {
+                this.isFulfilled();
+                this.res.end();
+            } catch {
+                // throw away
+            }
+        });
     }
 
     end() {

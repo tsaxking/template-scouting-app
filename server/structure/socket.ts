@@ -286,10 +286,10 @@ export class SocketWrapper {
      * @returns {*}
      */
     to(room: string | string[]) {
-        if (!room.length)
-            return {
-                emit: () => {}
-            };
+        // if (!room.length)
+        //     return {
+        //         emit: this.io.emit.bind(this.io),
+        //     };
         // return {
         //     emit: (event: string, data?: unknown) => {
         //         num++;
