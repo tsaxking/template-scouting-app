@@ -56,6 +56,11 @@ app.use('/*', (req, res, next) => {
     next();
 });
 
+// app.use('/*', Permissions.forceUniverse(async () => {
+//     const universes = (await Permissions.Universe.all(false)).unwrap();
+//     return universes.find(u => u.data.name === 'test');
+// }));
+
 app.static('/client', path.resolve(__root, './client'));
 app.static('/public', path.resolve(__root, './public'));
 app.static('/dist', path.resolve(__root, './dist'));

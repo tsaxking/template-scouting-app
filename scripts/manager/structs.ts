@@ -44,7 +44,7 @@ export const openStructs = () => {
             const openObj = (obj: Record<string, unknown>) => {
                 for (const value of Object.values(obj)) {
                     if (value instanceof Struct) {
-                        structs.push(value);
+                        if (!value.sample) structs.push(value);
                         continue;
                     }
 
@@ -70,7 +70,7 @@ export const openStructs = () => {
         // console.log(res);
         // throw new Error('Close');
 
-        return res;
+        return res.sort((a, b) => a.name.localeCompare(b.name));
     });
 };
 

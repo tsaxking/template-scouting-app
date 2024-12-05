@@ -294,4 +294,8 @@ export class Req<
     public get universe() {
         return this.metadata.universe;
     }
+
+    public set universe(value: string | undefined) {
+        this.metadata.universe = value;
+    }
 }

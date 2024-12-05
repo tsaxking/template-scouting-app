@@ -2,7 +2,6 @@
 import {
     attempt,
     attemptAsync,
-    resolveAll,
     Result
 } from '../../../shared/check';
 import {
@@ -22,8 +21,6 @@ import {
     capitalize,
     decode,
     encode,
-    fromCamelCase,
-    toSnakeCase
 } from '../../../shared/text';
 import fs from 'fs';
 import path from 'path';
@@ -42,7 +39,6 @@ import {
 import { Loop } from '../../../shared/loop';
 import { log } from '../../utilities/terminal-logging';
 import { Version } from '../../utilities/database/versions';
-import env from '../../utilities/env';
 
 /**
  * Prove that the data matches the structure
@@ -1904,7 +1900,8 @@ export class Struct<Structure extends Blank, Name extends string> {
                         );
 
                         req.io
-                            .to(n.getUniverses().unwrap())
+                            // .to(n.getUniverses().unwrap())
+                            // to(req.universe || '')
                             .emit(`struct:${this.data.name}:create`, n.data);
 
                         // (await Logs.Log.new({
@@ -1971,7 +1968,8 @@ export class Struct<Structure extends Blank, Name extends string> {
                         if (doBypass) {
                             (await n.update(req.body)).unwrap();
                             req.io
-                                .to(roles.map(r => r.id))
+                                // to(req.universe || '')
+                                // .to(roles.map(r => r.id))
                                 .emit(
                                     `struct:${this.data.name}:update`,
                                     req.body
@@ -1996,7 +1994,8 @@ export class Struct<Structure extends Blank, Name extends string> {
                             (await n.update(updated)).unwrap();
 
                             req.io
-                                .to(n.getUniverses().unwrap())
+                                // to(req.universe || '')
+                                // .to(n.getUniverses().unwrap())
                                 .emit(
                                     `struct:${this.data.name}:update`,
                                     updated
@@ -2536,7 +2535,8 @@ export class Struct<Structure extends Blank, Name extends string> {
                         );
 
                         req.io
-                            .to(n.getUniverses().unwrap())
+                            // to(req.universe || '')
+                            // .to(n.getUniverses().unwrap())
                             .emit(`struct:${this.data.name}:restore`, n.data);
                     }
                 );
@@ -2623,7 +2623,8 @@ export class Struct<Structure extends Blank, Name extends string> {
                         );
 
                         req.io
-                            .to(n.getUniverses().unwrap())
+                            // .to(n.getUniverses().unwrap())
+                            // to(req.universe || '')
                             .emit(
                                 `struct:${this.data.name}:delete-version`,
                                 n.data
@@ -2694,7 +2695,8 @@ export class Struct<Structure extends Blank, Name extends string> {
                         );
 
                         req.io
-                            .to(n.getUniverses().unwrap())
+                            // .to(n.getUniverses().unwrap())
+                            // to(req.universe || '')
                             .emit(`struct:${this.data.name}:delete`, n.data.id);
                     }
                 );
@@ -2761,7 +2763,8 @@ export class Struct<Structure extends Blank, Name extends string> {
                         );
 
                         req.io
-                            .to(n.getUniverses().unwrap())
+                            // .to(n.getUniverses().unwrap())
+                            // to(req.universe || '')
                             .emit(`struct:${this.data.name}:archive`, n.data);
                     }
                 );
