@@ -9,8 +9,6 @@
 
     export let account: Accounts.AccountData;
 
-    const a = $account;
-
     const universeRes = account.getUniverses();
     let universes: string[] | undefined = [];
 
@@ -37,9 +35,9 @@
 
 <tr>
     <td>
-        {#if a.username !== undefined}
+        {#if $account.username !== undefined}
             <RowInput
-                data="{a.username}"
+                data="{$account.username}"
                 onChange="{d => {
                     onDataChange('username', d);
                 }}"
@@ -50,9 +48,9 @@
         {/if}
     </td>
     <td>
-        {#if a.firstName !== undefined}
+        {#if $account.firstName !== undefined}
             <RowInput
-                data="{a.firstName}"
+                data="{$account.firstName}"
                 onChange="{d => {
                     onDataChange('firstName', d);
                 }}"
@@ -63,9 +61,9 @@
         {/if}
     </td>
     <td>
-        {#if a.lastName !== undefined}
+        {#if $account.lastName !== undefined}
             <RowInput
-                data="{a.lastName}"
+                data="{$account.lastName}"
                 onChange="{d => {
                     onDataChange('lastName', d);
                 }}"
@@ -76,9 +74,9 @@
         {/if}
     </td>
     <td>
-        {#if a.email !== undefined}
+        {#if $account.email !== undefined}
             <RowInput
-                data="{a.email}"
+                data="{$account.email}"
                 onChange="{d => {
                     onDataChange('email', d);
                 }}"
@@ -90,10 +88,10 @@
     </td>
     <td>
         <!-- TODO: Account picture change -->
-        {#if a.picture !== undefined}
+        {#if $account.picture !== undefined}
             <img
                 alt="Cannot display Image"
-                src="{a.picture}" />
+                src="{$account.picture}" />
         {:else}
             {cantRead}
         {/if}
@@ -126,8 +124,8 @@
         {/if}
     </td>
     <td>
-        {#if typeof a.verified === 'boolean'}
-            {#if a.verified}
+        {#if typeof $account.verified === 'boolean'}
+            {#if $account.verified}
                 <i class="material-icons bg-success">verified</i>
             {:else}
                 <i class="material-icons bg-warning">warning</i>
@@ -144,7 +142,7 @@
                 type="button">
                 <i class="material-icons"> delete </i>
             </button>
-            {#if a.verified}
+            {#if $account.verified}
                 <button
                     class="btn btn-warning"
                     type="button">

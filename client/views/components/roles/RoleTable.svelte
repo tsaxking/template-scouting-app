@@ -3,9 +3,7 @@
     import RoleEditor from './RoleEditor.svelte';
     import Modal from '../bootstrap/Modal.svelte';
 
-    const rolesStore = Permissions.Role.all(true);
-
-    const roles = $rolesStore;
+    const roles = Permissions.Role.all(true);
 
     let selected: Permissions.RoleData | null = null;
     let showEditor = false;
@@ -20,7 +18,7 @@
         </tr>
     </thead>
     <tbody>
-        {#each roles as role (role.id)}
+        {#each $roles as role (role.id)}
             <tr
                 on:click="{() => {
                     selected = role;

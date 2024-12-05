@@ -5,8 +5,6 @@
 
     export let struct: Permissions.StructPermissions<Blank>;
 
-    const s = $struct;
-
     const selectRead = () => {
         struct.update(s => {
             const on = s.properties.every(p => p.read);
@@ -42,16 +40,16 @@
         });
     };
 
-    let canCreate = s.permissions['create'];
-    let canDelete = s.permissions['delete'];
+    let canCreate = $struct.permissions['create'];
+    let canDelete = $struct.permissions['delete'];
 
-    let canReadArchive = s.permissions['read-archive'];
-    let canArchive = s.permissions['archive'];
-    let canRestoreArchive = s.permissions['restore-archive'];
+    let canReadArchive = $struct.permissions['read-archive'];
+    let canArchive = $struct.permissions['archive'];
+    let canRestoreArchive = $struct.permissions['restore-archive'];
 
-    let canReadVersionHistory = s.permissions['read-version-history'];
-    let canRestoreVersion = s.permissions['restore-version'];
-    let canDeleteVersion = s.permissions['delete-version'];
+    let canReadVersionHistory = $struct.permissions['read-version-history'];
+    let canRestoreVersion = $struct.permissions['restore-version'];
+    let canDeleteVersion = $struct.permissions['delete-version'];
 
     const onChange = () => {
         struct.update(s => {
@@ -223,7 +221,7 @@
         </tr>
     </thead>
     <tbody>
-        {#each s.properties as property (property.property)}
+        {#each $struct.properties as property (property.property)}
             <PropertyRow
                 {property}
                 structPermission="{struct}" />

@@ -7,8 +7,6 @@
     export let data: Data<Struct<Blank>>;
     export let headers: string[];
 
-    const d = $data;
-
     const onDataChange = (header: string, value: unknown) => {
         const type = data.struct.data.structure[header];
         if (typeValidation(type, value)) {
@@ -26,10 +24,10 @@
 
 <tr>
     {#each headers as header (header)}
-        {#if d[header]}
+        {#if $data[header]}
             <td>
                 <RowInput
-                    data="{d[header]}"
+                    data="{$data[header]}"
                     onChange="{d => {
                         onDataChange(header, d);
                     }}"
@@ -42,17 +40,17 @@
         {/if}
     {/each}
     <td>
-        {dateTime(new Date(String(d.created)))}
+        {dateTime(new Date(String($data.created)))}
     </td>
     <td>
-        {dateTime(new Date(String(d.created)))}
+        {dateTime(new Date(String($data.created)))}
     </td>
     <!-- Universes -->
     <!-- Attributes -->
     <td>
-        {#if typeof d.lifetime !== 'undefined'}
+        {#if typeof $data.lifetime !== 'undefined'}
             <RowInput
-                data="{d.lifetime}"
+                data="{$data.lifetime}"
                 onChange="{d => {
                     onDataChange('lifetime', d);
                 }}"
@@ -61,9 +59,9 @@
         {/if}
     </td>
     <td>
-        {#if typeof d.archived !== 'undefined'}
+        {#if typeof $data.archived !== 'undefined'}
             <RowInput
-                data="{d.archived}"
+                data="{$data.archived}"
                 onChange="{d => {
                     data.setArchive(!!d);
                 }}"

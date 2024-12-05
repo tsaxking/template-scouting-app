@@ -2,9 +2,7 @@
     import { Accounts } from '../../../models/account';
     import TableAccountRow from './TableAccountRow.svelte';
 
-    const allStore = Accounts.Account.all(true);
-
-    const all = $allStore;
+    const all = Accounts.Account.all(true);
 
     let table: HTMLTableElement;
 </script>
@@ -25,7 +23,7 @@
         </tr>
     </thead>
     <tbody>
-        {#each all as account (account.id)}
+        {#each $all as account (account.id)}
             <TableAccountRow {account} />
         {/each}
     </tbody>

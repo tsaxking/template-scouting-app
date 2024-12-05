@@ -44,7 +44,7 @@ export const openStructs = () => {
             const openObj = (obj: Record<string, unknown>) => {
                 for (const value of Object.values(obj)) {
                     if (value instanceof Struct) {
-                        if (!value.sample) structs.push(value);
+                        if (!value.data.sample) structs.push(value);
                         continue;
                     }
 

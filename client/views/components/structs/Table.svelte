@@ -10,8 +10,7 @@
 
     const headers = Object.keys(current.data.structure);
 
-    const allStore = current.all(true);
-    const all = $allStore;
+    const all = current.all(true);
 
     let table: HTMLTableElement;
 
@@ -65,7 +64,7 @@
         </tr>
     </thead>
     <tbody>
-        {#each all as row (row.id)}
+        {#each $all as row (row.id)}
             <Row
                 {headers}
                 bind:data="{row}" />
