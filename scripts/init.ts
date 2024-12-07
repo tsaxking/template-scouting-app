@@ -85,13 +85,6 @@ const createEnv = async () => {
         true
     );
     await setKey(
-        'SOCKET_PORT',
-        'Session Port: (default: 3001)',
-        '3001',
-        i => +i > 0 && +i < 65535,
-        true
-    );
-    await setKey(
         'ENVIRONMENT',
         'Environment: (default: dev)',
         'dev',
@@ -102,13 +95,6 @@ const createEnv = async () => {
         'DOMAIN',
         'Domain: (default: localhost)',
         'http://localhost:' + values['PORT'],
-        i => i.length > 0,
-        true
-    );
-    await setKey(
-        'SOCKET_DOMAIN',
-        'Socket Domain: (default: localhost)',
-        'http://localhost:' + values['SOCKET_PORT'],
         i => i.length > 0,
         true
     );

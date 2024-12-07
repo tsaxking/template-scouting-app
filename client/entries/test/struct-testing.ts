@@ -13,10 +13,10 @@ export const testStruct = new Struct({
     }
 });
 
-export type SType = StructData<typeof testStruct['data']['structure']>;
+export type SType = StructData<(typeof testStruct)['data']['structure']>;
 
 new Test({
-    target: document.body,
+    target: document.body
 });
 
 globalize(testStruct, 'Test');

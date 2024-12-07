@@ -63,6 +63,11 @@ export namespace Account {
     Account.bypass(PropertyAction.Update, isSelf);
     Account.bypass(PropertyAction.Read, isSelf);
 
+    Account.on('delete', async a => {
+        const admin = await Admins.fromProperty('accountId', a.id, true);
+        admin.pipe(a => a.delete());
+    });
+
     export type AccountData = Data<typeof Account>;
 
     export const DiscordLink = new Struct({
@@ -843,17 +848,13 @@ export namespace Account {
 
             const account = (await fromUsername(username)).unwrap();
             if (!account) {
-                console.log(
-                    `Account not found, cannot auto sign in. (${username})`
-                );
+                log(`Account not found, cannot auto sign in. (${username})`);
                 return next();
             }
 
             (
                 await Session.signIn((await req.getSession()).unwrap(), account)
             ).unwrap();
-
-            console.log('Auto signed in:', account.data.username);
 
             next();
         };

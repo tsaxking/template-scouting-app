@@ -1,18 +1,26 @@
 <script lang="ts">
     import { createEventDispatcher, onMount } from 'svelte';
+    import { Random } from '../../../../shared/math';
     const dispatch = createEventDispatcher();
     export let title: string;
     export let message: string = '';
-    export let id: string = 'modal-' + Math.random().toString(36);
+    export let id: string = 'modal-' + Random.uuid();
     export let show = false;
 
+
     onMount(() => {
+        if (show) {
+            jQuery(`#${id}`).modal('show');
+        }
+
         jQuery(`#${id}`).on('hidden.bs.modal', () => {
             dispatch('hide');
+            show = false;
         });
 
         jQuery(`#${id}`).on('shown.bs.modal', () => {
             dispatch('show');
+            show = true;
         });
 
         document.querySelectorAll(`#${id} button.close-modal`).forEach(m => {

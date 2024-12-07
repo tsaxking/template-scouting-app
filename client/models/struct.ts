@@ -357,7 +357,10 @@ export class StructData<T extends Blank>
         return attemptAsync(async () => {
             const prev = { ...this.data };
             const response = await fn(this.data);
-            (await this.struct.post(`/update`, response)).unwrap();
+            (await this.struct.post(`/update`, {
+                ...this.data,
+                ...response,
+            })).unwrap();
             return async () => {
                 return this.update(() => prev);
             };
@@ -501,7 +504,6 @@ export class Struct<T extends Blank> {
         Struct.structs.set(this.data.name, this as any);
 
         this.listen('create', (data: Structable<T & GlobalCols>) => {
-            console.log('create', data);
             const has = this.cache.get(data.id);
             if (has) return;
             const d = new StructData(this, data);
@@ -719,12 +721,6 @@ export class Struct<T extends Blank> {
             this.on('archive', remove);
             this.on('delete', remove);
 
-            arr.onAllUnsubscribe(() => {
-                this.off('new', add);
-                this.off('archive', remove);
-                this.off('delete', remove);
-            });
-
             // do not await because we want to return the array immediately
             // since it's returning a writable, we'll be able to get the changes through subscriptions
             run();
@@ -732,6 +728,9 @@ export class Struct<T extends Blank> {
             this.writables.set('all', arr);
 
             arr.onAllUnsubscribe(() => {
+                this.off('new', add);
+                this.off('archive', remove);
+                this.off('delete', remove);
                 this.writables.delete('all');
             });
 

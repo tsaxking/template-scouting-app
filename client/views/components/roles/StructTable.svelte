@@ -1,5 +1,6 @@
 <script lang="ts">
     import { type Blank } from '../../../../shared/struct';
+    import { capitalize, fromCamelCase } from '../../../../shared/text';
     import { Permissions } from '../../../models/permissions';
     import PropertyRow from './PropertyRow.svelte';
 
@@ -78,7 +79,7 @@
     };
 </script>
 
-<h3>{struct.struct.name}</h3>
+<h3>{capitalize(fromCamelCase(struct.struct.name))}</h3>
 <!-- This is where the global checkmarks will go -->
 <div class="form-check form-switch">
     <input

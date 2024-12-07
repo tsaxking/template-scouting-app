@@ -151,3 +151,11 @@ export const removeWhitespace = (str: string): string => {
     if (res === str) return res;
     return removeWhitespace(res);
 };
+
+export const toBinary = (num: number): string => {
+    return num.toString(2);
+};
+
+export const fromBinary = (bin: string): number => {
+    return parseInt(bin, 2);
+};

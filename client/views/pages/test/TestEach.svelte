@@ -1,11 +1,8 @@
 <script lang="ts">
-    import { type SType, testStruct } from "../../../entries/test/struct-testing";
+    import { type SType, testStruct } from '../../../entries/test/struct-testing';
 
     export let data: SType;
     export let onRemove: (data: SType) => void;
-
-    console.log(data);
-    console.log($data);
 </script>
 
 <div>
@@ -13,7 +10,7 @@
     <button
         class="btn btn-danger"
         type="button"
-        on:click={() => onRemove(data)}
+        on:click="{() => onRemove(data)}"
     >
         Remove
     </button>

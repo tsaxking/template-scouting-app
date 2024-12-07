@@ -41,81 +41,83 @@ export namespace Permissions {
                 permissions: Permissions;
             }>
     {
-        public static fromRole(role: RoleData) {
-            return attempt(() => {
-                const { permissions } = role.data;
-                if (!permissions)
-                    throw new PermissionError('No permissions found');
+        // public static fromRole(role: RoleData) {
+        //     // return attempt(() => {
+        //         const { permissions } = role.data;
+        //         if (permissions === undefined)
+        //             throw new PermissionError('No permissions found');
 
-                const split = permissions.split(';');
+        //         if (!permissions.length) return [];
 
-                const result = split.map(p => {
-                    let [permission, struct, property] = p.split(',');
-                    [permission, struct, property] = [
-                        permission,
-                        struct,
-                        property
-                    ].map(decode);
-                    const s = Struct.structs.get(struct);
-                    if (!s) throw new PermissionError('Struct not found');
-                    return {
-                        permission,
-                        struct: s,
-                        property
-                    } as {
-                        permission: keyof Permissions | 'read' | 'update';
-                        struct: Struct<Blank>;
-                        property?: string;
-                    };
-                });
+        //         const split = permissions.split(';');
 
-                const structPerms: StructPermissions<Blank>[] = [];
+        //         const result = split.map(p => {
+        //             let [permission, struct, property] = p.split(',');
+        //             [permission, struct, property] = [
+        //                 permission,
+        //                 struct,
+        //                 property
+        //             ].map(decode);
+        //             const s = Struct.structs.get(struct);
+        //             if (!s) throw new PermissionError('Struct not found');
+        //             return {
+        //                 permission,
+        //                 struct: s,
+        //                 property
+        //             } as {
+        //                 permission: keyof Permissions | 'read' | 'update';
+        //                 struct: Struct<Blank>;
+        //                 property?: string;
+        //             };
+        //         });
 
-                for (const r of result) {
-                    let found = structPerms.find(i =>
-                        Object.is(i.struct, r.struct)
-                    );
-                    if (!found) {
-                        found = new StructPermissions(r.struct, role, [], {
-                            create: false,
-                            delete: false,
-                            'read-archive': false,
-                            archive: false,
-                            'restore-archive': false,
-                            'read-version-history': false,
-                            'restore-version': false,
-                            'delete-version': false
-                        });
-                    }
+        //         const structPerms: StructPermissions<Blank>[] = [];
 
-                    const { permission, property } = r;
+        //         for (const r of result) {
+        //             let found = structPerms.find(i =>
+        //                 Object.is(i.struct, r.struct)
+        //             );
+        //             if (!found) {
+        //                 found = new StructPermissions(r.struct, role, [], {
+        //                     create: false,
+        //                     delete: false,
+        //                     'read-archive': false,
+        //                     archive: false,
+        //                     'restore-archive': false,
+        //                     'read-version-history': false,
+        //                     'restore-version': false,
+        //                     'delete-version': false
+        //                 });
+        //             }
 
-                    if (property) {
-                        found.update(i => ({
-                            properties: [
-                                ...i.properties,
-                                {
-                                    property,
-                                    update: permission === 'update',
-                                    read: permission === 'read'
-                                }
-                            ],
-                            permissions: i.permissions
-                        }));
-                    } else {
-                        found.update(i => ({
-                            properties: i.properties,
-                            permissions: {
-                                ...i.permissions,
-                                [permission]: true
-                            }
-                        }));
-                    }
-                }
+        //             const { permission, property } = r;
 
-                return structPerms;
-            });
-        }
+        //             if (property) {
+        //                 found.update(i => ({
+        //                     properties: [
+        //                         ...i.properties,
+        //                         {
+        //                             property,
+        //                             update: permission === 'update',
+        //                             read: permission === 'read'
+        //                         }
+        //                     ],
+        //                     permissions: i.permissions
+        //                 }));
+        //             } else {
+        //                 found.update(i => ({
+        //                     properties: i.properties,
+        //                     permissions: {
+        //                         ...i.permissions,
+        //                         [permission]: true
+        //                     }
+        //                 }));
+        //             }
+        //         }
+
+        //         return structPerms;
+        //     // });
+        // }
 
         public static stringify(permissions: StructPermissions<Blank>[]) {
             return attempt(() => {
@@ -134,14 +136,18 @@ export namespace Permissions {
                     for (const prop of p.data.properties) {
                         if (!prop.property)
                             throw new PermissionError('Property not found');
-                        str +=
-                            [
-                                prop.update ? 'update' : 'read',
-                                String(p.struct.data.name),
-                                String(prop.property) || '' // should always be defined
-                            ]
-                                .map(encode)
-                                .join(',') + ';';
+                        if (prop.read) {
+                            str +=
+                                ['read', String(p.struct.data.name), String(prop.property)]
+                                    .map(encode)
+                                    .join(',') + ';';
+                        }
+                        if (prop.update && prop.read) {
+                            str +=
+                                ['update', String(p.struct.data.name), String(prop.property)]
+                                    .map(encode)
+                                    .join(',') + ';';
+                        }
                     }
 
                     for (const [key, value] of Object.entries(
@@ -180,6 +186,60 @@ export namespace Permissions {
                         permissions: str
                     }))
                 ).unwrap();
+            });
+        }
+
+        public static getAll(role: RoleData) {
+            if (role.data.permissions === undefined) return [];
+            const all: [string, string, string][] = role.data.permissions
+                                    .split(';')
+                                    .map(s => s.split(','))
+                                    .map(([permission, struct, property]) => {
+                                        return [
+                                            decode(permission || ''),
+                                            decode(struct || ''),
+                                            decode(property || '')
+                                        ];
+                                    })
+                                    ;
+            return Array.from(Struct.structs.values()).map(s => {
+                const p = new StructPermissions(s, role, 
+                    Object.keys(s.data.structure).map(i => ({
+                        property: i,
+                        read: false,
+                        update: false,
+                    })),
+                    {
+                        create: false,
+                        delete: false,
+                        'read-archive': false,
+                        archive: false,
+                        'restore-archive': false,
+                        'read-version-history': false,
+                        'restore-version': false,
+                        'delete-version': false
+                    }
+                );
+
+                const filtered = all.filter(i => i[1] === s.data.name);
+
+                for (const [perm, _, prop] of filtered) {
+                    if (prop) {
+                        const property = p.data.properties.find(i => i.property === prop);
+                        if (property) {
+                            if (perm === 'read') {
+                                property.read = true;
+                            }
+                            if (perm === 'update') {
+                                property.update = true;
+                            }
+                        }
+                    } else {
+                        p.data.permissions[perm as keyof typeof p.data.permissions] = true;
+                    }
+                }
+
+                return p;
             });
         }
 
@@ -253,9 +313,10 @@ export namespace Permissions {
         reset() {
             return attempt(() => {
                 const { role } = this;
-                const res = StructPermissions.fromRole(role)
-                    .unwrap()
-                    .find(i => Object.is(i.struct, this.struct));
+                // const res = StructPermissions.fromRole(role)
+                //     // .unwrap()
+                //     .find(i => Object.is(i.struct, this.struct));
+                const res = StructPermissions.getAll(role).find(i => Object.is(i.struct, this.struct));
                 if (!res) throw new PermissionError('Struct not found');
 
                 this.set(res.data);
@@ -280,8 +341,9 @@ export namespace Permissions {
         structure: {
             name: 'text',
             universe: 'text',
-            permissions: 'text',
-            description: 'text'
+            permissions: 'text', // DataPermission[]
+            description: 'text',
+            linkAccess: 'text' // used on the front end to show/hide links
         }
     });
 

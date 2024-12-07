@@ -1,4 +1,5 @@
 <script lang="ts">
+import { onMount } from 'svelte';
     import { typeValidation } from '../../../../shared/struct';
     import { capitalize } from '../../../../shared/text';
     import { Accounts } from '../../../models/account';
@@ -14,7 +15,7 @@
 
     universes = $universeRes || undefined;
 
-    const onDataChange = (
+    const onDataChange = async (
         header: keyof typeof account.struct.data.structure,
         d: unknown
     ) => {
@@ -24,10 +25,15 @@
             return;
         }
 
-        account.update({
+        const res = await account.update(data => ({
             [header]: d
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any);
+        }));
+
+        if (res.isOk()) {
+            console.log('Updated', header, 'to', d);
+        } else {
+            console.error('Failed to update', header, 'to', d, res.error);
+        }
     };
 
     const cantRead = '[Invalid Permissions]';
@@ -126,9 +132,9 @@
     <td>
         {#if typeof $account.verified === 'boolean'}
             {#if $account.verified}
-                <i class="material-icons bg-success">verified</i>
+                <i class="material-icons text-success">verified</i>
             {:else}
-                <i class="material-icons bg-warning">warning</i>
+                <i class="material-icons text-warning">warning</i>
             {/if}
         {:else}
             {cantRead}

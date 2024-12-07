@@ -308,7 +308,7 @@ export class Res {
             const res =
                 JSON.stringify(pipe ? await pipe(chunk) : chunk) +
                 streamDelimiter;
-            // log(res);            
+            // log(res);
             try {
                 this.res.write(res);
             } catch (e) {

@@ -1,10 +1,17 @@
 <script lang="ts">
+import { onMount } from 'svelte';
     import { Accounts } from '../../../models/account';
     import TableAccountRow from './TableAccountRow.svelte';
 
     const all = Accounts.Account.all(true);
 
     let table: HTMLTableElement;
+
+    // onMount(() => {
+    //     jQuery(table).DataTable();
+
+    //     return () => {};
+    // });
 </script>
 
 <table

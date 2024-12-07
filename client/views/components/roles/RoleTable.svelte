@@ -2,13 +2,41 @@
     import { Permissions } from '../../../models/permissions';
     import RoleEditor from './RoleEditor.svelte';
     import Modal from '../bootstrap/Modal.svelte';
+    import { prompt } from '../../../utilities/notifications';
 
-    const roles = Permissions.Role.all(true);
+    export let universe: Permissions.UniverseData;
+
+    const roles = Permissions.Role.fromProperty('universe', universe.id, true);
 
     let selected: Permissions.RoleData | null = null;
     let showEditor = false;
     $: showEditor = !!selected;
+
+    const createNew = async () => {
+        if (!universe.id) return;
+        const name = await prompt('Role Name');
+        if (!name) return;
+        const description = await prompt('Role Description');
+        if (!description) return;
+
+        const res = await Permissions.Role.new({
+            name,
+            description,
+            universe: universe.id,
+            permissions: '',
+            linkAccess: '',
+        });
+
+        if (res.isErr()) {
+            console.error('Failed to create role', res.error);
+        }
+    };
 </script>
+
+<button type="button" class="btn btn-primary w-100" on:click={createNew}>
+    Create New Role
+    <i class="material-icons">add</i>
+</button>
 
 <table class="table table-hover">
     <thead>
@@ -20,6 +48,7 @@
     <tbody>
         {#each $roles as role (role.id)}
             <tr
+                class="cursor-pointer"
                 on:click="{() => {
                     selected = role;
                 }}"
@@ -34,7 +63,10 @@
 {#if selected}
     <Modal
         title="{'Role: ' + selected.data.name}"
-        bind:show="{showEditor}">
+        bind:show="{showEditor}"
+        on:hide="{() => selected = null}"
+        on:close="{() => selected = null}"
+    >
         <RoleEditor role="{selected}" />
     </Modal>
 {/if}

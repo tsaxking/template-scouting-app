@@ -1,18 +1,19 @@
 <script lang="ts">
     import Main from '../components/main/Main.svelte';
     import Page from '../components/main/Page.svelte';
-    import Dashboard from '../pages/Dashboard.svelte';
+    // import Dashboard from '../pages/Dashboard.svelte';
     import Accounts from '../pages/Accounts.svelte';
     import type { PageGroup } from '../../utilities/general-types';
     import { getOpenPage } from '../../utilities/page';
+import Universes from '../pages/admin/Universes.svelte';
 
     const groups: PageGroup[] = [
         {
             name: 'Home',
             pages: [
                 {
-                    name: 'dashboard',
-                    icon: 'home',
+                    name: 'universes',
+                    icon: 'dashboard',
                     iconType: 'material'
                 },
                 {
@@ -54,8 +55,10 @@
     <Page
         {active}
         {domain}
-        title="dashboard"
-        bind:loading><Dashboard /></Page>
+        title="universes"
+        bind:loading>
+        <Universes />
+    </Page>
     <Page
         {active}
         {domain}

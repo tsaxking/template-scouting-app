@@ -226,7 +226,7 @@ export const validate = <type = unknown>(
                 } else {
                     log('is not primitive');
                     if (
-                        (isValid as (data: any) => boolean)((body as any)[key])
+                        (isValid as (data: any, body: any) => boolean)((body as any)[key], body)
                     ) {
                         log('valid non-primitive');
                         // valid

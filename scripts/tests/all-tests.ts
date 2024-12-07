@@ -573,10 +573,8 @@ const main = async () => {
     );
 
     env.PORT = '3000';
-    env.SOCKET_PORT = '3001';
     env.ENVIRONMENT = 'test';
     env.DOMAIN = 'http://localhost:3000';
-    env.SOCKET_DOMAIN = 'ws://localhost:3001';
     env.TITLE = 'Test Server';
     env.DATABASE_NAME = env.DATABASE_NAME + '_test';
     env.DATABASE_PORT = '5432';

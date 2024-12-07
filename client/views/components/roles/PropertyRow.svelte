@@ -28,30 +28,39 @@
 <tr>
     <td>{property.property}</td>
     <td>
-        <input
-            id="{struct.name + ':' + property.property + '-read'}"
-            name="{struct.name + ':' + property.property + '-read'}"
-            type="checkbox"
-            bind:checked="{read}"
-            on:input="{event => {
-                read = event.currentTarget.checked;
-                onChange();
-            }}"
-        />
+        <div class="form-check form-switch">
+            <input
+                id="{struct.name + ':' + property.property + '-read'}"
+                name="{struct.name + ':' + property.property + '-read'}"
+                class="form-check-input"
+                role="switch"
+                type="checkbox"
+                bind:checked="{read}"
+                on:input="{event => {
+                    read = event.currentTarget.checked;
+                    onChange();
+                }}"
+            />
+        </div>
+        <!-- <label for="{struct.name + ':' + property.property + '-read'}"></label> -->
     </td>
     <td>
         <!-- It doesn't make sense to be able to update something you cannot read -->
         {#if read}
-            <input
-                id="{struct.name + ':' + property.property + '-update'}"
-                name="{struct.name + ':' + property.property + '-update'}"
-                type="checkbox"
-                bind:checked="{update}"
-                on:input="{event => {
-                    update = event.currentTarget.checked;
-                    onChange();
-                }}"
-            />
+            <div class="form-check form-switch">
+                <input
+                    id="{struct.name + ':' + property.property + '-update'}"
+                    name="{struct.name + ':' + property.property + '-update'}"
+                    class="form-check-input"
+                    role="switch"
+                    type="checkbox"
+                    bind:checked="{update}"
+                    on:input="{event => {
+                        update = event.currentTarget.checked;
+                        onChange();
+                    }}"
+                />
+            </div>
         {/if}
     </td>
 </tr>

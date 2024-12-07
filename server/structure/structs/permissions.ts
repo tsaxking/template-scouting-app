@@ -359,17 +359,23 @@ export namespace Permissions {
             next();
         };
 
-    export const forceUniverse = (getUniverse: (session: Session.SessionData) => Promise<UniverseData | undefined> | UniverseData | undefined): ServerFunction => async (req, res, next) => {
-        const session = (await req.getSession()).unwrap();
-        if (!session) throw new Error('Session not found');
-        const universe = await getUniverse(session);
-        if (universe) {
-            req.universe = universe.id;
-            const rooms = req.socket?.rooms;
-            if (rooms && !rooms.has(universe.id)) {
-                req.socket.join(universe.id);
+    export const forceUniverse =
+        (
+            getUniverse: (
+                session: Session.SessionData
+            ) => Promise<UniverseData | undefined> | UniverseData | undefined
+        ): ServerFunction =>
+        async (req, res, next) => {
+            const session = (await req.getSession()).unwrap();
+            if (!session) throw new Error('Session not found');
+            const universe = await getUniverse(session);
+            if (universe) {
+                req.universe = universe.id;
+                const rooms = req.socket?.rooms;
+                if (rooms && !rooms.has(universe.id)) {
+                    req.socket.join(universe.id);
+                }
             }
-        }
-        next();
-    };
+            next();
+        };
 }

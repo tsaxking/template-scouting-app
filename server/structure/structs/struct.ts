@@ -1,9 +1,5 @@
 /* eslint-disable no-dupe-class-members */
-import {
-    attempt,
-    attemptAsync,
-    Result
-} from '../../../shared/check';
+import { attempt, attemptAsync, Result } from '../../../shared/check';
 import {
     Database,
     Parameter,
@@ -17,11 +13,7 @@ import { validate } from '../../middleware/data-type';
 import { Status } from '../../utilities/status';
 import { EventEmitter } from '../../../shared/event-emitter';
 import { Req } from '../app/req';
-import {
-    capitalize,
-    decode,
-    encode,
-} from '../../../shared/text';
+import { capitalize, decode, encode } from '../../../shared/text';
 import fs from 'fs';
 import path from 'path';
 import {
@@ -808,6 +800,7 @@ export class StructData<Structure extends Blank, Name extends string>
      */
     update(data: Partial<St<Structure, Name>>) {
         return attemptAsync(async () => {
+            delete data.updated;
             await this.createVersion();
 
             if (!this.struct.validate(data))
@@ -871,7 +864,6 @@ export class StructData<Structure extends Blank, Name extends string>
      */
     delete() {
         return attemptAsync(async () => {
-            await this.createVersion();
             const query = Query.build(
                 `
                 DELETE FROM ${this.struct.data.name}
@@ -1353,6 +1345,7 @@ export class Struct<Structure extends Blank, Name extends string> {
         return new Loop(async () => {
             Struct.forEach(s => {
                 s.getLifetimeItems(true).pipe(async d => {
+                    if (d.lifetime === 0) return;
                     if (d.created.getTime() + d.lifetime < Date.now()) {
                         (await d.delete()).unwrap();
                     }
@@ -2090,7 +2083,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                     if ((await Account.isAdmin(account)).unwrap()) {
                         return res.stream<StructData<Structure, Name>>(
                             this.all(true, false),
-                            data => data.data,
+                            data => data.data
                         );
                     }
 
@@ -2176,15 +2169,17 @@ export class Struct<Structure extends Blank, Name extends string> {
                 }>(
                     '/read.from-property',
                     validate({
-                        property: v =>
-                            Object.keys(this.data.structure).includes(v),
-                        value: (v, self) =>
-                            typeValidation(
+                        property: v =>{
+                            log('Checking property', v);
+                            return Object.keys(this.data.structure).includes(v);},
+                        value: (v, self) =>{
+                            log('Checking self.value', self);
+                            return typeValidation(
                                 this.data.structure[
-                                    self.property as keyof Structure
+                                    self?.property as keyof Structure
                                 ],
                                 v
-                            )
+                            );}
                     }),
                     async (req, res) => {
                         const account = (
@@ -2867,8 +2862,8 @@ export class Struct<Structure extends Blank, Name extends string> {
         property: Property,
         value: TS_Type<Structure[Property]>,
         asStream: true // filter?: (
-        // ) => boolean | Promise<boolean>
-    ) //     data: StructData<Structure, Name>
+        //     data: StructData<Structure, Name>
+    ) // ) => boolean | Promise<boolean>
     : StructStream<Structure, Name>;
     fromProperty<Property extends keyof Structure>(
         property: Property,
@@ -2896,6 +2891,8 @@ export class Struct<Structure extends Blank, Name extends string> {
                 this.data.database.unsafe.stream<St<Structure, Name>>(query);
             const streamer = new StructStream<Structure, Name>(this /*filter*/);
             stream.pipe(data => streamer.add(this.Generator(data)));
+            stream.once('end', () => streamer.end());
+            stream.once('close', () => streamer.close());
             return streamer;
         }
         return attemptAsync(async () => {
@@ -2923,8 +2920,8 @@ export class Struct<Structure extends Blank, Name extends string> {
     all(
         asStream: true,
         includeArchived?: boolean // filter?: (
-        // ) => boolean | Promise<boolean>
-    ) //     data: StructData<Structure, Name>
+        //     data: StructData<Structure, Name>
+    ) // ) => boolean | Promise<boolean>
     : StructStream<Structure, Name>;
     all(
         asStream: false,
@@ -2983,8 +2980,8 @@ export class Struct<Structure extends Blank, Name extends string> {
     fromUniverse(
         universe: string,
         asStream: true // filter?: (
-        // ) => boolean | Promise<boolean>
-    ) //     data: StructData<Structure, Name>
+        //     data: StructData<Structure, Name>
+    ) // ) => boolean | Promise<boolean>
     : StructStream<Structure, Name>;
     fromUniverse(
         universe: string,
@@ -3036,8 +3033,8 @@ export class Struct<Structure extends Blank, Name extends string> {
      */
     archived(
         asStream: true // filter?: (
-        // ) => boolean | Promise<boolean>
-    ) //     data: StructData<Structure, Name>
+        //     data: StructData<Structure, Name>
+    ) // ) => boolean | Promise<boolean>
     : StructStream<Structure, Name>;
     archived(asStream: false): Promise<Result<StructData<Structure, Name>[]>>;
     archived(
@@ -3158,8 +3155,8 @@ export class Struct<Structure extends Blank, Name extends string> {
         // log('Routing: ', `/${this.name}/${path}`);
         Struct.router.post(
             `/${this.name}/${path}`,
-            (_req, _res, next) => {
-                log('Request: ', `/${this.name}/${path}`);
+            (req, _res, next) => {
+                log('Request: ', `/${this.name}/${path}`, req.body);
                 next();
             },
             ...fns

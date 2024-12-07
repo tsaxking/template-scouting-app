@@ -66,8 +66,6 @@ app.static('/public', path.resolve(__root, './public'));
 app.static('/dist', path.resolve(__root, './dist'));
 app.static('/uploads', path.resolve(__root, './storage/uploads'));
 
-app.route('/api', Struct.router);
-
 app.post('/test/get-socket', (req, res) => {
     res.json({
         id: req.socket?.id || 'Not found!'
@@ -196,8 +194,8 @@ app.get('/*', async (req, res, next) => {
 
 app.get(
     '/dashboard/admin',
-    Permissions.canAccess((account, roles) => {
-        return !!roles.find(r => r.data.name === 'admin');
+    Permissions.canAccess(async (account) => {
+        return (await Account.isAdmin(account)).unwrap();
     }),
     (_req, res) => {
         res.sendTemplate('entries/dashboard/admin');

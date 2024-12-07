@@ -318,7 +318,10 @@ export const selectDir = async (
     return data;
 };
 
-export const managerFn = async (fn: () => Promise<unknown>, done?: (message: string) => void) => {
+export const managerFn = async (
+    fn: () => Promise<unknown>,
+    done?: (message: string) => void
+) => {
     try {
         await fn();
     } catch (e) {

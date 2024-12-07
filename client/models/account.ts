@@ -42,7 +42,7 @@ export namespace Accounts {
         name: 'DiscordLink',
         socket,
         structure: {
-            discordId: 'text',
+            discordID: 'text',
             account: 'text'
         }
     });
@@ -51,9 +51,8 @@ export namespace Accounts {
         name: 'PasswordChange',
         socket,
         structure: {
-            accountId: 'text',
-            key: 'text',
-            expires: 'text'
+            account: 'text',
+            key: 'text'
         }
     });
 
