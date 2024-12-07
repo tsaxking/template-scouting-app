@@ -24,16 +24,22 @@
             description,
             universe: universe.id,
             permissions: '',
-            linkAccess: '',
+            linkAccess: ''
         });
 
         if (res.isErr()) {
             console.error('Failed to create role', res.error);
         }
     };
+
+    let editor: RoleEditor;
+    let modal: Modal;
 </script>
 
-<button type="button" class="btn btn-primary w-100" on:click={createNew}>
+<button
+    class="btn btn-primary w-100"
+    type="button"
+    on:click="{createNew}">
     Create New Role
     <i class="material-icons">add</i>
 </button>
@@ -64,9 +70,30 @@
     <Modal
         title="{'Role: ' + selected.data.name}"
         bind:show="{showEditor}"
-        on:hide="{() => selected = null}"
-        on:close="{() => selected = null}"
+        on:hide="{() => (selected = null)}"
+        on:close="{() => (selected = null)}"
+        bind:this={modal}
     >
-        <RoleEditor role="{selected}" />
+        <RoleEditor bind:this={editor} role="{selected}" />
+        <div slot="buttons">
+            <button
+                class="btn btn-primary"
+                type="button"
+                on:click="{() => editor.save()}">
+                Save
+            </button>
+            <button
+                class="btn btn-warning"
+                type="button"
+                on:click="{() => editor.reset()}">
+                Reset
+            </button>
+            <button
+                class="btn btn-secondary"
+                type="button"
+                on:click="{() => modal.close()}">
+                Close
+            </button>
+        </div>
     </Modal>
 {/if}

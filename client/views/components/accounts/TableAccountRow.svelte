@@ -1,5 +1,5 @@
 <script lang="ts">
-import { onMount } from 'svelte';
+    import { onMount } from 'svelte';
     import { typeValidation } from '../../../../shared/struct';
     import { capitalize } from '../../../../shared/text';
     import { Accounts } from '../../../models/account';

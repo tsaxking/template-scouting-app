@@ -1,5 +1,5 @@
 <script lang="ts">
-import { onMount } from 'svelte';
+    import { onMount } from 'svelte';
     import { Accounts } from '../../../models/account';
     import TableAccountRow from './TableAccountRow.svelte';
 
@@ -7,11 +7,11 @@ import { onMount } from 'svelte';
 
     let table: HTMLTableElement;
 
-    // onMount(() => {
-    //     jQuery(table).DataTable();
+// onMount(() => {
+//     jQuery(table).DataTable();
 
-    //     return () => {};
-    // });
+//     return () => {};
+// });
 </script>
 
 <table

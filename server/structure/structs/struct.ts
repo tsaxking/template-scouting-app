@@ -2169,17 +2169,19 @@ export class Struct<Structure extends Blank, Name extends string> {
                 }>(
                     '/read.from-property',
                     validate({
-                        property: v =>{
+                        property: v => {
                             log('Checking property', v);
-                            return Object.keys(this.data.structure).includes(v);},
-                        value: (v, self) =>{
+                            return Object.keys(this.data.structure).includes(v);
+                        },
+                        value: (v, self) => {
                             log('Checking self.value', self);
                             return typeValidation(
                                 this.data.structure[
                                     self?.property as keyof Structure
                                 ],
                                 v
-                            );}
+                            );
+                        }
                     }),
                     async (req, res) => {
                         const account = (
@@ -2862,8 +2864,8 @@ export class Struct<Structure extends Blank, Name extends string> {
         property: Property,
         value: TS_Type<Structure[Property]>,
         asStream: true // filter?: (
-        //     data: StructData<Structure, Name>
-    ) // ) => boolean | Promise<boolean>
+        // ) => boolean | Promise<boolean>
+    ) //     data: StructData<Structure, Name>
     : StructStream<Structure, Name>;
     fromProperty<Property extends keyof Structure>(
         property: Property,
@@ -2920,8 +2922,8 @@ export class Struct<Structure extends Blank, Name extends string> {
     all(
         asStream: true,
         includeArchived?: boolean // filter?: (
-        //     data: StructData<Structure, Name>
-    ) // ) => boolean | Promise<boolean>
+        // ) => boolean | Promise<boolean>
+    ) //     data: StructData<Structure, Name>
     : StructStream<Structure, Name>;
     all(
         asStream: false,
@@ -2980,8 +2982,8 @@ export class Struct<Structure extends Blank, Name extends string> {
     fromUniverse(
         universe: string,
         asStream: true // filter?: (
-        //     data: StructData<Structure, Name>
-    ) // ) => boolean | Promise<boolean>
+        // ) => boolean | Promise<boolean>
+    ) //     data: StructData<Structure, Name>
     : StructStream<Structure, Name>;
     fromUniverse(
         universe: string,
@@ -3033,8 +3035,8 @@ export class Struct<Structure extends Blank, Name extends string> {
      */
     archived(
         asStream: true // filter?: (
-        //     data: StructData<Structure, Name>
-    ) // ) => boolean | Promise<boolean>
+        // ) => boolean | Promise<boolean>
+    ) //     data: StructData<Structure, Name>
     : StructStream<Structure, Name>;
     archived(asStream: false): Promise<Result<StructData<Structure, Name>[]>>;
     archived(

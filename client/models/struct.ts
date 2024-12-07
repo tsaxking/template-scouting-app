@@ -357,10 +357,12 @@ export class StructData<T extends Blank>
         return attemptAsync(async () => {
             const prev = { ...this.data };
             const response = await fn(this.data);
-            (await this.struct.post(`/update`, {
-                ...this.data,
-                ...response,
-            })).unwrap();
+            (
+                await this.struct.post(`/update`, {
+                    ...this.data,
+                    ...response
+                })
+            ).unwrap();
             return async () => {
                 return this.update(() => prev);
             };

@@ -5,7 +5,7 @@
     import Accounts from '../pages/Accounts.svelte';
     import type { PageGroup } from '../../utilities/general-types';
     import { getOpenPage } from '../../utilities/page';
-import Universes from '../pages/admin/Universes.svelte';
+    import Universes from '../pages/admin/Universes.svelte';
 
     const groups: PageGroup[] = [
         {

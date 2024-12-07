@@ -34,10 +34,76 @@ export namespace Permissions {
         'delete-version': boolean;
     };
 
+    export class StructProperty<T extends Blank> implements Writable<{
+        property: keyof T;
+        update: boolean;
+        read: boolean;
+    }> {
+        public data: {
+            property: keyof T;
+            update: boolean;
+            read: boolean;
+        };
+
+        private readonly subscribers: Set<
+            (value: {
+                property: keyof T;
+                update: boolean;
+                read: boolean;
+            }) => void
+        > = new Set();
+
+        constructor(property: keyof T, update: boolean, read: boolean) {
+            this.data = {
+                property,
+                update,
+                read
+            };
+        }
+
+        set(value: {
+            property: keyof T;
+            update: boolean;
+            read: boolean;
+        }) {
+            this.data = value;
+            this.subscribers.forEach(i => i(value));
+        }
+
+        update(
+            fn: (value: {
+                property: keyof T;
+                update: boolean;
+                read: boolean;
+            }) => {
+                property: keyof T;
+                update: boolean;
+                read: boolean;
+            }
+        ) {
+            this.set(fn(this.data));
+        }
+
+        subscribe(
+            fn: (value: {
+                property: keyof T;
+                update: boolean;
+                read: boolean;
+            }) => void
+        ) {
+            this.subscribers.add(fn);
+            fn(this.data);
+
+            return () => {
+                this.subscribers.delete(fn);
+            };
+        }
+    }
+
     export class StructPermissions<T extends Blank>
         implements
             Writable<{
-                properties: StructPermission<T>[];
+                properties: StructProperty<T>[];
                 permissions: Permissions;
             }>
     {
@@ -134,17 +200,25 @@ export namespace Permissions {
 
                 for (const p of permissions) {
                     for (const prop of p.data.properties) {
-                        if (!prop.property)
+                        if (!prop.data.property)
                             throw new PermissionError('Property not found');
-                        if (prop.read) {
+                        if (prop.data.read) {
                             str +=
-                                ['read', String(p.struct.data.name), String(prop.property)]
+                                [
+                                    'read',
+                                    String(p.struct.data.name),
+                                    String(prop.data.property)
+                                ]
                                     .map(encode)
                                     .join(',') + ';';
                         }
-                        if (prop.update && prop.read) {
+                        if (prop.data.update && prop.data.read) {
                             str +=
-                                ['update', String(p.struct.data.name), String(prop.property)]
+                                [
+                                    'update',
+                                    String(p.struct.data.name),
+                                    String(prop.data.property)
+                                ]
                                     .map(encode)
                                     .join(',') + ';';
                         }
@@ -192,23 +266,20 @@ export namespace Permissions {
         public static getAll(role: RoleData) {
             if (role.data.permissions === undefined) return [];
             const all: [string, string, string][] = role.data.permissions
-                                    .split(';')
-                                    .map(s => s.split(','))
-                                    .map(([permission, struct, property]) => {
-                                        return [
-                                            decode(permission || ''),
-                                            decode(struct || ''),
-                                            decode(property || '')
-                                        ];
-                                    })
-                                    ;
+                .split(';')
+                .map(s => s.split(','))
+                .map(([permission, struct, property]) => {
+                    return [
+                        decode(permission || ''),
+                        decode(struct || ''),
+                        decode(property || '')
+                    ];
+                });
             return Array.from(Struct.structs.values()).map(s => {
-                const p = new StructPermissions(s, role, 
-                    Object.keys(s.data.structure).map(i => ({
-                        property: i,
-                        read: false,
-                        update: false,
-                    })),
+                const p = new StructPermissions(
+                    s,
+                    role,
+                    Object.keys(s.data.structure).map(i => new StructProperty(i, false, false)),
                     {
                         create: false,
                         delete: false,
@@ -225,17 +296,21 @@ export namespace Permissions {
 
                 for (const [perm, _, prop] of filtered) {
                     if (prop) {
-                        const property = p.data.properties.find(i => i.property === prop);
+                        const property = p.data.properties.find(
+                            i => i.data.property === prop
+                        );
                         if (property) {
                             if (perm === 'read') {
-                                property.read = true;
+                                property.data.read = true;
                             }
                             if (perm === 'update') {
-                                property.update = true;
+                                property.data.update = true;
                             }
                         }
                     } else {
-                        p.data.permissions[perm as keyof typeof p.data.permissions] = true;
+                        p.data.permissions[
+                            perm as keyof typeof p.data.permissions
+                        ] = true;
                     }
                 }
 
@@ -244,13 +319,13 @@ export namespace Permissions {
         }
 
         private data: {
-            properties: StructPermission<T>[];
+            properties: StructProperty<T>[];
             permissions: Permissions;
         };
 
         private readonly subscribers: Set<
             (value: {
-                properties: StructPermission<T>[];
+                properties: StructProperty<T>[];
                 permissions: Permissions;
             }) => void
         > = new Set();
@@ -258,7 +333,7 @@ export namespace Permissions {
         constructor(
             public readonly struct: Struct<T>,
             public readonly role: RoleData,
-            properties: StructPermission<T>[],
+            properties: StructProperty<T>[],
             permissions: Permissions
         ) {
             this.data = {
@@ -270,7 +345,7 @@ export namespace Permissions {
         private _onAllUnsubscribe?: () => void;
 
         set(value: {
-            properties: StructPermission<T>[];
+            properties: StructProperty<T>[];
             permissions: Permissions;
         }) {
             this.data = value;
@@ -279,10 +354,10 @@ export namespace Permissions {
 
         update(
             fn: (value: {
-                properties: StructPermission<T>[];
+                properties: StructProperty<T>[];
                 permissions: Permissions;
             }) => {
-                properties: StructPermission<T>[];
+                properties: StructProperty<T>[];
                 permissions: Permissions;
             }
         ) {
@@ -291,7 +366,7 @@ export namespace Permissions {
 
         subscribe(
             run: (value: {
-                properties: StructPermission<T>[];
+                properties: StructProperty<T>[];
                 permissions: Permissions;
             }) => void
         ) {
@@ -312,14 +387,27 @@ export namespace Permissions {
 
         reset() {
             return attempt(() => {
-                const { role } = this;
-                // const res = StructPermissions.fromRole(role)
-                //     // .unwrap()
-                //     .find(i => Object.is(i.struct, this.struct));
-                const res = StructPermissions.getAll(role).find(i => Object.is(i.struct, this.struct));
-                if (!res) throw new PermissionError('Struct not found');
+                // const { role } = this;
+                // const res = StructPermissions.getAll(role).find(i =>
+                //     Object.is(i.struct, this.struct)
+                // );
+                // if (!res) throw new PermissionError('Struct not found');
 
-                this.set(res.data);
+                // this.set(res.data);
+
+                this.set({
+                    permissions: {
+                        create: false,
+                        delete: false,
+                        'read-archive': false,
+                        archive: false,
+                        'restore-archive': false,
+                        'read-version-history': false,
+                        'restore-version': false,
+                        'delete-version': false
+                    },
+                    properties: this.data.properties.map(i => new StructProperty<T>(i.data.property, false, false))
+                });
             });
         }
     }

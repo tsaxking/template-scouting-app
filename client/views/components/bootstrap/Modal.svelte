@@ -7,10 +7,17 @@
     export let id: string = 'modal-' + Random.uuid();
     export let show = false;
 
+    export const close = () => {
+        jQuery(`#${id}`).modal('hide');
+    };
+
+    export const open = () => {
+        jQuery(`#${id}`).modal('show');
+    };
 
     onMount(() => {
         if (show) {
-            jQuery(`#${id}`).modal('show');
+            open();
         }
 
         jQuery(`#${id}`).on('hidden.bs.modal', () => {
@@ -24,7 +31,7 @@
         });
 
         document.querySelectorAll(`#${id} button.close-modal`).forEach(m => {
-            jQuery(m).modal('hide');
+            close();
         });
     });
 </script>
@@ -55,13 +62,14 @@
                 </slot>
             </div>
             <div class="modal-footer">
-                <button
-                    class="btn btn-secondary"
-                    data-bs-dismiss="modal"
-                    type="button"
-                    on:click="{() => dispatch('close')}">Close</button
-                >
-                <slot name="buttons" />
+                <slot name="buttons">
+                    <button
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal"
+                        type="button"
+                        on:click="{() => dispatch('close')}">Close</button
+                    >
+                </slot>  
             </div>
         </div>
     </div>

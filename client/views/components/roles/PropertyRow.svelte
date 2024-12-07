@@ -2,21 +2,21 @@
     import { type Blank } from '../../../../shared/struct';
     import { Permissions } from '../../../models/permissions';
 
-    export let property: Permissions.StructPermission<Blank>;
+    export let property: Permissions.StructProperty<Blank>;
     export let structPermission: Permissions.StructPermissions<Blank>;
     let struct = structPermission.struct;
 
-    let read = property.read;
-    let update = property.update;
+    // let read = property.data.read;
+    // let update = property.data.update;
 
     const onChange = () => {
         structPermission.update(s => {
-            const p = s.properties.find(p => p.property === property.property);
+            const p = s.properties.find(p => p.data.property === $property.property);
             if (p) {
-                p.read = read;
-                p.update = update;
-                if (!read) {
-                    p.update = false;
+                p.data.read = $property.read;
+                p.data.update = $property.update;
+                if (!$property.read) {
+                    p.data.update = false;
                 }
             }
 
@@ -26,18 +26,18 @@
 </script>
 
 <tr>
-    <td>{property.property}</td>
+    <td>{$property.property}</td>
     <td>
         <div class="form-check form-switch">
             <input
-                id="{struct.name + ':' + property.property + '-read'}"
-                name="{struct.name + ':' + property.property + '-read'}"
+                id="{struct.name + ':' + $property.property + '-read'}"
+                name="{struct.name + ':' + $property.property + '-read'}"
                 class="form-check-input"
                 role="switch"
                 type="checkbox"
-                bind:checked="{read}"
+                bind:checked="{$property.read}"
                 on:input="{event => {
-                    read = event.currentTarget.checked;
+                    $property.read = event.currentTarget.checked;
                     onChange();
                 }}"
             />
@@ -46,17 +46,17 @@
     </td>
     <td>
         <!-- It doesn't make sense to be able to update something you cannot read -->
-        {#if read}
+        {#if $property.read}
             <div class="form-check form-switch">
                 <input
-                    id="{struct.name + ':' + property.property + '-update'}"
-                    name="{struct.name + ':' + property.property + '-update'}"
+                    id="{struct.name + ':' + $property.property + '-update'}"
+                    name="{struct.name + ':' + $property.property + '-update'}"
                     class="form-check-input"
                     role="switch"
                     type="checkbox"
-                    bind:checked="{update}"
+                    bind:checked="{$property.update}"
                     on:input="{event => {
-                        update = event.currentTarget.checked;
+                        $property.update = event.currentTarget.checked;
                         onChange();
                     }}"
                 />

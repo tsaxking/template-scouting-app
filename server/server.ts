@@ -194,7 +194,7 @@ app.get('/*', async (req, res, next) => {
 
 app.get(
     '/dashboard/admin',
-    Permissions.canAccess(async (account) => {
+    Permissions.canAccess(async account => {
         return (await Account.isAdmin(account)).unwrap();
     }),
     (_req, res) => {
