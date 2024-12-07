@@ -34,11 +34,14 @@ export namespace Permissions {
         'delete-version': boolean;
     };
 
-    export class StructProperty<T extends Blank> implements Writable<{
-        property: keyof T;
-        update: boolean;
-        read: boolean;
-    }> {
+    export class StructProperty<T extends Blank>
+        implements
+            Writable<{
+                property: keyof T;
+                update: boolean;
+                read: boolean;
+            }>
+    {
         public data: {
             property: keyof T;
             update: boolean;
@@ -61,11 +64,7 @@ export namespace Permissions {
             };
         }
 
-        set(value: {
-            property: keyof T;
-            update: boolean;
-            read: boolean;
-        }) {
+        set(value: { property: keyof T; update: boolean; read: boolean }) {
             this.data = value;
             this.subscribers.forEach(i => i(value));
         }
@@ -279,7 +278,9 @@ export namespace Permissions {
                 const p = new StructPermissions(
                     s,
                     role,
-                    Object.keys(s.data.structure).map(i => new StructProperty(i, false, false)),
+                    Object.keys(s.data.structure).map(
+                        i => new StructProperty(i, false, false)
+                    ),
                     {
                         create: false,
                         delete: false,
@@ -406,7 +407,10 @@ export namespace Permissions {
                         'restore-version': false,
                         'delete-version': false
                     },
-                    properties: this.data.properties.map(i => new StructProperty<T>(i.data.property, false, false))
+                    properties: this.data.properties.map(
+                        i =>
+                            new StructProperty<T>(i.data.property, false, false)
+                    )
                 });
             });
         }

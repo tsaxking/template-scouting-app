@@ -68,30 +68,35 @@
 
 {#if selected}
     <Modal
+        bind:this="{modal}"
         title="{'Role: ' + selected.data.name}"
         bind:show="{showEditor}"
         on:hide="{() => (selected = null)}"
         on:close="{() => (selected = null)}"
-        bind:this={modal}
     >
-        <RoleEditor bind:this={editor} role="{selected}" />
+        <RoleEditor
+            bind:this="{editor}"
+            role="{selected}" />
         <div slot="buttons">
             <button
                 class="btn btn-primary"
                 type="button"
-                on:click="{() => editor.save()}">
+                on:click="{() => editor.save()}"
+            >
                 Save
             </button>
             <button
                 class="btn btn-warning"
                 type="button"
-                on:click="{() => editor.reset()}">
+                on:click="{() => editor.reset()}"
+            >
                 Reset
             </button>
             <button
                 class="btn btn-secondary"
                 type="button"
-                on:click="{() => modal.close()}">
+                on:click="{() => modal.close()}"
+            >
                 Close
             </button>
         </div>

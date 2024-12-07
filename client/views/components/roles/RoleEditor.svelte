@@ -2,7 +2,7 @@
     import { type Blank } from '../../../../shared/struct';
     import { capitalize, fromCamelCase } from '../../../../shared/text';
     import { Permissions } from '../../../models/permissions';
-import { confirm } from '../../../utilities/notifications';
+    import { confirm } from '../../../utilities/notifications';
     import StructTable from './StructTable.svelte';
 
     export let role: Permissions.RoleData;
@@ -10,8 +10,10 @@ import { confirm } from '../../../utilities/notifications';
     let structs: Permissions.StructPermissions<Blank>[] =
         Permissions.StructPermissions.getAll(role);
 
-    export const save  = async () => {
-        const confirmed = await confirm('Are you sure you want to save these changes?');
+    export const save = async () => {
+        const confirmed = await confirm(
+            'Are you sure you want to save these changes?'
+        );
         if (!confirmed) return;
         Permissions.StructPermissions.save(structs);
     };

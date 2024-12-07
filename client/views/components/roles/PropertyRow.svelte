@@ -7,11 +7,13 @@
     let struct = structPermission.struct;
 
     // let read = property.data.read;
-    // let update = property.data.update;
+// let update = property.data.update;
 
     const onChange = () => {
         structPermission.update(s => {
-            const p = s.properties.find(p => p.data.property === $property.property);
+            const p = s.properties.find(
+                p => p.data.property === $property.property
+            );
             if (p) {
                 p.data.read = $property.read;
                 p.data.update = $property.update;

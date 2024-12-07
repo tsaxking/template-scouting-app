@@ -41,39 +41,39 @@
     };
 
     // let canCreate = $struct.permissions['create'];
-    // let canDelete = $struct.permissions['delete'];
+// let canDelete = $struct.permissions['delete'];
 
-    // let canReadArchive = $struct.permissions['read-archive'];
-    // let canArchive = $struct.permissions['archive'];
-    // let canRestoreArchive = $struct.permissions['restore-archive'];
+// let canReadArchive = $struct.permissions['read-archive'];
+// let canArchive = $struct.permissions['archive'];
+// let canRestoreArchive = $struct.permissions['restore-archive'];
 
-    // let canReadVersionHistory = $struct.permissions['read-version-history'];
-    // let canRestoreVersion = $struct.permissions['restore-version'];
-    // let canDeleteVersion = $struct.permissions['delete-version'];
+// let canReadVersionHistory = $struct.permissions['read-version-history'];
+// let canRestoreVersion = $struct.permissions['restore-version'];
+// let canDeleteVersion = $struct.permissions['delete-version'];
 
     const onChange = () => {
         struct.update(s => {
             // if (!canCreate) canDelete = false;
-            // if (!canReadArchive) {
-            //     canArchive = false;
-            //     canRestoreArchive = false;
-            // }
-            // if (!canReadVersionHistory) {
-            //     canRestoreVersion = false;
-            //     canDeleteVersion = false;
-            // }
+        // if (!canReadArchive) {
+        //     canArchive = false;
+        //     canRestoreArchive = false;
+        // }
+        // if (!canReadVersionHistory) {
+        //     canRestoreVersion = false;
+        //     canDeleteVersion = false;
+        // }
 
-            // s.permissions = {
-            //     create: canCreate,
-            //     delete: canDelete,
-            //     'read-archive': canReadArchive,
-            //     archive: canArchive,
-            //     'restore-archive': canRestoreArchive,
-            //     'read-version-history': canReadVersionHistory,
-            //     'restore-version': canRestoreVersion,
-            //     'delete-version': canDeleteVersion
-            // };
-            // return s;
+        // s.permissions = {
+        //     create: canCreate,
+        //     delete: canDelete,
+        //     'read-archive': canReadArchive,
+        //     archive: canArchive,
+        //     'restore-archive': canRestoreArchive,
+        //     'read-version-history': canReadVersionHistory,
+        //     'restore-version': canRestoreVersion,
+        //     'delete-version': canDeleteVersion
+        // };
+        // return s;
 
             return s;
         });
@@ -240,8 +240,8 @@
             <tbody>
                 {#each $struct.properties as property (property.data.property)}
                     <PropertyRow
-                        bind:property="{property}"
-                        structPermission="{struct}" />
+                        structPermission="{struct}"
+                        bind:property />
                 {/each}
             </tbody>
         </table>

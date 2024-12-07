@@ -69,7 +69,7 @@
                         type="button"
                         on:click="{() => dispatch('close')}">Close</button
                     >
-                </slot>  
+                </slot>
             </div>
         </div>
     </div>
