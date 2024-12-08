@@ -130,10 +130,9 @@ const _select = async <T = unknown>(
             for (let i = 0; i < options.length; i++) {
                 const o = options[i];
                 console.log(
-                    Colors.FgGreen,
-                    i === selected ? '>' : ' ',
+                    i === selected ? Colors.FgGreen : '',
+                    o.name,
                     Colors.Reset,
-                    o.name
                 );
             }
 

@@ -5,7 +5,6 @@
 import {
     attempt,
     attemptAsync,
-    build,
     Err,
     Ok,
     resolveAll,
@@ -21,7 +20,6 @@ import {
     parseObject,
     toCamelCase,
     fromSnakeCase,
-    capitalize,
     encode,
     decode
 } from '../../../shared/text';
@@ -31,7 +29,7 @@ import path from 'path';
 import { Queries } from '../queries';
 import { log } from '../../../client/utilities/logging';
 import { gitBranch, gitCommit } from '../git';
-import { getVersions, Version } from './versions';
+import { Version } from './versions';
 import fs from 'fs';
 import { error } from '../terminal-logging';
 import { exec } from '../run-task';
@@ -619,6 +617,8 @@ export class TableBackup {
             const metadata = m.unwrap();
             const version = v.unwrap();
 
+            // log('Restoring', table.name, 'to', metadata.date);
+
             // TODO: What if there's a backup that is compatibile but it's from a different database version?
             // Is this a problem? The database will create a backup between each version change
             if (Version.compare(version, metadata.version) !== 'equal') {
@@ -636,13 +636,19 @@ export class TableBackup {
                 return new Ok(undefined);
             }
 
+            // log('Backing up table');
             (await table.backup()).unwrap();
+            // log('Clearing table');
             (await table.clear()).unwrap();
 
             // need to drop so we can recreate the table with the correct schema
             // this is important because when migrating versions, it's possible for the schema to change
             // and if the version fails, we should restore to the most recent schema
+            // log('Dropping table');
             (await table.drop()).unwrap();
+            // log('Recreating table');
+            (await this.buildTable()).unwrap();
+            // return;
 
             // Did it in here so I could isolate the stream side of the function
             // eslint-disable-next-line no-async-promise-executor
@@ -651,39 +657,70 @@ export class TableBackup {
                 const resolve = () => {
                     if (resolved) return;
                     resolved = true;
-                    if (error) rej(error);
+                    // log('Resolved promise', err);
+                    if (err) rej(err);
                     else res();
                 };
 
-                const rs = this.read().unwrap();
+                const rs = new EventEmitter<{
+                    data: string;
+                    end: void;
+                    close: void;
+                    error: Error;
+                }>();
 
-                let error: DatabaseError;
+                // TODO: the file doesn't exist here in right now
+
+                const data = await fs.promises.readFile(
+                    path.resolve(
+                        __root,
+                        './storage/db/backups',
+                        `${this.filename}.backupv2`
+                    ),
+                    'utf-8'
+                );
+
+                const schema = metadata.schema;
+
+
+                let err: DatabaseError;
 
                 let row = 0;
                 let headers: string[] = [];
-                rs.on('data', d => {
+
+                const makeType = (type: string, data: string) => {
+                    type = type.toLowerCase();
+                    if (type.includes('int')) return Number(data);
+                    if (type.includes('bool')) return data === 'true';
+                    return data;
+                };
+
+
+
+                rs.on('data', async d => {
                     if (row === 0) {
                         headers = d.toString().split(',').map(decode);
                     } else {
                         if (!headers.length) {
-                            rs.close();
-                            error = new DatabaseError(
+                            // rs.close();
+                            err = new DatabaseError(
                                 `Did not find any headers for ${table.name} in backup`
                             );
-                            return;
+                            return resolve();
                         }
-                        const data = (
-                            JSON.parse(decode(d.toString())) as unknown[]
-                        ).reduce(
-                            (cur, acc, i) => {
-                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                (acc as any)[headers[i]] = cur;
-                                return acc;
-                            },
-                            {} as Record<string, unknown>
-                        ) as Record<string, unknown>;
+                        const data = d.toString().split(',').map(decode)
+                            .reduce((acc, cur, i) => {
+                                const type = schema.find(s => toCamelCase(fromSnakeCase(s.columnName)) === headers[i])?.dataType.toLowerCase();
+                                if (!type) throw new Error(`No type found for ${table.name}.${headers[i]}`);
 
-                        this.database.unsafe.run(
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                (acc as any)[headers[i]] = makeType(type, cur);
+                                return acc;
+                            }, {});
+
+                        // log('Adding', data);
+
+                        const res = await this.database.unsafe.run(
                             Query.build(
                                 `
                             INSERT INTO ${table.name} (
@@ -697,18 +734,27 @@ export class TableBackup {
                                 data as Parameter
                             )
                         );
+
+                        if (res.isErr()) error(res.error.message);
                     }
                     row++;
                 });
 
                 rs.on('end', () => {
-                    rs.close();
+                    // rs.close();
                     resolve(); // TODO: How should I structure the end of this function?
                 });
 
                 rs.on('close', () => {
                     resolve();
                 });
+
+                const split = data.split('\n');
+                for (let i = 0; i < split.length; i++) {
+                    rs.emit('data', split[i]);
+                }
+                rs.emit('end', undefined);
+                rs.emit('close', undefined);
             });
         });
     }
@@ -716,14 +762,14 @@ export class TableBackup {
     deleteFiles() {
         return attemptAsync(async () => {
             return Promise.all([
-                fs.promises.unlink(
+                fs.promises.rm(
                     path.resolve(
                         __root,
                         './storage/db/backups',
                         `${this.filename}.backupv2`
                     )
                 ),
-                fs.promises.unlink(
+                fs.promises.rm(
                     path.resolve(
                         __root,
                         './storage/db/backups',
@@ -894,17 +940,15 @@ class Table {
     create() {
         return attemptAsync(async () => {
             const schema = (await this.getSchema()).unwrap();
-            this.database.unsafe.run(
+            (await this.database.unsafe.run(
                 Query.build(`
                 CREATE TABLE IF NOT EXISTS ${this.name} (
                     ${
-                        // TODO: Will this even work?
-                        // I don't know if dataType handles all edge cases
-                        schema.map(s => `${s.columnName} ${s.dataType}`)
+                        schema.map(s => `${s.columnName} ${s.dataType}`).join()
                     }
                 );
             `)
-            );
+            )).unwrap();
         });
     }
 
@@ -1017,7 +1061,7 @@ class Table {
 
                 ws.write(
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    headers.map(h => encode((data as any)[h])).join(',') + '\n'
+                    headers.map(h => encode(String((data as any)[h]))).join(',') + '\n'
                 );
 
                 i++;
@@ -1712,6 +1756,15 @@ export class Database {
                         const table = new TableBackup(
                             file.replace('.backupv2', ''),
                             this
+                        );
+
+                        await fs.promises.cp(
+                            path.resolve(backupDir, file),
+                            path.resolve(
+                                __root,
+                                './storage/db/backups',
+                                file
+                            )
                         );
 
                         (await table.restore()).unwrap();

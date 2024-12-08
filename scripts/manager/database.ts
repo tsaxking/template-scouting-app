@@ -95,6 +95,7 @@ export const restoreBackup = async () => {
 
     if (doRestore) {
         (await DB.restore(backup)).unwrap();
+        // process.exit(0);
         return backToMain(`Backup ${backup} restored`);
     }
 

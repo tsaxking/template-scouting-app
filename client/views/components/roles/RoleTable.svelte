@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Permissions } from '../../../models/permissions';
-    import RoleEditor from './RoleEditor.svelte';
-    import Modal from '../bootstrap/Modal.svelte';
+    // import RoleEditor from './RoleEditor.svelte';
+// import Modal from '../bootstrap/Modal.svelte';
     import { prompt } from '../../../utilities/notifications';
 
     export let universe: Permissions.UniverseData;
@@ -9,8 +9,8 @@
     const roles = Permissions.Role.fromProperty('universe', universe.id, true);
 
     let selected: Permissions.RoleData | null = null;
-    let showEditor = false;
-    $: showEditor = !!selected;
+    // let showEditor = false;
+// $: showEditor = !!selected;
 
     const createNew = async () => {
         if (!universe.id) return;
@@ -32,8 +32,8 @@
         }
     };
 
-    let editor: RoleEditor;
-    let modal: Modal;
+// let editor: RoleEditor;
+// let modal: Modal;
 </script>
 
 <button
@@ -65,7 +65,7 @@
         {/each}
     </tbody>
 </table>
-
+<!-- 
 {#if selected}
     <Modal
         bind:this="{modal}"
@@ -101,4 +101,4 @@
             </button>
         </div>
     </Modal>
-{/if}
+{/if} -->
