@@ -103,7 +103,7 @@ export namespace Permissions {
     export const PageAccess = new Struct({
         database: DB,
         structure: {
-            accoutnId: 'text',
+            accountId: 'text',
             link: 'text'
         },
         name: 'PageAccess'

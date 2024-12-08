@@ -435,7 +435,7 @@ export namespace Permissions {
             universe: 'text',
             permissions: 'text', // DataPermission[]
             description: 'text',
-            linkAccess: 'text' // used on the front end to show/hide links
+            linkAccess: 'text' // used on the front end to show/hide links (csv)
         }
     });
 
@@ -484,5 +484,11 @@ export namespace Permissions {
         permissions: unknown[]
     ) => {
         return attemptAsync(async () => {});
+    };
+
+    export const getLinks = (role: RoleData) => {
+        return attempt(async () => {
+            return role.data.linkAccess?.split(',') || [];
+        });
     };
 }

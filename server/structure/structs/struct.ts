@@ -1632,6 +1632,7 @@ export class Struct<Structure extends Blank, Name extends string> {
             const { Permissions } = await import('./permissions');
             const { Session } = await import('./session');
             const { Account } = await import('./account');
+            const { API } = await import('./api');
 
             const image = (await this.imagize()).unwrap();
             (await Struct.initImage(this, image)).unwrap();
@@ -1789,20 +1790,24 @@ export class Struct<Structure extends Blank, Name extends string> {
                             );
                         }
 
-                        res.sendStatus(
-                            new Status(
-                                {
-                                    code: 200,
-                                    message: 'Structures match',
-                                    color: 'success',
-                                    instructions: ''
-                                },
-                                this.data.name,
-                                'Structures Match',
-                                '{}',
-                                req
-                            )
-                        );
+                        // res.sendStatus(
+                        //     new Status(
+                        //         {
+                        //             code: 200,
+                        //             message: 'Structures match',
+                        //             color: 'success',
+                        //             instructions: ''
+                        //         },
+                        //         this.data.name,
+                        //         'Structures Match',
+                        //         '{}',
+                        //         req
+                        //     )
+                        // );
+                        res.status(200).json({
+                            struct: this.name,
+                            match: true,
+                        });
                     }
                 );
 
@@ -1841,7 +1846,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                             );
                         }
 
-                        if (!(await Account.isAdmin(account)).unwrap()) {
+                        if (!(await Account.isAdmin(account)).unwrap() || !(await API.canAccess(req.headers.get('x-api-key'))).unwrap()) {
                             if (
                                 !this.bypasses
                                     .filter(
@@ -1954,7 +1959,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                         if (bypasses) {
                             doBypass = bypasses.some(bp => bp.fn(account, n));
                         }
-                        if ((await Account.isAdmin(account)).unwrap()) {
+                        if ((await Account.isAdmin(account)).unwrap() || (await API.canAccess(req.headers.get('x-api-key'))).unwrap()) {
                             doBypass = true;
                         }
 
@@ -2038,7 +2043,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                         const n = (await this.fromId(req.body.id)).unwrap();
                         if (!n) return res.sendStatus(notFoundStatus(req));
 
-                        if ((await Account.isAdmin(account)).unwrap()) {
+                        if ((await Account.isAdmin(account)).unwrap() || (await API.canAccess(req.headers.get('x-api-key'))).unwrap()) {
                             return res.json(n.data);
                         }
 
@@ -2080,7 +2085,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                     ).unwrap();
                     if (!account) return res.sendStatus(notSignedInStatus(req));
 
-                    if ((await Account.isAdmin(account)).unwrap()) {
+                    if ((await Account.isAdmin(account)).unwrap() || (await API.canAccess(req.headers.get('x-api-key'))).unwrap()) {
                         return res.stream<StructData<Structure, Name>>(
                             this.all(true, false),
                             data => data.data
@@ -2190,7 +2195,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                         if (!account)
                             return res.sendStatus(notSignedInStatus(req));
 
-                        if ((await Account.isAdmin(account)).unwrap()) {
+                        if ((await Account.isAdmin(account)).unwrap() || (await API.canAccess(req.headers.get('x-api-key'))).unwrap()) {
                             return res.stream<StructData<Structure, Name>>(
                                 this.fromProperty(
                                     req.body.property as keyof Structure,
@@ -2289,7 +2294,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                     ).unwrap();
                     if (!account) return res.sendStatus(notSignedInStatus(req));
 
-                    if ((await Account.isAdmin(account)).unwrap()) {
+                    if ((await Account.isAdmin(account)).unwrap() || (await API.canAccess(req.headers.get('x-api-key'))).unwrap()) {
                         return res.stream<StructData<Structure, Name>>(
                             this.archived(true),
                             async data => data.data
@@ -2389,7 +2394,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                         if (!account)
                             return res.sendStatus(notSignedInStatus(req));
 
-                        if ((await Account.isAdmin(account)).unwrap()) {
+                        if ((await Account.isAdmin(account)).unwrap() || (await API.canAccess(req.headers.get('x-api-key'))).unwrap()) {
                             const n = (await this.fromId(req.body.id)).unwrap();
                             if (!n) return res.sendStatus(notFoundStatus(req));
 
@@ -2471,7 +2476,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                         const n = (await this.fromId(req.body.id)).unwrap();
                         if (!n) return res.sendStatus(notFoundStatus(req));
 
-                        if (!(await Account.isAdmin(account)).unwrap()) {
+                        if (!(await Account.isAdmin(account)).unwrap() || !(await API.canAccess(req.headers.get('x-api-key'))).unwrap()) {
                             const roles = (
                                 await Permissions.getRoles(account)
                             ).unwrap();
@@ -2564,7 +2569,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                             );
                         }
 
-                        if (!(await Account.isAdmin(account)).unwrap()) {
+                        if (!(await Account.isAdmin(account)).unwrap() || !(await API.canAccess(req.headers.get('x-api-key'))).unwrap()) {
                             const roles = (
                                 await Permissions.getRoles(account)
                             ).unwrap();
@@ -2646,7 +2651,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                         const n = (await this.fromId(req.body.id)).unwrap();
                         if (!n) return res.sendStatus(notFoundStatus(req));
 
-                        if ((await Account.isAdmin(account)).unwrap()) {
+                        if (!(await Account.isAdmin(account)).unwrap() || !(await API.canAccess(req.headers.get('x-api-key'))).unwrap()) {
                             const roles = (
                                 await Permissions.getRoles(account)
                             ).unwrap();
@@ -2717,7 +2722,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                         const n = (await this.fromId(req.body.id)).unwrap();
                         if (!n) return res.sendStatus(notFoundStatus(req));
 
-                        if ((await Account.isAdmin(account)).unwrap()) {
+                        if (!(await Account.isAdmin(account)).unwrap() || !(await API.canAccess(req.headers.get('x-api-key'))).unwrap()) {
                             const roles = (
                                 await Permissions.getRoles(account)
                             ).unwrap();
