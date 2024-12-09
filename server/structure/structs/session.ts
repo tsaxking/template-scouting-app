@@ -95,18 +95,23 @@ export namespace Session {
                     prevUrl: req.url
                 })
             ).unwrap();
-            res.cookie('ssid', s.id);
+            res.cookie('ssid', s.id, {
+                maxAge: 1000 * 60 * 60 * 24 * 365,
+                httpOnly: true,
+                sameSite: 'none',
+                domain: app.domain 
+            });
             return s;
         });
     };
 
-    export const middleware =
-        (options: CookieOptions, int = 1000 * 60 * 10): ServerFunction =>
-        async (req, res, next) => {
-            const interval = deleteInterval(int);
-            interval.start();
-            const s = (await fromApp(req.app, req.req, res.res)).unwrap();
-        };
+    // export const middleware =
+    //     (options: CookieOptions, int = 1000 * 60 * 10): ServerFunction =>{
+    //     deleteInterval(int).start();
+    //     return async (req, res, next) => {
+    //         const s = (await fromApp(req.app, req.req, res.res)).unwrap();
+    //     };
+    // };
 
     export const signIn = async (
         session: Data<typeof Session>,
