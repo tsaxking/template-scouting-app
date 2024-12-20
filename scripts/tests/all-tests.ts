@@ -503,7 +503,7 @@ export const runTests = async (env: Env, database: Database) =>
     ]);
 
 type Env = {
-    [key: string]: string;
+    [key: string]: string | undefined;
 };
 
 const readEnv = (envPath: string): Env => {
@@ -541,10 +541,20 @@ const buildDatabase = () =>
                 1000 * 60 * 5
             );
 
-            const pcs = spawn('sh', ['./db-init.sh', '--force-reset'], {
-                stdio: 'inherit',
-                cwd: path.resolve(__dirname, '../')
-            });
+            const pcs = spawn(
+                'sh',
+                [
+                    './db-init.sh',
+                    '--force-reset',
+                    '--user=' + env.DATABASE_USER || 'test',
+                    '--password=' + env.DATABASE_PASSWORD || 'test',
+                    '--database=' + env.DATABASE_NAME || 'test'
+                ],
+                {
+                    stdio: 'inherit',
+                    cwd: path.resolve(__dirname, '../')
+                }
+            );
 
             pcs.on('exit', code => {
                 if (code === 0) {
@@ -556,41 +566,41 @@ const buildDatabase = () =>
         });
     });
 const main = async () => {
-    process.on('exit', () => {
-        log('Resetting env');
-        try {
-            fs.cpSync(
-                path.resolve(__dirname, '../../._env'),
-                path.resolve(__dirname, '../../.env')
-            );
-            fs.unlinkSync(path.resolve(__dirname, '../../._env'));
-        } catch (error) {
-            console.warn(error);
-        }
-    });
+    // process.on('exit', () => {
+    //     log('Resetting env');
+    //     try {
+    //         fs.cpSync(
+    //             path.resolve(__dirname, '../../._env'),
+    //             path.resolve(__dirname, '../../.env')
+    //         );
+    //         fs.unlinkSync(path.resolve(__dirname, '../../._env'));
+    //     } catch (error) {
+    //         console.warn(error);
+    //     }
+    // });
 
-    log('Reading env');
-    let env: Record<string, string> = {};
-    try {
-        env = readEnv(path.resolve(__dirname, '../../.env'));
-        fs.cpSync(
-            path.resolve(__dirname, '../../.env'),
-            path.resolve(__dirname, '../../._env')
-        );
-    } catch (error) {
-        console.warn(error);
-    }
+    // log('Reading env');
+    // let env: Record<string, string> = {};
+    // try {
+    //     env = readEnv(path.resolve(__dirname, '../../.env'));
+    //     fs.cpSync(
+    //         path.resolve(__dirname, '../../.env'),
+    //         path.resolve(__dirname, '../../._env')
+    //     );
+    // } catch (error) {
+    //     console.warn(error);
+    // }
 
-    env.PORT = '3000';
-    env.ENVIRONMENT = 'test';
-    env.DOMAIN = 'http://localhost:3000';
-    env.TITLE = 'Test Server';
-    env.DATABASE_NAME = env.DATABASE_NAME + '_test';
-    env.DATABASE_PORT = '5432';
-    env.DATABASE_HOST = 'localhost';
-    if (!env.DATABASE_PASSWORD) env.DATABASE_PASSWORD = 'test';
+    // env.PORT = '3000';
+    // env.ENVIRONMENT = 'test';
+    // env.DOMAIN = 'http://localhost:3000';
+    // env.TITLE = 'Test Server';
+    // env.DATABASE_NAME = env.DATABASE_NAME + '_test';
+    // env.DATABASE_PORT = '5432';
+    // env.DATABASE_HOST = 'localhost';
+    // if (!env.DATABASE_PASSWORD) env.DATABASE_PASSWORD = 'test';
 
-    saveEnv(path.resolve(__dirname, '../../.env'), env);
+    // saveEnv(path.resolve(__dirname, '../../.env'), env);
 
     log('Building database...');
     const dbRes = await buildDatabase();
@@ -601,11 +611,11 @@ const main = async () => {
     log('Database built successfully');
 
     const client = new Client({
-        user: env.DATABASE_USER,
-        database: env.DATABASE_NAME,
-        host: env.DATABASE_HOST,
-        password: env.DATABASE_PASSWORD,
-        port: Number(env.DATABASE_PORT),
+        user: env.DATABASE_USER || 'test',
+        database: env.DATABASE_NAME || 'test',
+        host: env.DATABASE_HOST || 'localhost',
+        password: env.DATABASE_PASSWORD || 'test',
+        port: Number(env.DATABASE_PORT || '5432'),
         keepAlive: true
     });
     const pgDb = new PgDatabase(client);
