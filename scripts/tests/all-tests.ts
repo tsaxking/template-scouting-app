@@ -506,65 +506,75 @@ type Env = {
     [key: string]: string | undefined;
 };
 
-const readEnv = (envPath: string): Env => {
-    const env = fs
-        .readFileSync(envPath, 'utf8')
-        .replace(/#.*/g, '')
-        .replace(/\n\n/g, '\n')
-        .trim();
+// const readEnv = (envPath: string): Env => {
+//     const env = fs
+//         .readFileSync(envPath, 'utf8')
+//         .replace(/#.*/g, '')
+//         .replace(/\n\n/g, '\n')
+//         .trim();
 
-    return env.split('\n').reduce((acc, line) => {
-        const [key, value] = line
-            .split('=')
-            .map(k => k.trim().replace(/['"]/g, ''));
-        if (key && value) {
-            acc[key] = value;
-        }
-        return acc;
-    }, {} as Env);
+//     return env.split('\n').reduce((acc, line) => {
+//         const [key, value] = line
+//             .split('=')
+//             .map(k => k.trim().replace(/['"]/g, ''));
+//         if (key && value) {
+//             acc[key] = value;
+//         }
+//         return acc;
+//     }, {} as Env);
+// };
+
+// const saveEnv = (envPath: string, env: Env) => {
+//     const envStr = Object.keys(env)
+//         .map(key => `${key} = '${env[key]}'`)
+//         .join('\n');
+//     fs.writeFileSync(envPath, envStr);
+// };
+
+const buildDatabase = () => {
+    // attemptAsync(() => {
+        // return new Promise<void>((res, rej) => {
+        //     setTimeout(
+        //         () => {
+        //             rej('Database took too long to build');
+        //         },
+        //         1000 * 60 * 5
+        //     );
+
+            return runTask('sh', [
+                './scripts/db-init.sh',
+                '--force-reset',
+                '--user=' + env.DATABASE_USER || 'test',
+                '--password=' + env.DATABASE_PASSWORD || 'test',
+                '--database=' + env.DATABASE_NAME || 'test'
+            ], 60 * 1000);
+
+            // const pcs = spawn(
+            //     'sh',
+            //     [
+            //         './db-init.sh',
+            //         '--force-reset',
+            //         '--user=' + env.DATABASE_USER || 'test',
+            //         '--password=' + env.DATABASE_PASSWORD || 'test',
+            //         '--database=' + env.DATABASE_NAME || 'test'
+            //     ],
+            //     {
+            //         stdio: 'inherit',
+            //         cwd: path.resolve(__dirname, '../')
+            //     }
+            // );
+            
+
+            // pcs.on('exit', code => {
+            //     if (code === 0) {
+            //         res();
+            //     } else {
+            //         rej(code);
+            //     }
+            // });
+        // });
+    // });
 };
-
-const saveEnv = (envPath: string, env: Env) => {
-    const envStr = Object.keys(env)
-        .map(key => `${key} = '${env[key]}'`)
-        .join('\n');
-    fs.writeFileSync(envPath, envStr);
-};
-
-const buildDatabase = () =>
-    attemptAsync(() => {
-        return new Promise<void>((res, rej) => {
-            setTimeout(
-                () => {
-                    rej('Database took too long to build');
-                },
-                1000 * 60 * 5
-            );
-
-            const pcs = spawn(
-                'sh',
-                [
-                    './db-init.sh',
-                    '--force-reset',
-                    '--user=' + env.DATABASE_USER || 'test',
-                    '--password=' + env.DATABASE_PASSWORD || 'test',
-                    '--database=' + env.DATABASE_NAME || 'test'
-                ],
-                {
-                    stdio: 'inherit',
-                    cwd: path.resolve(__dirname, '../')
-                }
-            );
-
-            pcs.on('exit', code => {
-                if (code === 0) {
-                    res();
-                } else {
-                    rej(code);
-                }
-            });
-        });
-    });
 const main = async () => {
     // process.on('exit', () => {
     //     log('Resetting env');

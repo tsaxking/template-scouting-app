@@ -14,7 +14,7 @@ import { __root } from './env';
  * @param {string[]} args
  * @returns {unknown}
  */
-export const runTask = async (command: string, args: string[]) => {
+export const runTask = async (command: string, args: string[], timeLimit = 5000) => {
     return attemptAsync(() => {
         return new Promise<void>((res, rej) => {
             const task = spawn(command, args, {
@@ -27,7 +27,7 @@ export const runTask = async (command: string, args: string[]) => {
                 if (num === 0) res();
                 else rej(new Error(`child process exited with code ${num}`));
             };
-            const timeout = setTimeout(() => end(1), 1000 * 5);
+            const timeout = setTimeout(() => end(1), timeLimit);
             task.stdout.on('data', data => {
                 console.log(data.toString());
             });
