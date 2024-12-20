@@ -1,6 +1,6 @@
 import path from 'path';
 import { DB } from '../server/utilities/database';
-import { TableBackup } from '../server/utilities/database/databases-2';
+import { TableBackup } from '../server/utilities/database/databases';
 
 const main = async () => {
     const [, , backup] = process.argv;

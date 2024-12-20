@@ -7,7 +7,7 @@ import { validate } from '../../server/middleware/data-type';
 import { Req } from '../../server/structure/app/req';
 import { Res } from '../../server/structure/app/res';
 import { deepEqual } from 'assert';
-import { attemptAsync, check, isValid, parseJSON } from '../../shared/check';
+import { check, isValid, parseJSON } from '../../shared/check';
 import { match, matchInstance } from '../../shared/match';
 import { Client } from 'pg';
 import env from '../../server/utilities/env';
@@ -15,10 +15,7 @@ import {
     Database,
     PgDatabase,
     Query
-} from '../../server/utilities/database/databases-2';
-import fs from 'fs';
-import path from 'path';
-import { spawn } from 'child_process';
+} from '../../server/utilities/database/databases';
 import { Struct } from '../../server/structure/structs/struct';
 
 /**

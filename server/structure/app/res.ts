@@ -10,8 +10,6 @@ import { EventEmitter } from '../../../shared/event-emitter';
 import { getTemplateSync } from '../../utilities/files';
 import { ReadableStream } from 'stream/web';
 import { streamDelimiter } from '../../../shared/text';
-import { log } from 'console';
-import { error } from '../../utilities/terminal-logging';
 
 /**
  * The event types for the stream

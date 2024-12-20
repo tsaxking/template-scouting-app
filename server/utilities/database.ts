@@ -1,4 +1,4 @@
-import { PgDatabase, Database } from './database/databases-2';
+import { PgDatabase, Database } from './database/databases';
 import { Client } from 'pg';
 import env from './env';
 

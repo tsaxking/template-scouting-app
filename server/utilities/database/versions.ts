@@ -1,7 +1,7 @@
 /* eslint-disable no-await-in-loop */
 import { readdir } from 'fs/promises';
 import { attemptAsync, Result } from '../../../shared/check';
-import { Database } from './databases-2';
+import { Database } from './databases';
 import path from 'path';
 import { __root } from '../env';
 

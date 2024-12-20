@@ -5,7 +5,7 @@ import {
     Parameter,
     Query,
     SimpleParameter
-} from '../../utilities/database/databases-2';
+} from '../../utilities/database/databases';
 import { uuid } from '../../utilities/uuid';
 import { Route, ServerFunction } from '../app/app';
 import { match } from '../../../shared/match';
