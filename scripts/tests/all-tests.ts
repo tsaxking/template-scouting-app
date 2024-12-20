@@ -27,13 +27,13 @@ import { Struct } from '../../server/structure/structs/struct';
  *
  * @type {*}
  */
-const {
-    DATABASE_USER,
-    DATABASE_PASSWORD,
-    DATABASE_NAME,
-    DATABASE_HOST,
-    DATABASE_PORT
-} = env;
+// const {
+//     DATABASE_USER,
+//     DATABASE_PASSWORD,
+//     DATABASE_NAME,
+//     DATABASE_HOST,
+//     DATABASE_PORT
+// } = env;
 
 const assertEquals = (a: unknown, b: unknown) => {
     try {
@@ -601,11 +601,11 @@ const main = async () => {
     log('Database built successfully');
 
     const client = new Client({
-        user: DATABASE_USER,
-        database: DATABASE_NAME,
-        host: DATABASE_HOST,
-        password: DATABASE_PASSWORD,
-        port: Number(DATABASE_PORT),
+        user: env.DATABASE_USER,
+        database: env.DATABASE_NAME,
+        host: env.DATABASE_HOST,
+        password: env.DATABASE_PASSWORD,
+        port: Number(env.DATABASE_PORT),
         keepAlive: true
     });
     const pgDb = new PgDatabase(client);
