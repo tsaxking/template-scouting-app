@@ -544,9 +544,9 @@ const buildDatabase = () => {
             return runTask('bash', [
                 './scripts/db-init.sh',
                 '--force-reset',
-                '--user=' + env.DATABASE_USER || 'test',
-                '--password=' + env.DATABASE_PASSWORD || 'test',
-                '--database=' + env.DATABASE_NAME || 'test'
+                '--user=' + (env.DATABASE_USER || 'test'),
+                '--password=' + (env.DATABASE_PASSWORD || 'test'),
+                '--database=' + (env.DATABASE_NAME || 'test'),
             ], 60 * 1000);
 
             // const pcs = spawn(
