@@ -570,11 +570,16 @@ const main = async () => {
     });
 
     log('Reading env');
-    const env = readEnv(path.resolve(__dirname, '../../.env'));
-    fs.cpSync(
-        path.resolve(__dirname, '../../.env'),
-        path.resolve(__dirname, '../../._env')
-    );
+    let env: Record<string, string> = {};
+    try {
+        env = readEnv(path.resolve(__dirname, '../../.env'));
+        fs.cpSync(
+            path.resolve(__dirname, '../../.env'),
+            path.resolve(__dirname, '../../._env')
+        );
+    } catch (error) {
+        console.warn(error);
+    }
 
     env.PORT = '3000';
     env.ENVIRONMENT = 'test';
