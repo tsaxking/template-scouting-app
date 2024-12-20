@@ -77,15 +77,15 @@ export class Keyboard {
     public combine(...keyboard: Keyboard[]) {
         for (let i = 0; i < keyboard.length; i++) {
             const kb = keyboard[i];
-            const entries = kb.listeners.entries();
-            for (let j = 0; j < kb.listeners.size; j++) {
-                const next = entries.next().value;
-                if (next) {
-                    const [key, fn] = next;
-                    for (const f of fn) {
-                        this.on(key, f);
-                    }
-                }
+            const entries = Array.from(kb.listeners.entries());
+            // for (let j = 0; j < kb.listeners.size; j++) {
+            //     const [key, fn] = entries.next().value;
+            //     this.on(key, fn);
+            // }
+
+            for (const [key, fns] of entries) {
+                const current = this.listeners.get(key) || [];
+                this.listeners.set(key, current.concat(fns));
             }
         }
     }

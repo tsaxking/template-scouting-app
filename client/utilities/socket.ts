@@ -190,9 +190,9 @@ export class Socket {
         this.socket.connect();
         const events = this.listeners.entries();
         for (let i = 0; i < this.listeners.size; i++) {
-            const next = events.next().value;
-            if (!next) break;
-            const [event, listeners] = next;
+            const res = events.next().value;
+            if (!res) continue;
+            const [event, listeners] = res;
             for (const listener of listeners) {
                 this.socket.on(event, listener);
             }

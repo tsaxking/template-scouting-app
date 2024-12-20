@@ -3,6 +3,8 @@ import env from '../utilities/env';
 import { Req } from '../structure/app/req';
 import { Res } from '../structure/app/res';
 import { Account } from '../structure/structs/account';
+import { capitalize } from '../../shared/text';
+import { resolveAll } from '../../shared/check';
 
 export const router = new Route();
 

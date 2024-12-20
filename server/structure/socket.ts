@@ -134,7 +134,7 @@ export class SocketWrapper {
             }
 
             socket.on('disconnect', () => {
-                console.log('disconnected');
+                // console.log('disconnected');
                 this.em.emit('disconnect', socket);
             });
         });
