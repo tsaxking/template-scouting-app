@@ -33,7 +33,7 @@ echo "Arguments: $@"
 # assume --name=DATABASE_NAME --user=DATABASE_USER --password=DATABASE_PASSWORD
 while [[ "$#" -gt 0 ]]; do
     case $1 in
-        --name=*) DATABASE_NAME="${1#*=}" ;;
+        --database=*) DATABASE_NAME="${1#*=}" ;;
         --user=*) DATABASE_USER="${1#*=}" ;;
         --password=*) DATABASE_PASSWORD="${1#*=}" ;;
         # --force-reset) FORCE_RESET=true ;;
