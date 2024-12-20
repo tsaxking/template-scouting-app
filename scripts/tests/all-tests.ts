@@ -32,6 +32,12 @@ import { Struct } from '../../server/structure/structs/struct';
 //     DATABASE_PORT
 // } = env;
 
+env.DATABASE_USER = env.DATABASE_USER || 'test';
+env.DATABASE_NAME = env.DATABASE_NAME || 'test';
+env.DATABASE_HOST = env.DATABASE_HOST || 'localhost';
+env.DATABASE_PASSWORD = env.DATABASE_PASSWORD || 'test';
+env.DATABASE_PORT = env.DATABASE_PORT || '5432';
+
 const assertEquals = (a: unknown, b: unknown) => {
     try {
         deepEqual(a, b);
@@ -618,11 +624,11 @@ const main = async () => {
     log('Database built successfully');
 
     const client = new Client({
-        user: env.DATABASE_USER || 'test',
-        database: env.DATABASE_NAME || 'test',
-        host: env.DATABASE_HOST || 'localhost',
-        password: env.DATABASE_PASSWORD || 'test',
-        port: Number(env.DATABASE_PORT || '5432'),
+        user: env.DATABASE_USER,
+        database: env.DATABASE_NAME,
+        host: env.DATABASE_HOST,
+        password: env.DATABASE_PASSWORD,
+        port: Number(env.DATABASE_PORT),
         keepAlive: true
     });
     const pgDb = new PgDatabase(client);
