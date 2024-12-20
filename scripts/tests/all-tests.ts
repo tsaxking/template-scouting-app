@@ -558,11 +558,15 @@ const buildDatabase = () =>
 const main = async () => {
     process.on('exit', () => {
         log('Resetting env');
-        fs.cpSync(
-            path.resolve(__dirname, '../../._env'),
-            path.resolve(__dirname, '../../.env')
-        );
-        fs.unlinkSync(path.resolve(__dirname, '../../._env'));
+        try {
+            fs.cpSync(
+                path.resolve(__dirname, '../../._env'),
+                path.resolve(__dirname, '../../.env')
+            );
+            fs.unlinkSync(path.resolve(__dirname, '../../._env'));
+        } catch (error) {
+            console.error(error);
+        }
     });
 
     log('Reading env');
