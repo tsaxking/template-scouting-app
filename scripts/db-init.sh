@@ -1,4 +1,8 @@
 #!/bin/bash
+
+echo "Initializing database..."
+echo "Arguments: $@"
+
 # Assume format is --user=USER --password=PASSWORD --database=DATABASE
 # for i in "$@"
 # do
@@ -26,16 +30,21 @@
 # done
 
 # Parse arguments
+# assume --name=DATABASE_NAME --user=DATABASE_USER --password=DATABASE_PASSWORD
 while [[ "$#" -gt 0 ]]; do
     case $1 in
-        --name) DATABASE_NAME="$2"; shift ;;
-        --user) DATABASE_USER="$2"; shift ;;
-        --password) DATABASE_PASSWORD="$2"; shift ;;
+        --name=*) DATABASE_NAME="${1#*=}" ;;
+        --user=*) DATABASE_USER="${1#*=}" ;;
+        --password=*) DATABASE_PASSWORD="${1#*=}" ;;
         # --force-reset) FORCE_RESET=true ;;
         *) echo "Unknown parameter passed: $1"; usage ;;
     esac
     shift
 done
+
+echo "Database name: $DATABASE_NAME"
+echo "Database user: $DATABASE_USER"
+echo "Database password: $DATABASE_PASSWORD"
 
 # Load environment variables
 # eval "$(

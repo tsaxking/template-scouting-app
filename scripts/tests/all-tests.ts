@@ -541,7 +541,7 @@ const buildDatabase = () => {
         //         1000 * 60 * 5
         //     );
 
-            return runTask('sh', [
+            return runTask('bash', [
                 './scripts/db-init.sh',
                 '--force-reset',
                 '--user=' + env.DATABASE_USER || 'test',
