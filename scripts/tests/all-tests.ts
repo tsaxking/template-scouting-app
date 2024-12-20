@@ -565,7 +565,7 @@ const main = async () => {
             );
             fs.unlinkSync(path.resolve(__dirname, '../../._env'));
         } catch (error) {
-            console.error(error);
+            console.warn(error);
         }
     });
 
