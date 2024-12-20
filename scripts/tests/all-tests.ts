@@ -588,6 +588,7 @@ const main = async () => {
     env.DATABASE_NAME = env.DATABASE_NAME + '_test';
     env.DATABASE_PORT = '5432';
     env.DATABASE_HOST = 'localhost';
+    if (!env.DATABASE_PASSWORD) env.DATABASE_PASSWORD = 'test';
 
     saveEnv(path.resolve(__dirname, '../../.env'), env);
 
