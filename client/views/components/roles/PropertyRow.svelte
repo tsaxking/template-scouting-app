@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { Blank } from "../../../../shared/struct";
-    import { capitalize, fromCamelCase } from "../../../../shared/text";
-    import { Permissions } from "../../../models/permissions";
+    import { Blank } from '../../../../shared/struct';
+    import { capitalize, fromCamelCase } from '../../../../shared/text';
+    import { Permissions } from '../../../models/permissions';
 
     export let property: Permissions.StructProperty<Blank>;
     export let structName: string;
@@ -17,23 +17,27 @@
 </script>
 
 <tr>
-    <td>{capitalize(fromCamelCase(structName))} - {capitalize(fromCamelCase(String(name)))}</td>
+    <td
+    >{capitalize(fromCamelCase(structName))} - {capitalize(
+        fromCamelCase(String(name))
+    )}</td
+    >
     <td>
         <div class="form-check form-switch">
             <input
                 id="role-editor-{structName}-{name}-read"
                 class="form-check-input"
                 type="checkbox"
-                bind:checked={read}
-                on:change={() => {
+                bind:checked="{read}"
+                on:change="{() => {
                     if (!read) update = false;
 
                     property.set({
                         read,
                         update,
-                        property: name,
+                        property: name
                     });
-                }}
+                }}"
             />
         </div>
     </td>
@@ -43,16 +47,16 @@
                 id="role-editor-{structName}-{name}-update"
                 class="form-check-input"
                 type="checkbox"
-                bind:checked={update}
-                on:change={() => {
+                bind:checked="{update}"
+                on:change="{() => {
                     if (update) read = true;
 
                     property.set({
                         read,
                         update,
-                        property: name,
+                        property: name
                     });
-                }}
+                }}"
             />
         </div>
     </td>

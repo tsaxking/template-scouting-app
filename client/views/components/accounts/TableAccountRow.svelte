@@ -151,23 +151,25 @@
             {#if $account.verified}
                 <button
                     class="btn btn-warning"
-                    data-bs-toggle="tooltip"
                     data-bs-title="Unverify Account {$account.username}"
-                    on:click={() => {
+                    data-bs-toggle="tooltip"
+                    type="button"
+                    on:click="{() => {
                         onDataChange('verified', false);
-                    }}
-                    type="button">
+                    }}"
+                >
                     <i class="material-icons"> warning </i>
                 </button>
             {:else}
                 <button
                     class="btn btn-success"
-                    data-bs-toggle="tooltip"
                     data-bs-title="Verify Account {$account.username}"
-                    on:click={() => {
+                    data-bs-toggle="tooltip"
+                    type="button"
+                    on:click="{() => {
                         onDataChange('verified', true);
-                    }}
-                    type="button">
+                    }}"
+                >
                     <i class="material-icons"> verified </i>
                 </button>
             {/if}

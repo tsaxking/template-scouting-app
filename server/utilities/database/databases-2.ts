@@ -13,7 +13,6 @@ import {
 // import cliProgress from 'cli-progress';
 import { EventEmitter } from '../../../shared/event-emitter';
 import { Client } from 'pg';
-import QueryStream from 'pg-query-stream';
 import {
     fromCamelCase,
     toSnakeCase,
@@ -682,7 +681,6 @@ export class TableBackup {
 
                 const schema = metadata.schema;
 
-
                 let err: DatabaseError;
 
                 let row = 0;
@@ -695,8 +693,6 @@ export class TableBackup {
                     return data;
                 };
 
-
-
                 rs.on('data', async d => {
                     if (row === 0) {
                         headers = d.toString().split(',').map(decode);
@@ -708,10 +704,23 @@ export class TableBackup {
                             );
                             return resolve();
                         }
-                        const data = d.toString().split(',').map(decode)
+                        const data = d
+                            .toString()
+                            .split(',')
+                            .map(decode)
                             .reduce((acc, cur, i) => {
-                                const type = schema.find(s => toCamelCase(fromSnakeCase(s.columnName)) === headers[i])?.dataType.toLowerCase();
-                                if (!type) throw new Error(`No type found for ${table.name}.${headers[i]}`);
+                                const type = schema
+                                    .find(
+                                        s =>
+                                            toCamelCase(
+                                                fromSnakeCase(s.columnName)
+                                            ) === headers[i]
+                                    )
+                                    ?.dataType.toLowerCase();
+                                if (!type)
+                                    throw new Error(
+                                        `No type found for ${table.name}.${headers[i]}`
+                                    );
 
                                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                 (acc as any)[headers[i]] = makeType(type, cur);
@@ -940,15 +949,15 @@ class Table {
     create() {
         return attemptAsync(async () => {
             const schema = (await this.getSchema()).unwrap();
-            (await this.database.unsafe.run(
-                Query.build(`
+            (
+                await this.database.unsafe.run(
+                    Query.build(`
                 CREATE TABLE IF NOT EXISTS ${this.name} (
-                    ${
-                        schema.map(s => `${s.columnName} ${s.dataType}`).join()
-                    }
+                    ${schema.map(s => `${s.columnName} ${s.dataType}`).join()}
                 );
             `)
-            )).unwrap();
+                )
+            ).unwrap();
         });
     }
 
@@ -1060,8 +1069,10 @@ class Table {
                 }
 
                 ws.write(
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    headers.map(h => encode(String((data as any)[h]))).join(',') + '\n'
+                    headers
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        .map(h => encode(String((data as any)[h])))
+                        .join(',') + '\n'
                 );
 
                 i++;
@@ -1760,11 +1771,7 @@ export class Database {
 
                         await fs.promises.cp(
                             path.resolve(backupDir, file),
-                            path.resolve(
-                                __root,
-                                './storage/db/backups',
-                                file
-                            )
+                            path.resolve(__root, './storage/db/backups', file)
                         );
 
                         (await table.restore()).unwrap();

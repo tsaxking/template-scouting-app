@@ -14,6 +14,10 @@ export namespace FIRST {
         sample: true
     });
 
+    Events.all(true).pipe(event => {
+        event.data.flipX;
+    });
+
     export const Teams = new Struct({
         database: DB,
         name: 'Teams',

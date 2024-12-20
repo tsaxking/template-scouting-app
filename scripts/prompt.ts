@@ -132,7 +132,7 @@ const _select = async <T = unknown>(
                 console.log(
                     i === selected ? Colors.FgGreen : '',
                     o.name,
-                    Colors.Reset,
+                    Colors.Reset
                 );
             }
 

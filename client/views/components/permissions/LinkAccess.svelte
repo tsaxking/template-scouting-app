@@ -2,8 +2,8 @@
     // This file will not render a link if a user does not have access to it
 
     import { onMount } from 'svelte';
-import { Accounts } from '../../../models/account';
-import { Permissions } from '../../../models/permissions';
+    import { Accounts } from '../../../models/account';
+    import { Permissions } from '../../../models/permissions';
 
     export let link: string; // full url path
     export let classes = '';
@@ -24,8 +24,11 @@ import { Permissions } from '../../../models/permissions';
         getAccess();
     });
 </script>
+
 {#if hasAccess}
-    <a href="{link}" class="{classes}">
+    <a
+        class="{classes}"
+        href="{link}">
         {text}
     </a>
 {:else}

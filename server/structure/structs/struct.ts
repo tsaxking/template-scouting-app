@@ -618,7 +618,7 @@ export class DataVersion<T extends Blank, Name extends string>
      * @returns {*}
      */
     getUniverses() {
-        return attempt(() => {
+        return attempt<string[]>(() => {
             let { universes } = this.data;
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             if (!universes) universes = '[]' as any;
@@ -629,7 +629,7 @@ export class DataVersion<T extends Blank, Name extends string>
             if (!parsed.every(a => typeof a === 'string'))
                 throw new FatalDataError('Universes not all strings');
 
-            return parsed;
+            return parsed as string[];
         });
     }
 }
@@ -816,7 +816,7 @@ export class StructData<Structure extends Blank, Name extends string>
             }
 
             const old = this.data;
-
+            const updated = new Date().toISOString();
             const sql = `
                 UPDATE ${this.struct.data.name}
                 SET ${Object.keys(data)
@@ -829,7 +829,8 @@ export class StructData<Structure extends Blank, Name extends string>
             const res = await this.struct.data.database.unsafe.run(
                 Query.build(sql, {
                     ...old,
-                    ...data
+                    ...data,
+                    updated
                 } as Parameter)
             );
             if (res.isErr()) {
@@ -852,7 +853,10 @@ export class StructData<Structure extends Blank, Name extends string>
             } else {
                 this.struct.emit('update', [old, this]);
 
-                Object.assign(this.data, data);
+                Object.assign(this.data, {
+                    ...data,
+                    updated
+                });
             }
         });
     }
@@ -1017,7 +1021,7 @@ export class StructData<Structure extends Blank, Name extends string>
      * @returns {*}
      */
     getAttributes() {
-        return attempt(() => {
+        return attempt<string[]>(() => {
             const { attributes } = this.data;
             if (!attributes) throw new FatalDataError('No attributes found');
 
@@ -1027,7 +1031,7 @@ export class StructData<Structure extends Blank, Name extends string>
             if (!parsed.every(a => typeof a === 'string'))
                 throw new FatalDataError('Attributes not all strings');
 
-            return parsed;
+            return parsed as string[];
         });
     }
 
@@ -1108,7 +1112,7 @@ export class StructData<Structure extends Blank, Name extends string>
      * @returns {*}
      */
     getUniverses() {
-        return attempt(() => {
+        return attempt<string[]>(() => {
             let { universes } = this.data;
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             if (!universes) universes = '[]' as any;
@@ -1119,7 +1123,7 @@ export class StructData<Structure extends Blank, Name extends string>
             if (!parsed.every(a => typeof a === 'string'))
                 throw new FatalDataError('Universes not all strings');
 
-            return parsed;
+            return parsed as string[];
         });
     }
 
@@ -1354,7 +1358,9 @@ export class Struct<Structure extends Blank, Name extends string> {
         }, time);
     }
 
-    public static forEach(fn: (struct: Struct<Blank, string>) => void | Promise<void>) {
+    public static forEach(
+        fn: (struct: Struct<Blank, string>) => void | Promise<void>
+    ) {
         return Array.from(Struct.structs).map(([_, s]) => fn(s));
     }
 
@@ -1396,14 +1402,16 @@ export class Struct<Structure extends Blank, Name extends string> {
                 next();
             });
 
-            await Promise.all(Struct.forEach(async s => {
-                (await s.build()).unwrap();
+            await Promise.all(
+                Struct.forEach(async s => {
+                    (await s.build()).unwrap();
 
-                // Struct.router.route(
-                //     '/' + s.name,
-                //     s.route
-                // );
-            }));
+                    // Struct.router.route(
+                    //     '/' + s.name,
+                    //     s.route
+                    // );
+                })
+            );
 
             if (doLoop) {
                 Struct.generateLifetimeLoop(1000 * 60 * 60).start();
@@ -1806,7 +1814,7 @@ export class Struct<Structure extends Blank, Name extends string> {
                         // );
                         res.status(200).json({
                             struct: this.name,
-                            match: true,
+                            match: true
                         });
                     }
                 );
@@ -1846,7 +1854,15 @@ export class Struct<Structure extends Blank, Name extends string> {
                             );
                         }
 
-                        if (!(await Account.isAdmin(account)).unwrap() || !(await API.canAccess(req.headers.get('x-api-key') || '', this)).unwrap()) {
+                        if (
+                            !(await Account.isAdmin(account)).unwrap() ||
+                            !(
+                                await API.canAccess(
+                                    req.headers.get('x-api-key') || '',
+                                    this
+                                )
+                            ).unwrap()
+                        ) {
                             if (
                                 !this.bypasses
                                     .filter(
@@ -1959,7 +1975,15 @@ export class Struct<Structure extends Blank, Name extends string> {
                         if (bypasses) {
                             doBypass = bypasses.some(bp => bp.fn(account, n));
                         }
-                        if ((await Account.isAdmin(account)).unwrap() || (await API.canAccess(req.headers.get('x-api-key') || '', this)).unwrap()) {
+                        if (
+                            (await Account.isAdmin(account)).unwrap() ||
+                            (
+                                await API.canAccess(
+                                    req.headers.get('x-api-key') || '',
+                                    this
+                                )
+                            ).unwrap()
+                        ) {
                             doBypass = true;
                         }
 
@@ -2043,7 +2067,15 @@ export class Struct<Structure extends Blank, Name extends string> {
                         const n = (await this.fromId(req.body.id)).unwrap();
                         if (!n) return res.sendStatus(notFoundStatus(req));
 
-                        if ((await Account.isAdmin(account)).unwrap() || (await API.canAccess(req.headers.get('x-api-key') || '', this)).unwrap()) {
+                        if (
+                            (await Account.isAdmin(account)).unwrap() ||
+                            (
+                                await API.canAccess(
+                                    req.headers.get('x-api-key') || '',
+                                    this
+                                )
+                            ).unwrap()
+                        ) {
                             return res.json(n.data);
                         }
 
@@ -2085,7 +2117,15 @@ export class Struct<Structure extends Blank, Name extends string> {
                     ).unwrap();
                     if (!account) return res.sendStatus(notSignedInStatus(req));
 
-                    if ((await Account.isAdmin(account)).unwrap() || (await API.canAccess(req.headers.get('x-api-key') || '', this)).unwrap()) {
+                    if (
+                        (await Account.isAdmin(account)).unwrap() ||
+                        (
+                            await API.canAccess(
+                                req.headers.get('x-api-key') || '',
+                                this
+                            )
+                        ).unwrap()
+                    ) {
                         return res.stream<StructData<Structure, Name>>(
                             this.all(true, false),
                             data => data.data
@@ -2195,7 +2235,15 @@ export class Struct<Structure extends Blank, Name extends string> {
                         if (!account)
                             return res.sendStatus(notSignedInStatus(req));
 
-                        if ((await Account.isAdmin(account)).unwrap() || (await API.canAccess(req.headers.get('x-api-key') || '', this)).unwrap()) {
+                        if (
+                            (await Account.isAdmin(account)).unwrap() ||
+                            (
+                                await API.canAccess(
+                                    req.headers.get('x-api-key') || '',
+                                    this
+                                )
+                            ).unwrap()
+                        ) {
                             return res.stream<StructData<Structure, Name>>(
                                 this.fromProperty(
                                     req.body.property as keyof Structure,
@@ -2294,7 +2342,15 @@ export class Struct<Structure extends Blank, Name extends string> {
                     ).unwrap();
                     if (!account) return res.sendStatus(notSignedInStatus(req));
 
-                    if ((await Account.isAdmin(account)).unwrap() || (await API.canAccess(req.headers.get('x-api-key') || '', this)).unwrap()) {
+                    if (
+                        (await Account.isAdmin(account)).unwrap() ||
+                        (
+                            await API.canAccess(
+                                req.headers.get('x-api-key') || '',
+                                this
+                            )
+                        ).unwrap()
+                    ) {
                         return res.stream<StructData<Structure, Name>>(
                             this.archived(true),
                             async data => data.data
@@ -2394,7 +2450,15 @@ export class Struct<Structure extends Blank, Name extends string> {
                         if (!account)
                             return res.sendStatus(notSignedInStatus(req));
 
-                        if ((await Account.isAdmin(account)).unwrap() || (await API.canAccess(req.headers.get('x-api-key') || '', this)).unwrap()) {
+                        if (
+                            (await Account.isAdmin(account)).unwrap() ||
+                            (
+                                await API.canAccess(
+                                    req.headers.get('x-api-key') || '',
+                                    this
+                                )
+                            ).unwrap()
+                        ) {
                             const n = (await this.fromId(req.body.id)).unwrap();
                             if (!n) return res.sendStatus(notFoundStatus(req));
 
@@ -2476,7 +2540,15 @@ export class Struct<Structure extends Blank, Name extends string> {
                         const n = (await this.fromId(req.body.id)).unwrap();
                         if (!n) return res.sendStatus(notFoundStatus(req));
 
-                        if (!(await Account.isAdmin(account)).unwrap() || !(await API.canAccess(req.headers.get('x-api-key') || '', this)).unwrap()) {
+                        if (
+                            !(await Account.isAdmin(account)).unwrap() ||
+                            !(
+                                await API.canAccess(
+                                    req.headers.get('x-api-key') || '',
+                                    this
+                                )
+                            ).unwrap()
+                        ) {
                             const roles = (
                                 await Permissions.getRoles(account)
                             ).unwrap();
@@ -2569,7 +2641,15 @@ export class Struct<Structure extends Blank, Name extends string> {
                             );
                         }
 
-                        if (!(await Account.isAdmin(account)).unwrap() || !(await API.canAccess(req.headers.get('x-api-key') || '', this)).unwrap()) {
+                        if (
+                            !(await Account.isAdmin(account)).unwrap() ||
+                            !(
+                                await API.canAccess(
+                                    req.headers.get('x-api-key') || '',
+                                    this
+                                )
+                            ).unwrap()
+                        ) {
                             const roles = (
                                 await Permissions.getRoles(account)
                             ).unwrap();
@@ -2651,7 +2731,15 @@ export class Struct<Structure extends Blank, Name extends string> {
                         const n = (await this.fromId(req.body.id)).unwrap();
                         if (!n) return res.sendStatus(notFoundStatus(req));
 
-                        if (!(await Account.isAdmin(account)).unwrap() || !(await API.canAccess(req.headers.get('x-api-key') || '', this)).unwrap()) {
+                        if (
+                            !(await Account.isAdmin(account)).unwrap() ||
+                            !(
+                                await API.canAccess(
+                                    req.headers.get('x-api-key') || '',
+                                    this
+                                )
+                            ).unwrap()
+                        ) {
                             const roles = (
                                 await Permissions.getRoles(account)
                             ).unwrap();
@@ -2722,7 +2810,15 @@ export class Struct<Structure extends Blank, Name extends string> {
                         const n = (await this.fromId(req.body.id)).unwrap();
                         if (!n) return res.sendStatus(notFoundStatus(req));
 
-                        if (!(await Account.isAdmin(account)).unwrap() || !(await API.canAccess(req.headers.get('x-api-key') || '', this)).unwrap()) {
+                        if (
+                            !(await Account.isAdmin(account)).unwrap() ||
+                            !(
+                                await API.canAccess(
+                                    req.headers.get('x-api-key') || '',
+                                    this
+                                )
+                            ).unwrap()
+                        ) {
                             const roles = (
                                 await Permissions.getRoles(account)
                             ).unwrap();
@@ -2869,8 +2965,8 @@ export class Struct<Structure extends Blank, Name extends string> {
         property: Property,
         value: TS_Type<Structure[Property]>,
         asStream: true // filter?: (
-        // ) => boolean | Promise<boolean>
-    ) //     data: StructData<Structure, Name>
+        //     data: StructData<Structure, Name>
+    ) // ) => boolean | Promise<boolean>
     : StructStream<Structure, Name>;
     fromProperty<Property extends keyof Structure>(
         property: Property,
@@ -2927,8 +3023,8 @@ export class Struct<Structure extends Blank, Name extends string> {
     all(
         asStream: true,
         includeArchived?: boolean // filter?: (
-        // ) => boolean | Promise<boolean>
-    ) //     data: StructData<Structure, Name>
+        //     data: StructData<Structure, Name>
+    ) // ) => boolean | Promise<boolean>
     : StructStream<Structure, Name>;
     all(
         asStream: false,
@@ -2987,8 +3083,8 @@ export class Struct<Structure extends Blank, Name extends string> {
     fromUniverse(
         universe: string,
         asStream: true // filter?: (
-        // ) => boolean | Promise<boolean>
-    ) //     data: StructData<Structure, Name>
+        //     data: StructData<Structure, Name>
+    ) // ) => boolean | Promise<boolean>
     : StructStream<Structure, Name>;
     fromUniverse(
         universe: string,
@@ -3040,8 +3136,8 @@ export class Struct<Structure extends Blank, Name extends string> {
      */
     archived(
         asStream: true // filter?: (
-        // ) => boolean | Promise<boolean>
-    ) //     data: StructData<Structure, Name>
+        //     data: StructData<Structure, Name>
+    ) // ) => boolean | Promise<boolean>
     : StructStream<Structure, Name>;
     archived(asStream: false): Promise<Result<StructData<Structure, Name>[]>>;
     archived(

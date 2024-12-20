@@ -7,7 +7,6 @@ import {
     StatusId,
     StatusMessage
 } from '../../shared/status-messages';
-import { Next, ServerFunction } from '../structure/app/app';
 import { Req } from '../structure/app/req';
 import { Res } from '../structure/app/res';
 import { Result } from '../../shared/check';

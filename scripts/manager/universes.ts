@@ -72,7 +72,8 @@ const removeUniverseFromAccount = async () => {
     );
     if (!selectedAccount) return backToMain('No account selected');
 
-    const universes = (await selectedAccount.getUniverses())
+    const universes = selectedAccount
+        .getUniverses()
         .unwrap()
         .map(universe => u.find(u => u.id === universe))
         .filter(Boolean);

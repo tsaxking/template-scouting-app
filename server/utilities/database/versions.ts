@@ -4,7 +4,6 @@ import { attemptAsync, Result } from '../../../shared/check';
 import { Database } from './databases-2';
 import path from 'path';
 import { __root } from '../env';
-import { Blank } from '../../../shared/struct';
 
 export class VersionError extends Error {
     constructor(message: string) {

@@ -301,7 +301,9 @@
             </td>
         </tr>
         {#each $struct.properties as p (p.data.property)}
-            <PropertyRow bind:property={p} structName={name} />
+            <PropertyRow
+                structName="{name}"
+                bind:property="{p}" />
         {/each}
     </tbody>
 </table>

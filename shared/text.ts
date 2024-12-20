@@ -147,7 +147,8 @@ export const decode = (str: string) => {
 };
 
 export const removeWhitespace = (str: string): string => {
-    const res = str.replaceAll('  ', ' ')
+    const res = str
+        .replaceAll('  ', ' ')
         .replaceAll('    ', ' ')
         .replace('\n', ' ')
         .replace(/\t/g, ' ');

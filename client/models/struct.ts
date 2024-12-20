@@ -450,7 +450,7 @@ export class StructData<T extends Blank>
 
         if (!universes) return undefined;
 
-        const parsed = JSON.parse(universes);
+        const parsed = JSON.parse(universes) as string[];
         if (!Array.isArray(parsed)) {
             console.error(new DataError('Universes are not an array'));
             return universe;

@@ -99,7 +99,7 @@ export namespace Session {
                 maxAge: 1000 * 60 * 60 * 24 * 365,
                 httpOnly: true,
                 sameSite: 'none',
-                domain: app.domain 
+                domain: app.domain
             });
             return s;
         });

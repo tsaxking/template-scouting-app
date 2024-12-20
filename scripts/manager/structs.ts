@@ -100,7 +100,7 @@ export const selectData = async <T extends Data<Struct<Blank, string>>>(
         omit?: (keyof T['data'])[];
     }
 ) => {
-    const run = async () => {
+    const run = async (): Promise<T | undefined> => {
         const res = await selectTable(
             message || 'Select a data',
             data.map(d => d.data),
