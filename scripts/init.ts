@@ -85,13 +85,6 @@ const createEnv = async () => {
         true
     );
     await setKey(
-        'SOCKET_PORT',
-        'Session Port: (default: 3001)',
-        '3001',
-        i => +i > 0 && +i < 65535,
-        true
-    );
-    await setKey(
         'ENVIRONMENT',
         'Environment: (default: dev)',
         'dev',
@@ -102,13 +95,6 @@ const createEnv = async () => {
         'DOMAIN',
         'Domain: (default: localhost)',
         'http://localhost:' + values['PORT'],
-        i => i.length > 0,
-        true
-    );
-    await setKey(
-        'SOCKET_DOMAIN',
-        'Socket Domain: (default: localhost)',
-        'http://localhost:' + values['SOCKET_PORT'],
         i => i.length > 0,
         true
     );
@@ -246,27 +232,12 @@ const createEnv = async () => {
         true
     );
     await setKey(
-        'SECURITY_PIN',
-        'Security Pin: (no default)',
-        '',
+        'SINGLE_UNIVERSE',
+        'Universal Universe: (no default)',
+        undefined,
         undefined,
         true
     );
-    await setKey(
-        'ALLOW_INTERNET',
-        'Allow Internet: (default: n) (y/n)',
-        'n',
-        i => ['y', 'n'].includes(i),
-        true
-    );
-    await setKey(
-        'ALLOW_PRESCOUTING',
-        'Allow Prescouting: (default: n) (y/n)',
-        'n',
-        i => ['y', 'n'].includes(i),
-        true
-    );
-    await setKey('ADMIN_PIN', 'Admin Pin: (no default)', '', undefined, true);
 
     const e = Object.keys(values)
         .map(key => `${key} = '${values[key]}'`)

@@ -21,7 +21,7 @@ import './socket';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 
 // settings
-import './settings';
+// import './settings';
 import './socket';
 
 import { Chart, registerables } from 'chart.js';
