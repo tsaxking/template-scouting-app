@@ -1,8 +1,9 @@
 <script lang="ts">
     import { ServerRequest } from '../../utilities/requests';
     import Password from './Password.svelte';
-    import Recaptcha from './Recaptcha.svelte';
+    // import Recaptcha from './Recaptcha.svelte';
     import { prompt } from '../../utilities/notifications';
+    import { Accounts } from '../../models/account';
 
     export let title: string;
 
@@ -23,10 +24,12 @@
             console.log('Is not valid');
         }
 
-        ServerRequest.post('/account/sign-in', {
-            username,
-            password
-        });
+        // ServerRequest.post('/account/sign-in', {
+    //     username,
+    //     password
+    // });
+
+        Accounts.signIn(username, password);
     };
 
     const isValid = (username: string, password: string) => {
@@ -58,9 +61,11 @@
         );
         if (!data) return;
 
-        ServerRequest.post('/account/request-password-reset', {
-            username: data
-        });
+        // ServerRequest.post('/account/request-password-reset', {
+    //     username: data
+    // });
+
+        Accounts.requestPasswordReset(data);
     };
 </script>
 

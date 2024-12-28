@@ -1,24 +1,24 @@
 <script lang="ts">
-    import { Role } from '../../../models/roles';
-    import { Account } from '../../../models/account';
-    import type { BootstrapColor } from '../../../submodules/colors/color';
-    import { onMount } from 'svelte';
-    // import RemovableBadge from '../main/RemovableBadge.svelte';
+import { Accounts } from '../../../models/account';
+import type { BootstrapColor } from '../../../submodules/colors/color';
+import { onMount } from 'svelte';
+import RemovableBadge from '../main/RemovableBadge.svelte';
+import { Permissions } from '../../../models/permissions';
 
-    export let role: Role;
-    export let account: Account | undefined;
-    export let color: BootstrapColor = 'primary';
-    export let deletable: boolean = false;
+export let role: Permissions.RoleData;
+export let account: Accounts.AccountData | undefined;
+export let color: BootstrapColor = 'primary';
+export let deletable: boolean = false;
 </script>
 
 {#if !!account}
     <!-- <RemovableBadge
         {color}
         {deletable}
-        description="{role.description || ''}"
-        text="{role.name}"
+        description="{role.data.description || ''}"
+        text="{role.data.name || ''}"
         on:remove="{() => {
-            account.removeRole(role);
+            Permissions.removeRole(account, role);
         }}"
     /> -->
 {/if}

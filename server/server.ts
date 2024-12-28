@@ -3,28 +3,22 @@ import { error, log } from './utilities/terminal-logging';
 import { App, ResponseStatus } from './structure/app/app';
 import { getJSON, getJSONSync, log as serverLog } from './utilities/files';
 import { homeBuilder } from './utilities/page-builder';
-import Account from './structure/accounts';
 import { router as admin } from './routes/admin';
-import { router as account } from './routes/account';
 import { router as api } from './routes/api';
-import { router as role } from './routes/roles';
-import { router as notifications } from './routes/account-notifications';
 import { FileUpload } from './middleware/stream';
 import { ReqBody } from './structure/app/req';
 import { parseCookie } from '../shared/cookie';
 import path from 'path';
-import { DB } from './utilities/databases';
-import { Session } from './structure/sessions';
-import { startPinger } from './utilities/ping';
-import {
-    Match,
-    validateObj
-} from '../shared/submodules/tatorscout-calculations/trace';
-import { validate } from './middleware/data-type';
-import { ServerRequest } from './utilities/requests';
-import { TBA } from './utilities/tba/tba';
-import { TBAEvent } from '../shared/tba';
-import { State } from './structure/cache/state';
+import { DB } from './utilities/database';
+import { Struct } from './structure/structs/struct';
+import { Account } from './structure/structs/account';
+import { Permissions } from './structure/structs/permissions';
+
+import './structure/structs/account';
+import './structure/structs/permissions';
+import './structure/structs/session';
+import './structure/structs/email';
+import './structure/structs/test';
 
 if (process.argv.includes('--stats')) {
     const measure = () => {
@@ -39,25 +33,7 @@ if (process.argv.includes('--stats')) {
 
 const port = +(env.PORT || 3000);
 
-export const app = new App<{
-    isTrusted: boolean;
-    isAdmin: boolean;
-}>(port, env.DOMAIN || `http://localhost:${port}`);
-
-if (process.argv.includes('--ping')) {
-    const pinger = startPinger();
-    pinger.on('disconnect', () => {
-        console.log('Servers are disconnected!');
-    });
-    pinger.on('connect', () => {
-        console.log('Servers are connected!');
-    });
-    pinger.on('ping', () => {
-        console.log('Pinged!');
-    });
-}
-
-new State(app);
+export const app = new App(port, env.DOMAIN || `http://localhost:${port}`);
 
 app.post('/env', (req, res) => {
     res.json({
@@ -81,6 +57,11 @@ app.use('/*', (req, res, next) => {
     // res.setHeader('Access-Control-Expose-Headers', '*');
     next();
 });
+
+// app.use('/*', Permissions.forceUniverse(async () => {
+//     const universes = (await Permissions.Universe.all(false)).unwrap();
+//     return universes.find(u => u.data.name === 'test');
+// }));
 
 app.static('/client', path.resolve(__root, './client'));
 app.static('/public', path.resolve(__root, './public'));
@@ -161,7 +142,7 @@ app.post('/*', (req, res, next) => {
     next();
 });
 
-app.get('/', (req, res) => {
+app.get('/', (_, res) => {
     res.redirect('/home');
 });
 
@@ -184,60 +165,44 @@ app.get('/test/:page', (req, res, next) => {
     }
 });
 
+app.route('/API', Struct.router);
 app.route('/api', api);
-app.route('/account', account);
-// app.route('/roles', role);
-// app.route('/account-notifications', notifications);
+app.use('/*', Account.autoSignIn(env.AUTO_SIGN_IN || ''));
 
-app.get('/sign-in', (req, res) => {
-    res.sendTemplate('entries/sign-in');
-});
+app.get('/*', async (req, res, next) => {
+    if (env.ENVIRONMENT === 'test') return next();
+    const s = (await req.getSession()).unwrap();
+    if (!s.data.accountId) {
+        if (
+            ![
+                '/account/sign-in',
+                '/account/sign-up',
+                '/account/forgot-password'
+            ].includes(req.url)
+        ) {
+            // only save the previous url if it's not a sign-in, sign-up, or forgot-password page
+            // this is so that the user can be redirected back to the page they initially were trying to access
+            (
+                await s.update({
+                    prevUrl: req.url
+                })
+            ).unwrap();
+        }
+        return res.redirect('/account/sign-in');
+    }
 
-app.use('/*', (req, _res, next) => {
-    console.log('Custom data:', req.session.customData);
     next();
 });
 
-app.post<{
-    pin: string;
-}>(
-    '/sign-in',
-    validate({
-        pin: 'string'
+app.get(
+    '/dashboard/admin',
+    Permissions.canAccess(async account => {
+        return (await Account.isAdmin(account)).unwrap();
     }),
-    (req, res) => {
-        console.log('Pin:', req.body.pin);
-        if (req.body.pin === env.SECURITY_PIN) {
-            req.session.customData.isTrusted = true;
-            req.session.save();
-            res.redirect('/app');
-        } else if (env.ADMIN_PIN && req.body.pin === env.ADMIN_PIN) {
-            req.session.customData.isAdmin = true;
-            req.session.save();
-            res.redirect('/dashboard/admin');
-            req.socket?.join('admin');
-        } else {
-            res.sendStatus('pin:incorrect');
-        }
+    (_req, res) => {
+        res.sendTemplate('entries/dashboard/admin');
     }
 );
-
-app.use('/*', (req, res, next) => {
-    if (env.SECURITY_PIN && !req.session.customData.isTrusted) {
-        console.log('redirecting to sign-in');
-        res.redirect('/sign-in');
-    } else {
-        next();
-    }
-});
-
-app.get('/dashboard/admin', (req, res) => {
-    if (req.session.customData.isAdmin) {
-        res.sendTemplate('entries/dashboard/admin');
-    } else {
-        res.redirect('/sign-in');
-    }
-});
 
 app.route('/admin', admin);
 
@@ -391,14 +356,14 @@ app.final<{
     $$files?: FileUpload;
     password?: string;
     confirmPassword?: string;
-}>((req, res) => {
+}>(async (req, res) => {
     // req.session.save();
 
     if (res.fulfilled) {
         serverLog('request', {
             date: Date.now(),
             duration: Date.now() - req.start,
-            ip: req.session?.ip,
+            ip: (await req.getSession()).unwrap().data.ip,
             method: req.method,
             url: req.pathname,
             status: res._status,
@@ -427,4 +392,12 @@ app.final<{
     }
 });
 
-DB.em.on('connect', () => app.start());
+DB.connect().then(async res => {
+    res.unwrap();
+    (await DB.init()).unwrap();
+
+    Struct.buildAll(true).then(res => {
+        if (res.isErr()) throw res.error;
+        app.start();
+    });
+});
