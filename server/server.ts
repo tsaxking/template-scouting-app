@@ -1,7 +1,7 @@
 import env, { __root } from './utilities/env';
-import { log } from './utilities/terminal-logging';
-import { App } from './structure/app/app';
-import { getJSON, log as serverLog } from './utilities/files';
+import { error, log } from './utilities/terminal-logging';
+import { App, ResponseStatus } from './structure/app/app';
+import { getJSON, getJSONSync, log as serverLog } from './utilities/files';
 import { homeBuilder } from './utilities/page-builder';
 import { router as admin } from './routes/admin';
 import { router as api } from './routes/api';
@@ -37,7 +37,9 @@ export const app = new App(port, env.DOMAIN || `http://localhost:${port}`);
 
 app.post('/env', (req, res) => {
     res.json({
-        ENVIRONMENT: env.ENVIRONMENT
+        ENVIRONMENT: env.ENVIRONMENT,
+        ALLOW_INTERNET: env.ALLOW_INTERNET,
+        ALLOW_PRESCOUTING: env.ALLOW_PRESCOUTING
     });
 });
 
@@ -132,9 +134,9 @@ app.post('/*', (req, res, next) => {
         delete b?.password;
         delete b?.confirmPassword;
         delete b?.$$files;
-        log(b);
+        console.log(b);
     } catch {
-        log(req.body);
+        console.log(req.body);
     }
 
     next();
@@ -204,12 +206,144 @@ app.get(
 
 app.route('/admin', admin);
 
-app.get('/dashboard/:dashboard', (req, res) => {
-    res.sendTemplate('entries/dashboard/' + req.params.dashboard);
+app.get('/app', (req, res) => {
+    res.sendTemplate('entries/app');
 });
 
-app.get('/user/*', Account.isSignedIn, (req, res) => {
-    res.sendTemplate('entries/user');
+app.get('/*', (req, res) => {
+    res.redirect('/app');
+});
+
+app.post<Match>(
+    '/submit',
+    validate(
+        validateObj as {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            [key in keyof Match]: any; // TODO: export IsValid type
+        }
+    ),
+    async (req, res) => {
+        const {
+            // eventKey,
+            checks,
+            comments,
+            matchNumber,
+            teamNumber,
+            compLevel,
+            scout,
+            date,
+            group,
+            trace,
+            preScouting
+        } = req.body;
+
+        if (preScouting && !env.ALLOW_PRESCOUTING) {
+            return res.sendStatus('pre-scouting:not-allowed');
+        }
+
+        // I don't want to pass in req.body because it can have extra unneeded properties
+        const result = await ServerRequest.submitMatch({
+            checks,
+            comments,
+            matchNumber,
+            teamNumber,
+            compLevel,
+            eventKey: '2024cabl',
+            scout,
+            date,
+            group,
+            trace,
+            preScouting
+        });
+
+        if (result.isOk()) {
+            res.sendStatus('server-request:match-submitted', {
+                matchNumber,
+                teamNumber,
+                compLevel,
+                data: result.value
+            });
+        } else {
+            res.sendStatus('server-request:match-error', {
+                matchNumber,
+                teamNumber,
+                compLevel,
+                eventKey: '2024cabl',
+                scout,
+                date,
+                group,
+                trace
+            });
+
+            if (result.isOk()) {
+                res.sendStatus('server-request:match-submitted', {
+                    matchNumber,
+                    teamNumber,
+                    compLevel,
+                    data: result.value
+                });
+            } else {
+                error('Match submission error:', result.error);
+                res.sendStatus('server-request:match-error', {
+                    matchNumber,
+                    teamNumber,
+                    compLevel,
+                    error: result.error
+                });
+            }
+        }
+    }
+);
+
+app.post<{
+    key: string;
+}>('/event-data', async (req, res) => {
+    const { key } = req.body;
+
+    let name = 'dummy-event-data.json';
+    if (env.ENVIRONMENT === 'prod') name = 'event-data.json';
+
+    if (env.ALLOW_PRESCOUTING && req.body.key) {
+        console.log('Requesting event data for', key);
+        const data = await ServerRequest.getEventData(key);
+        // console.log(data);
+        if (data.isOk()) return res.json(data.value);
+        return res.status(500).json(data.error);
+    }
+
+    const data = getJSONSync(name);
+    if (data.isOk()) {
+        res.json(data.value);
+    } else {
+        res.status(500).json(data.error);
+    }
+});
+
+app.post<{ year: number }>(
+    '/get-events',
+    validate({
+        year: 'number'
+    }),
+    async (req, res) => {
+        if (!env.ALLOW_PRESCOUTING) return res.json([]); // if prescouting is not allowed, return an empty array
+        const events = await TBA.get<TBAEvent[]>('/events/' + req.body.year);
+        // console.log({ events });
+        if (events.isOk()) {
+            // console.log('num events:', events.value?.length);
+            res.json(events.value);
+        } else {
+            res.status(500).json(events.error);
+        }
+    }
+);
+
+app.post('/get-accounts', async (req, res) => {
+    const accounts = await ServerRequest.getAccounts();
+    if (accounts.isOk()) {
+        res.json(accounts.value);
+    } else {
+        res.status(500).json(accounts.error);
+    }
 });
 
 app.get('/*', (req, res) => {

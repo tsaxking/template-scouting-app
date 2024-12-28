@@ -16,11 +16,9 @@
     let recaptcha = false;
 
     const submit = () => {
-        // if (i.value || !recaptcha) {
-    //     return;
-    // }
-
-        if (i.value) return;
+        if (i.value || !recaptcha) {
+            return;
+        }
 
         if (!valid) {
             console.log('Is not valid');
@@ -35,7 +33,7 @@
     };
 
     const isValid = (username: string, password: string) => {
-        return isUsernameValid(username) && password.length > 8;
+        return isUsernameValid(username) && password.length > 3;
     };
 
     const isUsernameValid = (username: string): boolean => {
@@ -71,21 +69,29 @@
     };
 </script>
 
-<main>
-    <div class="container pt-5">
-        <div class="row">
-            <div class="col-md-6">
-                <div class="row mb-3">
-                    <h1>
-                        {title}: Sign in
-                    </h1>
-                </div>
-
-                <div class="row mb-3">
-                    <a
-                        class="link-primary nav-link"
-                        href="/account/sign-up"
-                    >Sign Up</a
+<div class="container pt-5">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="row mb-3">
+                <h1>
+                    {title}: Sign in
+                </h1>
+            </div>
+            <form on:submit|preventDefault="{submit}">
+                <div class="mb-3 form-floating">
+                    <input
+                        id="username"
+                        name="username"
+                        class="form-control"
+                        placeholder="Username or Email"
+                        type="text"
+                        bind:value="{username}"
+                        on:input="{onInput}"
+                    />
+                    <label
+                        class="form-label"
+                        for="username"
+                    >Username or Email</label
                     >
                 </div>
                 <form on:submit|preventDefault="{submit}">
@@ -174,7 +180,7 @@
                         }}"
                     /> -->
                 </form>
-            </div>
+            </form>
         </div>
     </div>
-</main>
+</div>
