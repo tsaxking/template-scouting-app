@@ -352,6 +352,53 @@ export type RolePermissions = {
     permission: string;
 };
 
+export type ServerRequests = {
+    id: string;
+    url: string;
+    body: string;
+    response: string | undefined;
+    date: string;
+};
+
+export type Insert_server_requests_new = {
+    id: string;
+    body: string;
+    url: string;
+    date: string;
+};
+
+export type Delete_server_requests_delete = {
+    id: string;
+};
+
+export type Update_server_requests_update = {
+    response: string | undefined;
+    id: string;
+};
+
+export type Select_server_requests_get = {
+    id: string;
+};
+
+export type Select_server_requests_all = undefined;
+
+export type Update_sessions_sign_in = {
+    accountId: string | undefined;
+    id: string;
+};
+
+export type Update_sessions_sign_out = {
+    id: string;
+};
+
+export type Delete_db_delete_version = undefined;
+
+export type Insert_db_change_version = {
+    major: number;
+    minor: number;
+    patch: number;
+};
+
 export type Insert_permissions_add_to_role = {
     roleId: string;
     permission: string;
@@ -364,22 +411,25 @@ export type Delete_permissions_remove_from_role = {
 
 export type Select_blacklist_all = undefined;
 
-export type Update_sessions_sign_in = {
-    accountId: string | undefined;
-    id: string;
+export type TBARequests = {
+    url: string;
+    response: string | undefined;
+    updated: number;
+    update: number;
 };
 
-export type Update_sessions_sign_out = {
-    id: string;
+export type Update_db_versions______ = undefined;
+
+export type Select_tba_from_url = {
+    url: string;
 };
 
-export type Insert_db_change_version = {
-    major: number;
-    minor: number;
-    patch: number;
+export type Insert_tba_new = {
+    url: string;
+    response: string | undefined;
+    updated: number;
+    update: number;
 };
-
-export type Delete_db_delete_version = undefined;
 
 export type Select_account_notifications_from_account = {
     accountId: string;
