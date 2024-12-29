@@ -3,7 +3,7 @@
     import { Account } from '../../../models/account';
     import type { BootstrapColor } from '../../../submodules/colors/color';
     import { onMount } from 'svelte';
-    import RemovableBadge from '../main/RemovableBadge.svelte';
+    // import RemovableBadge from '../main/RemovableBadge.svelte';
 
     export let role: Role;
     export let account: Account | undefined;
@@ -12,7 +12,7 @@
 </script>
 
 {#if !!account}
-    <RemovableBadge
+    <!-- <RemovableBadge
         {color}
         {deletable}
         description="{role.description || ''}"
@@ -20,5 +20,5 @@
         on:remove="{() => {
             account.removeRole(role);
         }}"
-    />
+    /> -->
 {/if}

@@ -1,11 +1,9 @@
 <script lang="ts">
     import Main from '../components/main/Main.svelte';
     import Page from '../components/main/Page.svelte';
-    import Dashboard from '../pages/Dashboard.svelte';
-    import Accounts from '../pages/Accounts.svelte';
-    import Roles from '../pages/Roles.svelte';
-    import type { PageGroup } from '../../utilities/general-types';
     import { getOpenPage } from '../../utilities/page';
+    import type { PageGroup } from '../../utilities/general-types';
+    import Tablets from '../pages/Tablets.svelte';
 
     const groups: PageGroup[] = [
         {
@@ -15,22 +13,13 @@
                     name: 'dashboard',
                     icon: 'home',
                     iconType: 'material'
-                },
-                {
-                    name: 'accounts',
-                    icon: 'person',
-                    iconType: 'material'
-                },
-                {
-                    name: 'roles',
-                    icon: 'admin_panel_settings',
-                    iconType: 'material'
                 }
             ]
         }
     ];
 
-    let active: string = getOpenPage() || 'dashboard';
+    // let active: string = getOpenPage();
+    let active = 'dashboard';
     const domain = '';
 
     const navItems: string[] = [];
@@ -55,16 +44,7 @@
     <Page
         {active}
         {domain}
-        title="dashboard"
-        bind:loading><Dashboard /></Page>
-    <Page
-        {active}
-        {domain}
-        title="accounts"
-        bind:loading><Accounts /></Page>
-    <Page
-        {active}
-        {domain}
-        title="roles"
-        bind:loading><Roles /></Page>
+        title="dashboard">
+        <Tablets />
+    </Page>
 </Main>

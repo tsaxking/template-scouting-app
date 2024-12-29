@@ -26,7 +26,9 @@ document.body.classList.add('no-scroll');
 const c = new Canvas(canvas.getContext('2d')!);
 
 // c.background.color = Color.fromName('gray');
-c.background.properties.fill.color = 'gray';
+c.background.properties.fill = {
+    color: 'rgba(255, 255, 255, 1)'
+};
 
 const cubePoints = [
     [0, 0, 0],
@@ -129,7 +131,7 @@ c.animate(() => {
         p.y = a[1];
         p.z = a[2];
         const color = new Color(
-            ...(p.array.map(n => n * 255) as Point3D)
+            ...(p.array.map((n: number) => n * 255) as Point3D)
         ).toString('rgba');
 
         c.ctx.fillStyle = color;
