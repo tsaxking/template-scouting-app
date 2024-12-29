@@ -24,9 +24,12 @@ class Bubble extends Circle {
         public velocity: [number, number]
     ) {
         super(center, radius);
-        const c = Color.random();
-        this.properties.fill.color = c.toString('rgba');
-        this.properties.line.color = c.toString('rgba');
+        this.properties.fill = {
+            color: 'rgba(255, 255, 255, 0.5)'
+        };
+        this.properties.line = {
+            color: 'rgba(255, 255, 255, 0)'
+        };
     }
 }
 
