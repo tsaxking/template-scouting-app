@@ -63,11 +63,7 @@
                     compLevel: App.matchData.compLevel,
                     teamNum: App.matchData.teamNumber,
                     matchNum: String(App.matchData.matchNumber),
-                    events: events
-                        .filter(
-                            e => e.key === '2024cabl',
-                        )
-                    ,
+                    events: events.filter(e => e.key === '2024cabl'),
                     event: eventData.eventKey
                 }
             });
