@@ -46,6 +46,7 @@ import { Tick } from './tick';
 import { MatchData } from './match-data';
 import { Loop } from '../../../shared/loop';
 import { TabletState } from '../admin';
+import { generate2025App } from './2025-app';
 
 /**
  * Description placeholder
@@ -282,10 +283,12 @@ export class App<
     }
 
     public static current?: App<any, any, any>;
-    public static build(year: 2024, alliance: 'red' | 'blue' | null = null) {
+    public static build(year: 2024 | 2025, alliance: 'red' | 'blue' | null = null) {
         switch (year) {
             case 2024:
                 return generate2024App(alliance);
+            case 2025:
+                return generate2025App(alliance);
         }
     }
 

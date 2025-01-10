@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { generate2024App } from '../models/app/2024-app';
+    import { generate2025App } from '../models/app/2025-app';
     import NavTabs from './components/Tabs.svelte';
     import Page from './components/main/Page.svelte';
     import AppView from './pages/App.svelte';
@@ -22,10 +22,10 @@
     const generate = () =>
         App.matchData.getAlliance().then(a => {
             if (a) {
-                app = generate2024App(a);
+                app = generate2025App(a);
             // reassign app at restart
             } else {
-                app = generate2024App(null);
+                app = generate2025App(null);
             }
             app.on('restart', generate);
         });
@@ -120,7 +120,7 @@
         {app}
         on:submit="{async () => {
             active = '--$Pre';
-            app = generate2024App(await App.matchData.getAlliance());
+            app = generate2025App(await App.matchData.getAlliance());
         }}"
     /></Page
     >
