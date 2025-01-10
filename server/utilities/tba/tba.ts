@@ -4,6 +4,7 @@ import env from '../env';
 import { error } from '../terminal-logging';
 // import { saveEvent } from '../../../scripts/tba-update';
 import { attemptAsync, Result } from '../../../shared/check';
+import { ServerRequest } from '../requests';
 // import { TBAEvent } from "../../../shared/tba";
 // import { TBA_Event } from './event';
 
@@ -86,15 +87,17 @@ export class TBA {
             }
 
             try {
-                const res = await fetch(`${TBA.baseURL}/${path}`, {
-                    method: 'GET',
-                    headers: {
-                        'X-TBA-Auth-Key': TBA_KEY,
-                        Accept: 'application/json'
-                    }
-                });
+                // const res = await fetch(`${TBA.baseURL}/${path}`, {
+                //     method: 'GET',
+                //     headers: {
+                //         'X-TBA-Auth-Key': TBA_KEY,
+                //         Accept: 'application/json'
+                //     }
+                // });
 
-                const json = await res.json();
+                const res = await ServerRequest.get('/api/tba/' + path);
+
+                const json = await res.unwrap();
 
                 // cache response, this will also update the cache if it already exists (using ON CONFLICT sql)
                 DB.run('tba/new', {
