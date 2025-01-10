@@ -63,6 +63,44 @@ export class ServerRequest {
             throw new Error('No data');
         });
     }
+    
+    public static get<T>(url: string): Promise<Result<T>> {
+        return attemptAsync(async () => {
+            const id = uuid();
+
+            const data = await request<{
+                status?: number;
+            }>(SERVER_DOMAIN + url, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-auth-key': SERVER_KEY as string
+                },
+            });
+
+            if (data.isErr()) throw data.error;
+
+            if (data.isOk()) {
+                if (data.value.status?.toString().startsWith('4')) {
+                    throw new Error('Invalid request');
+                }
+
+                if (data.value.status?.toString().startsWith('5')) {
+                    throw new Error('Server error');
+                }
+
+                if (url !== '/ping') {
+                    DB.run('server-requests/update', {
+                        id,
+                        response: JSON.stringify(data.value)
+                    });
+                }
+
+                return data.value as T;
+            }
+            throw new Error('No data');
+        });
+    }
 
     public static async submitMatch(match: Match) {
         return attemptAsync(async () => {
