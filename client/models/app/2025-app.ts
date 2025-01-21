@@ -45,7 +45,7 @@ export const generate2025App = (
         // nte: new Img('/public/pictures/icons/note.png'),
         // lob: new Img('/public/pictures/icons/lob.png')
 
-        // replace with prc, brg images
+        // TODO: replace with correct images
         prc: new Img('/public/pictures/icons/spk.png'),
         brg: new Img('/public/pictures/icons/spk.png'),
         dpc: new Img('/public/pictures/icons/spk.png'),
