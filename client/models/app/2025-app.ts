@@ -2,18 +2,18 @@ import { Color } from '../../submodules/colors/color';
 import { Iterator, Toggle } from './app-object';
 import { Drawable } from '../canvas/drawable';
 import {
-    amps,
+    barges,
+    processors,
+    reefs,
+    zones,
+    stations,
     autoZone,
-    border,
-    notePositions,
-    srcs,
-    stages,
-    zones
-} from '../../../shared/submodules/tatorscout-calculations/2024-areas';
+    border
+} from '../../../shared/submodules/tatorscout-calculations/2025-areas';
 import {
-    Action2024,
-    TraceParse2024,
-    Zones2024
+    Action2025,
+    TraceParse2025,
+    Zones2025
 } from '../../../shared/submodules/tatorscout-calculations/trace';
 import { App } from './app';
 import { Point2D } from '../../../shared/submodules/calculations/src/linear-algebra/point';
@@ -28,34 +28,45 @@ import { Tick } from './tick';
  */
 export const generate2025App = (
     alliance: 'red' | 'blue' | null = null
-): App<Action2024> => {
+) => {
     const icons: {
-        [key in Action2024]: Icon | SVG | Img;
+        [key in Action2025]: Icon | SVG | Img;
     } = {
         // spk: new Icon('speaker'),
         // amp: new Icon('campaign'),
         // src: new Icon('back_hand'),
         // clb: new Icon('dry_cleaning'),
         // trp: new Icon('place_item'),
-        spk: new Img('/public/pictures/icons/spk.png'),
-        amp: new Img('/public/pictures/icons/amp.png'),
-        src: new Img('/public/pictures/icons/src.png'),
-        clb: new Img('/public/pictures/icons/clb.png'),
-        trp: new Img('/public/pictures/icons/trp.png'),
-        nte: new Img('/public/pictures/icons/note.png'),
-        lob: new Img('/public/pictures/icons/lob.png')
+        // spk: new Img('/public/pictures/icons/spk.png'),
+        // amp: new Img('/public/pictures/icons/amp.png'),
+        // src: new Img('/public/pictures/icons/src.png'),
+        // clb: new Img('/public/pictures/icons/clb.png'),
+        // trp: new Img('/public/pictures/icons/trp.png'),
+        // nte: new Img('/public/pictures/icons/note.png'),
+        // lob: new Img('/public/pictures/icons/lob.png')
+
+        // replace with prc, brg images
+        prc: new Img('/public/pictures/icons/spk.png'),
+        brg: new Img('/public/pictures/icons/spk.png'),
+        dpc: new Img('/public/pictures/icons/spk.png'),
+        shc: new Img('/public/pictures/icons/spk.png'),
+        cl1: new Img('/public/pictures/icons/clb.png'),
+        cl2: new Img('/public/pictures/icons/clb.png'),
+        cl3: new Img('/public/pictures/icons/clb.png'),
+        cl4: new Img('/public/pictures/icons/clb.png')
     };
 
     const images: {
-        [key in Action2024]: HTMLImageElement;
+        [key in Action2025]: HTMLImageElement;
     } = {
-        spk: new Image(60, 60),
-        amp: new Image(60, 60),
-        src: new Image(60, 60),
-        clb: new Image(60, 60),
-        trp: new Image(60, 60),
-        nte: new Image(60, 60),
-        lob: new Image(60, 60)
+        prc: new Image(60, 60),
+        brg: new Image(60, 60),
+        dpc: new Image(60, 60),
+        shc: new Image(60, 60),
+        cl1: new Image(60, 60),
+        cl2: new Image(60, 60),
+        cl3: new Image(60, 60),
+        cl4: new Image(60, 60)
     };
 
     for (const key in images) {
@@ -73,7 +84,7 @@ export const generate2025App = (
         images[key as keyof typeof images].ondrag = e => e.preventDefault();
     }
 
-    const app = new App<Action2024, Zones2024, TraceParse2024>(2025, icons);
+    const app = new App<Action2025, Zones2025, TraceParse2025>(2025, icons);
 
     const isIn = (d: Drawable) =>
         app.currentLocation ? d.isIn(app.currentLocation) : false;
@@ -96,17 +107,33 @@ export const generate2025App = (
         blackFade: Color.fromBootstrap('dark').setAlpha(0.5)
     };
 
-    app.addArea('blue-stage', stages.blue, colors.blueFade, isIn);
-    app.addArea('blue-amp', amps.blue, colors.blueFade, isIn);
-    app.addArea('blue-src', srcs.blue, colors.blueFade, isIn);
-    app.addArea('blue-zone', zones.blue, colors.blueFade, isIn);
-    app.addArea('blue-auto', autoZone.blue, colors.blueFade, isIn);
+    // app.addArea('blue-stage', stages.blue, colors.blueFade, isIn);
+    // app.addArea('blue-amp', amps.blue, colors.blueFade, isIn);
+    // app.addArea('blue-src', srcs.blue, colors.blueFade, isIn);
+    // app.addArea('blue-zone', zones.blue, colors.blueFade, isIn);
+    // app.addArea('blue-auto', autoZone.blue, colors.blueFade, isIn);
 
-    app.addArea('red-auto', autoZone.red, colors.redFade, isIn);
+    // app.addArea('red-auto', autoZone.red, colors.redFade, isIn);
+    // app.addArea('red-zone', zones.red, colors.redFade, isIn);
+    // app.addArea('red-src', srcs.red, colors.redFade, isIn);
+    // app.addArea('red-amp', amps.red, colors.redFade, isIn);
+    // app.addArea('red-stage', stages.red, colors.redFade, isIn);
+
+    app.addArea('blue-barge', barges.blue, colors.blueFade, isIn);
+    app.addArea('red-barge', barges.red, colors.redFade, isIn);
+    app.addArea('blue-reef', reefs.blue, colors.blueFade, isIn);
+    app.addArea('red-reef', reefs.red, colors.redFade, isIn);
+    app.addArea('blue-prc', processors.blue, colors.blueFade, isIn);
+    app.addArea('red-prc', processors.red, colors.redFade, isIn);
+    app.addArea('blue-zone', zones.blue, colors.blueFade, isIn);
     app.addArea('red-zone', zones.red, colors.redFade, isIn);
-    app.addArea('red-src', srcs.red, colors.redFade, isIn);
-    app.addArea('red-amp', amps.red, colors.redFade, isIn);
-    app.addArea('red-stage', stages.red, colors.redFade, isIn);
+    app.addArea('blue-auto', autoZone.blue, colors.blueFade, isIn);
+    app.addArea('red-auto', autoZone.red, colors.redFade, isIn);
+    // this might need changing
+    app.addArea('sta1', stations.sta1, colors.blueFade, isIn);
+    app.addArea('sta2', stations.sta2, colors.blueFade, isIn);
+    app.addArea('sta3', stations.sta3, colors.redFade, isIn);
+    app.addArea('sta4', stations.sta4, colors.redFade, isIn);
 
     app.setBorder(border as Point2D[], colors.blackFade);
 
@@ -120,16 +147,33 @@ export const generate2025App = (
     const redButtonClasses = ['btn', 'btn-danger', 'btn-lg'];
 
     // gameObject buttons
-    const blueAmp = App.button(blueButtonClasses, images.amp.cloneNode());
-    const redAmp = App.button(redButtonClasses, images.amp.cloneNode());
-    const blueSpeaker = App.button(blueButtonClasses, images.spk.cloneNode());
-    const redSpeaker = App.button(redButtonClasses, images.spk.cloneNode());
-    const blueSource = App.button(blueButtonClasses, images.src.cloneNode());
-    const redSource = App.button(redButtonClasses, images.src.cloneNode());
-    const redLobA = App.button(redButtonClasses, images.lob.cloneNode());
-    const blueLobA = App.button(blueButtonClasses, images.lob.cloneNode());
-    const redLobB = App.button(redButtonClasses, images.lob.cloneNode());
-    const blueLobB = App.button(blueButtonClasses, images.lob.cloneNode());
+    // const blueAmp = App.button(blueButtonClasses, images.amp.cloneNode());
+    // const redAmp = App.button(redButtonClasses, images.amp.cloneNode());
+    // const blueSpeaker = App.button(blueButtonClasses, images.spk.cloneNode());
+    // const redSpeaker = App.button(redButtonClasses, images.spk.cloneNode());
+    // const blueSource = App.button(blueButtonClasses, images.src.cloneNode());
+    // const redSource = App.button(redButtonClasses, images.src.cloneNode());
+    // const redLobA = App.button(redButtonClasses, images.lob.cloneNode());
+    // const blueLobA = App.button(blueButtonClasses, images.lob.cloneNode());
+    // const redLobB = App.button(redButtonClasses, images.lob.cloneNode());
+    // const blueLobB = App.button(blueButtonClasses, images.lob.cloneNode());
+
+    const blueCL1 = App.button(blueButtonClasses, images.cl1.cloneNode());
+    const blueCL2 = App.button(blueButtonClasses, images.cl2.cloneNode());
+    const blueCL3 = App.button(blueButtonClasses, images.cl3.cloneNode());
+    const blueCL4 = App.button(blueButtonClasses, images.cl4.cloneNode());
+    const redCL1 = App.button(redButtonClasses, images.cl1.cloneNode());
+    const redCL2 = App.button(redButtonClasses, images.cl2.cloneNode());
+    const redCL3 = App.button(redButtonClasses, images.cl3.cloneNode());
+    const redCL4 = App.button(redButtonClasses, images.cl4.cloneNode());
+    const blueBrg = App.button(blueButtonClasses, images.brg.cloneNode());
+    const redBrg = App.button(redButtonClasses, images.brg.cloneNode());
+    const bluePrc = App.button(blueButtonClasses, images.prc.cloneNode());
+    const redPrc = App.button(redButtonClasses, images.prc.cloneNode());
+    const blueSta1 = App.button(blueButtonClasses, images.prc.cloneNode());
+    const blueSta2 = App.button(blueButtonClasses, images.prc.cloneNode());
+    const redSta1 = App.button(redButtonClasses, images.prc.cloneNode());
+    const redSta4 = App.button(redButtonClasses, images.prc.cloneNode());
 
     // const btns = notePositions.map((pos, i) => {
     //     const btn = App.button(
@@ -184,100 +228,18 @@ export const generate2025App = (
     //     });
     // });
 
-    const I = Iterator<Action2024>;
+    const I = Iterator<Action2025>;
 
     app.addAppObject(
         [0.16976556184316896, 0.021018593371059015],
-        new I('Blue Amp', 'Placing any note into the blue amp', 'amp', 0),
-        blueAmp,
+        new I('Blue Processor', 'Placing any note into the blue processor', 'prc', 0),
+        bluePrc,
         i => i.toString(),
         'blue'
-    );
-
-    app.addAppObject(
-        [0.8274050121261115, 0.018593371059013743],
-        new I('Red Amp', 'Placing any note into the red amp', 'amp', 0),
-        redAmp,
-        i => i.toString(),
-        'red'
-    );
-
-    app.addAppObject(
-        [0.06345998383185125, 0.33063864187550523],
-        new I('Blue Speaker', 'Shot a note into the blue speaker', 'spk', 0),
-        blueSpeaker,
-        i => i.toString(),
-        'blue'
-    );
-
-    app.addAppObject(
-        [0.9365400161681487, 0.32740501212611156],
-        new I('Red Speaker', 'Shot a note into the red speaker', 'spk', 0),
-        redSpeaker,
-        i => i.toString(),
-        'red'
-    );
-
-    app.addAppObject(
-        [0.49946581196581197, 1 - 0.9594017094017094],
-        new I('Red Lob', 'Lob a note to the red side', 'lob', 0),
-        redLobA,
-        i => i.toString(),
-        'red'
-    );
-
-    app.addAppObject(
-        [0.49946581196581197, 0.9594017094017094],
-        new I('Red Lob', 'Lob a note to the red side', 'lob', 0),
-        redLobB,
-        i => i.toString(),
-        'red'
-    );
-
-    app.addAppObject(
-        [0.49946581196581197, 1 - 0.9594017094017094],
-        new I('Blue Lob', 'Lob a note to the blue side', 'lob', 0),
-        blueLobA,
-        i => i.toString(),
-        'blue'
-    );
-
-    app.addAppObject(
-        [0.49946581196581197, 0.9594017094017094],
-        new I('Blue Lob', 'Lob a note to the blue side', 'lob', 0),
-        blueLobB,
-        i => i.toString(),
-        'blue'
-    );
-
-    app.addAppObject(
-        [0.8823767178658044, 0.9062247372675829],
-        new I(
-            'Blue Source',
-            'Robot retrieves a note from the blue source',
-            'src',
-            0
-        ),
-        blueSource,
-        i => i.toString(),
-        'blue'
-    );
-
-    app.addAppObject(
-        [0.11156022635408246, 0.9086499595796281],
-        new I(
-            'Red Source',
-            'Robot retrieves a note from the red source',
-            'src',
-            0
-        ),
-        redSource,
-        i => i.toString(),
-        'red'
     );
 
     const drawButton =
-        (z: Zones2024) =>
+        (z: Zones2025) =>
         (app: App): boolean => {
             const { currentLocation } = app;
             if (!currentLocation) return false;
@@ -289,50 +251,71 @@ export const generate2025App = (
             return zone.area.isIn(currentLocation);
         };
 
-    app.buttonCircle
-        .addButton(
-            'Blue Trap',
-            'When the robot has successfully placed an item in the trap',
-            'trp',
-            0,
-            drawButton('blue-stage'),
-            colors.blue,
-            'blue',
-            icons.trp
-        )
-        .addButton(
-            'Blue Climb',
-            'Click when the robot has successfully pulled themselves up for the last time in the match',
-            'clb',
-            0,
-            drawButton('blue-stage'),
-            colors.blue,
-            'blue',
-            icons.clb
-        )
-        .addButton(
-            'Red Trap',
-            'When the robot has successfully placed an item in the trap',
-            'trp',
-            0,
-            drawButton('red-stage'),
-            colors.red,
-            'red',
-            icons.trp
-        )
-        .addButton(
-            'Red Climb',
-            'Click when the robot has successfully pulled themselves up for the last time in the match',
-            'clb',
-            0,
-            drawButton('red-stage'),
-            colors.red,
-            'red',
-            icons.clb
-        );
+    // app.buttonCircle
+    //     .addButton(
+    //         'Blue Trap',
+    //         'When the robot has successfully placed an item in the trap',
+    //         'trp',
+    //         0,
+    //         drawButton('blue-stage'),
+    //         colors.blue,
+    //         'blue',
+    //         icons.trp
+    //     )
+    //     .addButton(
+    //         'Blue Climb',
+    //         'Click when the robot has successfully pulled themselves up for the last time in the match',
+    //         'clb',
+    //         0,
+    //         drawButton('blue-stage'),
+    //         colors.blue,
+    //         'blue',
+    //         icons.clb
+    //     )
+    //     .addButton(
+    //         'Red Trap',
+    //         'When the robot has successfully placed an item in the trap',
+    //         'trp',
+    //         0,
+    //         drawButton('red-stage'),
+    //         colors.red,
+    //         'red',
+    //         icons.trp
+    //     )
+    //     .addButton(
+    //         'Red Climb',
+    //         'Click when the robot has successfully pulled themselves up for the last time in the match',
+    //         'clb',
+    //         0,
+    //         drawButton('red-stage'),
+    //         colors.red,
+    //         'red',
+    //         icons.clb
+    //     );
 
     const em = app.clickPoints();
-    em.on('point', console.log);
+
+    let str = '';
+
+    document.addEventListener('keydown', e => {
+        if (e.ctrlKey) {
+            switch(e.key) {
+                case 't':
+                    str = '';
+                    console.log('Cleared');
+                    break;
+                // enter
+                case 'Enter':
+                    console.log(`[${str}]`);
+                    break;
+            }
+        }
+    });
+
+    em.on('point', (p) => {
+        console.log(p);
+        str += `[${p[0].toFixed(3)}, ${p[1].toFixed(3)}],\n`;
+    });
 
     Object.assign(window, { app });
 
@@ -351,13 +334,13 @@ export const generate2025App = (
             // case 'Blue Source':
             //     data = images.src;
             //     break;
-            case 'Red Trap':
-            case 'Blue Trap':
-                data = images.trp;
+            case 'Red Deep Climb':
+            case 'Blue Deep Climb':
+                data = images.dpc;
                 break;
-            case 'Red Climb':
-            case 'Blue Climb':
-                data = images.clb;
+            case 'Red Shallow Climb':
+            case 'Blue Shallow Climb':
+                data = images.shc;
                 break;
             default:
                 return;
@@ -369,7 +352,7 @@ export const generate2025App = (
     return app;
 };
 
-export const update2024 = (tick: Tick) => {
+export const update2025 = (tick: Tick) => {
     const { app, section } = tick;
     const { currentLocation } = app;
 
