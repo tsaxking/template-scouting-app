@@ -1,8 +1,17 @@
-import { all as all2024, zones } from './2024-areas';
+import { all as all2024, zones as zones2024 } from './2024-areas';
+import { all as all2025, zones as zones2025 } from './2025-areas';
 import { isInside } from '../calculations/src/polygon';
 import { Point2D } from '../calculations/src/linear-algebra/point';
 import { $Math } from '../../math';
 
+/**
+ * Description placeholder
+ * @date 1/8/2025 - 7:24:32 PM
+ *
+ * @export
+ * @typedef {Action2025}
+ */
+export type Action2025 = 'cl1' | 'cl2' | 'cl3' | 'cl4' | 'prc' | 'brg' | 'dpc' | 'shc';
 /**
  * Description placeholder
  * @date 1/25/2024 - 4:58:49 PM
@@ -20,6 +29,18 @@ export type Action2024 = 'spk' | 'amp' | 'src' | 'trp' | 'clb' | 'nte' | 'lob';
  */
 export type Action2023 = 'cne' | 'cbe' | 'bal' | 'pck';
 
+export type Zones2025 =
+    | 'blue-barge'
+    | 'blue-reef'
+    | 'blue-prc'
+    | 'blue-src'
+    | 'blue-zone'
+    | 'red-barge'
+    | 'red-reef'
+    | 'red-prc'
+    | 'red-src'
+    | 'red-zone';
+
 export type Zones2024 =
     | 'blue-auto'
     | 'blue-stage'
@@ -33,16 +54,31 @@ export type Zones2024 =
     | 'red-zone';
 
 export const actions = {
+    cl1: 'coralL1',
+    cl2: 'coralL2',
+    cl3: 'coralL3',
+    cl4: 'coralL4',
+    prc: 'processor',
+    brg: 'barge',
+    dpc: 'deepclimb',
+    shc: 'shallowclimb',
     spk: 'speaker',
     amp: 'amp',
     src: 'source',
     trp: 'trap',
     clb: 'climb',
+    lob: 'lob',
     cne: 'cone',
     cbe: 'cube',
     bal: 'balance',
     pck: 'pick',
     nte: 'nte'
+};
+
+export type TraceParse2025 = {
+    mobility: boolean;
+    parked: boolean;
+    groundPicks: boolean;
 };
 
 export type TraceParse2024 = {
@@ -58,11 +94,11 @@ export type TraceParse2024 = {
  * @export
  * @typedef {Action}
  */
-export type Action = Action2024 | Action2023;
+export type Action = Action2025 | Action2024 | Action2023;
 
-export type Zones = Zones2024;
+export type Zones = Zones2025 | Zones2024;
 
-export type TraceParse = TraceParse2024;
+export type TraceParse = TraceParse2025 | TraceParse2024;
 
 /**
  * Description placeholder
@@ -521,6 +557,7 @@ export class Trace {
                         },
                         teleop: {
                             spk: 2,
+                            lob: 0,
                             amp: 1,
                             clb: 3,
                             park: 1,
@@ -537,12 +574,14 @@ export class Trace {
                         spk: 0,
                         amp: 0,
                         mobility: 0,
+                        lob: 0,
                         total: 0
                     },
                     teleop: {
                         spk: 0,
                         amp: 0,
                         trp: 0,
+                        lob: 0,
                         total: 0
                     },
                     endgame: {
@@ -670,6 +709,13 @@ export class Trace {
                                 traceData.map(t => t.teleop.amp),
                                 traceData.map(t => t.teleop.trp),
                                 traceData.map(t => t.teleop.total)
+                            ].map($Math.average)
+                        },
+                        {
+                            title: 'Total Lobs',
+                            labels: ['Speaker', 'Lob'],
+                            data: [
+                                traceData.map(t => t.teleop.lob)
                             ].map($Math.average)
                         },
                         {
