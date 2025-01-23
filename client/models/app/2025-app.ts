@@ -129,7 +129,7 @@ export const generate2025App = (
     app.addArea('red-zone', zones.red, colors.redFade, isIn);
     app.addArea('blue-auto', autoZone.blue, colors.blueFade, isIn);
     app.addArea('red-auto', autoZone.red, colors.redFade, isIn);
-    // this might need changing
+    // this might need changing?
     app.addArea('sta1', stations.sta1, colors.blueFade, isIn);
     app.addArea('sta2', stations.sta2, colors.blueFade, isIn);
     app.addArea('sta3', stations.sta3, colors.redFade, isIn);
@@ -174,59 +174,10 @@ export const generate2025App = (
     const blueSta2 = App.button(blueButtonClasses, images.prc.cloneNode());
     const redSta1 = App.button(redButtonClasses, images.prc.cloneNode());
     const redSta4 = App.button(redButtonClasses, images.prc.cloneNode());
-
-    // const btns = notePositions.map((pos, i) => {
-    //     const btn = App.button(
-    //         ['btn', 'btn-outline-dark', 'btn-sm'],
-    //         images.nte.cloneNode()
-    //     );
-
-    //     const t = new Toggle(
-    //         'Auto Note ' + (i + 1),
-    //         'Picked up this note in auto',
-    //         'nte',
-    //         false
-    //     );
-
-    //     app.addAppObject(
-    //         pos,
-    //         t,
-    //         btn,
-    //         _ => '',
-    //         i < 5 ? undefined : i < 8 ? 'red' : 'blue',
-    //         t => t.index < 65
-    //     );
-
-    //     let p: Point2D | null = null;
-
-    //     t.on('change', o => {
-    //         if (o.state) {
-    //             btn.classList.remove('btn-outline-dark');
-    //             btn.classList.add('btn-dark');
-
-    //             try {
-    //                 p = app.currentLocation || null;
-
-    //                 // o.lastState!.tick!.point = [pos[0], pos[1]];
-    //             } catch (error) {
-    //                 console.error(error);
-    //             }
-    //         } else {
-    //             btn.classList.remove('btn-dark');
-    //             btn.classList.add('btn-outline-dark');
-    //             // remove all states matching this AppObject
-    //             for (const s of o.stateHistory) {
-    //                 s.tick?.clear();
-    //             }
-
-    //             try {
-    //                 // o.lastState!.tick!.point = p;
-    //             } catch (error) {
-    //                 console.error(error);
-    //             }
-    //         }
-    //     });
-    // });
+    const blueShc = App.button(blueButtonClasses, images.shc.cloneNode());
+    const redShc = App.button(redButtonClasses, images.shc.cloneNode());
+    const blueDpc = App.button(blueButtonClasses, images.dpc.cloneNode());
+    const redDpc = App.button(redButtonClasses, images.dpc.cloneNode());
 
     const I = Iterator<Action2025>;
 
@@ -251,47 +202,47 @@ export const generate2025App = (
             return zone.area.isIn(currentLocation);
         };
 
-    // app.buttonCircle
-    //     .addButton(
-    //         'Blue Trap',
-    //         'When the robot has successfully placed an item in the trap',
-    //         'trp',
-    //         0,
-    //         drawButton('blue-stage'),
-    //         colors.blue,
-    //         'blue',
-    //         icons.trp
-    //     )
-    //     .addButton(
-    //         'Blue Climb',
-    //         'Click when the robot has successfully pulled themselves up for the last time in the match',
-    //         'clb',
-    //         0,
-    //         drawButton('blue-stage'),
-    //         colors.blue,
-    //         'blue',
-    //         icons.clb
-    //     )
-    //     .addButton(
-    //         'Red Trap',
-    //         'When the robot has successfully placed an item in the trap',
-    //         'trp',
-    //         0,
-    //         drawButton('red-stage'),
-    //         colors.red,
-    //         'red',
-    //         icons.trp
-    //     )
-    //     .addButton(
-    //         'Red Climb',
-    //         'Click when the robot has successfully pulled themselves up for the last time in the match',
-    //         'clb',
-    //         0,
-    //         drawButton('red-stage'),
-    //         colors.red,
-    //         'red',
-    //         icons.clb
-    //     );
+    app.buttonCircle
+        .addButton(
+            'Blue Shallow Climb',
+            'When the robot has successfully completed a shallow climb',
+            'shc',
+            0,
+            drawButton('blue-reef'),
+            colors.blue,
+            'blue',
+            icons.shc
+        )
+        .addButton(
+            'Red Shallow Climb',
+            'When the robot has successfully completed a shallow climb',
+            'shc',
+            0,
+            drawButton('red-reef'),
+            colors.red,
+            'red',
+            icons.shc
+        )
+        .addButton(
+            'Blue Deep Climb',
+            'When the robot has successfully completed a deep climb',
+            'dpc',
+            0,
+            drawButton('blue-reef'),
+            colors.blue,
+            'blue',
+            icons.dpc
+        )
+        .addButton(
+            'Red Deep Climb',
+            'When the robot has successfully completed a deep climb',
+            'dpc',
+            0,
+            drawButton('red-reef'),
+            colors.red,
+            'red',
+            icons.dpc
+        );
 
     const em = app.clickPoints();
 
