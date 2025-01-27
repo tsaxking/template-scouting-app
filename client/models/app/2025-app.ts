@@ -26,9 +26,7 @@ import { Tick } from './tick';
  * Builds the app for the 2024 game
  * @date 1/25/2024 - 4:59:26 PM
  */
-export const generate2025App = (
-    alliance: 'red' | 'blue' | null = null
-) => {
+export const generate2025App = (alliance: 'red' | 'blue' | null = null) => {
     const icons: {
         [key in Action2025]: Icon | SVG | Img;
     } = {
@@ -54,6 +52,7 @@ export const generate2025App = (
         cl2: new Img('/public/pictures/icons/clb.png'),
         cl3: new Img('/public/pictures/icons/clb.png'),
         cl4: new Img('/public/pictures/icons/clb.png')
+        // might need coral station image
     };
 
     const images: {
@@ -67,6 +66,7 @@ export const generate2025App = (
         cl2: new Image(60, 60),
         cl3: new Image(60, 60),
         cl4: new Image(60, 60)
+        // might need coral station image
     };
 
     for (const key in images) {
@@ -183,11 +183,47 @@ export const generate2025App = (
 
     app.addAppObject(
         [0.16976556184316896, 0.021018593371059015],
-        new I('Blue Processor', 'Placing any note into the blue processor', 'prc', 0),
+        new I(
+            'Blue Processor',
+            'Placing any algae into the blue processor',
+            'prc',
+            0
+        ),
         bluePrc,
         i => i.toString(),
         'blue'
     );
+
+    app.addAppObject(
+        [0.16976556184316896, 0.021018593371059015],
+        new I(
+            'Red Processor',
+            'Placing any algae into the red processor',
+            'prc',
+            0
+        ),
+        redPrc,
+        i => i.toString(),
+        'red'
+    );
+
+    app.addAppObject(
+        [0.5, 0.05],
+        new I('Blue Barge', 'Placing any algae into the blue barge', 'brg', 0),
+        blueBrg,
+        i => i.toString(),
+        'blue'
+    );
+
+    app.addAppObject(
+        [0.5, 0.95],
+        new I('Red Barge', 'Placing any algae into the red barge', 'brg', 0),
+        redBrg,
+        i => i.toString(),
+        'red'
+    );
+
+    // coral levels
 
     const drawButton =
         (z: Zones2025) =>
@@ -208,7 +244,7 @@ export const generate2025App = (
             'When the robot has successfully completed a shallow climb',
             'shc',
             0,
-            drawButton('blue-reef'),
+            drawButton('blue-barge'),
             colors.blue,
             'blue',
             icons.shc
@@ -218,7 +254,7 @@ export const generate2025App = (
             'When the robot has successfully completed a shallow climb',
             'shc',
             0,
-            drawButton('red-reef'),
+            drawButton('red-barge'),
             colors.red,
             'red',
             icons.shc
@@ -228,7 +264,7 @@ export const generate2025App = (
             'When the robot has successfully completed a deep climb',
             'dpc',
             0,
-            drawButton('blue-reef'),
+            drawButton('blue-barge'),
             colors.blue,
             'blue',
             icons.dpc
@@ -238,7 +274,7 @@ export const generate2025App = (
             'When the robot has successfully completed a deep climb',
             'dpc',
             0,
-            drawButton('red-reef'),
+            drawButton('red-barge'),
             colors.red,
             'red',
             icons.dpc
@@ -250,7 +286,7 @@ export const generate2025App = (
 
     document.addEventListener('keydown', e => {
         if (e.ctrlKey) {
-            switch(e.key) {
+            switch (e.key) {
                 case 't':
                     str = '';
                     console.log('Cleared');
@@ -263,7 +299,7 @@ export const generate2025App = (
         }
     });
 
-    em.on('point', (p) => {
+    em.on('point', p => {
         console.log(p);
         str += `[${p[0].toFixed(3)}, ${p[1].toFixed(3)}],\n`;
     });
