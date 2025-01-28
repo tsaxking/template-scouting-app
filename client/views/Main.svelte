@@ -65,9 +65,11 @@ const exitFullscreen = () => {
 
 $: {
     if (active === '--$App') {
-        fullscreen();
+        // fullscreen();
+        // TODO: PUT BACK IN
+        console.log('not fullscreening');
     } else {
-        exitFullscreen();
+        // exitFullscreen();
     }
 }
 
