@@ -6,7 +6,7 @@ export type CommentSection = {
 
 export const comments: {
     general: CommentSection;
-    2024: CommentSection;
+    2025: CommentSection;
 } = {
     general: {
         auto: ['Did not move in autonomous', 'Mobility only in auto'],
