@@ -26,9 +26,7 @@ import { Tick } from './tick';
  * Builds the app for the 2024 game
  * @date 1/25/2024 - 4:59:26 PM
  */
-export const generate2024App = (
-    alliance: 'red' | 'blue' | null = null
-): App<Action2024> => {
+export const generate2024App = (alliance: 'red' | 'blue' | null = null) => {
     const icons: {
         [key in Action2024]: Icon | SVG | Img;
     } = {

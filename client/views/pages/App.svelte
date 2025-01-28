@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import { App } from '../../models/app/app';
-    import { update2024 } from '../../models/app/2024-app';
+    import { update2025 } from '../../models/app/2025-app';
     import Timer from '../components/app/Timer.svelte';
 
     let target: HTMLDivElement;
@@ -13,7 +13,7 @@
             if (!app) return;
             if (!target) return;
             app.target = target;
-            app.launch(update2024);
+            app.launch(update2025);
         }
     };
 
@@ -22,8 +22,6 @@
     $: fns.launch(app);
 </script>
 
-<div
-    bind:this="{target}"
-    class="position-relative">
+<div bind:this="{target}" class="position-relative">
     <Timer bind:app />
 </div>
