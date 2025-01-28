@@ -283,7 +283,10 @@ export class App<
     }
 
     public static current?: App<any, any, any>;
-    public static build(year: 2024 | 2025, alliance: 'red' | 'blue' | null = null) {
+    public static build(
+        year: 2024 | 2025,
+        alliance: 'red' | 'blue' | null = null
+    ) {
         switch (year) {
             case 2024:
                 return generate2024App(alliance);
@@ -809,6 +812,15 @@ export class App<
                     : null;
             }
         }
+    }
+
+    static get rotate() {
+        return App.flipX && App.flipY;
+    }
+
+    static set rotate(rotate: boolean) {
+        App.flipX = rotate;
+        App.flipY = rotate;
     }
 
     /**
