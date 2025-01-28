@@ -36,30 +36,22 @@
         'autoMobility',
         'parked',
         'climbed',
-        'stoleGamepieces'
+        'stoleGamepieces',
     ]);
     let primary = createPostDataMap([
         'playedDefense',
         'groundPicks',
-        'canPlaceCoral',
-        'canAlgae',
-        'canShootNet',
-        'canProcess'
     ]);
     let warning = createPostDataMap([
         'tippy',
         'easilyDefended',
         'slow',
-        'stolenFrom',
-        'droppedCoral',
-        'droppedAlgae'
+        'droppedItems',
     ]);
     let danger = createPostDataMap([
         'robotDied',
         'problemsDriving',
-        'penalized',
         'spectator',
-        'unreliable'
     ]);
 
     let all: PostDataMap = { ...success, ...primary, ...warning, ...danger };
