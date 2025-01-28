@@ -1095,8 +1095,6 @@ export class App<
         const p = new Polygon(points);
 
         p.properties.doDraw = () => {
-            if (Settings.get('showAreas') === false) return false;
-
             const draw = condition(p);
 
             return draw;
@@ -1218,12 +1216,12 @@ export class App<
         const loop = new Loop(() => {
             const now = Date.now();
             const { section } = this;
-            this.currentTick = this.ticks[i];
+            this.currentTick = this.currentTick?.next();
             if (this.section !== section)
                 this.emit('section', this.section || undefined);
 
-            if (!this.currentTick) this.emit('end', undefined);
             if (!loop.active) this.emit('stopped', undefined);
+            if (!this.currentTick) return this.emit('end', undefined);
             this.currentTime = now - this.startTime;
             this.emit('tick', this.currentTick);
             if (this.currentLocation)
@@ -1524,6 +1522,12 @@ export class App<
             console.error('No target');
             return;
         }
+
+        // if (App.current) {
+        //     App.current.stop();
+        // }
+
+        // target.innerHTML = '';
 
         this.cover.style.display = 'block';
         this.canvas.clearDrawables();

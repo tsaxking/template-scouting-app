@@ -23,7 +23,7 @@ export const comments: {
         ],
         end: []
     },
-    2024: {
+    2025: {
         auto: [
             'crossed leave line',
             '1 coral auto',
@@ -55,5 +55,5 @@ export const comments: {
             'Very fast floor pick'
         ],
         end: ['Climbs quickly', 'Cannot climb', 'Slow climb', 'Unstable climb']
-    }
+    },
 };
