@@ -182,7 +182,7 @@ export const generate2025App = (alliance: 'red' | 'blue' | null = null) => {
     const I = Iterator<Action2025>;
 
     app.addAppObject(
-        [0.36118848653667596, 0.9632899628252788],
+        [0.36, 0.95],
         new I(
             'Blue Processor',
             'Placing any algae into the blue processor',
@@ -195,7 +195,7 @@ export const generate2025App = (alliance: 'red' | 'blue' | null = null) => {
     );
 
     app.addAppObject(
-        [0.6397400185701021, 0.028345724907063198],
+        [0.64, 0.05],
         new I(
             'Red Processor',
             'Placing any algae into the red processor',
@@ -208,7 +208,7 @@ export const generate2025App = (alliance: 'red' | 'blue' | null = null) => {
     );
 
     app.addAppObject(
-        [0.5, 0.05],
+        [0.53, 0.5],
         new I('Blue Barge', 'Placing any algae into the blue barge', 'brg', 0),
         blueBrg,
         i => i.toString(),
@@ -216,7 +216,7 @@ export const generate2025App = (alliance: 'red' | 'blue' | null = null) => {
     );
 
     app.addAppObject(
-        [0.5, 0.95],
+        [0.47, 0.5],
         new I('Red Barge', 'Placing any algae into the red barge', 'brg', 0),
         redBrg,
         i => i.toString(),
@@ -227,57 +227,8 @@ export const generate2025App = (alliance: 'red' | 'blue' | null = null) => {
     app.addAppObject(
         [0.733, 0.6],
         new I(
-            'Blue Coral Level 1',
-            'Placing any coral into the blue coral level 1',
-            'cl1',
-            0
-        ),
-        blueCL1,
-        i => i.toString(),
-        'blue'
-    );
-    app.addAppObject(
-        [0.733, 0.5333],
-        new I(
-            'Blue Coral Level 2',
-            'Placing any coral into the blue coral level 2',
-            'cl2',
-            0
-        ),
-        blueCL2,
-        i => i.toString(),
-        'blue'
-    );
-    app.addAppObject(
-        [0.733, 0.4667],
-        new I(
-            'Blue Coral Level 3',
-            'Placing any coral into the red coral level 3',
-            'cl3',
-            0
-        ),
-        blueCL3,
-        i => i.toString(),
-        'blue'
-    );
-    app.addAppObject(
-        [0.733, 0.4],
-        new I(
-            'Blue Coral Level 4',
-            'Placing any coral into the blue coral level 4',
-            'cl4',
-            0
-        ),
-        blueCL4,
-        i => i.toString(),
-        'blue'
-    );
-
-    app.addAppObject(
-        [0.267, 0.6],
-        new I(
             'Red Coral Level 1',
-            'Placing any coral into the red coral level 1',
+            'Placing any coral into the Red coral level 1',
             'cl1',
             0
         ),
@@ -286,10 +237,10 @@ export const generate2025App = (alliance: 'red' | 'blue' | null = null) => {
         'red'
     );
     app.addAppObject(
-        [0.267, 0.5333],
+        [0.733, 0.5333],
         new I(
             'Red Coral Level 2',
-            'Placing any coral into the red coral level 2',
+            'Placing any coral into the Red coral level 2',
             'cl2',
             0
         ),
@@ -298,7 +249,7 @@ export const generate2025App = (alliance: 'red' | 'blue' | null = null) => {
         'red'
     );
     app.addAppObject(
-        [0.267, 0.4667],
+        [0.733, 0.4667],
         new I(
             'Red Coral Level 3',
             'Placing any coral into the red coral level 3',
@@ -310,16 +261,65 @@ export const generate2025App = (alliance: 'red' | 'blue' | null = null) => {
         'red'
     );
     app.addAppObject(
-        [0.267, 0.4],
+        [0.733, 0.4],
         new I(
             'Red Coral Level 4',
-            'Placing any coral into the red coral level 4',
+            'Placing any coral into the Red coral level 4',
             'cl4',
             0
         ),
         redCL4,
         i => i.toString(),
         'red'
+    );
+
+    app.addAppObject(
+        [0.267, 0.6],
+        new I(
+            'Blue Coral Level 1',
+            'Placing any coral into the blue coral level 1',
+            'cl1',
+            0
+        ),
+        blueCL1,
+        i => i.toString(),
+        'blue'
+    );
+    app.addAppObject(
+        [0.267, 0.5333],
+        new I(
+            'Blue Coral Level 2',
+            'Placing any coral into the blue coral level 2',
+            'cl2',
+            0
+        ),
+        blueCL2,
+        i => i.toString(),
+        'blue'
+    );
+    app.addAppObject(
+        [0.267, 0.4667],
+        new I(
+            'Blue Coral Level 3',
+            'Placing any coral into the blue coral level 3',
+            'cl3',
+            0
+        ),
+        blueCL3,
+        i => i.toString(),
+        'blue'
+    );
+    app.addAppObject(
+        [0.267, 0.4],
+        new I(
+            'Blue Coral Level 4',
+            'Placing any coral into the blue coral level 4',
+            'cl4',
+            0
+        ),
+        blueCL4,
+        i => i.toString(),
+        'blue'
     );
 
     const drawButton =
