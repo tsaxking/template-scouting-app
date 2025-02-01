@@ -1218,17 +1218,20 @@ export class App<
      * @returns {void) => void}
      */
     public launch(cb?: (tick: Tick) => void) {
+        this.stop();
         this.off('stop');
         const { cover } = this;
         this.build();
         this.startTime = Date.now();
         this.currentTime = this.startTime;
+        this.currentTick = this.ticks[0];
 
         let i = 0;
         const loop = new Loop(() => {
             const now = Date.now();
             const { section } = this;
             this.currentTick = this.currentTick?.next();
+            console.log('Tick:', this.currentTick);
             if (this.section !== section)
                 this.emit('section', this.section || undefined);
 
@@ -1324,7 +1327,15 @@ export class App<
 
         cover.addEventListener('mousedown', start);
         cover.addEventListener('touchstart', start);
+
+        this._stop = () => {
+            cover.removeEventListener('mousedown', start);
+            cover.removeEventListener('touchstart', start);
+            loop.stop();
+        };
     }
+
+    private _stop = () => {};
 
     /**
      * The current section of the match
@@ -1414,6 +1425,7 @@ export class App<
      */
     public stop() {
         this.emit('stop', undefined);
+        this._stop();
     }
 
     emit = this.emitter.emit.bind(this.emitter);
