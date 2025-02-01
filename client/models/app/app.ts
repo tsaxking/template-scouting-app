@@ -551,13 +551,16 @@ export class App<
     }
 
     public static updateState() {
-        return ServerRequest.post('/api/tablet/update', {
-            compLevel: App.matchData.compLevel,
-            groupNumber: App.matchData.group,
-            matchNumber: App.matchData.matchNumber,
-            teamNumber: App.matchData.teamNumber,
-            scoutName: App.scoutName,
-            preScouting: App.preScouting
+        // return ServerRequest.post('/api/tablet/update', {
+        //     compLevel: App.matchData.compLevel,
+        //     groupNumber: App.matchData.group,
+        //     matchNumber: App.matchData.matchNumber,
+        //     teamNumber: App.matchData.teamNumber,
+        //     scoutName: App.scoutName,
+        //     preScouting: App.preScouting
+        // });
+        return attemptAsync(async () => {
+            throw new Error('Not implemented');
         });
     }
 
@@ -1228,7 +1231,7 @@ export class App<
         const loop = new Loop(() => {
             const now = Date.now();
             const { section } = this;
-            this.currentTick = this.currentTick?.next();
+            this.currentTick = this.ticks[i];
             if (this.section !== section)
                 this.emit('section', this.section || undefined);
 
