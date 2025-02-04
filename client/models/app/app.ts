@@ -1234,7 +1234,7 @@ export class App<
             const now = Date.now();
             const { section } = this;
             this.currentTick = this.currentTick?.next();
-            console.log('Tick:', this.currentTick);
+            // console.log('Tick:', this.currentTick);
             if (this.section !== section)
                 this.emit('section', this.section || undefined);
 
