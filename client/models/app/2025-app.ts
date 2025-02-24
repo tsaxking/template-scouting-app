@@ -44,14 +44,14 @@ export const generate2025App = (alliance: 'red' | 'blue' | null = null) => {
         // lob: new Img('/public/pictures/icons/lob.png')
 
         // TODO: replace with correct images
-        prc: new Img('/public/pictures/icons/spk.png'),
-        brg: new Img('/public/pictures/icons/spk.png'),
+        prc: new Img('/public/pictures/icons/prc.png'),
+        brg: new Img('/public/pictures/icons/brg.png'),
         dpc: new Img('/public/pictures/icons/spk.png'),
         shc: new Img('/public/pictures/icons/spk.png'),
-        cl1: new Img('/public/pictures/icons/clb.png'),
-        cl2: new Img('/public/pictures/icons/clb.png'),
-        cl3: new Img('/public/pictures/icons/clb.png'),
-        cl4: new Img('/public/pictures/icons/clb.png')
+        cl1: new Img('/public/pictures/icons/cl1.png'),
+        cl2: new Img('/public/pictures/icons/cl2.png'),
+        cl3: new Img('/public/pictures/icons/cl3.png'),
+        cl4: new Img('/public/pictures/icons/cl4.png')
         // might need coral station image
     };
 
@@ -62,10 +62,10 @@ export const generate2025App = (alliance: 'red' | 'blue' | null = null) => {
         brg: new Image(60, 60),
         dpc: new Image(60, 60),
         shc: new Image(60, 60),
-        cl1: new Image(30, 30),
-        cl2: new Image(30, 30),
-        cl3: new Image(30, 30),
-        cl4: new Image(30, 30)
+        cl1: new Image(40, 40),
+        cl2: new Image(40, 40),
+        cl3: new Image(40, 40),
+        cl4: new Image(40, 40)
         // might need coral station image
     };
 
@@ -225,7 +225,7 @@ export const generate2025App = (alliance: 'red' | 'blue' | null = null) => {
 
     // coral levels
     app.addAppObject(
-        [0.733, 0.6],
+        [0.733, 0.4],
         new I(
             'Red Coral Level 1',
             'Placing any coral into the Red coral level 1',
@@ -237,7 +237,7 @@ export const generate2025App = (alliance: 'red' | 'blue' | null = null) => {
         'red'
     );
     app.addAppObject(
-        [0.733, 0.5333],
+        [0.733, 0.4667],
         new I(
             'Red Coral Level 2',
             'Placing any coral into the Red coral level 2',
@@ -249,7 +249,7 @@ export const generate2025App = (alliance: 'red' | 'blue' | null = null) => {
         'red'
     );
     app.addAppObject(
-        [0.733, 0.4667],
+        [0.733, 0.5333],
         new I(
             'Red Coral Level 3',
             'Placing any coral into the red coral level 3',
@@ -261,7 +261,7 @@ export const generate2025App = (alliance: 'red' | 'blue' | null = null) => {
         'red'
     );
     app.addAppObject(
-        [0.733, 0.4],
+        [0.733, 0.6],
         new I(
             'Red Coral Level 4',
             'Placing any coral into the Red coral level 4',
@@ -274,7 +274,7 @@ export const generate2025App = (alliance: 'red' | 'blue' | null = null) => {
     );
 
     app.addAppObject(
-        [0.267, 0.6],
+        [0.267, 0.4],
         new I(
             'Blue Coral Level 1',
             'Placing any coral into the blue coral level 1',
@@ -286,7 +286,7 @@ export const generate2025App = (alliance: 'red' | 'blue' | null = null) => {
         'blue'
     );
     app.addAppObject(
-        [0.267, 0.5333],
+        [0.267, 0.4667],
         new I(
             'Blue Coral Level 2',
             'Placing any coral into the blue coral level 2',
@@ -298,7 +298,7 @@ export const generate2025App = (alliance: 'red' | 'blue' | null = null) => {
         'blue'
     );
     app.addAppObject(
-        [0.267, 0.4667],
+        [0.267, 0.5333],
         new I(
             'Blue Coral Level 3',
             'Placing any coral into the blue coral level 3',
@@ -310,7 +310,7 @@ export const generate2025App = (alliance: 'red' | 'blue' | null = null) => {
         'blue'
     );
     app.addAppObject(
-        [0.267, 0.4],
+        [0.267, 0.6],
         new I(
             'Blue Coral Level 4',
             'Placing any coral into the blue coral level 4',
