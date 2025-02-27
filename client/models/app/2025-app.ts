@@ -208,7 +208,7 @@ export const generate2025App = (alliance: 'red' | 'blue' | null = null) => {
     );
 
     app.addAppObject(
-        [0.53, 0.5],
+        [0.47, 0.5],
         new I('Blue Barge', 'Placing any algae into the blue barge', 'brg', 0),
         blueBrg,
         i => i.toString(),
@@ -216,7 +216,7 @@ export const generate2025App = (alliance: 'red' | 'blue' | null = null) => {
     );
 
     app.addAppObject(
-        [0.47, 0.5],
+        [0.53, 0.5],
         new I('Red Barge', 'Placing any algae into the red barge', 'brg', 0),
         redBrg,
         i => i.toString(),

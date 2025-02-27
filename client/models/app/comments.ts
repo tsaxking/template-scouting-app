@@ -36,24 +36,42 @@ export const comments: {
             '1 reef algae removal auto',
             '2 reef algae removal auto',
             '1 barge auto',
-            '2 barge auto'
+            '2 barge auto',
+            'Picked algae from ground',
+            'Dropped coral while placing'
         ],
         tele: [
+            'Takes a long time to line up for coral',
             'Processor only',
             'Coral only',
             'Barge only',
             'Held more than 1 coral',
             'Held more than 1 algae',
             'Extremely accurate coral',
-            'misses a lot of barge shots',
+            'Misses a lot of barge shots',
             'Game piece jammed in bot',
             'Often misses floor pick',
-            'Only shoots from one spot',
             "Steals from opponents' coral stations",
             'Takes a long time to set up barge shot',
             'Good defense',
-            'Very fast floor pick'
+            'Very fast floor pick',
+            'Knocked algae out of reef',
+            'Grabbed algae from reef',
+            'Dropped coral while placing',
+            'Picked algae from ground',
+            'Damaged coral',
+            'Damaged algae',
+            'Climbed on top of algae',
+            'Climbed on top of coral',
+            'Drops coral at source'
         ],
-        end: ['Climbs quickly', 'Cannot climb', 'Slow climb', 'Unstable climb']
-    },
+        end: [
+            'Climbs quickly',
+            'Cannot climb',
+            'Slow climb',
+            'Unstable climb',
+            'Tried to climb and failed',
+            'Parked'
+        ]
+    }
 };
