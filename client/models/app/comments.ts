@@ -41,6 +41,7 @@ export const comments: {
             'Dropped coral while placing'
         ],
         tele: [
+            'Takes a long time to line up for coral',
             'Processor only',
             'Coral only',
             'Barge only',
@@ -50,7 +51,6 @@ export const comments: {
             'Misses a lot of barge shots',
             'Game piece jammed in bot',
             'Often misses floor pick',
-            'Only shoots from one spot',
             "Steals from opponents' coral stations",
             'Takes a long time to set up barge shot',
             'Good defense',
@@ -62,7 +62,8 @@ export const comments: {
             'Damaged coral',
             'Damaged algae',
             'Climbed on top of algae',
-            'Climbed on top of coral'
+            'Climbed on top of coral',
+            'Drops coral at source'
         ],
         end: [
             'Climbs quickly',
