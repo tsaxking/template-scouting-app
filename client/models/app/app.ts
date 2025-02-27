@@ -46,6 +46,7 @@ import { Tick } from './tick';
 import { MatchData } from './match-data';
 import { Loop } from '../../../shared/loop';
 import { TabletState } from '../admin';
+import { generate2025App } from './2025-app';
 
 /**
  * Description placeholder
@@ -282,10 +283,15 @@ export class App<
     }
 
     public static current?: App<any, any, any>;
-    public static build(year: 2024, alliance: 'red' | 'blue' | null = null) {
+    public static build(
+        year: 2024 | 2025,
+        alliance: 'red' | 'blue' | null = null
+    ) {
         switch (year) {
             case 2024:
                 return generate2024App(alliance);
+            case 2025:
+                return generate2025App(alliance);
         }
     }
 
@@ -545,13 +551,16 @@ export class App<
     }
 
     public static updateState() {
-        return ServerRequest.post('/api/tablet/update', {
-            compLevel: App.matchData.compLevel,
-            groupNumber: App.matchData.group,
-            matchNumber: App.matchData.matchNumber,
-            teamNumber: App.matchData.teamNumber,
-            scoutName: App.scoutName,
-            preScouting: App.preScouting
+        // return ServerRequest.post('/api/tablet/update', {
+        //     compLevel: App.matchData.compLevel,
+        //     groupNumber: App.matchData.group,
+        //     matchNumber: App.matchData.matchNumber,
+        //     teamNumber: App.matchData.teamNumber,
+        //     scoutName: App.scoutName,
+        //     preScouting: App.preScouting
+        // });
+        return attemptAsync(async () => {
+            throw new Error('Not implemented');
         });
     }
 
@@ -806,6 +815,15 @@ export class App<
                     : null;
             }
         }
+    }
+
+    static get rotate() {
+        return App.flipX && App.flipY;
+    }
+
+    static set rotate(rotate: boolean) {
+        App.flipX = rotate;
+        App.flipY = rotate;
     }
 
     /**
@@ -1092,8 +1110,6 @@ export class App<
         const p = new Polygon(points);
 
         p.properties.doDraw = () => {
-            if (Settings.get('showAreas') === false) return false;
-
             const draw = condition(p);
 
             return draw;
@@ -1205,22 +1221,25 @@ export class App<
      * @returns {void) => void}
      */
     public launch(cb?: (tick: Tick) => void) {
+        this.stop();
         this.off('stop');
         const { cover } = this;
         this.build();
         this.startTime = Date.now();
         this.currentTime = this.startTime;
+        this.currentTick = this.ticks[0];
 
         let i = 0;
         const loop = new Loop(() => {
             const now = Date.now();
             const { section } = this;
-            this.currentTick = this.ticks[i];
+            this.currentTick = this.currentTick?.next();
+            // console.log('Tick:', this.currentTick);
             if (this.section !== section)
                 this.emit('section', this.section || undefined);
 
-            if (!this.currentTick) this.emit('end', undefined);
             if (!loop.active) this.emit('stopped', undefined);
+            if (!this.currentTick) return this.emit('end', undefined);
             this.currentTime = now - this.startTime;
             this.emit('tick', this.currentTick);
             if (this.currentLocation)
@@ -1311,7 +1330,15 @@ export class App<
 
         cover.addEventListener('mousedown', start);
         cover.addEventListener('touchstart', start);
+
+        this._stop = () => {
+            cover.removeEventListener('mousedown', start);
+            cover.removeEventListener('touchstart', start);
+            loop.stop();
+        };
     }
+
+    private _stop = () => {};
 
     /**
      * The current section of the match
@@ -1401,6 +1428,7 @@ export class App<
      */
     public stop() {
         this.emit('stop', undefined);
+        this._stop();
     }
 
     emit = this.emitter.emit.bind(this.emitter);
@@ -1521,6 +1549,12 @@ export class App<
             console.error('No target');
             return;
         }
+
+        // if (App.current) {
+        //     App.current.stop();
+        // }
+
+        // target.innerHTML = '';
 
         this.cover.style.display = 'block';
         this.canvas.clearDrawables();

@@ -4,7 +4,7 @@
     const d = createEventDispatcher();
 
     type T = 'auto' | 'tele' | 'end';
-    type Y = 2024;
+    type Y = 2025;
 
     export let type: T;
     export let year: Y;
@@ -40,8 +40,6 @@
             value="{comment}"
             bind:group="{selected}"
         />
-        <label
-            class="form-check-label"
-            for="{comment}">{comment}</label>
+        <label class="form-check-label" for="{comment}">{comment}</label>
     </div>
 {/each}

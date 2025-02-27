@@ -19,85 +19,42 @@
     export let active: string;
     let canvas: HTMLCanvasElement;
 
-    let success: PostDataMap = {
-        autoMobility: {
-            value: false,
-            comments: false,
-            comment: ''
-        },
-        parked: {
-            value: false,
-            comments: false,
-            comment: ''
-        }
-    };
+    const createPostDataMap = (
+        fields: string[],
+        commentsDefault = true
+    ): PostDataMap =>
+        fields.reduce((map, field) => {
+            map[field] = {
+                value: false,
+                comments: commentsDefault,
+                comment: ''
+            };
+            return map;
+        }, {} as PostDataMap);
 
-    let primary: PostDataMap = {
-        playedDefense: {
-            value: false,
-            comments: true,
-            comment: ''
-        },
-        groundPicks: {
-            value: false,
-            comments: true,
-            comment: ''
-        },
-        lobbedNotes: {
-            value: false,
-            comments: true,
-            comment: ''
-        }
-    };
+    let success = createPostDataMap([
+        'autoMobility',
+        'parked',
+        'climbed',
+        'stoleGamepieces',
+    ]);
+    let primary = createPostDataMap([
+        'playedDefense',
+        'groundPicks',
+    ]);
+    let warning = createPostDataMap([
+        'tippy',
+        'easilyDefended',
+        'slow',
+        'droppedItems',
+    ]);
+    let danger = createPostDataMap([
+        'robotDied',
+        'problemsDriving',
+        'spectator',
+    ]);
 
-    let warning: PostDataMap = {
-        tippy: {
-            value: false,
-            comments: true,
-            comment: ''
-        },
-        easilyDefended: {
-            value: false,
-            comments: true,
-            comment: ''
-        },
-        slow: {
-            value: false,
-            comments: true,
-            comment: ''
-        }
-    };
-
-    let danger: PostDataMap = {
-        robotDied: {
-            value: false,
-            comments: true,
-            comment: ''
-        },
-        problemsDriving: {
-            value: false,
-            comments: true,
-            comment: ''
-        },
-        penalized: {
-            value: false,
-            comments: true,
-            comment: ''
-        },
-        spectator: {
-            value: false,
-            comments: true,
-            comment: ''
-        }
-    };
-
-    // this does not need to use $ because all dependencies are kept.
-    let all: PostDataMap = {
-        ...success,
-        ...primary,
-        ...warning,
-        ...danger
-    };
+    let all: PostDataMap = { ...success, ...primary, ...warning, ...danger };
 
     let c: Canvas;
     let stop = () => {};
@@ -155,8 +112,9 @@
         }
 
         // if the number of shots is larger than the number of picks from the source + 1, then the robot picked off the ground
-    // + 1 because the robot starts with a note
-        app.parsed.groundPicks = Trace.yearInfo[2024].mustGroundPick(traceArray);
+        // + 1 because the robot starts with a note
+        app.parsed.groundPicks =
+            Trace.yearInfo[2025].mustGroundPick(traceArray);
 
         success.autoMobility.value = !!app.parsed.mobility;
         success.parked.value = !!app.parsed.parked;
@@ -205,7 +163,7 @@
         if (
             // TODO: make this year by year based
             !primary.groundPicks.value &&
-            Trace.yearInfo[2024].mustGroundPick(app.pull())
+            Trace.yearInfo[2025].mustGroundPick(app.pull())
         ) {
             const doSubmit = await confirm(
                 'You stated that the robot did not pick off the ground, but the have robot must pick off the ground because you said it shot more than it retrieved from the source. Are you sure you want to submit?'
@@ -270,7 +228,7 @@
             target: modal.target.querySelector('.modal-body') as HTMLElement,
             props: {
                 type,
-                year: app.year as 2024,
+                year: app.year as 2025,
                 selected: (() => {
                     switch (type) {
                         case 'auto':
@@ -320,22 +278,10 @@
 </script>
 
 <div class="container mb-3">
-    <ChecksRow
-        name="Info"
-        color="primary"
-        bind:checks="{primary}" />
-    <ChecksRow
-        name="Good"
-        color="success"
-        bind:checks="{success}" />
-    <ChecksRow
-        name="Bad"
-        color="warning"
-        bind:checks="{warning}" />
-    <ChecksRow
-        name="Ugly"
-        color="danger"
-        bind:checks="{danger}" />
+    <ChecksRow name="Info" color="primary" bind:checks="{primary}" />
+    <ChecksRow name="Good" color="success" bind:checks="{success}" />
+    <ChecksRow name="Bad" color="warning" bind:checks="{warning}" />
+    <ChecksRow name="Ugly" color="danger" bind:checks="{danger}" />
     {#if commentsSections.length > 0}
         <div class="row mb-3">
             <div class="container">
@@ -357,7 +303,7 @@
                                     event.currentTarget.value;
                                 setCheckView();
                             }}"
-                        />
+                        ></textarea>
                     </div>
                     <hr />
                 {/each}
@@ -369,8 +315,8 @@
         <div class="col-8">
             <label for="textarea-auto">
                 Please leave a comment here on how the robot performed in the
-                autonomous period. (If it missed shots because notes collided in
-                mid-air, etc.)
+                autonomous period. (If it couldn't place on the reef because
+                algae was in the way, etc.)
             </label>
         </div>
         <div class="col-4">
@@ -387,7 +333,7 @@
                 class="form-control"
                 rows="5"
                 bind:value="{autoComment}"
-            />
+            ></textarea>
         </div>
     </div>
 
@@ -415,7 +361,7 @@
                 class="form-control"
                 rows="5"
                 bind:value="{teleopComment}"
-            />
+            ></textarea>
         </div>
     </div>
 
@@ -425,8 +371,8 @@
         <div class="col-8">
             <label for="textarea-end">
                 Please leave a comment here on how the robot performed in the
-                endgame period. (If the robot climbed, how did it do? If it
-                didn't, why not?)
+                endgame period. (If the robot climbed, how did it do? How much
+                did it climb? If it didn't, why not?)
             </label>
         </div>
         <div class="col-4">
@@ -443,15 +389,13 @@
                 class="form-control"
                 rows="5"
                 bind:value="{endComment}"
-            />
+            ></textarea>
         </div>
     </div>
 
     <div class="row mb-3">
         <div class="btn-group">
-            <button
-                class="btn btn-success btn-lg"
-                on:click="{() => submit()}">
+            <button class="btn btn-success btn-lg" on:click="{() => submit()}">
                 Submit Match
             </button>
             <button
@@ -460,7 +404,7 @@
                     choose(
                         'Are you sure you want to delete this match?',
                         'Yes, delete this match',
-                        'No, don\'t delete this match'
+                        "No, don't delete this match"
                     ).then(res => {
                         if (res?.toLowerCase().includes('yes')) {
                             App.abort();
@@ -475,9 +419,7 @@
         <Summary {app} />
     </div>
     <div class="row p-0 m-0">
-        <canvas bind:this="{canvas}" />
-        <div
-            id="slider"
-            class="mt-1" />
+        <canvas bind:this="{canvas}"></canvas>
+        <div id="slider" class="mt-1"></div>
     </div>
 </div>
