@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { generate2024App } from '../models/app/2024-app';
+    import { generate2025App } from '../models/app/2025-app';
     import NavTabs from './components/Tabs.svelte';
     import Page from './components/main/Page.svelte';
     import AppView from './pages/App.svelte';
@@ -22,10 +22,10 @@
     const generate = () =>
         App.matchData.getAlliance().then(a => {
             if (a) {
-                app = generate2024App(a);
-            // reassign app at restart
+                app = generate2025App(a);
+                // reassign app at restart
             } else {
-                app = generate2024App(null);
+                app = generate2025App(null);
             }
             app.on('restart', generate);
         });
@@ -66,6 +66,8 @@
     $: {
         if (active === '--$App') {
             fullscreen();
+            // TODO: PUT BACK IN
+            // console.log('not fullscreening');
         } else {
             exitFullscreen();
         }
@@ -94,40 +96,23 @@
 </script>
 
 <main>
-    <NavTabs
-        {active}
-        {tabs}
-        on:change="{e => (active = '--$' + e.detail)}" />
+    <NavTabs {active} {tabs} on:change="{e => (active = '--$' + e.detail)}" />
 
-    <Page
-        {active}
-        {domain}
-        title="--$Pre"
-    ><Pre
-        {app}
-        on:play="{() => (active = '--$App')}" /></Page
+    <Page {active} {domain} title="--$Pre"
+        ><Pre {app} on:play="{() => (active = '--$App')}" /></Page
     >
-    <Page
-        {active}
-        {domain}
-        title="--$App"><AppView {app} /></Page>
-    <Page
-        {active}
-        {domain}
-        title="--$Post"
-    ><Post
-        {active}
-        {app}
-        on:submit="{async () => {
-            active = '--$Pre';
-            app = generate2024App(await App.matchData.getAlliance());
-        }}"
-    /></Page
+    <Page {active} {domain} title="--$App"><AppView {app} /></Page>
+    <Page {active} {domain} title="--$Post"
+        ><Post
+            {active}
+            {app}
+            on:submit="{async () => {
+                active = '--$Pre';
+                app = generate2025App(await App.matchData.getAlliance());
+            }}"
+        /></Page
     >
-    <Page
-        {active}
-        {domain}
-        title="--$Upload"><Upload /></Page>
+    <Page {active} {domain} title="--$Upload"><Upload /></Page>
 
     <!-- <button
         class="btn btn-outline-primary position-fixed top-0 end-0 me-3"

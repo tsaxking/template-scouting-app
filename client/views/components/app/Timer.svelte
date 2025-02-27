@@ -32,25 +32,24 @@
         currentSection = 'end';
     };
 
-    $: {
-        if (app) {
-            if (prev) {
-                prev.off('section', section);
-                prev.off('tick', tick);
-                prev.off('end', end);
-            }
-
-            app.on('section', section);
-            app.on('tick', tick);
-            app.on('end', end);
-
-            prev = app;
-
-            matchNumber = App.matchData.matchNumber;
-            teamNumber = App.matchData.teamNumber;
-            compLevel = App.matchData.compLevel;
+    $:  if (app) {
+        if (prev) {
+            prev.off('section', section);
+            prev.off('tick', tick);
+            prev.off('end', end);
         }
+
+        app.on('section', section);
+        app.on('tick', tick);
+        app.on('end', end);
+
+        prev = app;
+
+        matchNumber = App.matchData.matchNumber;
+        teamNumber = App.matchData.teamNumber;
+        compLevel = App.matchData.compLevel;
     }
+    
 
     const setSection = (section: string) => {
         currentSection = section as Section;
@@ -65,20 +64,22 @@
 </script>
 
 <div class="timer position-absolute bg-dark rounded">
-    {#each Object.entries(sections) as [section, [color]]}
+    {#each Object.entries(sections) as [section, [color]] (section)}
         {#if section === currentSection}
             <button
                 class="btn btn-{color}"
+                type="button"
                 on:click="{() => setSection(section)}">{section}</button
             >
         {:else}
             <button
                 class="btn btn-outline-{color}"
+                type="button"
                 on:click="{() => setSection(section)}">{section}</button
             >
         {/if}
     {/each}
-    {#each Object.entries(sections) as [section, [color, text]]}
+    {#each Object.entries(sections) as [section, [color, text]] (section)}
         {#if section === currentSection}
             <div class="position-relative">
                 <div class="progress position-relative w-100">

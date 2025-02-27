@@ -18,7 +18,9 @@
     const d = createEventDispatcher();
 
     const fns = {
-        getAssignedTeams: async (groupNum: number): Promise<void | number[]> => {
+        getAssignedTeams: async (
+            groupNum: number
+        ): Promise<void | number[]> => {
             const data = await App.getEventData();
             if (data.isOk()) {
                 assignedTeams = data.value.assignments.groups[groupNum];
@@ -43,9 +45,12 @@
 
             let events: TBAEvent[] = App.events;
             if ((await env).ALLOW_PRESCOUTING === 'true' && !events.length) {
-                const data = await ServerRequest.post<TBAEvent[]>('/get-events', {
-                    year: new Date().getFullYear()
-                });
+                const data = await ServerRequest.post<TBAEvent[]>(
+                    '/get-events',
+                    {
+                        year: new Date().getFullYear()
+                    }
+                );
                 if (data.isOk()) {
                     events = data.value;
                     App.events = data.value;
@@ -63,11 +68,10 @@
                     compLevel: App.matchData.compLevel,
                     teamNum: App.matchData.teamNumber,
                     matchNum: String(App.matchData.matchNumber),
-                    events: events
-                        .filter(
-                            e => e.key === '2024cabl',
-                        )
-                    ,
+                    events: events,
+                    // .filter(
+                    //     e => e.key === '2024cabl',
+                    // )
                     event: eventData.eventKey
                 }
             });
@@ -100,18 +104,18 @@
 
                 App.emit('select-match', App.matchData);
 
-            // const res = await App.matchData.selectMatch(
-            //     data.matchNum,
-            //     data.compLevel,
-            //     data.teamNum || App.matchData.teamNumber
-            // );
+                // const res = await App.matchData.selectMatch(
+                //     data.matchNum,
+                //     data.compLevel,
+                //     data.teamNum || App.matchData.teamNumber
+                // );
 
-            // if (res.isErr()) {
-            //     console.error(res.error);
-            //     alert(
-            //         "Error selecting match and team number. Please ensure you've entered a valid match number and team number."
-            //     );
-            // }
+                // if (res.isErr()) {
+                //     console.error(res.error);
+                //     alert(
+                //         "Error selecting match and team number. Please ensure you've entered a valid match number and team number."
+                //     );
+                // }
             });
             m.addButton(save);
 
@@ -138,7 +142,8 @@
                 const eventData = res.value;
                 const matchIndex = eventData.matches.findIndex(
                     m =>
-                        m.comp_level === compLevel && m.match_number === matchNumber
+                        m.comp_level === compLevel &&
+                        m.match_number === matchNumber
                 );
                 if (matchIndex === -1) return;
 
@@ -157,18 +162,22 @@
             m.setTitle('Flip Field Orientation');
             const body = new FieldOrientation({
                 props: {
-                    flipX: App.flipX,
-                    flipY: App.flipY
+                    // flipX: App.flipX,
+                    rotate: App.rotate
                 },
                 target: m.target.querySelector('.modal-body') as HTMLElement
             });
 
-            body.$on('flipX', e => {
-                App.flipX = e.detail;
-            });
+            // body.$on('flipX', e => {
+            //     App.flipX = e.detail;
+            // });
 
-            body.$on('flipY', e => {
-                App.flipY = e.detail;
+            // body.$on('flipY', e => {
+            //     App.flipY = e.detail;
+            // });
+
+            body.$on('rotate', e => {
+                App.rotate = e.detail;
             });
 
             m.show();
@@ -176,28 +185,17 @@
     };
 </script>
 
-<div
-    class="btn-group w-100 p-0"
-    role="group">
-    <button
-        class="btn btn-primary"
-        type="button"
-        on:click="{fns.matchInfo}">
+<div class="btn-group w-100 p-0" role="group">
+    <button class="btn btn-primary" type="button" on:click="{fns.matchInfo}">
         View and Change Match Info
     </button>
     <!-- <button type="button" class="btn btn-warning">
         Tutorial
     </button> -->
-    <button
-        class="btn btn-info"
-        type="button"
-        on:click="{fns.assignedTeams}">
+    <button class="btn btn-info" type="button" on:click="{fns.assignedTeams}">
         Your Assigned Teams
     </button>
-    <button
-        class="btn btn-success"
-        type="button"
-        on:click="{fns.flipField}">
+    <button class="btn btn-success" type="button" on:click="{fns.flipField}">
         Flip Field Orientation
     </button>
 </div>

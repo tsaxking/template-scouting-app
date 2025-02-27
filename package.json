@@ -13,7 +13,9 @@
         "dev": "concurrently --kill-others \"npm run start\" \"npm run build:watch\"",
         "encrypt-backup": "ts-node ./scripts/encrypt-backup.ts",
         "backup": "ts-node ./scripts/backup-db.ts",
-        "restore": "ts-node ./scripts/restore-db.ts"
+        "restore": "ts-node ./scripts/restore-db.ts",
+        "db:start": "docker compose -f ./docker-compose.yml up -d",
+        "db:stop": "docker compose -f ./docker-compose.yml down"
     },
     "devDependencies": {
         "@popperjs/core": "^2.11.8",

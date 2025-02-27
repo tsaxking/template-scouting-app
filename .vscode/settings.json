@@ -15,5 +15,11 @@
     "parameterTypes.enabled": true,
     "propertyDeclarationTypes.enabled": true,
     // "variableTypes.enabled": true,
-    "eslint.validate": ["javascript", "typescript", "svelte"]
+    "eslint.validate": ["javascript", "typescript", "svelte"],
+    "[typescript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[dockercompose]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    }
 }
