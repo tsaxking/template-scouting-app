@@ -46,8 +46,8 @@ export const generate2025App = (alliance: 'red' | 'blue' | null = null) => {
         // TODO: replace with correct images
         prc: new Img('/public/pictures/icons/prc.png'),
         brg: new Img('/public/pictures/icons/brg.png'),
-        dpc: new Img('/public/pictures/icons/spk.png'),
-        shc: new Img('/public/pictures/icons/spk.png'),
+        dpc: new Img('/public/pictures/icons/dpc.png'),
+        shc: new Img('/public/pictures/icons/shc.png'),
         cl1: new Img('/public/pictures/icons/cl1.png'),
         cl2: new Img('/public/pictures/icons/cl2.png'),
         cl3: new Img('/public/pictures/icons/cl3.png'),
