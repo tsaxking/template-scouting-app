@@ -37,6 +37,7 @@ export const comments: {
             '2 reef algae removal auto',
             '1 barge auto',
             '2 barge auto',
+            'Picked algae from ground',
             'Dropped coral while placing'
         ],
         tele: [
@@ -56,7 +57,12 @@ export const comments: {
             'Very fast floor pick',
             'Knocked algae out of reef',
             'Grabbed algae from reef',
-            'Dropped coral while placing'
+            'Dropped coral while placing',
+            'Picked algae from ground',
+            'Damaged coral',
+            'Damaged algae',
+            'Climbed on top of algae',
+            'Climbed on top of coral'
         ],
         end: [
             'Climbs quickly',
