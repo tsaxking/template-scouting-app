@@ -95,7 +95,7 @@ export class TBA {
                 //     }
                 // });
 
-                const res = await ServerRequest.get('api/tba' + path);
+                const res = await ServerRequest.get('/api/tba' + path);
 
                 const json = await res.unwrap();
 
