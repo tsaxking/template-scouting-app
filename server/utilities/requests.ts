@@ -31,7 +31,7 @@ export class ServerRequest {
 
             const data = await request<{
                 status?: number;
-            }>(SERVER_DOMAIN + '/api/event-server' + url, {
+            }>(SERVER_DOMAIN + 'api/event-server' + url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -63,7 +63,7 @@ export class ServerRequest {
             throw new Error('No data');
         });
     }
-    
+
     public static get<T>(url: string): Promise<Result<T>> {
         return attemptAsync(async () => {
             const id = uuid();
@@ -75,7 +75,7 @@ export class ServerRequest {
                 headers: {
                     'Content-Type': 'application/json',
                     'x-auth-key': SERVER_KEY as string
-                },
+                }
             });
 
             if (data.isErr()) throw data.error;
