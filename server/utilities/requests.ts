@@ -31,7 +31,7 @@ export class ServerRequest {
 
             const data = await request<{
                 status?: number;
-            }>(SERVER_DOMAIN + 'api/event-server' + url, {
+            }>(SERVER_DOMAIN + '/api/event-server' + url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
