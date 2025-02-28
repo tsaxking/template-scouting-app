@@ -49,7 +49,9 @@
                     scoutIndex: teams.findIndex(
                         t =>
                             t ===
-                                eventData.assignments.matchAssignments[App.group]?.[i]
+                                eventData.assignments.matchAssignments[App.group]?.[
+                                    i
+                                ]
                     )
                 };
             }) as M[];
@@ -93,13 +95,19 @@
                 }
             };
 
-            if (typeof teamIndex === 'number' && teamIndex >= 0 && teamIndex < 6) {
+            if (
+                typeof teamIndex === 'number' &&
+                teamIndex >= 0 &&
+                teamIndex < 6
+            ) {
                 // use teamIndex, and force scout group
                 useTeamIndex();
             } else if (App.group !== -1) {
                 // use scout group only
                 team =
-                    eventData.assignments.matchAssignments[App.group]?.[matchIndex];
+                    eventData.assignments.matchAssignments[App.group]?.[
+                        matchIndex
+                    ];
             } else {
                 teamIndex = 0;
                 useTeamIndex();
@@ -131,7 +139,8 @@
                 };
             });
 
-            matchAssignments = eventData.assignments.matchAssignments[App.group];
+            matchAssignments =
+                eventData.assignments.matchAssignments[App.group];
             fns.setCustom(matches);
             currentMatchIndex = matches.findIndex(
                 m =>
@@ -225,10 +234,10 @@
 </table>
 
 <style>
-.is-group {
-    color: #6c757d !important;
-}
-.selected-team {
-    font-weight: bold;
-}
+    .is-group {
+        color: #6c757d !important;
+    }
+    .selected-team {
+        font-weight: bold;
+    }
 </style>

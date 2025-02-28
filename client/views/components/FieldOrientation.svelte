@@ -18,7 +18,9 @@
             value=""
             bind:checked="{rotate}"
         />
-        <label class="form-check-label" for="flexCheckDefault">
+        <label
+            class="form-check-label"
+            for="flexCheckDefault">
             Rotate field
         </label>
     </div>

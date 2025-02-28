@@ -18,12 +18,12 @@
     };
 
 // const reset = () => {
-//     type = 'password';
-//     const p = document.querySelector('#' + id) as HTMLInputElement;
-//     if (p) {
-//         p.type = type;
-//     }
-// }
+    //     type = 'password';
+    //     const p = document.querySelector('#' + id) as HTMLInputElement;
+    //     if (p) {
+    //         p.type = type;
+    //     }
+    // }
 </script>
 
 <div class="container-fluid">

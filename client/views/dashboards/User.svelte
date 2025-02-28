@@ -31,8 +31,8 @@
 
     const accountLinks: string[] = [
     // 'account',
-    // 'contact',
-    // null
+        // 'contact',
+        // null
     ];
 </script>
 

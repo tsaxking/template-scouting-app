@@ -19,9 +19,11 @@
 
     onMount(() => fns.launch(app));
 
-    // $: fns.launch(app);
+// $: fns.launch(app);
 </script>
 
-<div bind:this="{target}" class="position-relative">
+<div
+    bind:this="{target}"
+    class="position-relative">
     <Timer bind:app />
 </div>

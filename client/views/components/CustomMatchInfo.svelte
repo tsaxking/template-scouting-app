@@ -4,7 +4,8 @@
     import SelectedInfo from './SelectedInfo.svelte';
     import { type TBAEvent } from '../../../shared/submodules/tatorscout-calculations/tba';
 
-    export let compLevel: 'pr' | 'qm' | 'qf' | 'sf' | 'f' = App.matchData.compLevel;
+    export let compLevel: 'pr' | 'qm' | 'qf' | 'sf' | 'f' =
+        App.matchData.compLevel;
     export let matchNum: string = String(App.matchData.matchNumber || '');
     export let teamNum: number = App.matchData.teamNumber;
     export let teams: {

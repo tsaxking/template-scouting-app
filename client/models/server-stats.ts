@@ -3,32 +3,33 @@ import { Systeminformation } from 'systeminformation';
 import { ServerRequest } from '../utilities/requests';
 import { writable } from 'svelte/store';
 
-
 export class Blank {
     public readonly time = new Date();
 
-
     public readonly cpu = {
-        speed: 0,
+        speed: 0
     };
 
     public readonly memory = {
         used: 0,
-        total: 1,
+        total: 1
     };
 
     public readonly temp = {
-        main: 0,
+        main: 0
     };
 
-    constructor() {
-    }
+    constructor() {}
 }
 
 export class ServerStat {
-    static readonly stats = writable<(ServerStat | Blank)[]>(Array.from({
-        length: 6 * 5 // 10 sec intervals for 5 minutes
-    }).fill(0).map(() => new Blank()));
+    static readonly stats = writable<(ServerStat | Blank)[]>(
+        Array.from({
+            length: 6 * 5 // 10 sec intervals for 5 minutes
+        })
+            .fill(0)
+            .map(() => new Blank())
+    );
 
     public readonly time = new Date();
 
@@ -43,7 +44,6 @@ export class ServerStat {
         });
     }
 }
-
 
 const retrieve = async () => {
     const res = await ServerRequest.post<{

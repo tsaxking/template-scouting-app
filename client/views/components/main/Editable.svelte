@@ -40,7 +40,7 @@
 >
 
 <style>
-.show {
-    display: none;
-}
+    .show {
+        display: none;
+    }
 </style>

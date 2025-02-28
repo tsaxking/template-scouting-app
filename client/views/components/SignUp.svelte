@@ -16,8 +16,8 @@
         recaptcha = false;
     const submit = () => {
         // if (i.value || !recaptcha) {
-    //     return;
-    // }
+        //     return;
+        // }
         if (i.value) return;
         if (!valid) {
             console.log('Is not valid');

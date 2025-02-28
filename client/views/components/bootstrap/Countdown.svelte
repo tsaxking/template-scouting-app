@@ -67,8 +67,8 @@
 </div>
 
 <style>
-p.display-4 {
-    font-size: 2rem;
-    margin: 0;
-}
+    p.display-4 {
+        font-size: 2rem;
+        margin: 0;
+    }
 </style>

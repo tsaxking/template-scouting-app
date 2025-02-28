@@ -111,7 +111,7 @@
 </div>
 
 <style>
-.hover-color:hover {
-    color: var(--bs-secondary);
-}
+    .hover-color:hover {
+        color: var(--bs-secondary);
+    }
 </style>
