@@ -38,6 +38,7 @@ export const comments: {
             '1 barge auto',
             '2 barge auto',
             'Picked algae from ground',
+            'Picked coral from ground',
             'Dropped coral while placing'
         ],
         tele: [
@@ -59,6 +60,7 @@ export const comments: {
             'Grabbed algae from reef',
             'Dropped coral while placing',
             'Picked algae from ground',
+            'Picked coral from ground',
             'Damaged coral',
             'Damaged algae',
             'Climbed on top of algae',

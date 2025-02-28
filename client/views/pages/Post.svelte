@@ -36,23 +36,26 @@
         'autoMobility',
         'parked',
         'climbed',
-        'stoleGamepieces',
+        'stoleGamepieces'
     ]);
-    let primary = createPostDataMap([
-        'playedDefense',
-        'groundPicks',
-    ]);
+    let primary = createPostDataMap(['playedDefense', 'groundPicks']);
     let warning = createPostDataMap([
         'tippy',
         'easilyDefended',
         'slow',
-        'droppedItems',
+        'droppedItems'
     ]);
     let danger = createPostDataMap([
         'robotDied',
         'problemsDriving',
-        'spectator',
+        'spectator'
     ]);
+
+    // potential idea
+    // basically, you make an object with a key for the term and if you want the text box for justifying the check to be a thing.
+    // let danger = createPostDataMap{[
+    //     {key: 'robotDied', justify: 'true'}
+    // ]}
 
     let all: PostDataMap = { ...success, ...primary, ...warning, ...danger };
 
