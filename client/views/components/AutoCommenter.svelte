@@ -40,6 +40,8 @@
             value="{comment}"
             bind:group="{selected}"
         />
-        <label class="form-check-label" for="{comment}">{comment}</label>
+        <label
+            class="form-check-label"
+            for="{comment}">{comment}</label>
     </div>
 {/each}

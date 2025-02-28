@@ -33,7 +33,10 @@
     });
 
     $: {
-        document.documentElement.setAttribute('data-bs-theme', theme.toLowerCase());
+        document.documentElement.setAttribute(
+            'data-bs-theme',
+            theme.toLowerCase()
+        );
     }
 </script>
 

@@ -104,23 +104,23 @@
 {/if}
 
 <style>
-.dashboard-card {
-    /* Force all cards to be the same height */
-    height: 425px !important;
-    transition:
-        top 0.3s ease,
-        left 0.3s ease,
-        width 0.3s ease;
-}
+    .dashboard-card {
+        /* Force all cards to be the same height */
+        height: 425px !important;
+        transition:
+            top 0.3s ease,
+            left 0.3s ease,
+            width 0.3s ease;
+    }
 
-.dashboard-card.expanded {
-    position: fixed;
-    z-index: 2000;
-    top: 50%;
-    left: 50%;
-    width: 100vw !important;
-    height: 100vh !important;
-    transform: translate(-50%, -50%);
-    padding: 2em;
-}
+    .dashboard-card.expanded {
+        position: fixed;
+        z-index: 2000;
+        top: 50%;
+        left: 50%;
+        width: 100vw !important;
+        height: 100vh !important;
+        transform: translate(-50%, -50%);
+        padding: 2em;
+    }
 </style>

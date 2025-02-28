@@ -104,7 +104,7 @@
 
                 App.emit('select-match', App.matchData);
 
-                // const res = await App.matchData.selectMatch(
+            // const res = await App.matchData.selectMatch(
                 //     data.matchNum,
                 //     data.compLevel,
                 //     data.teamNum || App.matchData.teamNumber
@@ -143,7 +143,7 @@
                 const matchIndex = eventData.matches.findIndex(
                     m =>
                         m.comp_level === compLevel &&
-                        m.match_number === matchNumber
+                            m.match_number === matchNumber
                 );
                 if (matchIndex === -1) return;
 
@@ -185,17 +185,28 @@
     };
 </script>
 
-<div class="btn-group w-100 p-0" role="group">
-    <button class="btn btn-primary" type="button" on:click="{fns.matchInfo}">
+<div
+    class="btn-group w-100 p-0"
+    role="group">
+    <button
+        class="btn btn-primary"
+        type="button"
+        on:click="{fns.matchInfo}">
         View and Change Match Info
     </button>
     <!-- <button type="button" class="btn btn-warning">
         Tutorial
     </button> -->
-    <button class="btn btn-info" type="button" on:click="{fns.assignedTeams}">
+    <button
+        class="btn btn-info"
+        type="button"
+        on:click="{fns.assignedTeams}">
         Your Assigned Teams
     </button>
-    <button class="btn btn-success" type="button" on:click="{fns.flipField}">
+    <button
+        class="btn btn-success"
+        type="button"
+        on:click="{fns.flipField}">
         Flip Field Orientation
     </button>
 </div>

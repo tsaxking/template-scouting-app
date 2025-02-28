@@ -281,10 +281,22 @@
 </script>
 
 <div class="container mb-3">
-    <ChecksRow name="Info" color="primary" bind:checks="{primary}" />
-    <ChecksRow name="Good" color="success" bind:checks="{success}" />
-    <ChecksRow name="Bad" color="warning" bind:checks="{warning}" />
-    <ChecksRow name="Ugly" color="danger" bind:checks="{danger}" />
+    <ChecksRow
+        name="Info"
+        color="primary"
+        bind:checks="{primary}" />
+    <ChecksRow
+        name="Good"
+        color="success"
+        bind:checks="{success}" />
+    <ChecksRow
+        name="Bad"
+        color="warning"
+        bind:checks="{warning}" />
+    <ChecksRow
+        name="Ugly"
+        color="danger"
+        bind:checks="{danger}" />
     {#if commentsSections.length > 0}
         <div class="row mb-3">
             <div class="container">
@@ -306,7 +318,7 @@
                                     event.currentTarget.value;
                                 setCheckView();
                             }}"
-                        ></textarea>
+                        />
                     </div>
                     <hr />
                 {/each}
@@ -336,7 +348,7 @@
                 class="form-control"
                 rows="5"
                 bind:value="{autoComment}"
-            ></textarea>
+            />
         </div>
     </div>
 
@@ -364,7 +376,7 @@
                 class="form-control"
                 rows="5"
                 bind:value="{teleopComment}"
-            ></textarea>
+            />
         </div>
     </div>
 
@@ -392,13 +404,15 @@
                 class="form-control"
                 rows="5"
                 bind:value="{endComment}"
-            ></textarea>
+            />
         </div>
     </div>
 
     <div class="row mb-3">
         <div class="btn-group">
-            <button class="btn btn-success btn-lg" on:click="{() => submit()}">
+            <button
+                class="btn btn-success btn-lg"
+                on:click="{() => submit()}">
                 Submit Match
             </button>
             <button
@@ -407,7 +421,7 @@
                     choose(
                         'Are you sure you want to delete this match?',
                         'Yes, delete this match',
-                        "No, don't delete this match"
+                        'No, don\'t delete this match'
                     ).then(res => {
                         if (res?.toLowerCase().includes('yes')) {
                             App.abort();
@@ -422,7 +436,9 @@
         <Summary {app} />
     </div>
     <div class="row p-0 m-0">
-        <canvas bind:this="{canvas}"></canvas>
-        <div id="slider" class="mt-1"></div>
+        <canvas bind:this="{canvas}" />
+        <div
+            id="slider"
+            class="mt-1" />
     </div>
 </div>

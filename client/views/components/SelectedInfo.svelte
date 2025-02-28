@@ -41,7 +41,7 @@
     };
 
     // App.on('change-group', select);
-// App.on('change-match', select);
+    // App.on('change-match', select);
     App.on('select-match', select);
     onMount(select);
 </script>

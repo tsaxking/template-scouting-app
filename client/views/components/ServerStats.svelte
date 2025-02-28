@@ -36,7 +36,9 @@
                 },
                 {
                     label: 'Memory Usage',
-                    data: stats.map(stat => (stat.memory.used / stat.memory.total) * 100),
+                    data: stats.map(
+                        stat => (stat.memory.used / stat.memory.total) * 100
+                    ),
                     borderColor: Color.fromBootstrap('danger')
                         .setAlpha(0.5)
                         .toString('rgba'),
@@ -60,7 +62,7 @@
             scales: {
                 y: {
                     min: 0,
-                    max: 100,
+                    max: 100
                 }
             }
         }}"

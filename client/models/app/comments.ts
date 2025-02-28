@@ -16,7 +16,7 @@ export const comments: {
             'Drove around aimlessly',
             'fast and maneuverable',
             'gets fouls hitting bots in protected zones',
-            "gets in partner's way",
+            'gets in partner\'s way',
             'hits opponents very hard',
             'Mostly played defense',
             'Very slow'
@@ -52,7 +52,7 @@ export const comments: {
             'Misses a lot of barge shots',
             'Game piece jammed in bot',
             'Often misses floor pick',
-            "Steals from opponents' coral stations",
+            'Steals from opponents\' coral stations',
             'Takes a long time to set up barge shot',
             'Good defense',
             'Very fast floor pick',

@@ -26,8 +26,8 @@
 
     const accountLinks: string[] = [
     // 'account',
-    // 'contact',
-    // null
+        // 'contact',
+        // null
     ];
 
     let loading = false;

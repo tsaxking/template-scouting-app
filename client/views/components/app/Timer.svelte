@@ -32,7 +32,7 @@
         currentSection = 'end';
     };
 
-    $:  if (app) {
+    $: if (app) {
         if (prev) {
             prev.off('section', section);
             prev.off('tick', tick);
@@ -49,7 +49,6 @@
         teamNumber = App.matchData.teamNumber;
         compLevel = App.matchData.compLevel;
     }
-    
 
     const setSection = (section: string) => {
         currentSection = section as Section;
@@ -106,10 +105,10 @@
 </div>
 
 <style>
-.timer {
-    z-index: 999;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-}
+    .timer {
+        z-index: 999;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+    }
 </style>
