@@ -18,5 +18,8 @@
     "eslint.validate": ["javascript", "typescript", "svelte"],
     "[typescript]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[dockercompose]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
     }
 }
