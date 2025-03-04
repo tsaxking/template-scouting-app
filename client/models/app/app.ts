@@ -645,7 +645,7 @@ export class App<
         });
 
         this.path.properties.line = {
-            color: Color.fromName('black').toString('rgba'),
+            color: Color.fromName('yellow').toString('rgba'),
             width: 1
         };
 
