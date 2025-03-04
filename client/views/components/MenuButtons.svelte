@@ -162,18 +162,22 @@
             m.setTitle('Flip Field Orientation');
             const body = new FieldOrientation({
                 props: {
-                    flipX: App.flipX,
-                    flipY: App.flipY
+                    // flipX: App.flipX,
+                    rotate: App.rotate
                 },
                 target: m.target.querySelector('.modal-body') as HTMLElement
             });
 
-            body.$on('flipX', e => {
-                App.flipX = e.detail;
-            });
+            // body.$on('flipX', e => {
+            //     App.flipX = e.detail;
+            // });
 
-            body.$on('flipY', e => {
-                App.flipY = e.detail;
+            // body.$on('flipY', e => {
+            //     App.flipY = e.detail;
+            // });
+
+            body.$on('rotate', e => {
+                App.rotate = e.detail;
             });
 
             m.show();
